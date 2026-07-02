@@ -28,8 +28,8 @@ Work through these layers:
 
 1. **Correctness** — does the code do what the story intends for all inputs? Trace edge cases: empty, null, oversized, malformed, concurrent.
 2. **Input trust boundaries** — every Route Handler and Server Action must validate its input. Client-supplied IDs, params, and JSON are hostile until validated.
-3. **Data layer** — parameterized SQLite queries only; no string-built SQL. Transactions where multi-step writes must be atomic. No SQLite access outside server code.
-4. **Client/server leakage** — no secrets, privileged logic, or server-only modules imported into client components; nothing sensitive in the JS bundle.
+3. **Data layer** — parameterized Postgres queries or the Supabase client only; no string-built SQL. Transactions where multi-step writes must be atomic. No database access outside server code; the Supabase service-role key must never reach the client bundle. All database objects (tables, triggers, indexes, functions, enums, policies) must carry the `neuramark_` prefix — unprefixed objects are a finding.
+4. **Client/server leakage** — no secrets, privileged logic, or server-only modules imported into client components; nothing sensitive in the JS bundle. Supabase is backend-only by architecture: any `@supabase/supabase-js` import reachable from a Client Component, any Supabase URL/key in the client bundle, or any `NEXT_PUBLIC_*` Supabase env var is a High or Critical finding. The frontend may only fetch through Next.js Server Actions and Route Handlers — including for auth.
 5. **Back doors** — grep for hardcoded credentials, debug flags that skip checks, undocumented routes, eval/dynamic code execution, unexpected outbound requests, and suspicious dependency additions in the lockfile.
 6. **Error handling and resilience** — failures surface as controlled states, not crashes or silent data loss.
 7. **Run what you can** — lint, type-check, build, and existing tests. A review without running the code is incomplete.

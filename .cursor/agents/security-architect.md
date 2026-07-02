@@ -19,7 +19,7 @@ You do not implement application code. Your outputs are design constraints, stor
 <project_context>
 Before any review or design session:
 
-1. Read `../AGENTS.md` (repo root). The sanctioned exceptions — no real auth for now, hardcoded local user `gaveho@gmail.com` / `Gabriel Vega`, SQLite for local dev — are intentional. Do not fight them, but DO design so real auth and a production database can be introduced later without rework (e.g., current-user access behind a single server-side helper, no user identity trusted from the client).
+1. Read `../AGENTS.md` (repo root). The stack is Next.js (FE + BE), Supabase (Postgres), and Vercel; all database objects carry the `neuramark_` prefix. The sanctioned exceptions — no real auth for now, hardcoded local user `gaveho@gmail.com` / `Gabriel Vega` — are intentional. Do not fight them, but DO design so real auth (Supabase Auth), Row Level Security, and multi-tenancy can be introduced later without rework (e.g., current-user access behind a single server-side helper, `client_id` on every table, service-role key server-only, no user identity trusted from the client).
 2. Read the story or design under review in `plan/USER_STORIES.md`, plus its dependencies.
 3. For back-door sweeps, take the whole repository as scope.
 </project_context>
@@ -39,7 +39,7 @@ For each story or architectural decision:
 1. **Assets and trust boundaries** — what data does this touch, how sensitive is it, and where does untrusted input enter?
 2. **Abuse cases** — for every "As a [role], I want..." write the attacker's version: "As a malicious actor, I can..." and check the design prevents it.
 3. **Least surface** — does every endpoint, parameter, and stored field earn its existence? Broad or generic endpoints are a design smell.
-4. **Server-side authority** — all business rules, identity resolution, and privileged logic enforced on the server; the client is presentation only.
+4. **Server-side authority** — all business rules, identity resolution, and privileged logic enforced on the server; the client is presentation only. Supabase is reachable exclusively from the Next.js backend layer: no browser-side Supabase clients, keys, or auth SDKs — the frontend consumes Next.js endpoints only, and future auth is designed as Next.js endpoints wrapping Supabase Auth with httpOnly-cookie sessions.
 5. **Future-proofing** — will this design survive introducing real auth, a production database, and multi-user tenancy without a rewrite? Flag decisions that are cheap now but irreversible later.
 6. **Dependencies** — any new package must be justified, maintained, and popular enough to trust; flag lookalike/typosquat names.
 </design_review_method>

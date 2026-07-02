@@ -4,7 +4,7 @@
 > **Date:** 2026-07-02 · **Reviewer:** security-architect
 > **Status of criteria:** every `[SEC]` checkbox added to `USER_STORIES.md` is binding for the implementing agents and is validated by the requirements-validator like any other acceptance criterion.
 
-Sanctioned exceptions per `AGENTS.md` (NOT findings): no real auth yet, hardcoded local user `gaveho@gmail.com` / Gabriel Vega, SQLite for local dev. All designs below are constrained so real auth, a production DB, and multi-tenancy can be introduced later without rewrite.
+Sanctioned exceptions per `AGENTS.md` (NOT findings): no real auth yet, hardcoded local user `gaveho@gmail.com` / Gabriel Vega. Stack: Next.js (FE + BE), Supabase (Postgres), Vercel. All database objects (tables, triggers, indexes, functions, enums, policies) carry the `neuramark_` prefix. All designs below are constrained so real auth (Supabase Auth), Row Level Security, and multi-tenancy can be introduced later without rewrite.
 
 ---
 
@@ -85,7 +85,7 @@ New packages expected by this backlog: a schema validator (Zod — sanctioned, m
 
 **Introducing real auth:** all identity flows through `getCurrentUser()`; swapping in a session-backed implementation changes zero call sites. Do not build any interim header-based or query-param identity — that becomes an accidental back door.
 
-**Production database:** all queries parameterized from day one (also the SQLi guard); keep SQLite access behind a thin data layer so the Postgres/Vercel swap is mechanical; enforce uniqueness/FK constraints at the DB level (e.g. `source_interview_id`) so integrity survives the migration.
+**Database:** all queries parameterized from day one (also the SQLi guard); keep Supabase access behind a thin server-only data layer with the service-role key never exposed to the client; enforce uniqueness/FK constraints at the DB level (e.g. `source_interview_id`); keep `client_id` on every table and plan RLS policies (prefixed `neuramark_`) so enabling Row Level Security at multi-tenancy time is additive, not a rewrite.
 
 **Multi-tenancy:** `client_id` on every owned table now, ownership checks on every client-supplied ID now (they're trivially true with one client, and they're the entire IDOR defense later); asset serving already ownership-checked; cost aggregation already client-scoped. When tenancy arrives, add row-level policies without schema rework.
 

@@ -27,6 +27,14 @@
 As a [role], I want [capability], so that [outcome].
 ```
 
+**Stack and database naming**
+
+- Stack: Next.js (FE + BE) · Supabase (Postgres) as database · Vercel for deployment.
+- Supabase is accessed ONLY by the Next.js backend (Server Actions, Route Handlers, server helpers). The frontend never imports Supabase clients or sees Supabase keys; all FE data access — including future auth — goes through Next.js endpoints.
+- Table names in the **DB** rows below are *logical* names. Every physical object in Supabase — tables, triggers, indexes, functions, enums, policies — MUST carry the `neuramark_` prefix.
+  - Example: `interview_sessions` → table `neuramark_interview_sessions`, index `neuramark_interview_sessions_client_id_idx`, trigger `neuramark_interview_sessions_set_updated_at`.
+- Schema changes go through Supabase migrations, never ad-hoc dashboard edits.
+
 ---
 
 ## Phase 1 — Base del cliente
