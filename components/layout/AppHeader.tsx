@@ -1,0 +1,32 @@
+import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { getTranslations } from "@/lib/i18n/get-translations";
+
+type AppHeaderProps = {
+  locale: "en" | "es";
+};
+
+export async function AppHeader({ locale }: AppHeaderProps) {
+  const user = await getCurrentUser();
+  const t = getTranslations(locale);
+
+  return (
+    <header
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "1rem 1.5rem",
+        background: "#ffffff",
+        borderBottom: "1px solid #e5e7eb",
+      }}
+    >
+      <div style={{ fontWeight: 700, fontSize: "1.125rem" }}>{t.appName}</div>
+      <div style={{ fontSize: "0.95rem", color: "#4b5563" }}>
+        {t.header.signedInAs}{" "}
+        <strong style={{ color: "#111827" }}>
+          {user.displayName} ({user.email})
+        </strong>
+      </div>
+    </header>
+  );
+}

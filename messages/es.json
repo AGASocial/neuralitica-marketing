@@ -1,0 +1,34 @@
+{
+  "appName": "Neuralitica Marketing",
+  "dashboard": {
+    "title": "Panel",
+    "subtitle": "Tu producción de contenido de un vistazo.",
+    "interviewCard": {
+      "title": "Entrevista del negocio",
+      "body": "Completa la entrevista guiada para que conozcamos tu negocio.",
+      "cta": "Iniciar entrevista"
+    },
+    "profileCard": {
+      "title": "Perfil del negocio",
+      "body": "Revisa y ajusta el perfil generado a partir de tu entrevista.",
+      "cta": "Ver perfil"
+    },
+    "approvalsCard": {
+      "title": "Aprobaciones pendientes",
+      "body": "Reels en espera de tu revisión antes de publicar.",
+      "cta": "Revisar reels"
+    },
+    "productionCard": {
+      "title": "Estado de producción",
+      "body": "Sigue guiones, trabajos de video y montaje de esta semana.",
+      "cta": "Ver pipeline"
+    },
+    "setupBanner": {
+      "title": "Scaffold listo",
+      "body": "La app está en marcha con el usuario local de desarrollo. Añade las credenciales de Supabase en .env cuando quieras conectar la base de datos."
+    }
+  },
+  "header": {
+    "signedInAs": "Sesión iniciada como"
+  }
+}

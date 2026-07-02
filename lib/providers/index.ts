@@ -1,6 +1,5 @@
 export {
   ASSET_ROLES,
-  COST_BILLING_UNITS,
   InMemoryProviderRegistry,
   PROVIDER_TIERS,
   SUPPORTED_LOCALES,
@@ -21,7 +20,6 @@ export type {
   LlmCompletionResult,
   LlmProviderAdapter,
   ProviderCatalogRow,
-  ProviderCostModel,
   ProviderRegistry,
   ProviderTier,
   ResolveProviderContext,

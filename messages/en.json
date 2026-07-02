@@ -1,0 +1,34 @@
+{
+  "appName": "Neuralitica Marketing",
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Your content production at a glance.",
+    "interviewCard": {
+      "title": "Business interview",
+      "body": "Complete your guided interview so we can learn your business.",
+      "cta": "Start interview"
+    },
+    "profileCard": {
+      "title": "Business profile",
+      "body": "Review and refine the profile generated from your interview.",
+      "cta": "View profile"
+    },
+    "approvalsCard": {
+      "title": "Pending approvals",
+      "body": "Reels waiting for your review before publishing.",
+      "cta": "Review reels"
+    },
+    "productionCard": {
+      "title": "Production status",
+      "body": "Track scripts, video jobs, and assembly for this week.",
+      "cta": "View pipeline"
+    },
+    "setupBanner": {
+      "title": "Scaffold ready",
+      "body": "The app is running with the hardcoded dev user. Add Supabase credentials to .env when you are ready to connect the database."
+    }
+  },
+  "header": {
+    "signedInAs": "Signed in as"
+  }
+}
