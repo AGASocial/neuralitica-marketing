@@ -1,7 +1,7 @@
 # Neuralitica V1 — User Stories (from MODULES_ROADMAP v1.1)
 
 > **Source:** `plan/MODULES_ROADMAP_v1.1.html`  
-> **Goal:** 3 AI Reels/week per client · Instagram only · No human recording required · Cheap API first  
+> **Goal:** 3 AI Reels/week per client · Instagram only · No human recording required · Cheap API first · **Default provider tier: low** (see Conventions)
 > **Agents:** Each story is tagged **FE**, **BE**, or **DB** so frontend and backend work can run in parallel where dependencies allow.
 
 ---
@@ -34,6 +34,195 @@ As a [role], I want [capability], so that [outcome].
 - Table names in the **DB** rows below are *logical* names. Every physical object in Supabase — tables, triggers, indexes, functions, enums, policies — MUST carry the `neuramark_` prefix.
   - Example: `interview_sessions` → table `neuramark_interview_sessions`, index `neuramark_interview_sessions_client_id_idx`, trigger `neuramark_interview_sessions_set_updated_at`.
 - Schema changes go through Supabase migrations, never ad-hoc dashboard edits.
+
+**Provider tiers (assembly assets)**
+
+V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) runs at both tiers; only upstream asset generators change. The policy engine (US-7.x) and catalogs (US-X.4) resolve `provider_tier` → concrete vendor per asset role. Clients never pick a tier; operators may switch global default or per-client override.
+
+| Asset role | Low tier (V1 default) | High tier (P1 / operator override) |
+|---|---|---|
+| LLM text (strategy, script, caption, QA) | DeepSeek V4 Flash / Qwen3.5 via **SiliconFlow** | GPT-5.4 mini / Claude-class APIs |
+| TTS voiceover | **CosyVoice2** via SiliconFlow (or Inworld Mini) | ElevenLabs Multilingual |
+| Talking-head video (own / generic avatar) | **SadTalker** via Replicate (~$0.10/Reel) | **HeyGen** standard or Avatar IV |
+| Talking-head alt (generic loop) | **MuseTalk** via Replicate (~$0.19/Reel) | HeyGen studio avatar |
+| B-roll (faceless mode) | **Wan2.1 I2V Turbo** via SiliconFlow (~$0.21/5s clip) | LTX 2.3 Pro / Kling 3.0 |
+| Cover still | FFmpeg frame extract (no API) | FLUX / image API |
+| Final assembly | FFmpeg on server (no API) | Same |
+
+**V1 economics target:** ~$0.37–0.58 per 30s Reel (low tier) · ~$1.10–1.75 per client per week (3 Reels) · default `max_cost_cents` seed **150** ($1.50/Reel) including retries, B-roll, and TTS.
+
+**Upgrade order when quality justifies cost:** avatar adapter → B-roll adapter → TTS → LLM. HeyGen remains an operator fallback (US-8.7), not the silent default.
+
+**Reference docs & code:** visual comparison → `plan/PROVIDER_TIERS.html` · TypeScript contract → `lib/providers/provider-adapters.ts` · Zod schemas → `lib/contracts/providers.ts`
+
+---
+
+## Phase 0 — Access
+
+### Module: Authentication (P0)
+
+> **Architecture (hard constraint from `AGENTS.md`):** Supabase Auth (email/password) is used ONLY from the Next.js backend. The browser never imports Supabase auth SDKs and never sees Supabase tokens or keys. Auth pages call Next.js Route Handlers / Server Actions exclusively. Sessions are server-managed httpOnly cookies. Identity is resolved only via the server-side `getCurrentUser()` helper (US-X.3) — these stories replace its hardcoded implementation through that designed seam, changing zero call sites. Supabase Auth owns `auth.users`; app-side profile data lives in `neuramark_`-prefixed tables linked via `auth_user_id`. Role systems remain OUT of scope.
+>
+> **Access model (user decision):** signup is OPEN (not invite-only). Flow: signup → Supabase sends email confirmation → app-side record created with `active = false` → an operator manually activates the account via SQL (`UPDATE ... SET active = true`). Only active accounts get product access; confirmed-but-inactive users see a neutral "account pending activation" screen. An admin activation UI is explicitly out of scope (possible P1 later).
+>
+> **Role flag (user decision):** `neuramark_clients.role text NOT NULL DEFAULT 'client'`, allowed values `client` | `operator` (Postgres enum or CHECK constraint, `neuramark_` prefix). Set to `operator` via SQL only — same trust model as `active`. `getCurrentUser()` returns the role; operator-only Server Actions / Route Handlers check it server-side. NO role management UI, NO permission tables, NO invite flows. The column exists from day one (US-14.1), but role gating activates with US-14.5 — until then the hardcoded local user acts as operator.
+
+#### US-14.1 — Sign up with email and password
+**As a** Client, **I want** to create an account with my email and a password, **so that** I can access my own workspace once auth is live.
+
+| Owner | Work |
+|-------|------|
+| **FE** | Signup page (PrimeReact form: email, password, confirm password, display name); client-side validation as presentation only; loading/pending/error states; post-signup "check your email to confirm" screen; post-confirmation "account pending activation" state (shared with US-14.2/14.5); EN/ES copy |
+| **BE** | Route Handler / Server Action wrapping Supabase Auth user creation server-side (email confirmation enabled); input validation (email format, password policy); duplicate-email handled without revealing whether the address exists (same generic response); create linked client row with `active = false` |
+| **DB** | `clients` table (`neuramark_clients`, aka "neuramark_users" in user shorthand — same record): `auth_user_id` (FK-like link to `auth.users.id`), email, display_name, preferred_locale, `active boolean NOT NULL DEFAULT false`, `role text NOT NULL DEFAULT 'client'` constrained to `client` \| `operator` (Postgres enum or CHECK, `neuramark_` prefix), created_at; migration via Supabase migrations |
+
+**Acceptance criteria**
+- [ ] Signup is open (no invite required); after submitting, the client sees a "check your email to confirm" screen — no session into product routes
+- [ ] Supabase sends an email confirmation on signup; the account cannot log in to a pending/product state before confirming
+- [ ] After email confirmation, the client sees a neutral "account pending activation" state until an operator activates the account (US-14.5 enforces this on every request)
+- [ ] Signing up with an already-registered email returns the same generic success-style response as a new email (no user enumeration)
+- [ ] Password policy enforced server-side (minimum length; client-side hints are presentation only)
+- [ ] A `neuramark_clients` row linked to the Supabase `auth.users` record is created on signup with `active = false` (column is `NOT NULL DEFAULT false`)
+- [ ] Manual activation: operator runs `UPDATE ... SET active = true` via SQL (no admin UI — explicitly out of scope, P1 candidate); once active, the user gets full access on their next request/login with no additional step
+- [ ] Every signup creates the row with `role = 'client'`; `role` is absent from the signup request contract and cannot be set through the endpoint under any payload (promotion to `operator` is SQL-only)
+- [ ] No Supabase SDK, token, or key appears in any client bundle or browser response
+- [ ] Copy exists in English and Spanish
+- [ ] [SEC] Password policy (server-enforced): minimum 12 characters, maximum 128, all characters allowed (spaces/unicode), no composition rules; password rejected if it appears in a bundled common-password list (top ~1,000); the same policy module is reused by US-14.4
+- [ ] [SEC] Passwords never appear in logs, error messages, analytics events, URLs, or any `neuramark_` table — the plaintext password exists only in the request body and the server-side Supabase Auth call; request logging redacts password fields by key name
+- [ ] [SEC] Duplicate-email signup returns the same HTTP status, response body shape, and copy as a new-email signup, with no measurable content difference; any Supabase "user already exists" error is caught server-side and mapped to the generic response
+- [ ] [SEC] Signup endpoint is rate-limited server-side (tightened for open signup): max 5 signup attempts per IP per hour AND max 15 per IP per day, tracked in `neuramark_auth_attempts` (ip_hash, email_hash, action, attempted_at) in addition to Supabase Auth's built-in limits; over-limit requests get the same generic response with a 429
+- [ ] [SEC] Inactive accounts consume no paid resources: signup creates only the Supabase auth user and one `neuramark_clients` row; no endpoint that triggers LLM, video, TTS, or file-storage spend is reachable while `active = false` (enforced by the US-14.5 guard on every request, including direct Route Handler / Server Action calls)
+- [ ] [SEC] Any "resend confirmation email" capability is rate-limited like reset requests (max 3 per email per hour via `neuramark_auth_attempts` plus Supabase built-in limits) and returns the same generic response for known and unknown emails
+- [ ] [SEC] Signup mutation is CSRF-protected: implemented as a Server Action (Next.js origin check) or a Route Handler that rejects requests whose `Origin` header does not match the app host
+- [ ] [SEC] `auth_user_id` for the `neuramark_clients` row comes only from the server-side Supabase Auth response — never from the request; the auth-user + client-row creation is transactional or compensated (no orphaned auth users on failure)
+- [ ] [SEC] If signup establishes a session, the session cookie is newly issued server-side at that moment (never reusing any pre-existing cookie value — session fixation guard)
+- [ ] [SEC] `role` is constrained at the DB level (Postgres enum `neuramark_client_role` or a CHECK constraint) to exactly `client` | `operator` with `NOT NULL DEFAULT 'client'`, so an invalid role value is impossible regardless of write path; `role` appears in NO auth request contract (signup, login, reset) and any payload containing a `role` field is rejected or stripped before processing
+
+**Depends on:** US-X.3 (seam definition)  
+**Priority:** P0
+
+---
+
+#### US-14.2 — Log in with email and password
+**As a** Client, **I want** to log in with my email and password, **so that** I can reach my dashboard securely.
+
+| Owner | Work |
+|-------|------|
+| **FE** | Login page (PrimeReact form: email, password); submit pending state; generic failure message for bad credentials; link to signup and reset password; redirect to dashboard on success (active accounts) or to the "account pending activation" screen (confirmed-but-inactive accounts); EN/ES copy |
+| **BE** | Route Handler / Server Action calling Supabase Auth sign-in server-side; on success set httpOnly session cookie (server-managed) and check `neuramark_clients.active` to choose the landing destination; on failure return one generic error regardless of cause |
+| **DB** | — (session lives in the cookie / Supabase Auth; reads `neuramark_clients.active` from US-14.1) |
+
+**Acceptance criteria**
+- [ ] Valid credentials for an ACTIVE account establish a server-side session (httpOnly cookie) and redirect to the dashboard
+- [ ] Valid credentials for a confirmed-but-INACTIVE account authenticate but land on the neutral "account pending activation" screen (EN/ES); no dashboard or product route is reachable
+- [ ] The `active` check is not a login-time-only gate: it is enforced server-side on every request via `getCurrentUser()`/route guards (US-14.5)
+- [ ] Invalid email or password shows the same generic error (no distinction between "unknown email" and "wrong password")
+- [ ] Session survives page refresh and new tab; no Supabase token is readable by browser JavaScript
+- [ ] Failure, loading, and pending states covered
+- [ ] Copy exists in English and Spanish
+- [ ] [SEC] The generic login failure returns the same status code, body shape, and copy for unknown email, wrong password, and unconfirmed account, with no timing side channel introduced by app code (the Supabase call runs for all failure paths; no early return on "user not found")
+- [ ] [SEC] Brute-force protection: max 5 failed attempts per (email, IP) per 15-minute window tracked in `neuramark_auth_attempts`; over-limit attempts return the same generic failure (with 429), and the counter resets on successful login; Supabase Auth built-in rate limits remain enabled as the second layer
+- [ ] [SEC] Session cookie is set with `HttpOnly`, `Secure` (in production), `SameSite=Lax`, and `Path=/`; no Supabase access/refresh token is readable by browser JavaScript or present in any response body
+- [ ] [SEC] Session rotation on login: a successful login always issues a fresh session cookie value; any session identifier present before authentication is discarded (session fixation guard)
+- [ ] [SEC] Login mutation is CSRF-protected: Server Action with origin verification, or Route Handler rejecting mismatched `Origin` headers
+- [ ] [SEC] The post-login redirect target (`next`/`redirectTo` parameter) is validated as a same-origin relative path: must start with a single `/`, must not start with `//` or contain a scheme/backslash; anything else falls back to `/dashboard` (open-redirect prevention)
+- [ ] [SEC] Passwords are never logged or echoed back on failure; the login handler redacts credential fields from any error/telemetry path
+- [ ] [SEC] The active/inactive distinction is revealed only AFTER successful authentication: login failures for inactive, active, unconfirmed, and nonexistent accounts are all the same generic error, and no unauthenticated request or response can be used to learn an account's activation state
+- [ ] [SEC] The pending-activation screen shows only what the user already knows (at most their own email/display name) plus neutral copy; no internal IDs, activation queue details, operator contact internals, or timestamps that leak operational information
+
+**Depends on:** US-14.1  
+**Priority:** P0
+
+---
+
+#### US-14.3 — Log out
+**As a** Client, **I want** to log out, **so that** my session cannot be reused on a shared device.
+
+| Owner | Work |
+|-------|------|
+| **FE** | Logout action in the header/user menu; confirmation optional; redirect to login page; EN/ES copy |
+| **BE** | Route Handler / Server Action that revokes the Supabase session server-side and clears the httpOnly session cookie |
+| **DB** | — |
+
+**Acceptance criteria**
+- [ ] Logout clears the session cookie and revokes the server-side session
+- [ ] After logout, protected routes redirect to login (verified with US-14.5 guard)
+- [ ] Back button after logout does not expose authenticated data
+- [ ] Copy exists in English and Spanish
+- [ ] [SEC] Logout revokes the session in Supabase Auth server-side (sign-out / refresh-token revocation), not just cookie deletion; a captured pre-logout cookie value replayed after logout is rejected by `getCurrentUser()`
+- [ ] [SEC] Logout is a POST-only Server Action / Route Handler with the same CSRF origin check as other auth mutations; no GET request can terminate (or be forced to terminate) a session
+- [ ] [SEC] Authenticated pages are served with `Cache-Control: no-store` so the browser back button and shared-device history cannot render cached authenticated content after logout
+- [ ] [SEC] The cookie is cleared with attributes matching how it was set (name, path, domain), leaving no stale variant behind
+
+**Depends on:** US-14.2, US-14.5 (redirect behavior)  
+**Priority:** P0
+
+---
+
+#### US-14.4 — Reset forgotten password
+**As a** Client, **I want** to request a password reset by email and set a new password, **so that** I can recover access without support intervention.
+
+| Owner | Work |
+|-------|------|
+| **FE** | "Forgot password" page (email input) with generic confirmation; "Set new password" page reached from the emailed link (new password + confirm); expired/invalid-token error state with retry path; EN/ES copy |
+| **BE** | Request endpoint: trigger Supabase Auth recovery email server-side, always returning the same generic response whether or not the email exists; set-password endpoint: validate recovery token server-side, apply new password via Supabase Auth, invalidate token after use |
+| **DB** | — (recovery tokens owned by Supabase Auth) |
+
+**Acceptance criteria**
+- [ ] Requesting a reset returns the same generic "check your email" response for known and unknown emails (no enumeration)
+- [ ] The emailed link leads to a set-new-password page that works exactly once per token
+- [ ] Expired or already-used tokens show a clear error with a path to request a new link
+- [ ] New password is validated server-side against the same policy as signup
+- [ ] After a successful reset the client can log in with the new password; the old password no longer works
+- [ ] Copy exists in English and Spanish
+- [ ] [SEC] Known and unknown emails get the same status code, body, and copy from the request endpoint; the Supabase recovery call's "user not found" outcome is absorbed server-side, and app code adds no timing branch that distinguishes the two
+- [ ] [SEC] Reset requests are rate-limited: max 3 requests per email per hour and max 10 per IP per hour, tracked in `neuramark_auth_attempts`; over-limit requests still return the generic "check your email" response (with 429)
+- [ ] [SEC] Recovery tokens are single-use and expire within 1 hour (Supabase Auth OTP expiry configured accordingly); a used or expired token cannot set a password, and any outstanding recovery token is invalidated when the password changes by any means
+- [ ] [SEC] The emailed link lands on a Next.js Route Handler that exchanges the recovery code for a session server-side; the token never reaches client-side JavaScript, is never logged, and the set-password page sends `Referrer-Policy: no-referrer` so the URL cannot leak via referrer
+- [ ] [SEC] A successful password reset revokes all other active sessions for that user (global sign-out), so a stolen session does not survive recovery
+- [ ] [SEC] The set-password endpoint enforces the shared password policy module (US-14.1), is CSRF-protected, and never logs the new password
+- [ ] [SEC] Password reset works identically for active, inactive, and unconfirmed accounts — same generic responses, same flow (preserving enumeration resistance); a successful reset never changes `neuramark_clients.active`, and the account remains gated on activation after the reset (recovering a password grants credential access only, never product access)
+
+**Depends on:** US-14.1  
+**Priority:** P0
+
+---
+
+#### US-14.5 — Session-backed identity and route protection
+**As a** System, **I want** unauthenticated users redirected to login and `getCurrentUser()` resolved from the server session, **so that** every existing flow becomes multi-user-safe with zero call-site changes.
+
+| Owner | Work |
+|-------|------|
+| **FE** | Header shows session user's display name/email (passed from Server Component, per US-X.3); auth pages (login/signup/reset) remain accessible while logged out; neutral "account pending activation" screen (EN/ES) for authenticated-but-inactive users; EN/ES copy for any new states |
+| **BE** | Middleware or layout-level guard: unauthenticated requests to app routes redirect to login (auth routes excluded); authenticated-but-inactive users (`neuramark_clients.active = false`) are routed to the pending-activation screen and blocked from all product routes; swap `getCurrentUser()` internals from hardcoded user to session-backed lookup (Supabase session → `neuramark_clients` row, including `active` and `role` on every request); operator-only Server Actions / Route Handlers gate on `role = 'operator'` server-side; optional dev-mode fallback flag (env var) that restores the hardcoded user for local development only |
+| **DB** | Seed/backfill: ensure the existing hardcoded local user (`gaveho@gmail.com` / Gabriel Vega) exists as a real `neuramark_clients` row (with `active = true`, `role = 'operator'`) linked to a Supabase auth user, so existing data keeps its owner |
+
+**Acceptance criteria**
+- [ ] Visiting any protected route without a session redirects to the login page; login, signup, and reset pages remain reachable
+- [ ] An authenticated user whose `neuramark_clients.active` is false is served only the neutral "account pending activation" screen; every product route and endpoint rejects them — enforced server-side in `getCurrentUser()`/route guards on every request, not only at login
+- [ ] Flipping `active` to true via SQL grants access on the user's next request or login with no other step (no cached inactive verdict outlives the request)
+- [ ] After login, `getCurrentUser()` returns the session user (same return shape as before, including stable `id`, plus `role`) and all existing call sites work unchanged
+- [ ] Operator-only Server Actions / Route Handlers verify `role = 'operator'` server-side and reject non-operator sessions with 403; the role is never taken from the request (header, cookie flag, or body)
+- [ ] Like `active`, `role` is read fresh from `neuramark_clients` on every request (no cached role outlives the request), and has no write path in the application — promotion/demotion is operator SQL only
+- [ ] The hardcoded user implementation is removed from the default path; a dev-only env flag can restore it locally and is inert in production builds
+- [ ] Existing seeded data remains owned by the migrated `gaveho@gmail.com` client row after the switch
+- [ ] Session expiry mid-use results in a redirect to login, not a crash or blank page
+- [ ] [SEC] Route protection is deny-by-default: the middleware/guard protects every route except an explicit public allowlist (login, signup, reset pages, their endpoints, static assets); new routes are protected without opt-in
+- [ ] [SEC] Middleware is convenience, not the security boundary: every Route Handler and Server Action independently resolves identity via server-side `getCurrentUser()` and returns 401/redirect when unauthenticated; no handler trusts a header, cookie flag, or middleware-injected value from the request to assert identity
+- [ ] [SEC] `getCurrentUser()` validates the session against Supabase Auth server-side (signature/expiry verification or user lookup), not mere cookie presence; expired or revoked sessions resolve to null
+- [ ] [SEC] Session lifetime is explicit: refresh handled server-side via the httpOnly cookie (rotating refresh token), idle expiry ≤ 7 days, and the refresh token is never exposed to client JavaScript
+- [ ] [SEC] The dev fallback activates only when `NODE_ENV === 'development'` AND `AUTH_DEV_FALLBACK=true` are both set; in production builds the code path throws at startup if `AUTH_DEV_FALLBACK` is set, and an automated test asserts the fallback is unreachable when `NODE_ENV=production`
+- [ ] [SEC] The Supabase service-role key (used for the seed/backfill and any admin lookup) stays in server-only modules and env vars; it never appears in `NEXT_PUBLIC_*`, client bundles, or middleware that ships to the edge without need
+- [ ] [SEC] `active` is read fresh from `neuramark_clients` inside `getCurrentUser()` on every request — never cached across requests (no module-level cache, no `active` claim baked into a cookie/JWT, no client-side persistence); staleness bound is one request, so deactivation (`active = false`) takes effect on the user's very next request even with a live session, and activation likewise requires no re-login
+- [ ] [SEC] `active` is not writable through any endpoint, Server Action, or request payload — the only write path is operator SQL (documented in the migration); an inactive session hitting any product Route Handler or Server Action directly (bypassing page navigation) receives 403, same enforcement as page routes
+- [ ] [SEC] No "check my activation status" endpoint exists outside an authenticated session; activation state is only ever conveyed on the pending screen to the authenticated owner of the account
+- [ ] [SEC] `role` is server-resolved authorization only: it is never present in any request contract, never stored in a cookie or JWT claim, never persisted client-side, and never accepted from a header or middleware-injected value — the ONLY source is the fresh per-request `neuramark_clients` read inside `getCurrentUser()`; demotion (`operator` → `client` via SQL) takes effect on the user's next request even with a live session, same staleness bound as `active`
+- [ ] [SEC] Every operator-only gate lives inside the Server Action / Route Handler itself as `role === 'operator'` on the `getCurrentUser()` result (a shared `requireOperator()` helper is acceptable); middleware checks and UI hiding are convenience only, and a direct request to an operator endpoint from a client-role session returns 403 with no side effects executed
+- [ ] [SEC] `role` and `active` compose as AND: an inactive operator (`active = false`) has no access to anything — the `active` gate is evaluated before the role gate, and `role = 'operator'` never bypasses activation, deny-by-default routing, or ownership checks
+- [ ] [SEC] The application has no code path that writes `neuramark_clients.role` — no endpoint, Server Action, seed-time toggle, or env flag (the dev fallback user's role is fixed in code, not configurable); promotion/demotion is operator SQL only, and back-door sweeps verify no alternate write path exists
+
+**Depends on:** US-14.2, US-X.3  
+**Priority:** P0
 
 ---
 
@@ -278,11 +467,13 @@ As a [role], I want [capability], so that [outcome].
 - [ ] Uses `getBusinessProfileForAgents` only, not raw interview
 - [ ] Regenerate creates new version without deleting approved history
 - [ ] Strategy targets Instagram Reels only in V1 — no multichannel output (roadmap hard rule: Instagram first)
+- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403)
 - [ ] [SEC] Agent job runs server-side only; LLM provider keys are read from server env and never reach the client or the DB
+- [ ] LLM calls use the catalog row for asset role `llm` at the resolved `provider_tier` (low default: DeepSeek V4 Flash / Qwen via SiliconFlow per US-X.4)
 - [ ] [SEC] Client-authored profile text is passed to the LLM as clearly delimited data, and agent output is validated against a typed brief schema before storage (prompt-injection containment: malformed or out-of-schema output is rejected, not stored)
 - [ ] [SEC] "Generate strategy" is rate-limited/debounced server-side per client to prevent runaway LLM spend from repeated clicks or scripted calls
 
-**Depends on:** US-2.3, US-3.1
+**Depends on:** US-2.3, US-3.1, US-X.4
 
 ---
 
@@ -299,6 +490,7 @@ As a [role], I want [capability], so that [outcome].
 - [ ] Edits saved and used as input to Video Script Agent
 - [ ] Approved strategy required before batch script generation
 - [ ] Shows who approved and when (hardcoded user OK in local dev)
+- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403)
 - [ ] [SEC] Status transitions (`draft` → `approved`) are enforced server-side as a state machine; the client cannot set an arbitrary status value, and script generation endpoints verify `approved` status themselves rather than trusting the caller
 
 **Depends on:** US-4.1
@@ -321,9 +513,10 @@ As a [role], I want [capability], so that [outcome].
 - [ ] Scripts adapt tone to profile and constraints (no false owner claims in generic mode)
 - [ ] Regenerate single slot without regenerating entire week
 - [ ] [SEC] Script generation verifies server-side that the referenced strategy is `approved` and belongs to the current client before invoking the agent
+- [ ] LLM calls use the catalog row for asset role `llm` at the resolved `provider_tier` (US-X.4)
 - [ ] [SEC] Agent output is schema-validated (hook/body/CTA/on-screen/VO fields, duration bounds) before persistence; rule flags like `must_disclose_not_owner` are injected from the server-side profile, never from request input
 
-**Depends on:** US-4.2, US-3.4
+**Depends on:** US-4.2, US-3.4, US-X.4
 
 ---
 
@@ -359,9 +552,10 @@ As a [role], I want [capability], so that [outcome].
 - [ ] Caption generated for each script in approved strategy
 - [ ] Includes local/geo keywords when profile has zone
 - [ ] Hashtag count within configured max
+- [ ] LLM calls use the catalog row for asset role `llm` at the resolved `provider_tier` (US-X.4)
 - [ ] [SEC] Caption/hashtag/keyword output is schema-validated and length-bounded before storage; captions are rendered as plain text everywhere (never as HTML)
 
-**Depends on:** US-5.1, US-4.2
+**Depends on:** US-5.1, US-4.2, US-X.4
 
 ---
 
@@ -394,18 +588,21 @@ As a [role], I want [capability], so that [outcome].
 |-------|------|
 | **FE** | Settings: max cost per Reel, default provider tier; display estimates |
 | **BE** | `cost_policies` resolver: duration, visual mode, b-roll flag → provider + estimate |
-| **DB** | `cost_policies` (client_id or global, max_cost_cents, min_quality_tier, rules JSON) |
+| **DB** | `cost_policies` (client_id or global, max_cost_cents, provider_tier `low` \| `high`, rules JSON) |
 
 **Acceptance criteria**
+- [ ] Global default `provider_tier` is `low`; per-client override optional
+- [ ] Seeded default `max_cost_cents` is **150** ($1.50/Reel) — sized for low-tier stack + 2–3 retries (see Provider tiers in Conventions)
 - [ ] Generation blocked if estimate exceeds max without override
 - [ ] Policy considers avatar required vs faceless
 - [ ] Estimate shown before user confirms generation
 - [ ] Budget check counts cumulative cost of all attempts for the same Reel (retries + B-roll + TTS), not just the current attempt (controls failed-regeneration margin risk)
+- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403) — applies to budget/policy settings writes
 - [ ] [SEC] The budget check runs server-side inside the job-creation path; a direct call to the generation endpoint with a crafted payload cannot skip it (the client never sends the estimate or the policy — both are resolved server-side)
 - [ ] [SEC] `max_cost_cents` and policy rules are editable only by the Operator role (hardcoded user OK locally), through a dedicated settings endpoint with validated bounds (positive integers, sane ceiling)
 - [ ] [SEC] Every budget-exceeded block and every override is recorded (who, when, estimate vs cap) so margin decisions are auditable
 
-**Depends on:** US-3.1, US-5.1
+**Depends on:** US-3.1, US-5.1, US-X.4
 
 ---
 
@@ -414,20 +611,21 @@ As a [role], I want [capability], so that [outcome].
 
 | Owner | Work |
 |-------|------|
-| **FE** | Show recommended provider + rationale (read-only in V1) |
-| **BE** | Policy engine ranks: HeyGen, LTX/Wan, MuseTalk, manual; output `provider_key` + `estimated_cost_cents` |
-| **DB** | `provider_catalog` (key, capabilities JSON, cost_model JSON, active) |
+| **FE** | Show recommended provider + tier + rationale (read-only in V1) |
+| **BE** | Policy engine: `provider_tier` + visual mode + asset role (`talking_head` \| `broll` \| `tts` \| `llm`) → `provider_key` + `estimated_cost_cents`; ranks only **active** catalog rows matching tier |
+| **DB** | `provider_catalog` (key, asset_role, tier `low` \| `high`, capabilities JSON, cost_model JSON, active) |
 
 **Acceptance criteria**
-- [ ] Faceless + B-roll may route to LTX/Wan; talking head to HeyGen or MuseTalk per rules
+- [ ] With `provider_tier = low` (default): talking-head routes to SadTalker (US-8.2); generic-avatar may route to MuseTalk (US-8.6) when a reference loop exists; faceless B-roll routes to Wan (US-8.5)
+- [ ] With `provider_tier = high`: talking-head may route to HeyGen (US-8.7); B-roll may route to LTX/Kling when those catalog rows are active
 - [ ] Manual upload always available as zero-cost fallback
-- [ ] Decision logged per job for later cost analysis
-- [ ] Cheapest provider meeting the quality floor is the default — expensive generation is never the silent default (roadmap rule: cheap API first)
-- [ ] Provider catalog is data-driven: providers can be activated/deactivated by config so self-host options can be added later without redesign
+- [ ] Decision logged per job (tier, asset role, provider_key, estimate) for later cost analysis
+- [ ] Cheapest **active** provider in the resolved tier is the default — high-tier providers are never chosen while tier is `low` (roadmap rule: cheap API first)
+- [ ] Provider catalog is data-driven and seeded by US-X.4: providers can be activated/deactivated without redesign
 - [ ] [SEC] `provider_key` for a job is chosen by the server-side policy engine; a client-supplied provider key is never accepted at job creation (prevents forcing an expensive provider or an inactive/unknown adapter)
 - [ ] [SEC] `provider_catalog.cost_model` and `capabilities` are trusted config maintained server-side only; no endpoint exposes writes to the catalog in V1
 
-**Depends on:** US-7.1
+**Depends on:** US-7.1, US-X.4
 
 ---
 
@@ -443,6 +641,7 @@ As a [role], I want [capability], so that [outcome].
 **Acceptance criteria**
 - [ ] Every completed job has actual or `null` with failure reason
 - [ ] Dashboard aggregate cost per client per week (simple sum)
+- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403) — cost data is margin-sensitive and never served to client sessions
 - [ ] [SEC] `actual_cost_cents` is written only by the server-side job-completion handler from provider responses; no client-facing endpoint can set or edit recorded costs
 
 **Depends on:** US-7.2, US-8.4
@@ -459,10 +658,12 @@ As a [role], I want [capability], so that [outcome].
 | **DB** | No new tables; query over `video_jobs` + TTS asset costs (add `media_assets.cost_cents` for voiceover if missing) |
 
 **Acceptance criteria**
-- [ ] Every Reel shows one total actual cost including failed attempts and all asset roles
+- [ ] Every Reel shows one total actual cost including failed attempts and all asset roles (talking_head, broll, tts, llm where tracked)
 - [ ] Estimated vs actual variance visible per Reel
 - [ ] Weekly per-client cost sum (US-7.3) reconciles with the sum of per-Reel totals
-- [ ] [SEC] Cost roll-up queries are parameterized and scoped to the current client's Reels; cost data for other clients is never included in a response (multi-tenancy readiness)
+- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403) — cost data is margin-sensitive and never served to client sessions
+- [ ] [SEC] Cost roll-up queries are parameterized and scoped to the requested client's Reels; cost data for other clients is never included in a response (multi-tenancy readiness)
+- [ ] [SEC] Cost exclusion is enforced at the response-shape level, not by UI hiding: shared payloads that client sessions can receive (Reel detail, dashboard, approval package) contain NO cost fields (`estimated_cost_cents`, `actual_cost_cents`, provider pricing, budget caps); cost fields appear only in operator-gated endpoints/serializers, so a client session cannot obtain cost data from any endpoint in the system
 
 **Depends on:** US-7.3, US-9.3
 
@@ -471,16 +672,17 @@ As a [role], I want [capability], so that [outcome].
 ### Module: Video Provider Adapter (P0)
 
 #### US-8.1 — Provider adapter interface
-**As a** System, **I want** a single adapter contract for all video providers, **so that** swapping HeyGen for MuseTalk does not rewrite the pipeline.
+**As a** System, **I want** a single adapter contract for all video providers, **so that** swapping SadTalker for MuseTalk or HeyGen does not rewrite the pipeline.
 
 | Owner | Work |
 |-------|------|
 | **FE** | — |
-| **BE** | Interface: `createJob`, `getJobStatus`, `fetchAsset`, `estimateCost`; registry pattern |
+| **BE** | Interface in `lib/providers/provider-adapters.ts`: `VideoProviderAdapter` with `estimateCost`, `createJob`, `getJobStatus`, `fetchAsset`; `ProviderRegistry` + `InMemoryProviderRegistry`; Zod mirrors in `lib/contracts/providers.ts` |
 | **DB** | — |
 
 **Acceptance criteria**
-- [ ] New provider = new adapter class + config, no changes to assembly pipeline
+- [ ] `VideoProviderAdapter` interface exists in `lib/providers/` with the four methods above; types shared via `lib/contracts/providers.ts`
+- [ ] New provider = new adapter class + catalog row + env var, no changes to assembly pipeline (US-9.x)
 - [ ] All jobs share statuses: `queued`, `processing`, `completed`, `failed`, `cancelled`
 - [ ] [SEC] All adapter code is server-only; provider API keys are read exclusively from server environment variables — never stored in the DB, never in `NEXT_PUBLIC_*` vars, never serialized into any response or log
 - [ ] [SEC] The adapter interface treats all provider responses as untrusted input: status values, URLs, and error messages are validated/normalized before persistence, and provider error text is sanitized before display
@@ -490,25 +692,27 @@ As a [role], I want [capability], so that [outcome].
 
 ---
 
-#### US-8.2 — HeyGen adapter (V1 default for avatar)
-**As a** System, **I want** HeyGen API integration, **so that** we can validate avatar Reels quickly.
+#### US-8.2 — SadTalker adapter (V1 default talking-head, low tier)
+**As a** System, **I want** SadTalker lip-sync via a cloud API, **so that** own-avatar and generic-avatar Reels are produced cheaply without client recording.
 
 | Owner | Work |
 |-------|------|
-| **FE** | Job status polling UI / SSE |
-| **BE** | HeyGen adapter: submit script + avatar ref → poll → store MP4 URL; env API key |
-| **DB** | `video_jobs` (reel_script_id, provider_key, external_job_id, status, output_url) |
+| **FE** | Job status polling UI / SSE (shared with US-8.4) |
+| **BE** | SadTalker adapter (e.g. Replicate): portrait asset + TTS audio → poll → store MP4; `provider_key` `sadtalker_low`; env API key |
+| **DB** | `video_jobs` (reel_script_id, provider_key, asset_role `primary`, external_job_id, status, output_url, provider_tier) |
 
 **Acceptance criteria**
-- [ ] Successful job returns playable video URL or stored asset
-- [ ] Failures capture provider error message
-- [ ] Retries configurable with max attempts
-- [ ] [SEC] Job creation re-verifies active avatar consent (US-3.2) and budget (US-7.1) server-side immediately before submitting to HeyGen
-- [ ] [SEC] Job status is updated only by the server-side poller (or a webhook handler that verifies the provider's signature/shared secret); no client-callable endpoint can set a job's status or `output_url`
-- [ ] [SEC] Output video is downloaded server-side and stored as a local/S3 asset; provider URLs are validated (https, expected provider host) before fetching, and raw provider URLs are not persisted as the long-term `output_url` (they expire and leak provider account structure)
-- [ ] [SEC] Status polling from the browser is scoped to jobs owned by the current client; job IDs from other clients return 404
+- [ ] Default talking-head provider when `provider_tier = low` and visual mode is `own_avatar` or `generic_avatar`
+- [ ] Inputs: one approved reference image (own avatar) or generic loop still + voiceover audio from US-9.3
+- [ ] Successful job returns playable video stored as `media_assets` (not a long-lived third-party URL)
+- [ ] Failures capture provider error message; retries configurable with max attempts
+- [ ] Estimated cost uses flat per-run model from `provider_catalog` (~$0.10/Reel at research baseline)
+- [ ] [SEC] Job creation re-verifies active avatar consent (US-3.2) when mode is `own_avatar`, and budget (US-7.1) server-side immediately before submit
+- [ ] [SEC] Job status is updated only by the server-side poller; no client-callable endpoint can set status or `output_url`
+- [ ] [SEC] Output video is downloaded server-side; provider URLs are validated (https, expected host) before fetch
+- [ ] [SEC] Status polling from the browser is scoped to jobs owned by the current client; foreign job IDs return 404
 
-**Depends on:** US-8.1, US-3.3 (own avatar), US-5.1
+**Depends on:** US-8.1, US-3.3 (own avatar), US-5.1, US-9.3, US-X.4
 
 ---
 
@@ -525,6 +729,7 @@ As a [role], I want [capability], so that [outcome].
 - [ ] Manual upload bypasses cost policy API charges
 - [ ] Downstream assembly treats manual raw video like provider output
 - [ ] File type and duration validated
+- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403)
 - [ ] [SEC] Manual upload applies the same file validation stack as US-3.3 (size limit, video MIME allowlist via magic bytes, server-generated storage key, storage outside web root)
 - [ ] [SEC] Manual uploads are restricted to the Operator role and recorded with uploader identity, so `manual` provider jobs are attributable
 - [ ] [SEC] A manual job still goes through QA (US-10.1) before approval — the manual path bypasses cost, not compliance
@@ -547,30 +752,74 @@ As a [role], I want [capability], so that [outcome].
 - [ ] Retry requires explicit confirmation showing new estimate
 - [ ] Regeneration count visible (margin risk from roadmap)
 - [ ] Retries beyond a configurable max per Reel are blocked until an operator explicitly overrides
+- [ ] Operator-only: retry and retry-override endpoints/actions reject non-operator sessions server-side (403)
 - [ ] [SEC] Retry limit and cumulative-budget check (US-7.1) are enforced in the server-side retry handler; disabling the retry button is UI convenience only
 - [ ] [SEC] If a webhook endpoint is used for status updates, it verifies request authenticity (provider signature or shared secret) and matches `external_job_id` + `provider_key` against an existing job before writing; unmatched or unsigned callbacks are rejected and logged
 - [ ] [SEC] Retry override is recorded (user, reason, timestamp) in the same audit pattern as QA overrides (US-10.2)
 
-**Depends on:** US-8.2 or US-8.3
+**Depends on:** US-8.2, US-8.3, or US-8.6
 
 ---
 
-#### US-8.5 — LTX/Wan adapter for B-roll (P0 stretch / Phase 3b)
-**As a** System, **I want** short B-roll clips via LTX/Wan API, **so that** faceless Reels have supporting visuals without full text-to-video for every piece.
+#### US-8.5 — Wan B-roll adapter (low tier, P0)
+**As a** System, **I want** short B-roll clips via Wan API (SiliconFlow), **so that** faceless Reels have cheap supporting visuals without full text-to-video for every piece.
 
 | Owner | Work |
 |-------|------|
 | **FE** | Optional B-roll preview strip on Reel |
-| **BE** | LTX adapter for short clips; cost per second; only when policy selects it |
-| **DB** | `video_jobs.asset_role`: `primary` \| `broll` |
+| **BE** | Wan adapter: image/text prompt → short clip; cost per clip from catalog; only when policy selects `broll` + `provider_tier = low` |
+| **DB** | `video_jobs.asset_role`: `primary` \| `broll`; `provider_tier` on job |
 
 **Acceptance criteria**
-- [ ] B-roll only generated when script marks `needs_broll`
-- [ ] Clips max duration per policy (e.g. 3–5s)
+- [ ] Default B-roll provider when `provider_tier = low` and script marks `needs_broll`
+- [ ] Clips max duration per policy (e.g. 3–5s); Wan catalog documents 5s cap
+- [ ] Estimated cost ~$0.21/clip at research baseline (Wan2.1 I2V Turbo)
 - [ ] Failed B-roll does not block talking-head primary (graceful degrade)
-- [ ] [SEC] LTX/Wan adapter follows the same US-8.1 contract: server-only keys, untrusted-response handling, and B-roll cost counted against the Reel's cumulative budget (US-7.1)
+- [ ] Multiple B-roll clips may be stitched in assembly (US-9.1)
+- [ ] [SEC] Wan adapter follows US-8.1 contract: server-only keys, untrusted-response handling, B-roll cost counted against Reel cumulative budget (US-7.1)
 
 **Depends on:** US-8.1, US-7.2
+
+---
+
+#### US-8.6 — MuseTalk adapter (low-tier talking-head alternative)
+**As a** System, **I want** MuseTalk lip-sync via a cloud API, **so that** generic-avatar mode can use a reference video loop when SadTalker is not the best fit.
+
+| Owner | Work |
+|-------|------|
+| **FE** | — (reuses US-8.4 status UI) |
+| **BE** | MuseTalk adapter (e.g. Replicate): reference video loop + TTS audio → poll → store MP4; `provider_key` `musetalk_low` |
+| **DB** | Reuse `video_jobs` |
+
+**Acceptance criteria**
+- [ ] Selected by policy for `generic_avatar` when a reference loop asset exists, or as operator-configured low-tier alternative to SadTalker
+- [ ] Estimated cost uses flat per-run model from catalog (~$0.19/Reel at research baseline)
+- [ ] Same consent, budget, download-and-own, and polling security rules as US-8.2
+- [ ] [SEC] Generic-avatar impersonation rules (US-3.4) still apply; MuseTalk does not bypass QA disclosure requirements
+
+**Depends on:** US-8.1, US-3.1, US-9.3, US-X.4
+
+---
+
+#### US-8.7 — HeyGen adapter (high tier / operator fallback, P1)
+**As a** System, **I want** HeyGen API integration, **so that** operators can produce higher-polish avatar Reels or recover when low-tier adapters fail.
+
+| Owner | Work |
+|-------|------|
+| **FE** | Operator-only "Generate with HeyGen" action on Reel detail when tier is `high` or fallback is invoked |
+| **BE** | HeyGen adapter: submit script + avatar ref → poll → store MP4; `provider_key` `heygen_high`; env API key |
+| **DB** | Reuse `video_jobs` |
+
+**Acceptance criteria**
+- [ ] Never the silent default when `provider_tier = low`
+- [ ] Used when `provider_tier = high`, or when operator explicitly triggers fallback after low-tier failure (override recorded)
+- [ ] Estimated cost uses per-minute model from catalog (standard ~$1/min; Avatar IV priced separately and never auto-selected)
+- [ ] Same consent, budget, download-and-own, webhook/polling security rules as US-8.2
+- [ ] Operator-only for fallback trigger; clients cannot request HeyGen directly
+
+**Depends on:** US-8.1, US-3.3, US-5.1, US-X.4
+
+**Priority:** P1 (MVP operable without this if SadTalker + manual upload suffice)
 
 ---
 
@@ -622,17 +871,18 @@ As a [role], I want [capability], so that [outcome].
 | Owner | Work |
 |-------|------|
 | **FE** | Voice picker (limited catalog); play audio sample |
-| **BE** | TTS provider integration; store audio asset; link to assembly job |
+| **BE** | TTS provider integration via catalog (`asset_role = tts`); low tier default CosyVoice2 (SiliconFlow); store audio asset; link to assembly job |
 | **DB** | `media_assets` type `voiceover`; `visual_preferences.voice_id` |
 
 **Acceptance criteria**
+- [ ] Low tier (`provider_tier = low`): CosyVoice2 or equivalent catalog row; high tier may use ElevenLabs when active
 - [ ] Voice matches profile tone hint when possible
 - [ ] Spanish and English voices supported
 - [ ] TTS cost included in job estimate
 - [ ] [SEC] `voice_id` is validated server-side against the offered catalog (no arbitrary provider voice IDs from the client — guards against voice-cloning misuse and unexpected billing)
 - [ ] [SEC] TTS provider key is server-only, and TTS spend is counted in the Reel's cumulative budget check (US-7.1)
 
-**Depends on:** US-5.1, US-9.1
+**Depends on:** US-5.1, US-X.4
 
 ---
 
@@ -652,11 +902,12 @@ As a [role], I want [capability], so that [outcome].
 **Acceptance criteria**
 - [ ] Checks include generic-avatar-not-owner rule (US-3.4)
 - [ ] AI disclosure required when avatar or synthetic voice used
+- [ ] LLM QA pass uses catalog row for asset role `llm` at resolved `provider_tier` (US-X.4)
 - [ ] Failed critical checks block approval until resolved or overridden by operator
 - [ ] [SEC] QA verdicts are computed and stored server-side; no endpoint accepts a client-supplied "passed" flag, and the approval gate (US-11.1) reads QA status from the DB, not from the request
 - [ ] [SEC] Checks are classified in the schema as `overridable` vs `blocking` (legal class: missing consent, generic-avatar impersonation); this classification is code/config, not data editable via any endpoint
 
-**Depends on:** US-9.2, US-6.1, US-3.4
+**Depends on:** US-9.2, US-6.1, US-3.4, US-X.4
 
 ---
 
@@ -673,6 +924,7 @@ As a [role], I want [capability], so that [outcome].
 - [ ] Override requires non-empty reason
 - [ ] Overrides visible on approval screen
 - [ ] Cannot override consent/legal blocks (own avatar without consent)
+- [ ] Operator-only: the override endpoint/action rejects non-operator sessions server-side (403) — makes the existing "only operator role" note explicit via `neuramark_clients.role`
 - [ ] [SEC] The non-overridable set (missing/revoked consent, generic-avatar impersonation) is enforced in the override handler server-side: an override request for a `blocking` check is rejected with 403 even from the Operator, regardless of UI state
 - [ ] [SEC] `qa_overrides` is append-only (no update/delete endpoint); each row records check key, reason, server-resolved user, and timestamp
 - [ ] [SEC] Override applies to one specific check on one specific QA report; there is no "override all" or report-level bypass parameter
@@ -760,6 +1012,8 @@ As a [role], I want [capability], so that [outcome].
 - [ ] Shows gaps when fewer than 3 Reels scheduled
 - [ ] Click slot opens Reel detail workflow
 - [ ] EN/ES day/month labels
+- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403) — the V1 calendar aggregates production status across clients and is an operator surface
+- [ ] [SEC] If a client-facing calendar is added later, it must be a separate endpoint scoped to the server-resolved client's own Reels — never the operator aggregate with rows filtered in the UI, and never a `client_id` parameter on the operator endpoint
 
 **Depends on:** US-11.3, US-4.1
 
@@ -777,6 +1031,7 @@ As a [role], I want [capability], so that [outcome].
 **Acceptance criteria**
 - [ ] Only approved Reels can be marked published
 - [ ] Published date defaults to today editable
+- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403)
 - [ ] [SEC] "Approved only" is enforced server-side in the mark-published handler (roadmap hard rule: no publish without approval); the optional IG post URL is validated as an `https://www.instagram.com/...` URL and stored as text, never rendered as a raw link without validation
 
 **Depends on:** US-12.1
@@ -797,6 +1052,7 @@ As a [role], I want [capability], so that [outcome].
 **Acceptance criteria**
 - [ ] Metrics only on published Reels
 - [ ] Edit allowed within 7 days (configurable)
+- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403)
 - [ ] [SEC] Metrics inputs are validated server-side as non-negative integers with a sane upper bound; the "published Reels only" and 7-day-edit rules are enforced in the handler, not just the form
 - [ ] [SEC] Metrics writes are scoped to Reels of the current client (client-supplied `assembled_reel_id` verified for ownership)
 
@@ -857,6 +1113,28 @@ As a [role], I want [capability], so that [outcome].
 
 ---
 
+#### US-X.4 — Seed provider catalog and tier defaults
+**As a** Developer, **I want** a server-side provider catalog with low/high tier mappings, **so that** all agents and video jobs resolve vendors consistently without hardcoding in each story.
+
+| Owner | Work |
+|-------|------|
+| **FE** | — (operator tier display lives in US-7.1 settings) |
+| **BE** | Seed/migration for `neuramark_provider_catalog` + default `neuramark_cost_policies` (`provider_tier = low`, `max_cost_cents = 150`); resolver helper `resolveProvider(assetRole, tier)` used by US-4.x, US-8.x, US-9.3, US-10.1 |
+| **DB** | `provider_catalog` rows (see Conventions **Provider tiers** table); `cost_policies` global default |
+
+**Acceptance criteria**
+- [ ] Catalog includes at minimum: `llm` low (siliconflow_deepseek / siliconflow_qwen), `tts` low (siliconflow_cosyvoice2), `talking_head` low (sadtalker_low), `talking_head` alt low (musetalk_low), `broll` low (siliconflow_wan21), `manual` (zero cost)
+- [ ] High-tier rows exist but `active = false` until P1 (heygen_high, ltx_broll_high, elevenlabs_tts_high) — policy engine cannot select inactive rows
+- [ ] Each row stores `cost_model` JSON sufficient for US-7.2 estimates (per_run_cents, per_second_cents, or per_clip_cents)
+- [ ] `provider_tier` on `cost_policies` is the only tier switch in V1; no per-asset tier mixing in MVP
+- [ ] [SEC] Catalog and cost policy writes are operator-only; catalog is not client-readable in full (only resolved provider name in operator views)
+- [ ] [SEC] API vendor keys referenced only by env var names in server config — never stored in catalog rows
+
+**Depends on:** US-X.3  
+**Priority:** P0 (blocks US-7.2 and all provider stories)
+
+---
+
 #### US-X.3 — Hardcoded local user (dev V1)
 **As a** Developer, **I want** a fixed current user without auth, **so that** we can build flows before login exists.
 
@@ -881,19 +1159,22 @@ As a [role], I want [capability], so that [outcome].
 
 ```text
 Sprint 1: US-X.3, US-X.1, US-1.1, US-1.2, US-1.3, US-2.1, US-2.2, US-2.3
+Sprint 1b (Auth): US-14.1, US-14.2, US-14.4, US-14.5, US-14.3
 Sprint 2: US-3.1, US-3.2, US-3.3, US-3.4, US-X.2 (onboarding screens)
-Sprint 3: US-4.1, US-4.2, US-5.1, US-5.2, US-6.1, US-6.2
-Sprint 4: US-7.1, US-7.2, US-8.1, US-8.2, US-8.3, US-8.4, US-9.3
-Sprint 5: US-9.1, US-9.2, US-7.3, US-7.4, US-10.1, US-10.2
-Sprint 6: US-11.1, US-11.2, US-11.3, US-8.5 (if capacity)
-Sprint 7 (P1): US-12.1, US-12.2, US-13.1, US-13.2
+Sprint 3: US-X.4, US-4.1, US-4.2, US-5.1, US-5.2, US-6.1, US-6.2
+Sprint 4: US-7.1, US-7.2, US-8.1, US-8.2, US-8.6, US-8.3, US-8.4, US-9.3
+Sprint 5: US-8.5, US-9.1, US-9.2, US-7.3, US-7.4, US-10.1, US-10.2
+Sprint 6: US-11.1, US-11.2, US-11.3
+Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, (+ high-tier B-roll adapter when added)
 ```
+
+Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3's hardcoded `getCurrentUser()` remains the valid identity mechanism until US-14.5 lands; Sprint 1 stories build against it unchanged, and the swap in US-14.5 requires no call-site changes.
 
 ---
 
 ## MVP cut line (matches roadmap)
 
-Stories **through US-11.3** constitute the operable V1.  
+Stories **through US-11.3** plus the Authentication module (**US-14.1–US-14.5**) constitute the operable V1 — the product cannot go to real clients without login and route protection.  
 **US-12.x** and **US-13.x** can be manual spreadsheets until P1 is scheduled.
 
 ---

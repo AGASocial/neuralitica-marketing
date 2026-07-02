@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neuralitica | Provider Tiers — Low vs High Assembly Models</title>
+  <style>
+    :root{--bg:#f4efe7;--paper:#fffdf9;--ink:#1f2937;--muted:#5b6470;--line:#ddd4c7;--accent:#0f766e;--accent-soft:#dbf2ee;--accent-deep:#115e59;--warn:#92400e;--warn-soft:#fff4e8;--blue-soft:#eef2ff;--blue:#3730a3;--low:#166534;--low-soft:#dcfce7;--high:#9f1239;--high-soft:#ffe4e6;--soft:#f8f4ec;--shadow:0 22px 56px rgba(31,41,55,.08)}
+    *{box-sizing:border-box}body{margin:0;font-family:"Avenir Next","Segoe UI",sans-serif;color:var(--ink);line-height:1.55;background:radial-gradient(circle at top left,rgba(15,118,110,.1),transparent 30%),linear-gradient(180deg,#faf7f1 0%,var(--bg) 100%)}
+    .page{width:min(1180px,calc(100% - 32px));margin:28px auto 56px;background:var(--paper);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);overflow:hidden}
+    .hero{padding:54px 56px 40px;background:linear-gradient(135deg,rgba(15,118,110,.12),rgba(34,197,94,.08)),#f8f5ef;border-bottom:1px solid var(--line)}
+    .eyebrow{display:inline-block;padding:8px 14px;border-radius:999px;background:var(--accent-soft);color:var(--accent-deep);font-size:.76rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    h1{margin:18px 0 14px;max-width:16ch;font-family:Georgia,"Times New Roman",serif;font-size:clamp(2.1rem,4vw,3.8rem);line-height:1.05;letter-spacing:-.03em}
+    .hero p{max-width:900px;margin:0;font-size:1.08rem;color:var(--muted)}
+    .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-top:28px}
+    .meta-card,.card{background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:18px;padding:18px 20px}
+    .meta-card span,.kicker{display:block;margin-bottom:8px;color:var(--muted);font-size:.76rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .content{display:grid;gap:24px;padding:40px 56px 56px}
+    .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+    h2{margin:0 0 12px;font-family:Georgia,"Times New Roman",serif;font-size:1.5rem;line-height:1.15}
+    h3{margin:0 0 10px;font-size:1.02rem;line-height:1.25}
+    p,li,td,th{font-size:.97rem}ul,ol{margin:12px 0 0;padding-left:20px}li+li{margin-top:8px}
+    .quote{padding:18px 20px;border-left:5px solid var(--accent);border-radius:16px;background:#f2faf8;color:var(--accent-deep);font-size:1.02rem}
+    .notice{background:var(--warn-soft);border-left:5px solid var(--warn)}
+    .info{background:var(--blue-soft);border-left:5px solid var(--blue)}
+    .low{background:var(--low-soft);border-left:5px solid var(--low)}
+    .high{background:var(--high-soft);border-left:5px solid var(--high)}
+    table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:12px 10px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:800}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-size:.78rem;font-weight:800}
+    .tier-low{background:var(--low-soft);color:var(--low)}.tier-high{background:var(--high-soft);color:var(--high)}
+    .flow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;margin-top:14px}
+    .flow-step{padding:12px 8px;border-radius:14px;background:var(--soft);border:1px solid var(--line);font-size:.82rem;font-weight:700;text-align:center}
+    .stack-card{padding:18px 20px;border-radius:18px;border:1px solid var(--line);background:#fffdfa}
+    .stack-card h3{margin-bottom:14px}
+    .price{font-family:Georgia,"Times New Roman",serif;font-size:1.6rem;font-weight:700;color:var(--accent-deep)}
+    .footer{padding:18px 56px 34px;color:var(--muted);font-size:.9rem}
+    code{font-family:"SFMono-Regular",Menlo,Consolas,monospace;font-size:.9em;background:var(--soft);padding:2px 6px;border-radius:6px}
+    a{color:var(--accent-deep);font-weight:700;text-decoration:none}a:hover{text-decoration:underline}
+    @media(max-width:980px){.grid-3,.flow{grid-template-columns:1fr 1fr}}@media(max-width:860px){.page{width:min(100%,calc(100% - 20px));margin:10px auto 28px;border-radius:20px}.hero,.content,.footer{padding-left:22px;padding-right:22px}.hero{padding-top:34px}.grid-2{grid-template-columns:1fr}.flow{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <div class="eyebrow">Neuralitica · Assembly provider strategy</div>
+      <h1>Low vs High Tier Models</h1>
+      <p>V1 starts on the <strong>low tier</strong> by default. The same FFmpeg assembly pipeline runs at both tiers — only upstream asset generators change. Swapping vendors means a new adapter class + catalog row, not a product rewrite.</p>
+      <div class="meta">
+        <div class="meta-card"><span>Default tier</span><strong>Low</strong></div>
+        <div class="meta-card"><span>Target / Reel (30s)</span><strong>$0.37 – $0.58</strong></div>
+        <div class="meta-card"><span>Target / client / week</span><strong>~$1.10 – $1.75</strong></div>
+        <div class="meta-card"><span>Budget cap seed</span><strong>$1.50 / Reel</strong></div>
+        <div class="meta-card"><span>Code contract</span><strong><code>lib/providers/</code></strong></div>
+      </div>
+    </section>
+
+    <section class="content">
+      <article class="card info">
+        <span class="kicker">Architecture</span>
+        <h2>Adapter pattern (US-8.1, US-X.4)</h2>
+        <div class="flow">
+          <div class="flow-step">Script + caption<br><small>LLM adapter</small></div>
+          <div class="flow-step">Voiceover<br><small>TTS adapter</small></div>
+          <div class="flow-step">Talking-head or B-roll<br><small>Video adapter</small></div>
+          <div class="flow-step">Stored assets<br><small>media_assets</small></div>
+          <div class="flow-step">FFmpeg<br><small>US-9.x</small></div>
+          <div class="flow-step">QA</div>
+          <div class="flow-step">Approval</div>
+        </div>
+        <p>Each vendor adapter implements the same methods — orchestration (budget, polling, DB) stays in server code; the adapter only talks to the external API.</p>
+        <table>
+          <thead><tr><th>Adapter type</th><th>Interface methods</th><th>Implementations (examples)</th></tr></thead>
+          <tbody>
+            <tr><td><code>VideoProviderAdapter</code></td><td><code>estimateCost</code> · <code>createJob</code> · <code>getJobStatus</code> · <code>fetchAsset</code></td><td>SadTalker, MuseTalk, Wan, HeyGen, manual</td></tr>
+            <tr><td><code>TtsProviderAdapter</code></td><td><code>estimateCost</code> · <code>synthesize</code></td><td>CosyVoice2, Inworld, ElevenLabs</td></tr>
+            <tr><td><code>LlmProviderAdapter</code></td><td><code>estimateCost</code> · <code>complete</code></td><td>DeepSeek, Qwen, GPT-class</td></tr>
+          </tbody>
+        </table>
+        <p>Source: <code>lib/providers/provider-adapters.ts</code> · Zod mirrors: <code>lib/contracts/providers.ts</code> · Backlog: <code>plan/USER_STORIES.md</code> (US-7.x, US-8.x, US-X.4)</p>
+      </article>
+
+      <article class="card">
+        <span class="kicker">Per asset</span>
+        <h2>Low-end vs high-end providers</h2>
+        <table>
+          <thead>
+            <tr><th>Asset</th><th>Role</th><th><span class="badge tier-low">Low (V1 default)</span></th><th><span class="badge tier-high">High (P1)</span></th><th>Low $/Reel</th><th>High $/Reel</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Strategy brief</td><td>LLM</td><td>DeepSeek V4 Flash · SiliconFlow</td><td>GPT-5.4 mini</td><td>~$0.01</td><td>~$0.08</td></tr>
+            <tr><td>Script package</td><td>LLM</td><td>Qwen3.5-9B · SiliconFlow</td><td>Claude / GPT-5.4 class</td><td>~$0.02</td><td>~$0.15</td></tr>
+            <tr><td>Instagram caption</td><td>LLM</td><td>DeepSeek V4 Flash</td><td>GPT-5.4</td><td>~$0.01</td><td>~$0.10</td></tr>
+            <tr><td>QA / compliance</td><td>LLM</td><td>DeepSeek V4 Flash</td><td>GPT + vision on video</td><td>~$0.02</td><td>~$0.20</td></tr>
+            <tr><td>Voiceover</td><td>TTS</td><td>CosyVoice2 · SiliconFlow</td><td>ElevenLabs Multilingual</td><td>~$0.003</td><td>~$0.045</td></tr>
+            <tr><td><strong>Talking-head</strong></td><td>Video</td><td><strong>SadTalker · Replicate</strong></td><td><strong>HeyGen Avatar IV</strong></td><td><strong>~$0.10</strong></td><td><strong>~$2.00</strong></td></tr>
+            <tr><td>Talking-head (loop)</td><td>Video</td><td>MuseTalk · Replicate</td><td>HeyGen studio</td><td>~$0.19</td><td>~$0.50+</td></tr>
+            <tr><td><strong>B-roll</strong></td><td>Video</td><td><strong>Wan2.1 I2V Turbo · SiliconFlow</strong></td><td><strong>Kling 3.0 Pro / LTX 2.3</strong></td><td><strong>~$0.21</strong></td><td><strong>~$1.26</strong></td></tr>
+            <tr><td>Cover still</td><td>Image</td><td>FFmpeg frame extract</td><td>FLUX Pro</td><td>$0</td><td>~$0.06</td></tr>
+            <tr><td>Final assembly</td><td>FFmpeg</td><td>Server worker</td><td>Same</td><td>$0</td><td>$0</td></tr>
+          </tbody>
+        </table>
+        <div class="quote">~90% of the cost gap is talking-head + B-roll. LLM and TTS are negligible at both tiers.</div>
+      </article>
+
+      <article class="card">
+        <span class="kicker">Totals</span>
+        <h2>Estimated cost per Reel (30s) by visual mode</h2>
+        <table>
+          <thead><tr><th>Visual mode</th><th>Low $/Reel</th><th>High $/Reel</th><th>Low $/week (×3)</th><th>High $/week (×3)</th></tr></thead>
+          <tbody>
+            <tr><td>Own avatar</td><td>~$0.37</td><td>~$2.69</td><td>~$1.11</td><td>~$8.07</td></tr>
+            <tr><td>Generic avatar</td><td>~$0.37</td><td>~$2.69</td><td>~$1.11</td><td>~$8.07</td></tr>
+            <tr><td>Faceless (+ B-roll)</td><td>~$0.58</td><td>~$3.95</td><td>~$1.74</td><td>~$11.85</td></tr>
+          </tbody>
+        </table>
+        <p>Add ~30% buffer for failed regenerations (US-7.1 cumulative budget). Prices are research snapshots (Jul 2026) — validate live vendor pricing before commercial commitments.</p>
+      </article>
+
+      <div class="grid-2">
+        <article class="stack-card low">
+          <span class="kicker">V1 default stack</span>
+          <h3>Low tier</h3>
+          <ul>
+            <li><strong>LLM hub:</strong> SiliconFlow (DeepSeek + Qwen)</li>
+            <li><strong>TTS:</strong> CosyVoice2</li>
+            <li><strong>Avatar:</strong> SadTalker (Replicate)</li>
+            <li><strong>Avatar alt:</strong> MuseTalk (generic loop)</li>
+            <li><strong>B-roll:</strong> Wan2.1 I2V Turbo</li>
+            <li><strong>Assembly:</strong> FFmpeg on server</li>
+            <li><strong>Fallback:</strong> manual upload (US-8.3)</li>
+          </ul>
+          <p class="price">~$1.10 – $1.75 / client / week</p>
+          <p>Stories: US-X.4, US-8.2, US-8.5, US-8.6, US-9.3</p>
+        </article>
+        <article class="stack-card high">
+          <span class="kicker">Premium / P1</span>
+          <h3>High tier</h3>
+          <ul>
+            <li><strong>LLM:</strong> OpenAI / Anthropic frontier</li>
+            <li><strong>TTS:</strong> ElevenLabs</li>
+            <li><strong>Avatar:</strong> HeyGen (US-8.7)</li>
+            <li><strong>B-roll:</strong> LTX 2.3 Pro / Kling 3.0</li>
+            <li><strong>QA:</strong> optional vision pass on final MP4</li>
+          </ul>
+          <p class="price">~$8 – $12 / client / week</p>
+          <p>Use for paid upsell or operator override — not V1 silent default.</p>
+        </article>
+      </div>
+
+      <div class="grid-2">
+        <article class="card notice">
+          <span class="kicker">Upgrade order</span>
+          <h2>When to move up a tier</h2>
+          <ol>
+            <li>Avatar adapter (SadTalker → MuseTalk → HeyGen)</li>
+            <li>B-roll adapter (Wan → Hailuo → LTX/Kling)</li>
+            <li>TTS provider</li>
+            <li>LLM provider (last — smallest cost impact)</li>
+          </ol>
+        </article>
+        <article class="card">
+          <span class="kicker">Catalog keys (seed)</span>
+          <h2>US-X.4 provider_key values</h2>
+          <table>
+            <thead><tr><th>Key</th><th>Asset</th><th>Tier</th></tr></thead>
+            <tbody>
+              <tr><td><code>siliconflow_deepseek_flash</code></td><td>llm</td><td>low</td></tr>
+              <tr><td><code>siliconflow_cosyvoice2</code></td><td>tts</td><td>low</td></tr>
+              <tr><td><code>sadtalker_low</code></td><td>talking_head</td><td>low</td></tr>
+              <tr><td><code>musetalk_low</code></td><td>talking_head</td><td>low</td></tr>
+              <tr><td><code>siliconflow_wan21_turbo</code></td><td>broll</td><td>low</td></tr>
+              <tr><td><code>heygen_high</code></td><td>talking_head</td><td>high (P1)</td></tr>
+              <tr><td><code>manual</code></td><td>talking_head</td><td>fallback</td></tr>
+            </tbody>
+          </table>
+        </article>
+      </div>
+
+      <article class="card">
+        <span class="kicker">Risks</span>
+        <h2>Chinese / budget provider checklist</h2>
+        <ul>
+          <li>Verify commercial license and likeness handling before routing client photos through any vendor.</li>
+          <li>API keys stay server-only — never <code>NEXT_PUBLIC_*</code>, never in catalog rows.</li>
+          <li>Download-and-own all provider outputs; never persist raw vendor URLs long-term.</li>
+          <li>Keep HeyGen or manual upload as operator escape hatch (US-8.7, US-8.3).</li>
+        </ul>
+      </article>
+    </section>
+
+    <footer class="footer">
+      Neuralitica Marketing V1 · Provider tier comparison · Research snapshot Jul 2026 ·
+      Canonical backlog: <code>plan/USER_STORIES.md</code> ·
+      Implementation: <code>lib/providers/provider-adapters.ts</code>
+    </footer>
+  </div>
+</body>
+</html>

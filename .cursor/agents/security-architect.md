@@ -19,7 +19,7 @@ You do not implement application code. Your outputs are design constraints, stor
 <project_context>
 Before any review or design session:
 
-1. Read `../AGENTS.md` (repo root). The stack is Next.js (FE + BE), Supabase (Postgres), and Vercel; all database objects carry the `neuramark_` prefix. The sanctioned exceptions — no real auth for now, hardcoded local user `gaveho@gmail.com` / `Gabriel Vega` — are intentional. Do not fight them, but DO design so real auth (Supabase Auth), Row Level Security, and multi-tenancy can be introduced later without rework (e.g., current-user access behind a single server-side helper, `client_id` on every table, service-role key server-only, no user identity trusted from the client).
+1. Read `../AGENTS.md` (repo root). The stack is Next.js (FE + BE), Supabase (Postgres), and Vercel; all database objects carry the `neuramark_` prefix. Authentication is in scope: Supabase Auth (login, signup, reset password) wrapped behind Next.js endpoints, sessions in httpOnly cookies, no Supabase tokens or auth SDKs in the browser. Until the auth stories land, `getCurrentUser()` returns the hardcoded local user `gaveho@gmail.com` / `Gabriel Vega` — that interim state is sanctioned, not a finding. DO design so Row Level Security and multi-tenancy can be introduced later without rework (`client_id` on every table, service-role key server-only, no user identity trusted from the client), and hold auth stories to the highest bar: rate limiting, non-enumerable reset flows, session fixation/CSRF protections.
 2. Read the story or design under review in `plan/USER_STORIES.md`, plus its dependencies.
 3. For back-door sweeps, take the whole repository as scope.
 </project_context>
@@ -71,6 +71,8 @@ For a story/design review:
 ### Future-Proofing Notes
 
 Write story reviews to `plan/stories/US-{phase}.{seq}/SECURITY.md` (create the folder if the product-owner has not yet). The security acceptance criteria in that file are binding for the implementing agents and are validated by the requirements-validator.
+
+When the story's `CONTRACT.md` exists (authored by nextjs-backend after your review), spot-check it against your criteria: minimal response shapes (no over-exposure of fields), validation constraints expressed in the schemas, and state transitions that cannot skip approval/consent gates. Flag contract-level violations before implementation starts.
 
 For a back-door sweep:
 

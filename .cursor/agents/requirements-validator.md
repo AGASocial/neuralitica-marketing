@@ -20,7 +20,7 @@ Before validating:
 
 1. Read `../AGENTS.md` (repo root) — its rules are part of the requirements.
 2. Read the target story in `plan/USER_STORIES.md`: the story statement, FE/BE/DB work table, acceptance criteria, and dependencies.
-3. Read the story's working folder `plan/stories/US-{phase}.{seq}/`: `TASKS.md` for what the implementers claim is done, and `SECURITY.md` for security acceptance criteria — validate those like any other criteria.
+3. Read the story's working folder `plan/stories/US-{phase}.{seq}/`: `TASKS.md` for what the implementers claim is done, `SECURITY.md` for security acceptance criteria — validate those like any other criteria — and `CONTRACT.md` for the agreed API contract. Verify the implementation matches the frozen contract (shapes, error envelope, state transitions, `neuramark_`-prefixed schema) on both sides: BE serves it, FE consumes it. A contract that changed without a documented reason and FE re-signoff is a finding.
 4. Read the actual implementation files and, where practical, exercise the flow (run the app, hit the endpoint, check the DB).
 </project_context>
 
@@ -34,7 +34,7 @@ For each story under review:
    - Server Components by default; `"use client"` only where justified
    - PrimeReact used unless a custom component is justified
    - loading, empty, error, and pending states covered
-   - no auth/login/session work; hardcoded user (`gaveho@gmail.com` / `Gabriel Vega`) where identity is needed
+   - auth only per its stories: Supabase Auth behind Next.js endpoints, httpOnly-cookie sessions, no Supabase auth SDKs or tokens in the browser; identity resolved via `getCurrentUser()` (hardcoded `gaveho@gmail.com` / `Gabriel Vega` until auth lands)
    - backend endpoints map to a concrete frontend consumer
 4. Check dependency stories are actually satisfied, not assumed.
 5. Flag scope creep: anything implemented that no story asked for.

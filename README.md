@@ -10,13 +10,19 @@ This README is the entry point for **humans and AI agents** (Cursor, Codex, Clau
 
 | Path | What it is |
 |---|---|
-| `plan/USER_STORIES.md` | **The canonical backlog.** Every story that will be developed (US-1.x–US-13.x + US-X.1–X.3), each with acceptance criteria (functional + `[SEC]` security), FE/BE/DB work tables, dependencies, sprint order, and MVP cut line. Nothing gets built that is not in this file. |
+| `plan/USER_STORIES.md` | **The canonical backlog.** Every story that will be developed (US-1.x–US-13.x + US-X.1–X.4), each with acceptance criteria (functional + `[SEC]` security), FE/BE/DB work tables, dependencies, sprint order, and MVP cut line. Nothing gets built that is not in this file. |
+| `plan/PROVIDER_TIERS.html` | **Provider comparison:** low vs high tier models per assembly asset, cost targets, adapter interface, catalog keys — visual companion to the Provider tiers section in `USER_STORIES.md`. |
 | `plan/MODULES_ROADMAP_v1.1.html` | Source roadmap: the 13 modules, product hard rules, provider strategy, and risks. Stories were derived from it. |
 | `plan/SECURITY_BASELINE.md` | Design-time security review of the whole backlog: per-module verdicts, trust boundaries, abuse cases, and future-proofing constraints (auth, RLS, multi-tenancy). |
 | `plan/HIGH_LEVEL_PLAN.md` | High-level phase context. |
+| `plan/DESIGN_PROMPTS.md` | Copy-paste prompts (global design-system context + one prompt per screen) to generate UI mockups with Claude. Approved mockups are saved under `plan/mockups/` and used by `nextjs-frontend` as visual reference. |
 | `plan/stories/US-x.y/` | Per-story working folders, **created lazily when a story enters a sprint** (see §4). |
+| `lib/providers/` | **Provider adapter interfaces** (US-8.1, US-X.4): `VideoProviderAdapter`, `TtsProviderAdapter`, `LlmProviderAdapter`, registry, `resolveProvider()`. Server-only. |
+| `lib/contracts/providers.ts` | Zod schemas mirroring provider types — validate at server boundaries. |
 | `../AGENTS.md` (repo root) | **Hard project rules** — architecture defaults, planning, frontend, and backend rules. Binding for every agent and human. Read it before writing any code. |
 | `.cursor/agents/*.md` | The agent team definitions (see §5). Written as portable markdown role files usable by Cursor, Codex, Claude, or any agent runtime. |
+
+Open the provider tier comparison: [plan/PROVIDER_TIERS.html](plan/PROVIDER_TIERS.html)
 
 ---
 
@@ -33,19 +39,20 @@ This README is the entry point for **humans and AI agents** (Cursor, Codex, Clau
 1. **Only the backend integrates with Supabase.** Supabase clients, URLs, and keys (service-role AND anon) exist exclusively in server code — Server Actions, Route Handlers (`app/**/route.ts`), and server helpers. No `@supabase/supabase-js` import may be reachable from a Client Component; no Supabase env var may use the `NEXT_PUBLIC_` prefix.
 2. **The frontend only calls Next.js endpoints.** Server Components load data via server-side helpers; Client Components call Server Actions or Route Handlers. This includes future authentication: the browser talks to Next.js auth endpoints; only the backend talks to Supabase Auth, with sessions in httpOnly cookies.
 3. **Database naming:** every Supabase object — tables, triggers, indexes, functions, enums, policies — carries the **`neuramark_` prefix**. Story documents use logical names (`interview_sessions`); the physical object is `neuramark_interview_sessions` (index: `neuramark_interview_sessions_client_id_idx`, trigger: `neuramark_interview_sessions_set_updated_at`). Schema changes go through Supabase migrations only — never ad-hoc dashboard edits.
-4. **No real authentication yet.** Auth/login/session work is deliberately out of scope. The current user is hardcoded and served by a single server-side `getCurrentUser()` helper: `gaveho@gmail.com` / `Gabriel Vega`. Every table still carries `client_id` so real auth, RLS, and multi-tenancy can be added later without rewrites.
+4. **Authentication (in scope, Phase 0 / US-14.x):** email/password login, signup, logout, and reset password via **Supabase Auth — backend-only**. The browser never uses Supabase auth SDKs or sees Supabase tokens; auth pages call Next.js endpoints, sessions live in httpOnly cookies, and identity is resolved exclusively through the server-side `getCurrentUser()` helper (US-X.3, the "auth seam"). Until US-14.5 lands, `getCurrentUser()` returns the hardcoded local user `gaveho@gmail.com` / `Gabriel Vega`; after that, any hardcoded-user path in the default build is a finding. Roles are a minimal flag, not a system: `neuramark_clients.role` (`client` | `operator`, default `client`), set via SQL like the `active` flag; operator-only endpoints check it server-side via `getCurrentUser()`. RBAC and role-management UI remain out of scope. Every table carries `client_id` so RLS and multi-tenancy can be added later without rewrites.
 5. **Server Components by default**; `"use client"` only for interactivity or browser APIs, with the boundary kept as small as possible.
 6. **No speculative APIs.** Every endpoint must name the concrete frontend consumer (story) it serves.
 7. **Dashboard is the default entry route.**
+8. **Interchangeable AI providers:** external models (LLM, TTS, video) are integrated only through server-side adapters in `lib/providers/` and a data-driven `provider_catalog` (US-X.4). V1 defaults to the **low tier** — see `plan/PROVIDER_TIERS.html`. Assembly (FFmpeg) is vendor-agnostic.
 
 ---
 
 ## 3. The backlog (`plan/USER_STORIES.md`)
 
-- 40 stories across 13 modules, phases 1–5, plus cross-cutting stories (dashboard entry, EN/ES localization, hardcoded user).
+- 48 stories across 14 modules: Authentication (Phase 0, US-14.x), the 13 product modules (phases 1–5), plus cross-cutting stories (dashboard entry, EN/ES localization, current-user seam, **provider catalog / tiers US-X.4**).
 - Story IDs are stable (`US-{phase}.{seq}`) — never renumber.
 - Each story has: story statement, FE/BE/DB work table, checkbox acceptance criteria (functional + `[SEC]` security criteria added by the security-architect), and `Depends on`.
-- The file ends with the **dependency-aware sprint order** (Sprint 1–7) and the **MVP cut line**: stories through US-11.3 constitute the operable V1; US-12.x/13.x are P1.
+- The file ends with the **dependency-aware sprint order** (Sprint 1, 1b for auth, 2–7) and the **MVP cut line**: stories through US-11.3 **plus** the Authentication module (US-14.1–14.5) constitute the operable V1; US-12.x/13.x are P1.
 - Acceptance criteria checkboxes in this file are checked **only by the product-owner** after a requirements-validator PASS.
 
 ---
@@ -53,9 +60,9 @@ This README is the entry point for **humans and AI agents** (Cursor, Codex, Clau
 ## 4. Development workflow (per story)
 
 ```text
-product-owner ──► security-architect ──► nextjs-frontend + nextjs-backend ──► requirements-validator ──► qa-engineer
-   (define/refine)    (design review,        (implement in parallel)             (PASS/FAIL vs criteria)     (bugs/security audit)
-                       [SEC] criteria)
+product-owner ──► security-architect ──► nextjs-backend ──► nextjs-frontend ──► nextjs-frontend + nextjs-backend ──► requirements-validator ──► qa-engineer
+   (define/refine)    (design review,      (authors CONTRACT.md)  (reviews + signs      (implement in parallel            (PASS/FAIL vs criteria      (bugs/security audit)
+                       [SEC] criteria)                             off contract)          against frozen contract)          and contract)
 ```
 
 When a story enters a sprint, the product-owner creates its working folder:
@@ -63,10 +70,23 @@ When a story enters a sprint, the product-owner creates its working folder:
 ```text
 plan/stories/US-x.y/
   TASKS.md        ← FE / BE / DB checklist sections (implementers check off their own section)
+  CONTRACT.md     ← the frozen API contract (see below); authored by nextjs-backend, signed off by nextjs-frontend
   SECURITY.md     ← security-architect design review; its criteria are binding
   VALIDATION.md   ← requirements-validator report (PASS/FAIL with file-level evidence)
   QA.md           ← qa-engineer audit report (severity-rated findings, checks run)
 ```
+
+### Contract-first (what unlocks FE/BE parallelism)
+
+Before implementation starts on a story, `CONTRACT.md` must exist and be signed off. It defines:
+
+- **Endpoints / Server Actions** — name, method/path or signature, purpose, and the frontend consumer
+- **Request/response shapes** — including the standard error envelope and per-field validation errors
+- **Table schemas** — `neuramark_`-prefixed DDL with columns, FKs, indexes
+- **Enums and state transitions** — allowed transitions, not just values (job status, approval status, etc.)
+- **Fixtures** — realistic example payloads the frontend mocks against while the backend is being built
+
+The contract is mirrored in code as Zod schemas + inferred TypeScript types in `lib/contracts/` — the backend validates with the same schemas the frontend imports types from, so contract and implementation cannot drift silently. After FE signoff the contract is frozen; changes require a documented reason in `CONTRACT.md` and re-signoff. The validator checks both sides against the contract, and the qa-engineer treats undeclared divergence as a finding.
 
 Rules of the flow:
 
@@ -98,12 +118,14 @@ Separation of duties: implementers never validate their own work; validators/QA 
 ## 6. Quick start for a new agent or developer
 
 1. Read `../AGENTS.md` (hard rules), then this README.
-2. Read `plan/USER_STORIES.md` — conventions section first, then the story you're assigned.
-3. If the story has a folder under `plan/stories/`, read `TASKS.md` and `SECURITY.md`; work only your section.
-4. Follow the stack rules in §2 — especially: Supabase only from the backend, `neuramark_` prefix on every DB object, EN/ES strings, no auth work.
-5. When finished, check off your `TASKS.md` items and report which acceptance criteria you satisfied — then hand off to the requirements-validator.
+2. Read `plan/USER_STORIES.md` — conventions section first (including **Provider tiers**), then the story you're assigned.
+3. For provider / cost work, read `plan/PROVIDER_TIERS.html` and `lib/providers/provider-adapters.ts`.
+4. If the story has a folder under `plan/stories/`, read `TASKS.md`, `CONTRACT.md`, and `SECURITY.md`; work only your section and build strictly against the contract.
+5. Follow the stack rules in §2 — especially: Supabase only from the backend, `neuramark_` prefix on every DB object, EN/ES strings.
+6. When finished, check off your `TASKS.md` items and report which acceptance criteria you satisfied — then hand off to the requirements-validator.
 
 ## 7. Current status
 
-- Planning phase complete: backlog generated from the roadmap and security-reviewed (82 `[SEC]` criteria across 38 stories, verdict APPROVE WITH CONDITIONS, no redesigns).
-- No application code yet. Next step: Sprint 1 — `US-X.3` (hardcoded user seam), `US-X.1` (dashboard), `US-1.1–1.3` (interview), `US-2.1–2.3` (business profile).
+- Planning phase complete: backlog generated from the roadmap and security-reviewed. Provider tier strategy locked (low default: SadTalker, Wan, SiliconFlow LLM/TTS) — see `plan/PROVIDER_TIERS.html` and `plan/USER_STORIES.md` conventions.
+- Provider adapter **interfaces** started: `lib/providers/provider-adapters.ts`, `lib/contracts/providers.ts` (US-8.1 / US-X.4 contract). Concrete vendor adapters (SadTalker, Wan, etc.) ship with Sprint 4 stories.
+- Next step: Sprint 1 — `US-X.3`, `US-X.1`, `US-1.1–1.3`, `US-2.1–2.3` — then Sprint 1b (auth, `US-14.x`). Provider catalog seed (`US-X.4`) lands Sprint 3.

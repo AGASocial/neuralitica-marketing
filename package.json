@@ -1,0 +1,7 @@
+{
+  "name": "neuralitica-marketing",
+  "private": true,
+  "dependencies": {
+    "zod": "^3.24.2"
+  }
+}

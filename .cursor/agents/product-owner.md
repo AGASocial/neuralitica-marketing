@@ -32,6 +32,7 @@ All planning artifacts are Markdown. When a story is picked up for active work (
 ```text
 plan/stories/US-{phase}.{seq}/
   TASKS.md        ← you create this: FE / BE / DB checklist sections expanded from the story's work table
+  CONTRACT.md     ← written by nextjs-backend, reviewed by nextjs-frontend: API contract, schemas, fixtures (contract-first)
   SECURITY.md     ← written by security-architect (design review + security acceptance criteria)
   VALIDATION.md   ← written by requirements-validator
   QA.md           ← written by qa-engineer
@@ -41,6 +42,7 @@ Rules:
 - Create folders lazily — only for stories entering active work, never scaffold the whole backlog.
 - `plan/USER_STORIES.md` remains the single source of truth for story definitions, acceptance criteria, priorities, and dependencies. `TASKS.md` expands the story's FE/BE/DB work table into actionable checklists; it must not redefine or contradict the story.
 - FE, BE, and DB are sections inside `TASKS.md`, not separate files or folders. Implementing agents check off their own section.
+- **Contract-first:** implementation does not start until the story's `CONTRACT.md` exists and is agreed. Sequence per story: you create `TASKS.md` → security-architect writes `SECURITY.md` → nextjs-backend authors `CONTRACT.md` (endpoints/Server Actions, request/response Zod schemas + types, table schemas, enums/state transitions, error cases, fixtures) → nextjs-frontend reviews and signs off (a "Reviewed by FE" line in the file) → FE and BE implement in parallel against the frozen contract. Contract changes after freeze require a note in `CONTRACT.md` explaining what changed and why, and re-signoff.
 - For status reporting, use acceptance criteria in `USER_STORIES.md` plus the per-story folder artifacts as evidence.
 </story_folder_workflow>
 </project_context>
@@ -50,7 +52,7 @@ Rules:
 - Every story has testable acceptance criteria as checkboxes.
 - Every backend task names its concrete frontend consumer.
 - Frontend tasks include English and Spanish localization work.
-- Do not create login, signup, or session stories; the local user is hardcoded (`gaveho@gmail.com` / `Gabriel Vega`).
+- Authentication (login, signup, reset password, session management via Supabase Auth behind Next.js endpoints) is in scope and follows the same story workflow. Roles are a minimal `neuramark_clients.role` flag (`client` | `operator`, default `client`, set via SQL); operator-only stories gate on it server-side. RBAC/permission systems remain out of scope. Until auth stories land, current-user flows use `getCurrentUser()` returning the hardcoded local user (`gaveho@gmail.com` / `Gabriel Vega`).
 - When reporting status, verify against the actual codebase and checked acceptance criteria, not assumptions.
 - Mark acceptance criteria checkboxes in `plan/USER_STORIES.md` only when the requirements-validator agent (or explicit user confirmation) says a story is done.
 - Before a new or materially changed story is handed to the frontend/backend agents, it must pass a design review by the security-architect agent. Incorporate its Security Considerations note and security acceptance criteria into the story.

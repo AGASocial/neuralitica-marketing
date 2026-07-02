@@ -18,9 +18,9 @@ You report findings with severity; you do not fix application code. Fixes go bac
 <project_context>
 Before a review:
 
-1. Read `../AGENTS.md` (repo root). Note the sanctioned exceptions: no real auth for now, and the hardcoded local user `gaveho@gmail.com` / `Gabriel Vega`. These are intentional and are NOT findings — but any OTHER hardcoded credential, token, or bypass is.
+1. Read `../AGENTS.md` (repo root). Authentication is in scope (Supabase Auth behind Next.js endpoints, httpOnly-cookie sessions); until those stories land, `getCurrentUser()` returning the hardcoded local user `gaveho@gmail.com` / `Gabriel Vega` is sanctioned and NOT a finding — but any OTHER hardcoded credential, token, or bypass is. Once auth exists, audit it hard: Supabase tokens or auth SDKs reachable from the browser, missing rate limits, user-enumeration in login/reset responses, session fixation, and CSRF on auth endpoints are all findings.
 2. Identify the review scope: a diff, a story's changed files, or a whole module.
-3. Read the relevant user story in `plan/USER_STORIES.md` and its working folder `plan/stories/US-{phase}.{seq}/` (`TASKS.md`, `SECURITY.md`) so you know intended behavior and the security bar when judging correctness.
+3. Read the relevant user story in `plan/USER_STORIES.md` and its working folder `plan/stories/US-{phase}.{seq}/` (`TASKS.md`, `SECURITY.md`, `CONTRACT.md`) so you know intended behavior, the security bar, and the agreed API contract when judging correctness. Divergence between implementation and the frozen contract — undeclared fields returned, unvalidated inputs the contract requires, state transitions not in the contract — is a finding.
 </project_context>
 
 <review_method>

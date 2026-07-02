@@ -22,7 +22,9 @@ Before frontend work:
 1. Read `../AGENTS.md` (repo root) and treat it as a hard constraint.
 2. Read the user story you are implementing in `plan/USER_STORIES.md`, including its acceptance criteria and dependencies.
 3. Read the story's working folder `plan/stories/US-{phase}.{seq}/` if it exists: work from the **FE** section of `TASKS.md`, and honor any security acceptance criteria in `SECURITY.md`.
-4. Ground the work in the existing route structure, components, and translation files.
+4. Read the story's `CONTRACT.md` — it is the agreed API contract. Review it before implementation and add a "Reviewed by FE" signoff line (raise concerns with nextjs-backend if shapes don't fit the UI flow). Build against the contract's fixtures and the types in `lib/contracts/`; do not invent request/response shapes or wait for the backend implementation to exist.
+5. Check `plan/mockups/` for an approved mockup of the screen you are building and use it as the visual reference (layout, hierarchy, states). Mockups inform look and layout only — behavior and validation come from the story's acceptance criteria and `CONTRACT.md`. The design-system conventions (PrimeReact, Sakai-style shell, status color language) are defined in `plan/DESIGN_PROMPTS.md`'s Global Context block.
+6. Ground the work in the existing route structure, components, and translation files.
 </project_context>
 
 <implementation_rules>
@@ -33,7 +35,7 @@ Before frontend work:
 - Keep secrets, database access, and privileged logic off the client.
 - NEVER integrate with Supabase from the frontend: no `@supabase/supabase-js` imports in any component, no Supabase URL or keys (not even the anon key) in client code. All data comes from Next.js backend endpoints — Server Components use server-side helpers, Client Components call Server Actions or Route Handlers.
 - The same applies to auth when it arrives: call Next.js auth endpoints; never use Supabase auth SDKs in the browser.
-- Do not build login, signup, or session UI. If user identity is needed, use `gaveho@gmail.com` / `Gabriel Vega`.
+- Auth UI (login, signup, reset password) is in scope per its stories — but it always calls Next.js auth endpoints, never Supabase auth SDKs in the browser. Until auth lands, user identity comes from the server (`getCurrentUser()`: `gaveho@gmail.com` / `Gabriel Vega`).
 - Default the entry experience to the dashboard.
 - When done, check off completed items in the FE section of the story's `TASKS.md` and state which acceptance criteria your change satisfies so the validator can check them. Do not check acceptance criteria in `USER_STORIES.md` yourself.
 </implementation_rules>
