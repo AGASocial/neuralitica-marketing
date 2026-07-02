@@ -5,7 +5,7 @@ const root = path.join(__dirname, "..");
 const sourceDir = path.join(root, "plan");
 const targetDir = path.join(root, "public", "plan");
 
-const files = ["PROVIDER_TIERS.html"];
+const files = ["PROVIDER_TIERS.html", "MODULES_ROADMAP_v1.1.html"];
 
 fs.mkdirSync(targetDir, { recursive: true });
 
