@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neuralitica | Módulos V1</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --paper: #fffdf9;
+      --ink: #1f2937;
+      --muted: #5b6470;
+      --line: #ddd4c7;
+      --accent: #0f766e;
+      --accent-soft: #dbf2ee;
+      --accent-deep: #115e59;
+      --warn: #92400e;
+      --warn-soft: #fff4e8;
+      --soft: #f8f4ec;
+      --shadow: 0 22px 56px rgba(31, 41, 55, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--ink);
+      line-height: 1.55;
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.1), transparent 30%),
+        linear-gradient(180deg, #faf7f1 0%, var(--bg) 100%);
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 28px auto 56px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 54px 56px 40px;
+      background:
+        linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(245, 158, 11, 0.08)),
+        #f8f5ef;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 18px 0 14px;
+      max-width: 12ch;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2.4rem, 4vw, 4.4rem);
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      max-width: 820px;
+      margin: 0;
+      font-size: 1.08rem;
+      color: var(--muted);
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .meta-card,
+    .card,
+    .module-card {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px 20px;
+    }
+
+    .meta-card span,
+    .kicker {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .content {
+      display: grid;
+      gap: 24px;
+      padding: 40px 56px 56px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.5rem;
+      line-height: 1.15;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 1.02rem;
+      line-height: 1.25;
+    }
+
+    p,
+    li,
+    td,
+    th {
+      font-size: 0.97rem;
+    }
+
+    p:last-child,
+    ul:last-child,
+    ol:last-child {
+      margin-bottom: 0;
+    }
+
+    ul,
+    ol {
+      margin: 12px 0 0;
+      padding-left: 20px;
+    }
+
+    li + li {
+      margin-top: 8px;
+    }
+
+    .quote {
+      padding: 18px 20px;
+      border-left: 5px solid var(--accent);
+      border-radius: 16px;
+      background: #f2faf8;
+      color: var(--accent-deep);
+      font-size: 1.02rem;
+    }
+
+    .notice {
+      background: var(--warn-soft);
+      border-left: 5px solid var(--warn);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th,
+    td {
+      padding: 12px 0;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .phase {
+      padding: 18px 20px;
+      border-radius: 18px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+    }
+
+    .phase-number {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+      font-size: 0.8rem;
+      font-weight: 800;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .module-card {
+      background: #fffdfa;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0 14px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .p0 {
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+    }
+
+    .p1 {
+      background: #fff3cd;
+      color: #8a5a00;
+    }
+
+    .kind {
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .footer {
+      padding: 18px 56px 34px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 0.94em;
+    }
+
+    @media (max-width: 980px) {
+      .grid-3,
+      .module-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .page {
+        width: min(100%, calc(100% - 20px));
+        margin: 10px auto 28px;
+        border-radius: 20px;
+      }
+
+      .hero,
+      .content,
+      .footer {
+        padding-left: 22px;
+        padding-right: 22px;
+      }
+
+      .hero {
+        padding-top: 34px;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        width: 100%;
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <div class="eyebrow">Neuralitica · Roadmap técnico V1</div>
+      <h1>Módulos a Desarrollar</h1>
+      <p>
+        Este documento traduce el plan de alto nivel a una vista de producto y ejecución. Resume qué módulos existen,
+        para qué sirven y en qué orden conviene construirlos para llegar a una V1 usable sin sobrediseñar el sistema.
+      </p>
+
+      <div class="meta">
+        <div class="meta-card">
+          <span>Total de módulos</span>
+          <strong>11 módulos</strong>
+        </div>
+        <div class="meta-card">
+          <span>Objetivo V1</span>
+          <strong>3 Reels semanales</strong>
+        </div>
+        <div class="meta-card">
+          <span>Canal inicial</span>
+          <strong>Instagram</strong>
+        </div>
+        <div class="meta-card">
+          <span>Restricción clave</span>
+          <strong>No multicanal todavía</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="grid-2">
+        <article class="card">
+          <span class="kicker">Lectura rápida</span>
+          <h2>Qué hay que construir realmente</h2>
+          <p>
+            La V1 no necesita una plataforma completa. Necesita una cadena mínima que permita capturar contexto del negocio,
+            decidir el tipo de video, generar piezas, revisarlas, aprobarlas y aprender del resultado.
+          </p>
+          <div class="quote">
+            La lógica base del producto es: tomar información del negocio, convertirla en estrategia semanal y producir
+            contenido listo para revisión y publicación.
+          </div>
+        </article>
+
+        <aside class="card notice">
+          <span class="kicker">Criterio de priorización</span>
+          <h2>Cómo leer este roadmap</h2>
+          <ul>
+            <li><strong>P0</strong>: necesario para que exista una V1 funcional.</li>
+            <li><strong>P1</strong>: importante, pero puede entrar después del primer flujo usable.</li>
+            <li>El orden sugerido está inferido del flujo operativo del plan.</li>
+          </ul>
+        </aside>
+      </div>
+
+      <article class="card">
+        <span class="kicker">Resumen ejecutivo</span>
+        <h2>Mapa general de módulos</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Módulo</th>
+              <th>Propósito</th>
+              <th>Prioridad</th>
+              <th>Depende de</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Interview Builder</td>
+              <td>Captura la entrevista inicial del cliente.</td>
+              <td>P0</td>
+              <td>Ninguno</td>
+            </tr>
+            <tr>
+              <td>Business Profile</td>
+              <td>Convierte la entrevista en una ficha viva del negocio.</td>
+              <td>P0</td>
+              <td>Interview Builder</td>
+            </tr>
+            <tr>
+              <td>Avatar Mode Selector</td>
+              <td>Define si el contenido usa avatar propio, genérico o sin rostro.</td>
+              <td>P0</td>
+              <td>Business Profile</td>
+            </tr>
+            <tr>
+              <td>Content Strategy Agent</td>
+              <td>Propone pilares, temas y enfoque semanal.</td>
+              <td>P0</td>
+              <td>Business Profile</td>
+            </tr>
+            <tr>
+              <td>Video Script Agent</td>
+              <td>Genera hooks, guiones, CTAs y texto en pantalla.</td>
+              <td>P0</td>
+              <td>Content Strategy Agent, Avatar Mode Selector</td>
+            </tr>
+            <tr>
+              <td>Video Generator Connector</td>
+              <td>Envía el guion a una herramienta externa de video/avatar IA.</td>
+              <td>P0</td>
+              <td>Video Script Agent</td>
+            </tr>
+            <tr>
+              <td>Caption Agent</td>
+              <td>Crea captions, hashtags y variantes de CTA.</td>
+              <td>P0</td>
+              <td>Content Strategy Agent, Video Script Agent</td>
+            </tr>
+            <tr>
+              <td>QA/Compliance Agent</td>
+              <td>Revisa tono, claims, claridad, derechos y reglas de uso.</td>
+              <td>P0</td>
+              <td>Video Generator Connector, Caption Agent</td>
+            </tr>
+            <tr>
+              <td>Approval Flow</td>
+              <td>Permite al cliente aprobar o pedir cambios.</td>
+              <td>P0</td>
+              <td>QA/Compliance Agent</td>
+            </tr>
+            <tr>
+              <td>Content Calendar</td>
+              <td>Ordena la producción y publicación semanal.</td>
+              <td>P1</td>
+              <td>Content Strategy Agent, Approval Flow</td>
+            </tr>
+            <tr>
+              <td>Metrics Lite</td>
+              <td>Registra rendimiento básico para aprendizaje posterior.</td>
+              <td>P1</td>
+              <td>Approval Flow, Content Calendar</td>
+            </tr>
+          </tbody>
+        </table>
+      </article>
+
+      <article class="card">
+        <span class="kicker">Fases sugeridas</span>
+        <h2>Orden recomendado de desarrollo</h2>
+        <div class="grid-3">
+          <div class="phase">
+            <div class="phase-number">Fase 1</div>
+            <h3>Base de entrada</h3>
+            <ul>
+              <li>Interview Builder</li>
+              <li>Business Profile</li>
+              <li>Avatar Mode Selector</li>
+            </ul>
+            <p>Objetivo: tener la información mínima del negocio y el modo visual permitido.</p>
+          </div>
+
+          <div class="phase">
+            <div class="phase-number">Fase 2</div>
+            <h3>Inteligencia de contenido</h3>
+            <ul>
+              <li>Content Strategy Agent</li>
+              <li>Video Script Agent</li>
+              <li>Caption Agent</li>
+            </ul>
+            <p>Objetivo: transformar el contexto del negocio en piezas concretas de contenido.</p>
+          </div>
+
+          <div class="phase">
+            <div class="phase-number">Fase 3</div>
+            <h3>Producción y control</h3>
+            <ul>
+              <li>Video Generator Connector</li>
+              <li>QA/Compliance Agent</li>
+              <li>Approval Flow</li>
+            </ul>
+            <p>Objetivo: generar activos, validarlos y cerrar el ciclo con aprobación del cliente.</p>
+          </div>
+
+          <div class="phase">
+            <div class="phase-number">Fase 4</div>
+            <h3>Operación semanal</h3>
+            <ul>
+              <li>Content Calendar</li>
+            </ul>
+            <p>Objetivo: ordenar qué se entrega, cuándo se revisa y qué se publica manualmente.</p>
+          </div>
+
+          <div class="phase">
+            <div class="phase-number">Fase 5</div>
+            <h3>Aprendizaje</h3>
+            <ul>
+              <li>Metrics Lite</li>
+            </ul>
+            <p>Objetivo: capturar señales básicas para mejorar la siguiente semana sin construir analytics complejo.</p>
+          </div>
+
+          <div class="phase notice">
+            <div class="phase-number">Regla de producto</div>
+            <h3>No meter de más en V1</h3>
+            <ul>
+              <li>No publicación automática obligatoria.</li>
+              <li>No automatización de DMs sensibles.</li>
+              <li>No TikTok, YouTube ni CRM avanzado.</li>
+            </ul>
+            <p>Objetivo: mantener el alcance simple, vendible y validable.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <span class="kicker">Detalle por módulo</span>
+        <h2>Qué hace cada pieza</h2>
+        <div class="module-grid">
+          <div class="module-card">
+            <h3>Interview Builder</h3>
+            <div class="badges">
+              <span class="badge p0">P0</span>
+              <span class="badge kind">Input</span>
+            </div>
+            <p>Formulario o flujo guiado para capturar servicios, zona, tono, ofertas, objeciones, estilo y restricciones.</p>
+            <p><strong>Salida:</strong> respuestas estructuradas del cliente.</p>
+          </div>
+
+          <div class="module-card">
+            <h3>Business Profile</h3>
+            <div class="badges">
+              <span class="badge p0">P0</span>
+              <span class="badge kind">Core data</span>
+            </div>
+            <p>Ficha viva del negocio con la información consolidada que el resto de agentes reutiliza.</p>
+            <p><strong>Salida:</strong> perfil canónico del cliente.</p>
+          </div>
+
+          <div class="module-card">
+            <h3>Avatar Mode Selector</h3>
+            <div class="badges">
+              <span class="badge p0">P0</span>
+              <span class="badge kind">Rules</span>
+            </div>
+            <p>Define el modo visual permitido y aplica reglas de consentimiento y representación.</p>
+            <p><strong>Salida:</strong> modo visual activo + restricciones.</p>
+          </div>
+
+          <div class="module-card">
+            <h3>Content Strategy Agent</h3>
+            <div class="badges">
+              <span class="badge p0">P0</span>
+              <span class="badge kind">Planning</span>
+            </div>
+            <p>Genera pilares, temas, ángulos y secuencia semanal según el tipo de negocio.</p>
+            <p><strong>Salida:</strong> brief semanal de contenido.</p>
+          </div>
+
+          <div class="module-card">
+            <h3>Video Script Agent</h3>
+            <div class="badges">
+              <span class="badge p0">P0</span>
+              <span class="badge kind">Generation</span>
+            </div>
+            <p>Convierte la estrategia en guiones, hooks, CTA y texto en pantalla para cada Reel.</p>
+            <p><strong>Salida:</strong> paquete de scripts por pieza.</p>
+          </div>
+
+          <div class="module-card">
+            <h3>Video Generator Connector</h3>
+            <div class="badges">
+              <span class="badge p0">P0</span>
+              <span class="badge kind">Integration</span>
+            </div>
+            <p>Conecta con proveedor externo de video/avatar IA y devuelve el video generado o el estado del job.</p>
+            <p><strong>Salida:</strong> assets de video.</p>
+          </div>
+
+          <div class="module-card">
+            <h3>Caption Agent</h3>
+            <div class="badges">
+              <span class="badge p0">P0</span>
+              <span class="badge kind">Copy</span>
+            </div>
+            <p>Genera captions, hashtags, keywords y variantes de CTA alineadas con el Reel.</p>
+            <p><strong>Salida:</strong> copy listo para revisión.</p>
+          </div>
+
+          <div class="module-card">
+            <h3>QA/Compliance Agent</h3>
+            <div class="badges">
+              <span class="badge p0">P0</span>
+              <span class="badge kind">Validation</span>
+            </div>
+            <p>Revisa claims peligrosos, claridad, tono, uso correcto del avatar y consistencia con reglas V1.</p>
+            <p><strong>Salida:</strong> aprobación interna o flags de corrección.</p>
+          </div>
+
+          <div class="module-card">
+            <h3>Approval Flow</h3>
+            <div class="badges">
+              <span class="badge p0">P0</span>
+              <span class="badge kind">Delivery</span>
+            </div>
+            <p>Presenta contenido al cliente para aprobar, rechazar o pedir cambios antes de publicar.</p>
+            <p><strong>Salida:</strong> estado de aprobación por pieza.</p>
+          </div>
+
+          <div class="module-card">
+            <h3>Content Calendar</h3>
+            <div class="badges">
+              <span class="badge p1">P1</span>
+              <span class="badge kind">Ops</span>
+            </div>
+            <p>Ordena la semana: qué pieza va qué día, en qué estado está y qué falta aprobar o publicar.</p>
+            <p><strong>Salida:</strong> calendario operativo semanal.</p>
+          </div>
+
+          <div class="module-card">
+            <h3>Metrics Lite</h3>
+            <div class="badges">
+              <span class="badge p1">P1</span>
+              <span class="badge kind">Feedback</span>
+            </div>
+            <p>Guarda métricas simples para entender qué temas y formatos deben repetirse o ajustarse.</p>
+            <p><strong>Salida:</strong> señales básicas para el siguiente ciclo.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <span class="kicker">Notas de infraestructura</span>
+        <h2>OpenRouter y ClawRouter como piezas de soporte</h2>
+        <p>
+          Estas herramientas no reemplazan los módulos del producto. Funcionan como capa de acceso o ruteo para modelos,
+          y podrían simplificar la implementación de los agentes de contenido si decidimos no acoplarnos a un solo proveedor.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Herramienta</th>
+              <th>Qué aporta</th>
+              <th>Dónde podría encajar</th>
+              <th>Lectura para V1</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>OpenRouter</td>
+              <td>Una API unificada para acceder a múltiples modelos y proveedores con compatibilidad tipo OpenAI.</td>
+              <td>Content Strategy Agent, Video Script Agent, Caption Agent y QA/Compliance Agent.</td>
+              <td>Puede acelerar la V1 porque evita integrar varios proveedores desde el día uno.</td>
+            </tr>
+            <tr>
+              <td>ClawRouter</td>
+              <td>Router open source orientado a agentes, con ruteo local, selección automática de modelo y endpoint compatible con OpenAI.</td>
+              <td>Capa de ruteo local por encima de los módulos generativos, especialmente si luego queremos optimizar costo y autonomía.</td>
+              <td>Suena más útil como segunda fase técnica que como requisito inicial del MVP.</td>
+            </tr>
+          </tbody>
+        </table>
+      </article>
+
+      <div class="grid-2">
+        <article class="card">
+          <span class="kicker">Nota 1</span>
+          <h2>Qué nos dice OpenRouter</h2>
+          <p>
+            OpenRouter se presenta como una interfaz unificada para LLMs, con acceso a cientos de modelos sobre decenas de proveedores
+            y compatibilidad con el SDK de OpenAI.
+          </p>
+          <p>
+            Para esta V1 eso sugiere una decisión pragmática: los módulos de generación de texto pueden programarse contra una sola interfaz
+            mientras validamos producto, sin diseñar una abstracción compleja de proveedores desde el principio.
+          </p>
+          <p>
+            Implicación práctica: si usamos OpenRouter, el primer corte de <strong>Content Strategy Agent</strong>, <strong>Video Script Agent</strong>,
+            <strong>Caption Agent</strong> y <strong>QA/Compliance Agent</strong> puede salir más rápido.
+          </p>
+        </article>
+
+        <article class="card">
+          <span class="kicker">Nota 2</span>
+          <h2>Qué nos dice ClawRouter</h2>
+          <p>
+            ClawRouter se posiciona como un router open source para agentes, con ruteo local, selección automática del modelo y
+            compatibilidad con llamadas estilo OpenAI.
+          </p>
+          <p>
+            La señal importante no es solo el costo. La señal importante es arquitectónica: propone desacoplar la lógica de los agentes
+            del proveedor final y mover la decisión de modelo a una capa de ruteo especializada.
+          </p>
+          <p>
+            Implicación práctica: si más adelante el sistema necesita optimizar calidad, costo o autonomía, ClawRouter podría volverse una
+            buena base técnica para enrutar los módulos generativos sin reescribirlos.
+          </p>
+        </article>
+      </div>
+
+      <div class="grid-2">
+        <article class="card notice">
+          <span class="kicker">Recomendación</span>
+          <h2>Cómo lo aterrizaría en esta V1</h2>
+          <ol>
+            <li>Construir los módulos P0 sin dependencia fuerte de un proveedor específico.</li>
+            <li>Definir una interfaz interna simple tipo <code>generateText()</code>, <code>reviewContent()</code> y <code>generateAssets()</code>.</li>
+            <li>Usar OpenRouter si queremos velocidad de implementación al principio.</li>
+            <li>Evaluar ClawRouter después, cuando exista volumen suficiente para justificar optimización de ruteo y costo.</li>
+          </ol>
+        </article>
+
+        <article class="card">
+          <span class="kicker">Impacto por módulo</span>
+          <h2>Módulos más afectados por esta decisión</h2>
+          <ul>
+            <li><strong>Content Strategy Agent</strong>: depende del acceso confiable a modelos de texto.</li>
+            <li><strong>Video Script Agent</strong>: probablemente será el consumidor principal de prompts y variantes.</li>
+            <li><strong>Caption Agent</strong>: requiere costo bajo y rapidez, ideal para una capa de ruteo flexible.</li>
+            <li><strong>QA/Compliance Agent</strong>: se beneficia de poder cambiar de modelo sin rehacer la lógica de revisión.</li>
+            <li><strong>Video Generator Connector</strong>: queda separado, porque su integración principal seguirá siendo con proveedores de video/avatar, no con el router de texto.</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="grid-2">
+        <article class="card">
+          <span class="kicker">Primer MVP usable</span>
+          <h2>Secuencia mínima para salir rápido</h2>
+          <ol>
+            <li>Interview Builder</li>
+            <li>Business Profile</li>
+            <li>Avatar Mode Selector</li>
+            <li>Content Strategy Agent</li>
+            <li>Video Script Agent</li>
+            <li>Caption Agent</li>
+            <li>Video Generator Connector</li>
+            <li>QA/Compliance Agent</li>
+            <li>Approval Flow</li>
+          </ol>
+          <p>
+            Con eso ya existe una V1 operable aunque el calendario y las métricas todavía sean manuales o muy simples.
+          </p>
+        </article>
+
+        <article class="card">
+          <span class="kicker">Siguiente paso práctico</span>
+          <h2>Cómo usar este documento</h2>
+          <ul>
+            <li>Convertir cada módulo en una historia o épica técnica.</li>
+            <li>Definir inputs, outputs y reglas por módulo.</li>
+            <li>Construir primero P0 y dejar P1 para la segunda ola.</li>
+            <li>Validar cada fase con un flujo real de un negocio local.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <footer class="footer">
+      Documento generado desde <code>plan/HIGH_LEVEL_PLAN.md</code>. El orden sugerido de desarrollo es una recomendación práctica derivada del flujo V1 descrito en el plan.
+    </footer>
+  </div>
+</body>
+</html>

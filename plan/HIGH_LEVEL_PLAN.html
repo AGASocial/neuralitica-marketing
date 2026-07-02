@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neuralitica | Plan de Negocio V1</title>
+  <style>
+    :root {
+      --bg: #f3eee5;
+      --paper: #fffdf8;
+      --ink: #1e293b;
+      --muted: #5b6472;
+      --line: #ddd3c3;
+      --accent: #0f766e;
+      --accent-deep: #115e59;
+      --accent-soft: #d7f0ec;
+      --sand: #f7f1e7;
+      --warn: #9a3412;
+      --warn-soft: #fff1e8;
+      --shadow: 0 22px 56px rgba(30, 41, 59, 0.09);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      line-height: 1.6;
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 30%),
+        linear-gradient(180deg, #faf6ef 0%, var(--bg) 100%);
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 28px auto 56px;
+      background: var(--paper);
+      border: 1px solid rgba(221, 211, 195, 0.95);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 56px 56px 42px;
+      background:
+        linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(245, 158, 11, 0.08)),
+        #f8f5ee;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 18px 0 14px;
+      max-width: 11ch;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2.4rem, 4.2vw, 4.5rem);
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      max-width: 780px;
+      margin: 0;
+      font-size: 1.08rem;
+      color: var(--muted);
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .meta-card,
+    .card {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(221, 211, 195, 0.98);
+      border-radius: 18px;
+      padding: 18px 20px;
+    }
+
+    .meta-card span,
+    .kicker {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .meta-card strong {
+      font-size: 1rem;
+    }
+
+    .content {
+      display: grid;
+      gap: 24px;
+      padding: 40px 56px 56px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .grid-wide {
+      display: grid;
+      grid-template-columns: 1.3fr 0.9fr;
+      gap: 24px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.55rem;
+      line-height: 1.15;
+    }
+
+    p,
+    li,
+    td,
+    th {
+      font-size: 0.98rem;
+    }
+
+    p:last-child,
+    ul:last-child,
+    ol:last-child {
+      margin-bottom: 0;
+    }
+
+    ul,
+    ol {
+      margin: 14px 0 0;
+      padding-left: 20px;
+    }
+
+    li + li {
+      margin-top: 8px;
+    }
+
+    .quote {
+      padding: 18px 20px;
+      border-left: 5px solid var(--accent);
+      border-radius: 16px;
+      background: #f2faf8;
+      font-size: 1.05rem;
+      color: var(--accent-deep);
+    }
+
+    .notice {
+      background: var(--warn-soft);
+      border-left: 5px solid var(--warn);
+    }
+
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .flow span {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--sand);
+      border: 1px solid var(--line);
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th,
+    td {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .footer {
+      padding: 18px 56px 34px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 0.94em;
+    }
+
+    @media (max-width: 860px) {
+      .page {
+        width: min(100%, calc(100% - 20px));
+        margin: 10px auto 28px;
+        border-radius: 20px;
+      }
+
+      .hero,
+      .content,
+      .footer {
+        padding-left: 22px;
+        padding-right: 22px;
+      }
+
+      .hero {
+        padding-top: 34px;
+      }
+
+      .grid,
+      .grid-wide {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        width: 100%;
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <div class="eyebrow">Neuralitica · V1</div>
+      <h1>Sistema Agéntico de Marketing Local</h1>
+      <p>
+        Propuesta de V1 enfocada en Instagram para prestadores de servicios locales. El producto se plantea como
+        un sistema video-first que reduce la carga de crear contenido y convierte redes sociales en una operación
+        simple, aprobable y vendible.
+      </p>
+
+      <div class="meta">
+        <div class="meta-card">
+          <span>Cliente objetivo</span>
+          <strong>Prestadores locales de servicios</strong>
+        </div>
+        <div class="meta-card">
+          <span>Canal inicial</span>
+          <strong>Instagram</strong>
+        </div>
+        <div class="meta-card">
+          <span>Formato principal</span>
+          <strong>Video-first</strong>
+        </div>
+        <div class="meta-card">
+          <span>Entrega semanal base</span>
+          <strong>3 Reels + 5 Stories</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="grid-wide">
+        <article class="card">
+          <span class="kicker">Concepto</span>
+          <h2>Qué es la V1</h2>
+          <p>
+            La V1 será un sistema agéntico de marketing para Instagram, pensado para plomeros, peluqueros, barberos,
+            electricistas, técnicos de aire acondicionado, manicuristas y otros prestadores de servicios locales.
+          </p>
+          <p>
+            El objetivo es que el cliente delegue la creación de contenido sin tener que pensar ideas, escribir textos
+            ni grabarse en video.
+          </p>
+          <div class="quote">
+            El cliente responde una entrevista inicial, aprueba el contenido y el sistema genera videos, captions,
+            stories y CTAs para Instagram usando avatar propio autorizado, avatar genérico o videos sin rostro.
+          </div>
+        </article>
+
+        <aside class="card notice">
+          <span class="kicker">Tesis comercial</span>
+          <h2>Promesa central</h2>
+          <p>
+            El producto no se vende como software complejo. Se vende como una forma clara de quitarle al prestador local
+            la carga de redes sociales.
+          </p>
+          <div class="pill-row">
+            <span class="pill">Sin grabarse</span>
+            <span class="pill">Sin pensar ideas</span>
+            <span class="pill">Sin escribir textos</span>
+          </div>
+        </aside>
+      </div>
+
+      <div class="grid">
+        <article class="card">
+          <span class="kicker">Problema</span>
+          <h2>Fricciones que resuelve</h2>
+          <ul>
+            <li>No saben qué publicar.</li>
+            <li>No tienen tiempo para redes.</li>
+            <li>No quieren grabarse.</li>
+            <li>No saben escribir buenos captions.</li>
+            <li>No tienen estrategia de contenido.</li>
+            <li>Publican de forma irregular.</li>
+            <li>No convierten redes en conversaciones comerciales.</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <span class="kicker">Enfoque</span>
+          <h2>Qué hace distinta a la V1</h2>
+          <p>
+            La V1 será estrictamente video-first y se enfocará inicialmente en Instagram. No busca construir todavía
+            un sistema multicanal completo.
+          </p>
+          <p>
+            El foco es producir contenido útil y frecuente para atraer confianza, mensajes y potenciales clientes.
+          </p>
+        </article>
+      </div>
+
+      <article class="card">
+        <span class="kicker">Modos visuales</span>
+        <h2>Tres formatos de producción de video</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Modo</th>
+              <th>Uso</th>
+              <th>Ventaja</th>
+              <th>Límite o requisito</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Avatar propio autorizado</td>
+              <td>Se usa la imagen del cliente para crear videos con un avatar basado en él.</td>
+              <td>Más confianza y mayor marca personal.</td>
+              <td>Requiere consentimiento explícito y control del uso de imagen.</td>
+            </tr>
+            <tr>
+              <td>Avatar genérico profesional</td>
+              <td>Se usa un avatar afín al oficio: plomero, barbero, técnico, estilista, etc.</td>
+              <td>Rápido, escalable y no exige que el cliente se grabe.</td>
+              <td>No debe fingir ser el dueño real del negocio.</td>
+            </tr>
+            <tr>
+              <td>Video sin rostro</td>
+              <td>Videos con imágenes, animaciones, herramientas, texto en pantalla y voz IA.</td>
+              <td>Más simple, seguro y escalable.</td>
+              <td>Debe mantener claridad, utilidad y coherencia visual.</td>
+            </tr>
+          </tbody>
+        </table>
+      </article>
+
+      <article class="card">
+        <span class="kicker">Operación V1</span>
+        <h2>Flujo operativo propuesto</h2>
+        <div class="flow">
+          <span>Entrevista inicial</span>
+          <span>Ficha viva del negocio</span>
+          <span>Selección de modo visual</span>
+          <span>Estrategia semanal</span>
+          <span>Ideas de Reels</span>
+          <span>Guiones + hooks + CTAs</span>
+          <span>Generación de videos IA</span>
+          <span>Captions + hashtags + covers</span>
+          <span>QA automático</span>
+          <span>Aprobación del cliente</span>
+          <span>Publicación manual asistida</span>
+          <span>Métricas básicas</span>
+          <span>Aprendizaje semanal</span>
+        </div>
+      </article>
+
+      <div class="grid">
+        <article class="card">
+          <span class="kicker">Entregables</span>
+          <h2>Paquete semanal sugerido</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Entregable</th>
+                <th>Cantidad V1</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Reels generados por IA</td>
+                <td>3</td>
+              </tr>
+              <tr>
+                <td>Stories</td>
+                <td>5</td>
+              </tr>
+              <tr>
+                <td>Captions</td>
+                <td>3</td>
+              </tr>
+              <tr>
+                <td>Hooks alternativos</td>
+                <td>2 por Reel</td>
+              </tr>
+              <tr>
+                <td>CTAs</td>
+                <td>1 por pieza</td>
+              </tr>
+              <tr>
+                <td>Hashtags / keywords</td>
+                <td>Sí</td>
+              </tr>
+              <tr>
+                <td>Covers simples</td>
+                <td>Sí</td>
+              </tr>
+              <tr>
+                <td>Brief visual</td>
+                <td>Sí</td>
+              </tr>
+              <tr>
+                <td>Reporte de aprendizaje</td>
+                <td>Mensual</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            La arquitectura debe escalar luego a 5 Reels semanales, pero el MVP inicia con 3 para mantener simplicidad operativa.
+          </p>
+        </article>
+
+        <article class="card">
+          <span class="kicker">Build scope</span>
+          <h2>Módulos que debe construir el programador</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Módulo</th>
+                <th>Función</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Interview Builder</td>
+                <td>Entrevista inicial del cliente.</td>
+              </tr>
+              <tr>
+                <td>Business Profile</td>
+                <td>Ficha viva del negocio.</td>
+              </tr>
+              <tr>
+                <td>Avatar Mode Selector</td>
+                <td>Define avatar propio, genérico o video sin rostro.</td>
+              </tr>
+              <tr>
+                <td>Content Strategy Agent</td>
+                <td>Define pilares, temas y enfoque.</td>
+              </tr>
+              <tr>
+                <td>Video Script Agent</td>
+                <td>Crea hooks, guiones, CTAs y texto en pantalla.</td>
+              </tr>
+              <tr>
+                <td>Video Generator Connector</td>
+                <td>Conecta con herramienta externa de video o avatar IA.</td>
+              </tr>
+              <tr>
+                <td>Caption Agent</td>
+                <td>Genera captions, hashtags y CTAs.</td>
+              </tr>
+              <tr>
+                <td>QA/Compliance Agent</td>
+                <td>Revisa tono, claims, claridad, derechos y uso de IA.</td>
+              </tr>
+              <tr>
+                <td>Approval Flow</td>
+                <td>Permite aprobar o pedir cambios.</td>
+              </tr>
+              <tr>
+                <td>Content Calendar</td>
+                <td>Organiza el contenido semanal.</td>
+              </tr>
+              <tr>
+                <td>Metrics Lite</td>
+                <td>Registra rendimiento básico.</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+      </div>
+
+      <div class="grid">
+        <article class="card notice">
+          <span class="kicker">Reglas duras</span>
+          <h2>Condiciones no negociables de la V1</h2>
+          <ol>
+            <li>No exigir que el cliente grabe videos.</li>
+            <li>No publicar sin aprobación.</li>
+            <li>No usar avatar propio sin consentimiento explícito.</li>
+            <li>No hacer pasar un avatar genérico como si fuera el dueño real.</li>
+            <li>No prometer resultados garantizados.</li>
+            <li>No generar claims técnicos peligrosos sin revisión.</li>
+            <li>No automatizar respuestas sensibles por DM en V1.</li>
+            <li>No construir multicanal todavía.</li>
+            <li>No depender de ads para validar.</li>
+            <li>Mantener la operación simple y vendible.</li>
+          </ol>
+        </article>
+
+        <article class="card">
+          <span class="kicker">Fuera de alcance</span>
+          <h2>Qué no entra en esta versión</h2>
+          <ul>
+            <li>TikTok, YouTube, LinkedIn y blog.</li>
+            <li>Ads y validación pagada.</li>
+            <li>CRM avanzado y dashboard complejo.</li>
+            <li>Publicación automática obligatoria.</li>
+            <li>Automatización completa de DMs.</li>
+            <li>Edición avanzada propietaria de video.</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="grid-wide">
+        <article class="card">
+          <span class="kicker">Posicionamiento</span>
+          <h2>Cómo debe explicarse comercialmente</h2>
+          <div class="quote">
+            Tu agente de marketing crea Reels, Stories y publicaciones para Instagram sin que tengas que grabarte,
+            pensar ideas ni escribir textos.
+          </div>
+          <p>
+            Para el prestador local, la promesa debe sentirse operativa y concreta: responde una entrevista, aprueba el
+            contenido y su Instagram empieza a publicar videos útiles para generar más conversaciones comerciales.
+          </p>
+        </article>
+
+        <article class="card">
+          <span class="kicker">Dirección recomendada</span>
+          <h2>Norte del producto</h2>
+          <p>
+            La V1 debe definirse como un agente Instagram video-first para prestadores locales, capaz de generar 3 Reels
+            semanales usando avatar propio autorizado, avatar genérico o videos sin rostro, sin exigir que el cliente grabe contenido.
+          </p>
+          <p>
+            Después de validar la V1, el sistema puede crecer hacia 5 Reels semanales, publicación automática, integración
+            con WhatsApp, Google Business Profile, TikTok, reportes avanzados, ads locales, CRM ligero y operación multicanal.
+          </p>
+        </article>
+      </div>
+
+      <article class="card">
+        <span class="kicker">Conclusión</span>
+        <h2>La definición correcta del MVP</h2>
+        <div class="quote">
+          Crear videos para Instagram de forma automática o semi-automática para prestadores de servicios locales que no
+          quieren grabarse ni gestionar redes.
+        </div>
+        <p>
+          Esta propuesta ataca una fricción real: falta de tiempo, falta de ideas, incomodidad frente a cámara y baja constancia.
+          La oportunidad de negocio está en empaquetar esa solución con foco, simplicidad y una promesa fácil de vender.
+        </p>
+      </article>
+    </section>
+
+    <footer class="footer">
+      Documento generado a partir de <code>plan/HIGH_LEVEL_PLAN.md</code> el 19 de junio de 2026 para revisión con socio.
+    </footer>
+  </div>
+</body>
+</html>
