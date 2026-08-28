@@ -6,6 +6,15 @@ import type { CSSProperties } from "react";
 
 import type { Locale } from "@/lib/i18n/locales";
 
+/** Safe query keys to preserve across locale switches. Never copy tokens or PII. */
+const AUTH_LOCALE_HREF_KEYS = [
+  "next",
+  "redirectTo",
+  "confirmed",
+  "error",
+  "reset",
+] as const;
+
 type AuthLocaleSwitcherProps = {
   locale: Locale;
   labels: {
@@ -14,15 +23,30 @@ type AuthLocaleSwitcherProps = {
   };
 };
 
+function hrefForLocale(
+  pathname: string,
+  searchParams: Pick<URLSearchParams, "get">,
+  nextLocale: Locale,
+): string {
+  const params = new URLSearchParams();
+  params.set("locale", nextLocale);
+
+  for (const key of AUTH_LOCALE_HREF_KEYS) {
+    const value = searchParams.get(key)?.trim();
+    if (value) {
+      params.set(key, value);
+    }
+  }
+
+  return `${pathname}?${params.toString()}`;
+}
+
 export function AuthLocaleSwitcher({ locale, labels }: AuthLocaleSwitcherProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   function hrefFor(nextLocale: Locale) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("locale", nextLocale);
-    const query = params.toString();
-    return query ? `${pathname}?${query}` : pathname;
+    return hrefForLocale(pathname, searchParams, nextLocale);
   }
 
   const linkStyle = (active: boolean): CSSProperties => ({
