@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import Module from "node:module";
 import { describe, it } from "node:test";
 
+import { NextResponse } from "next/server";
+
 import { isSupabaseAuthCookieName } from "./auth-cookie-name";
 import {
   assertAuthDevFallbackEnv,
@@ -9,7 +11,10 @@ import {
 } from "./assert-dev-fallback";
 import type { CurrentUser } from "./get-current-user-types";
 import { resolveActiveGuard, resolveOperatorGuard } from "./guard-decision";
-import { buildLoginLocation } from "./login-redirect";
+import {
+  buildAbsoluteLoginLocation,
+  buildLoginLocation,
+} from "./login-redirect";
 import { mapClientRowToCurrentUser } from "./map-client-row";
 import { isPublicPath, normalizePathname } from "./public-routes";
 import { shouldRefreshSessionOnEdge } from "./refresh-session-cookies";
@@ -135,6 +140,70 @@ describe("login Location", () => {
       buildLoginLocation({ next: "https://evil.example" }),
       "/login?next=%2Fdashboard",
     );
+  });
+
+  it("builds an absolute Edge login URL from SITE_URL, not a spoofed origin", () => {
+    assert.equal(
+      buildAbsoluteLoginLocation({
+        siteUrl: "https://app.example.com",
+        appOrigin: "https://evil.example",
+        next: "/dashboard",
+      }),
+      "https://app.example.com/login?next=%2Fdashboard",
+    );
+    assert.equal(
+      buildAbsoluteLoginLocation({
+        siteUrl: "https://app.example.com",
+        appOrigin: "https://evil.example",
+        next: "/pending",
+      }),
+      "https://app.example.com/login",
+    );
+    assert.equal(
+      buildAbsoluteLoginLocation({
+        siteUrl: undefined,
+        appOrigin: "http://localhost:3463",
+        next: "/dashboard",
+      }),
+      "http://localhost:3463/login?next=%2Fdashboard",
+    );
+    assert.equal(
+      buildAbsoluteLoginLocation({
+        siteUrl: "not a url",
+        appOrigin: "http://localhost:3000",
+        next: null,
+      }),
+      "http://localhost:3000/login",
+    );
+  });
+
+  it("NextResponse.redirect accepts the absolute login URL", () => {
+    const dashboard = NextResponse.redirect(
+      buildAbsoluteLoginLocation({
+        siteUrl: "https://app.example.com",
+        appOrigin: "http://localhost:3000",
+        next: "/dashboard",
+      }),
+      302,
+    );
+    dashboard.headers.set("Cache-Control", "no-store");
+    assert.equal(dashboard.status, 302);
+    assert.equal(
+      dashboard.headers.get("Location"),
+      "https://app.example.com/login?next=%2Fdashboard",
+    );
+    assert.equal(dashboard.headers.get("Cache-Control"), "no-store");
+
+    const pending = NextResponse.redirect(
+      buildAbsoluteLoginLocation({
+        siteUrl: "https://app.example.com",
+        appOrigin: "http://localhost:3000",
+        next: "/pending",
+      }),
+      302,
+    );
+    assert.equal(pending.headers.get("Location"), "https://app.example.com/login");
+    assert.equal(pending.headers.get("Location")?.includes("next="), false);
   });
 });
 

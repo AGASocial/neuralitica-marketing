@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { isSupabaseAuthCookieName } from "@/lib/auth/auth-cookie-name";
-import { buildLoginLocation } from "@/lib/auth/login-redirect";
+import { buildAbsoluteLoginLocation } from "@/lib/auth/login-redirect";
 import {
   isPublicPath,
   LOCALE_HEADER,
@@ -16,14 +16,25 @@ function hasSupabaseAuthCookie(request: NextRequest): boolean {
     .some((cookie) => isSupabaseAuthCookieName(cookie.name));
 }
 
-function relativeRedirect(location: string): NextResponse {
-  return new NextResponse(null, {
-    status: 302,
-    headers: {
-      Location: location,
-      "Cache-Control": "no-store",
-    },
+/**
+ * Next.js 15 Edge rejects relative `Location` (`middleware-relative-urls`).
+ * Absolute origin is `SITE_URL` then `request.nextUrl.origin` — never raw
+ * `Host` / `X-Forwarded-Host`.
+ */
+function loginRedirect(
+  request: NextRequest,
+  next: string | null,
+  locale: string | null,
+): NextResponse {
+  const location = buildAbsoluteLoginLocation({
+    siteUrl: process.env.SITE_URL,
+    appOrigin: request.nextUrl.origin,
+    next,
+    locale,
   });
+  const response = NextResponse.redirect(location, 302);
+  response.headers.set("Cache-Control", "no-store");
+  return response;
 }
 
 function withPathHeaders(
@@ -58,7 +69,7 @@ export async function middleware(
 
   if (!hasSupabaseAuthCookie(request)) {
     const next = pathname === "/pending" ? null : pathname;
-    return relativeRedirect(buildLoginLocation({ next, locale }));
+    return loginRedirect(request, next, locale);
   }
 
   return refreshSessionCookiesOnEdge(request, pathname, locale);
