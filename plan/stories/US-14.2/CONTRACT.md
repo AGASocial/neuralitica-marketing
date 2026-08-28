@@ -16,7 +16,7 @@ Reviewed by FE: yes — 2026-08-28
 
 Email/password login is a CSRF-protected Server Action wrapping Supabase Auth `signInWithPassword` on the server. On success the server mints an httpOnly session cookie and returns an opaque landing path. The browser never receives Supabase tokens, keys, `role`, `active`, `auth_user_id`, or `client_id`.
 
-Email confirmation (carry-forward from US-14.1) is completed by `GET /auth/callback`. **Callback Path A is frozen** (see below): the handler exchanges `code` server-side, does **not** leave a durable product session, and 302s to `/login`. Confirmed-inactive users reach pending **only after** a successful password login.
+Email confirmation (carry-forward from US-14.1) is completed by `GET /auth/callback`. **Callback Path A is frozen** (see below): the handler confirms via `token_hash`+`type` (`verifyOtp`) **or** PKCE `code` (`exchangeCodeForSession`) server-side, does **not** leave a durable product session, and 302s to `/login`. Confirmed-inactive users reach pending **only after** a successful password login. No PKCE cookie is required for email confirmation.
 
 **Frontend consumers**
 
@@ -35,8 +35,8 @@ Email confirmation (carry-forward from US-14.1) is completed by `GET /auth/callb
 | `lib/auth/forbidden-fields.ts` | Login forbidden-key set (same names as signup) |
 | `lib/auth/errors.ts` | Reuse envelope helpers; add credentials failure helper at BUILD |
 | `lib/auth/get-client-ip.ts`, `lib/auth/hash.ts` | IP + HMAC as US-14.1 |
-| `@supabase/ssr` `createServerClient` | User-scoped cookie adapter for `signInWithPassword` / `exchangeCodeForSession` |
-| Existing service-role client | `neuramark_clients` read + `neuramark_auth_attempts` only; `persistSession: false`; **must not** mint cookies |
+| `@supabase/ssr` `createServerClient` | User-scoped cookie adapter for `signInWithPassword` / PKCE `exchangeCodeForSession` |
+| Existing service-role client | `neuramark_clients` read + `neuramark_auth_attempts`; email-confirm `verifyOtp` (`persistSession: false` — **must not** mint cookies) |
 
 ---
 
@@ -215,8 +215,10 @@ Until US-14.5, product pages may still resolve `getCurrentUser()` as the hardcod
 **E2E path (must prove this, not Path B):**
 
 ```text
-email link → GET /auth/callback?code=… → exchange code server-side
-  → drop any session cookies from the exchange (no durable session)
+email link → GET /auth/callback?token_hash=…&type=signup  (or type=email)
+           or GET /auth/callback?code=…  (PKCE links only)
+  → verifyOtp / exchangeCodeForSession server-side
+  → drop any session cookies (no durable session; no PKCE cookie required)
   → 302 Location: /login?confirmed=1
 password login (confirmed + inactive) → logIn success → redirectTo "/pending"
 ```
@@ -227,8 +229,9 @@ Stolen inbox can confirm email; it **does not** mint a session and **does not** 
 
 | Param | Use |
 |-------|-----|
-| `code` | One-time Auth code. Exchanged **server-side** immediately. Never logged. Never copied into `Location`, HTML, JSON, or JS. |
-| `error`, `error_description` | Provider error query. **Never echoed.** Map to the generic confirmation-failure landing. |
+| `token_hash` + `type` | Email OTP confirmation (US-14.1 `admin.createUser` + `auth.resend` links). Verified **server-side** with `verifyOtp`. `type` allowlist: `signup`, `email`, `invite`, `magiclink`, `recovery`, `email_change`. Never logged. Never copied into `Location`, HTML, JSON, or JS. Preferred when present — does **not** require a PKCE verifier cookie. |
+| `code` | One-time PKCE Auth code. Exchanged **server-side** immediately when `token_hash` is absent. Never logged. Never copied into `Location`, HTML, JSON, or JS. |
+| `error`, `error_description` | Provider error query. **Never echoed.** Map to the generic confirmation-failure landing. Ignored in `Location` even when present. |
 | `next`, `redirect_to`, `redirectTo` | **Ignored on Path A.** Unsafe or any value still lands on the frozen callback URLs below — never an external URL, never `/dashboard` from the callback. |
 
 Other query keys are ignored.
@@ -239,10 +242,11 @@ Build **app-relative** 302 targets (leading `/`). Do not construct absolute URLs
 
 | Outcome | Status | `Location` | Session cookie |
 |---------|--------|------------|----------------|
-| Valid `code`, exchange succeeds | 302 | `/login?confirmed=1` | **None left** — sign out / delete `sb-*` if the exchange set them |
-| Missing/invalid/expired/used `code` | 302 | `/login?error=confirmation` | None |
+| Valid `token_hash`+`type`, `verifyOtp` succeeds | 302 | `/login?confirmed=1` | **None left** — service-role client does not persist; expire any `sb-*` |
+| Valid `code`, PKCE exchange succeeds | 302 | `/login?confirmed=1` | **None left** — sign out / delete `sb-*` if the exchange set them |
+| Missing/invalid/expired/used `token_hash` or `code`; `token_hash` without a valid `type` | 302 | `/login?error=confirmation` | None |
 | `error` / `error_description` present | 302 | `/login?error=confirmation` | None |
-| Exchange throws / provider failure | 302 | `/login?error=confirmation` | None |
+| Verify / exchange throws / provider failure | 302 | `/login?error=confirmation` | None |
 
 All failure rows share **one** confirmation-failure page and copy (`auth.login.confirmationFailed`). No Supabase text. Same landing whether the code is missing, expired, or already used.
 
@@ -383,7 +387,7 @@ Supabase Auth built-in rate limits remain the second layer.
 ```mermaid
 stateDiagram-v2
   [*] --> Unconfirmed: signUp (US-14.1)
-  Unconfirmed --> ConfirmedInactive: Path A callback exchanges code
+  Unconfirmed --> ConfirmedInactive: Path A callback (token_hash or code)
   Unconfirmed --> Unconfirmed: callback error (still unconfirmed)
   ConfirmedInactive --> PendingSession: logIn success (active=false or missing row)
   ConfirmedInactive --> ActiveSession: logIn success (active=true)
@@ -661,7 +665,11 @@ FE displays the same string as `INVALID_CREDENTIALS`. Do not infer that the emai
 
 ### `GET /auth/callback` — Path A success
 
-**Request:** `GET /auth/callback?code=pkce-or-auth-code-from-email`
+Either confirmation param set is valid. Same 302 targets (FE signoff unchanged).
+
+**Request (email OTP, typical US-14.1 link):** `GET /auth/callback?token_hash=…&type=signup`
+
+**Request (PKCE):** `GET /auth/callback?code=pkce-or-auth-code-from-email`
 
 **Response:** `302`  
 **Headers:**
@@ -670,7 +678,7 @@ FE displays the same string as `INVALID_CREDENTIALS`. Do not infer that the emai
 - `Referrer-Policy: no-referrer`
 - `Set-Cookie` clearing any cookies the exchange may have set (no durable session)
 
-No JSON body. `code` must not appear in `Location`.
+No JSON body. `code`, `token_hash`, `type`, `next`, `redirect_to`, and `error_description` must not appear in `Location`.
 
 ---
 
@@ -678,9 +686,11 @@ No JSON body. `code` must not appear in `Location`.
 
 Examples that must share this landing:
 
-- `GET /auth/callback` (no `code`)
+- `GET /auth/callback` (no `code` and no `token_hash`)
+- `GET /auth/callback?token_hash=…` (missing or unknown `type`)
 - `GET /auth/callback?error=access_denied&error_description=...`
 - `GET /auth/callback?code=expired-or-reused`
+- `GET /auth/callback?token_hash=expired-or-reused&type=signup`
 
 **Response:** `302`  
 **Headers:**
@@ -738,3 +748,4 @@ Known interim: until US-14.5, an inactive session plus hardcoded `getCurrentUser
 |------|--------|
 | 2026-08-28 | Initial contract (nextjs-backend): Path A callback, opaque `redirectTo`, additive login Zod types in `lib/contracts/auth.ts` |
 | 2026-08-28 | FE signoff: pending identity from action result; URL `next`/`redirectTo` → action `next`; Path A banners on `/login` |
+| 2026-08-28 | Callback accepts `code` **or** `token_hash`+`type` (`verifyOtp`); still Path A (no durable session; 302 `/login?confirmed=1` / `/login?error=confirmation`). **FE signoff still valid** — same 302 targets. |

@@ -1,15 +1,36 @@
 import { NextResponse } from "next/server";
+import type { EmailOtpType } from "@supabase/supabase-js";
 
 import {
   createUserScopedAuthClientForResponse,
   expireSupabaseAuthCookies,
   isUserScopedAuthConfigured,
 } from "@/lib/auth/supabase-cookie";
+import {
+  createServerSupabaseClient,
+  isSupabaseConfigured,
+} from "@/lib/auth/supabase-server";
 
 export const dynamic = "force-dynamic";
 
 const CONFIRMED_LOCATION = "/login?confirmed=1";
 const CONFIRMATION_ERROR_LOCATION = "/login?error=confirmation";
+
+const EMAIL_OTP_TYPES = new Set<string>([
+  "signup",
+  "invite",
+  "magiclink",
+  "recovery",
+  "email_change",
+  "email",
+]);
+
+function parseEmailOtpType(value: string): EmailOtpType | null {
+  if (!EMAIL_OTP_TYPES.has(value)) {
+    return null;
+  }
+  return value as EmailOtpType;
+}
 
 function pathARedirect(location: typeof CONFIRMED_LOCATION | typeof CONFIRMATION_ERROR_LOCATION): NextResponse {
   return new NextResponse(null, {
@@ -31,17 +52,53 @@ function confirmationFailure(request: Request): NextResponse {
 }
 
 /**
- * Path A: exchange confirmation `code` server-side, drop any session cookies,
- * 302 to `/login`. Never lands on product routes. `next` / `redirectTo` ignored.
+ * Path A: confirm via `token_hash`+`type` (verifyOtp) or PKCE `code`
+ * (exchangeCodeForSession). Drop any session cookies. 302 to `/login`.
+ * Never lands on product routes. `next` / `redirectTo` ignored.
  */
 export async function GET(request: Request): Promise<NextResponse> {
   try {
     const url = new URL(request.url);
     const providerError = url.searchParams.get("error");
     const errorDescription = url.searchParams.get("error_description");
+
+    if (providerError || errorDescription) {
+      return confirmationFailure(request);
+    }
+
+    const tokenHash = url.searchParams.get("token_hash")?.trim() ?? "";
+    const otpType = parseEmailOtpType(
+      (url.searchParams.get("type")?.trim() ?? "").toLowerCase(),
+    );
     const code = url.searchParams.get("code")?.trim() ?? "";
 
-    if (providerError || errorDescription || !code) {
+    if (tokenHash) {
+      if (!otpType) {
+        return confirmationFailure(request);
+      }
+
+      if (!isSupabaseConfigured()) {
+        console.error("[auth] callback unavailable: supabase not configured");
+        return confirmationFailure(request);
+      }
+
+      // Service-role client: persistSession false — verifyOtp must not mint cookies.
+      const supabase = createServerSupabaseClient();
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: otpType,
+      });
+
+      if (error) {
+        return confirmationFailure(request);
+      }
+
+      const success = pathARedirect(CONFIRMED_LOCATION);
+      expireSupabaseAuthCookies(request, success);
+      return success;
+    }
+
+    if (!code) {
       return confirmationFailure(request);
     }
 
