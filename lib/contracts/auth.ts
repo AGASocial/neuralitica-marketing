@@ -1,5 +1,5 @@
 /**
- * Auth contract types and Zod schemas (US-14.1 signup, US-14.2 login).
+ * Auth contract types and Zod schemas (US-14.1 signup, US-14.2 login, US-14.4 reset).
  * FE imports types only; password policy and next-path sanitizer stay server-side.
  */
 import { z } from "zod";
@@ -10,7 +10,7 @@ import { supportedLocaleSchema } from "./providers";
 export const clientRoleSchema = z.enum(["client", "operator"]);
 export type ClientRole = z.infer<typeof clientRoleSchema>;
 
-/** DB enum neuramark_auth_action — server-only writes. No `login_success` (US-14.2). */
+/** DB enum neuramark_auth_action — server-only writes. No `login_success` (US-14.2). No set-password action (US-14.4). */
 export const authAttemptActionSchema = z.enum([
   "signup",
   "resend_confirmation",
@@ -27,6 +27,7 @@ export const authErrorCodeSchema = z.enum([
   "RATE_LIMITED",
   "INTERNAL_ERROR",
   "INVALID_CREDENTIALS",
+  "RECOVERY_INVALID",
 ]);
 export type AuthErrorCode = z.infer<typeof authErrorCodeSchema>;
 
@@ -92,7 +93,7 @@ export const authErrorEnvelopeSchema = z.object({
   ok: z.literal(false),
   error: z.object({
     code: authErrorCodeSchema,
-    /** i18n keys under auth.errors.* / auth.login.* — FE maps to EN/ES copy */
+    /** i18n keys under auth.errors.* / auth.login.* / auth.reset.* — FE maps to EN/ES copy */
     messageKey: z.string(),
     fields: authFieldErrorsSchema.optional(),
     passwordPolicy: passwordPolicyViolationSchema.optional(),
@@ -152,3 +153,59 @@ export const logInResultSchema = z.discriminatedUnion("ok", [
   authErrorEnvelopeSchema,
 ]);
 export type LogInResult = z.infer<typeof logInResultSchema>;
+
+/** Forbidden if present: role, active, auth_user_id, client_id (same privilege keys as resend). */
+export const requestPasswordResetInputSchema = z
+  .object({
+    email: z
+      .string()
+      .trim()
+      .min(1)
+      .max(320)
+      .email()
+      .transform((v) => v.toLowerCase()),
+  })
+  .strict();
+export type RequestPasswordResetInput = z.infer<
+  typeof requestPasswordResetInputSchema
+>;
+
+export const requestPasswordResetSuccessSchema = authGenericSuccessSchema;
+export type RequestPasswordResetSuccess = z.infer<
+  typeof requestPasswordResetSuccessSchema
+>;
+
+export const requestPasswordResetResultSchema = z.discriminatedUnion("ok", [
+  requestPasswordResetSuccessSchema,
+  authErrorEnvelopeSchema,
+]);
+export type RequestPasswordResetResult = z.infer<
+  typeof requestPasswordResetResultSchema
+>;
+
+/**
+ * New password only. `confirmPassword` / `confirm_password` are forbidden on the
+ * wire (client match is UX only). Privilege keys (role, active, …) also forbidden.
+ */
+export const setNewPasswordInputSchema = z
+  .object({
+    password: z.string().min(1).max(128),
+  })
+  .strict();
+export type SetNewPasswordInput = z.infer<typeof setNewPasswordInputSchema>;
+
+/**
+ * Opaque login path after global sign-out. FE must navigate here as-is.
+ * Cookie is not part of this JSON body (and must not remain after success).
+ */
+export const setNewPasswordSuccessSchema = z.object({
+  ok: z.literal(true),
+  redirectTo: z.literal("/login?reset=1"),
+});
+export type SetNewPasswordSuccess = z.infer<typeof setNewPasswordSuccessSchema>;
+
+export const setNewPasswordResultSchema = z.discriminatedUnion("ok", [
+  setNewPasswordSuccessSchema,
+  authErrorEnvelopeSchema,
+]);
+export type SetNewPasswordResult = z.infer<typeof setNewPasswordResultSchema>;
