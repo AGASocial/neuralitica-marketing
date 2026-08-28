@@ -8,7 +8,13 @@
 
 En Cursor (modo Agent): escribe **`/desarrollar`** o pide *"orquesta la siguiente historia"*.
 
-Estado persistente: [`SPRINT-STATE.md`](SPRINT-STATE.md)
+Estado persistente: [`SPRINT-STATE.md`](SPRINT-STATE.md) (incluye `feature_branch` por historia activa)
+
+## Git (obligatorio)
+
+- **Rama por historia:** `feature/{US-id}-{slug}` desde `main` al iniciar la historia; un solo working tree (sin worktrees).
+- **Commit al terminar:** cada implementador (o el orquestador tras BUILD/fix) commitea el trabajo completado antes del siguiente gate.
+- Push/PR solo si el usuario lo pide o al cerrar la historia para review.
 
 ## Principio
 

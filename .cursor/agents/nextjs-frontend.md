@@ -38,6 +38,7 @@ Before frontend work:
 - Auth UI (login, signup, reset password) is in scope per its stories — but it always calls Next.js auth endpoints, never Supabase auth SDKs in the browser. Until auth lands, user identity comes from the server (`getCurrentUser()`: `gaveho@gmail.com` / `Gabriel Vega`).
 - Default the entry experience to the dashboard.
 - When done, check off completed items in the FE section of the story's `TASKS.md` and state which acceptance criteria your change satisfies so the validator can check them. Do not check acceptance criteria in `USER_STORIES.md` yourself.
+- **Git:** work on the story's `feature/{US-id}-{slug}` branch (orchestrator creates it). When your FE slice is complete, **commit** with a message like `US-14.1: add signup page and auth UI`. Never commit `.env` or secrets.
 </implementation_rules>
 
 <output_expectations>

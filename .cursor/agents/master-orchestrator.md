@@ -69,6 +69,45 @@ For each user story `US-{phase}.{seq}`:
 **On CONTRACT dispute:** pause; surface to user with spec-guardian verdict.
 </story_state_machine>
 
+<git_workflow>
+Version control is **mandatory** for every story. This is a single-app repo — use normal branches in the main working tree (no git worktrees).
+
+### Feature branch (start of story)
+
+When **SELECT** picks a new story (or resume finds no `feature_branch` for `current_story`):
+
+1. Ensure `main` is current: `git fetch origin` (if remote exists), then `git checkout main` and `git pull --ff-only` when safe.
+2. Create and switch: `git checkout -b feature/{story-id}-{short-slug}`  
+   Example: `feature/US-14.1-signup` for `US-14.1`.
+3. Record the branch in `SPRINT-STATE.md` as `feature_branch`.
+4. Stay on that branch for **all** work for the story (PREP → CLOSE), including fix loops.
+
+Do **not** start the next story on the same branch — new story → new feature branch from updated `main`.
+
+### Commits (when work is done)
+
+**Commit when a unit of work is complete** — do not leave finished implementation uncommitted.
+
+| When | Who commits | What |
+|------|-------------|------|
+| After BUILD (each implementer returns) | Implementer (preferred) or orchestrator | FE/BE/DB code + `TASKS.md` checkoffs |
+| After VALIDATE/QA fix delegation | Owning implementer or orchestrator | Fix commits; message references story ID |
+| After CLOSE | Orchestrator | Any remaining story artifacts; working tree should be clean |
+
+**Commit rules:**
+
+- One logical commit per completed slice (e.g. "US-14.1: add signup Server Actions and migration" — not a dump of unrelated files).
+- Never commit `.env`, credentials, or secrets; warn if asked.
+- Use HEREDOC for commit messages; follow recent repo style (`git log -5`).
+- Do **not** force-push `main`/`master`; do not amend unless user rules allow.
+
+Orchestrator **may** run `git add` + `git commit` after subagents return when implementers did not commit. Prefer delegating "commit your changes" in BUILD prompts.
+
+### Push / PR
+
+Push and open PR only when the user asks or at story CLOSE if they want review — default is **commit locally** on the feature branch.
+</git_workflow>
+
 <phase_protocol>
 When all stories for a PLAN phase are CLOSED:
 
@@ -96,6 +135,7 @@ Maintain `docs/development/SPRINT-STATE.md`:
 ```yaml
 current_phase: 1
 current_story: US-14.1 | null
+feature_branch: feature/US-14.1-signup | null
 story_status: SELECT | PREP | SPEC | SECURITY | CONTRACT | SIGNOFF | BUILD | VALIDATE | QA | CLOSE | DONE
 last_completed_story: null
 phase_status: in_progress | blocked | complete
@@ -134,6 +174,8 @@ Do not parallelize across stories — **one story active at a time** unless user
 - Skipping SECURITY or CONTRACT for "speed"
 - Starting phase N+1 while integration-checker reports GAPS on phase N
 - Using vocabulary from CONTEXT _Evitar_ list in new artifacts
+- Leaving completed story work uncommitted on the feature branch
+- Using git worktrees (single working tree + feature branches only)
 </forbidden>
 
 <boot_command>

@@ -52,6 +52,7 @@ For each story, before writing feature code:
 - Implement auth per its stories: Supabase Auth behind Next.js endpoints, sessions in httpOnly cookies, no Supabase tokens or auth SDKs in the browser. All identity resolution goes through `getCurrentUser()` (hardcoded `gaveho@gmail.com` / `Gabriel Vega` until auth lands).
 - Follow the DB column and table names suggested in the user stories unless there is a documented reason to deviate.
 - When done, check off completed items in the BE and DB sections of the story's `TASKS.md` and state which acceptance criteria your change satisfies so the validator can check them. Do not check acceptance criteria in `USER_STORIES.md` yourself.
+- **Git:** work on the story's `feature/{US-id}-{slug}` branch (orchestrator creates it). When your BE/DB slice is complete and builds, **commit** with a message like `US-14.1: add signup Server Actions and migration`. Never commit `.env` or secrets.
 </implementation_rules>
 
 <output_expectations>
