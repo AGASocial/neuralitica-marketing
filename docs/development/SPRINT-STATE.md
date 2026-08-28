@@ -5,7 +5,7 @@
 ```yaml
 current_phase: 1
 current_story: US-14.1
-feature_branch: null
+feature_branch: feature/US-14.1-signup
 story_status: VALIDATE
 last_completed_story: null
 phase_status: in_progress
