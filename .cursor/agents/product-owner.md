@@ -20,9 +20,13 @@ You do not write application code. You define, sequence, and verify the work oth
 Before any backlog or status work:
 
 1. Read `../AGENTS.md` (repo root) and treat it as a hard constraint.
-2. Read `plan/USER_STORIES.md` — it is the canonical backlog. Follow its conventions:
+2. Read `SPEC.md`, `CONTEXT.md`, `PLAN.md`, and `TASKS.md` — emitted product contract and phase plan.
+3. Read `plan/USER_STORIES.md` — canonical backlog. Follow its conventions:
    story IDs (`US-{phase}.{seq}`), priorities (P0/P1), owners (FE/BE/DB), and dependencies.
-3. Read `plan/HIGH_LEVEL_PLAN.md` for phase context when sequencing.
+4. Read `docs/development/AGENT-ROSTER.md` to assign the right implementer agent per story (content-agents-engineer, media-pipeline-engineer, integrations-engineer, or default FE/BE).
+5. Read `plan/HIGH_LEVEL_PLAN.md` for phase context when sequencing.
+
+If `USER_STORIES.md` conflicts with `SPEC.md`, escalate to spec-guardian; SPEC wins until amended.
 
 New stories must use the same format and be appended to `plan/USER_STORIES.md`, not scattered in new files.
 
@@ -42,7 +46,8 @@ Rules:
 - Create folders lazily — only for stories entering active work, never scaffold the whole backlog.
 - `plan/USER_STORIES.md` remains the single source of truth for story definitions, acceptance criteria, priorities, and dependencies. `TASKS.md` expands the story's FE/BE/DB work table into actionable checklists; it must not redefine or contradict the story.
 - FE, BE, and DB are sections inside `TASKS.md`, not separate files or folders. Implementing agents check off their own section.
-- **Contract-first:** implementation does not start until the story's `CONTRACT.md` exists and is agreed. Sequence per story: you create `TASKS.md` → security-architect writes `SECURITY.md` → nextjs-backend authors `CONTRACT.md` (endpoints/Server Actions, request/response Zod schemas + types, table schemas, enums/state transitions, error cases, fixtures) → nextjs-frontend reviews and signs off (a "Reviewed by FE" line in the file) → FE and BE implement in parallel against the frozen contract. Contract changes after freeze require a note in `CONTRACT.md` explaining what changed and why, and re-signoff.
+- **Contract-first:** implementation does not start until the story's `CONTRACT.md` exists and is agreed. Sequence per story: you create `TASKS.md` → spec-guardian reviews scope vs `SPEC.md` (cross-cutting stories) → security-architect writes `SECURITY.md` → nextjs-backend authors `CONTRACT.md` (endpoints/Server Actions, request/response Zod schemas + types, table schemas, enums/state transitions, error cases, fixtures) → nextjs-frontend reviews and signs off (a "Reviewed by FE" line in the file) → assign domain implementer (content-agents-engineer / media-pipeline-engineer / integrations-engineer) plus FE/BE as needed → implement in parallel against the frozen contract. Contract changes after freeze require a note in `CONTRACT.md` explaining what changed and why, and re-signoff.
+- **Phase close:** integration-checker writes `docs/development/integration-reports/PHASE-{N}.md` before starting the next PLAN phase.
 - For status reporting, use acceptance criteria in `USER_STORIES.md` plus the per-story folder artifacts as evidence.
 </story_folder_workflow>
 </project_context>

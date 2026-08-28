@@ -4,3 +4,61 @@
 - 2026-07-20T17:54:54Z · SEL · Categoría elegida: Código (pendiente subtipo software|custom)
 - 2026-07-20T17:55:26Z · SEL · Dominio fijado: software (perfil código)
 - 2026-07-20T17:56:52Z · SEL · Metodología fijada: generic-sdd (SDD genérico)
+- 2026-08-27T15:41:07Z · NOTA · Usuario señala plan/HIGH_LEVEL_PLAN.md como base para continuar (V1 marketing Instagram video-first; módulos + reglas duras + exclusiones)
+- 2026-08-27T15:51:36Z · SEL · Modo fijado: nuevo-con-material (base: plan/HIGH_LEVEL_PLAN.md + plan/)
+- 2026-08-27T15:52:14Z · SEL · Versionar .specfounder/ en git: SÍ (no está en .gitignore; se trackea)
+- 2026-08-27T15:53:00Z · SEL · BRIEF.receive: normalizar TODO plan/ (MD prioritarios; HTML apoyo)
+- 2026-08-27T15:55:14Z · MAP · SYSTEM-MAP desde todo plan/ (precedencia USER_STORIES+SECURITY > roadmap v1.1+PROVIDERS > HL plan). Contradicción módulos HL§8 vs v1.1 marcada. Ausentes: KPIs medibles, error paths providers, SLA, concurrencia, jurisdicción likeness, disparo estrategia semanal, Stories vs Reels.
+- 2026-08-27T15:55:14Z · CANON · CONTEXT.draft.md sembrado (~18 términos candidatos; igualdad semántica pendiente en entrevista)
+- 2026-08-27T16:00:06Z · S1.VISION ✅ · Visión derivada confirmada (usuario: Cliente prestador local; V1 Instagram video-first 3 Reels/semana; sin grabarse, con Aprobación). Escrita en SPEC.draft.md §1.
+- 2026-08-27T16:01:30Z · S1.LOTE ✅ · Sección 1 lote confirmado (visión/usuario/problema/fuera de alcance). Pendiente S1.Q4 criterios de éxito.
+- 2026-08-27T16:03:30Z · NOTA · Usuario pregunta: si Cliente no aprueba, ¿se regenera otra/u otras piezas? Material: US-11.2 max 1 revision round; reject ≠ auto-regen.
+- 2026-08-27T16:06:30Z · S1.Qa1 ✅ · Al Rechazar: preguntar si desea generar una nueva pieza (no auto-regen silenciosa). Pedir cambios: 1 ronda/Reel. Cupo semanal no se rellena solo.
+- 2026-08-27T16:07:30Z · S1.Q4 ✅ · Criterios de éxito: SC-1 3 Reels/semana listos aprobar; SC-2 no publish sin Aprobación; SC-3 primer lote ≤7 días post-Entrevista; SC-4 ≤30 min/semana revisar. Sección 1 completa.
+- 2026-08-27T16:09:30Z · NOTA · Usuario pide aclarar término Operator (igualdad semántica). Pendiente confirmación S2.
+- 2026-08-27T16:13:30Z · NOTA · Usuario quiere generación semanal automatizable (cron por Cliente) sin Operator disparando a mano. Cierra ausente "quién dispara estrategia".
+- 2026-08-27T16:16:30Z · S2.Qa1 ✅ · Ciclo semanal automatizado por Cliente (cron): Estrategia + generación de video hasta cola de Aprobación. Operator = supervisión/excepciones + disparo manual opcional. Publicación IG sigue manual asistida.
+- 2026-08-27T16:16:46Z · ADR-0001 · Ciclo semanal automatizado: Estrategia + generación video hasta Aprobación vía cron por Cliente; Operator = excepciones.
+- 2026-08-27T16:16:46Z · CANON · Operator redefinido (supervisión); término Ciclo semanal automatizado añadido.
+- 2026-08-27T16:22:17Z · NOTA · Usuario quiere Publicación vía Instagram Business API (tokens). Referencia: karidecor/src/lib/instagram (Graph API, container→publish, server-only). CONTRADICE Publicación manual asistida / fuera de alcance auto-publish. Pendiente zanjar disparo.
+- 2026-08-27T16:23:30Z · S2.Qa2 ✅ · Publicación Instagram Business API (Reels): tras Aprobación, botón Y programación/auto opcional. Patrón karidecor adaptado a video. Sustituye “solo manual asistida”.
+- 2026-08-27T16:23:32Z · S2.Qa2 ✅ · Publicación Reels vía Instagram Business API: botón + programación tras Aprobación. Canon: Publicación en Instagram. ADR-0002. ADR-0001 cláusula publish superseded.
+- 2026-08-27T16:23:32Z · CANON · Reemplazo término Publicación manual asistida → Publicación en Instagram (API).
+- 2026-08-27T16:28:30Z · S2.LOTE ✅ · Roles confirmados: Cliente / Operator (supervisión) / System (ciclo semanal + Publicación Instagram Reels API). Sección 2 completa.
+- 2026-08-27T16:31:30Z · S3.LOTE ✅ · Canon módulos confirmado (v1.1+Auth+Instagram Publish+Ciclo semanal; HL§8 supersedido). Prioridades P1/P2/P3 aceptadas. Inicia detalle módulo a módulo.
+- 2026-08-27T16:35:30Z · S3.M1 ✅ · Authentication P1 confirmado (signup/login/logout/reset; active SQL; role SQL; getCurrentUser; sin Supabase en browser).
+- 2026-08-27T16:35:30Z · NOTA · Usuario pide naming DB neura_mark_ — material/AGENTS usan prefijo neuramark_. Pendiente igualdad semántica (prefijo vs sufijo; guion bajo).
+- 2026-08-27T16:39:30Z · S3.Qa3 ✅ · Canon DB: prefijo neuramark_ en tablas/triggers/indexes/functions/enums/policies (no neura_mark_; no sufijo).
+- 2026-08-27T16:41:30Z · S3.M2 ✅ · Interview Builder P1 confirmado (pasos guiados; draft/resume; submit → Ficha viva; neuramark_interview_sessions).
+- 2026-08-27T16:43:30Z · S3.M3 ✅ · Business Profile / Ficha viva P1 confirmado (ver/editar allowlist; contrato agentes; versionado).
+- 2026-08-27T16:48:30Z · S3.M4 ✅ · Visual Mode P1 confirmado (3 modos; consent ledger; uploads; must_disclose_not_owner; sin grabación humana).
+- 2026-08-27T16:54:30Z · S3.M5 ✅ · Content Strategy P1: brief semanal ≥3 Reels; disparo ciclo auto + Operator manual; Cliente read-only; AUTO-AVANCE a guiones (sin approve Operator obligatorio).
+- 2026-08-27T16:55:30Z · S3.M6 ✅ · Video Script Agent P1: paquete hook/body/CTA/on-screen/VO por slot; auto en ciclo; regen por slot.
+- 2026-08-27T16:56:30Z · S3.M7 ✅ · Caption Agent P1: caption/hashtags/keywords/CTA variants por Reel; auto en ciclo.
+- 2026-08-27T16:58:30Z · S3.M8 ✅ · Cost Policy P1: max_cost/tier Operator-only; check server-side pre-job; cliente no ve costos; bloqueo → cola Operator en ciclo.
+- 2026-08-27T16:59:30Z · S3.M9 ✅ · Video Provider Adapter P1: interfaz única; SadTalker/Wan low default; manual upload Operator; download-and-own; HeyGen no default V1.
+- 2026-08-27T17:00:30Z · S3.M10 ✅ · Media Assembly P1: 9:16 FFmpeg; TTS; subtítulos/logo/cover; solo media_assets propios; auto → QA.
+- 2026-08-27T17:00:50Z · S3.M11 ✅ · QA/Compliance P1: checks blocking vs overridable; legal no-override; gate a Aprobación.
+- 2026-08-27T17:01:30Z · S3.M12 ✅ · Approval Flow P1: approve/changes(1)/reject+ask regen; gate QA; state machine.
+- 2026-08-27T17:01:50Z · S3.M13 ✅ · Instagram Publish Reels API P1: botón+programar; Graph; solo post-Aprobación; patrón karidecor→video.
+- 2026-08-27T17:02:30Z · S3.M14 ✅ · Ciclo semanal P1: cron por Cliente active; cadena hasta Aprobación; no publish sin approve; idempotente; Operator manual/skip.
+- 2026-08-27T17:02:50Z · S3.M15 ✅ · P2 Content Calendar + Metrics Lite confirmados (calendar Operator; metrics manual → feed estrategia; mark published = fallback).
+- 2026-08-27T17:03:30Z · S3.M16 ✅ · Stories IG fuera de alcance V1 (solo Reels). Sección 3 módulos completa.
+- 2026-08-27T17:04:30Z · S4.LOTE ✅ · 5 flujos críticos: Onboarding, Ciclo semanal, Aprobación, Publicación, Excepciones Operator.
+- 2026-08-27T17:05:30Z · S4.Q1 ✅ · Error UX: Cliente mensajes neutros; Operator detalle+reintentos; QA legal sin override; publish→reconectar IG; ciclo parcial OK a Aprobación. Sección 4 completa.
+- 2026-08-27T17:07:30Z · NOTA · S5.LOTE casi OK; usuario pregunta dónde corre trabajo largo (FFmpeg/pipelines). Pendiente S5.Q1.
+- 2026-08-27T17:08:30Z · S5.Q1 ✅ · Trabajo largo en worker Docker Fly.io (FFmpeg + polls providers); Vercel = app + cron enqueue; Supabase = cola/estado/assets.
+- 2026-08-27T17:08:30Z · S5.LOTE ✅ · Arquitectura confirmada (Next/Supabase/Vercel + providers + IG + cron + Fly worker).
+- 2026-08-27T17:08:30Z · ADR-0003 · Worker Fly.io para pipelines largos/FFmpeg.
+- 2026-08-28T14:56:30Z · S6.LOTE ✅ · NFR lote confirmado (i18n EN/ES; datos sensibles server-only; online-only V1; Vercel+Fly+Supabase; reglas duras). Pendiente: concurrencia, región, SLA.
+- 2026-08-28T15:00:00Z · S6.Q1 ✅ · Concurrencia V1: 1 Cliente activo (uso interno); sin presión de throughput; arquitectura scale-ready (multi-tenant, cola Supabase, worker Fly stateless, límites por config).
+- 2026-08-28T15:02:00Z · S6.Q2 ✅ · Región us-east-1 (Supabase) + iad (Fly worker) + Vercel auto; assets misma región; jurisdicción likeness US + país Cliente (futuro).
+- 2026-08-28T15:04:00Z · S6.Q3 ✅ · SLA V1 best-effort; ciclo semanal ≤24h a cola Aprobación; SC-3 primer lote ≤7d; sin SLA Meta; reintentos limitados → Operator.
+- 2026-08-28T15:04:00Z · S6 ✅ · Sección 6 (NFR) completa. Entrevista cerrada → fase cierre.
+- 2026-08-28T15:04:00Z · VERIFY · Pasada spec completo (sf-verify modo 2): sin hallazgos bloqueantes; 2 advertencias menores (SYSTEM-MAP desactualizado en ranura 6; término técnico "ledger" en §6 alineado con CONTEXT).
+- 2026-08-28T15:26:00Z · CIERRE · Content Playbook P1 + Trend Intelligence P1 (manual V1, scraping después). Modalidades visuales: preferencias Cliente (allowlist) + asignación dinámica por slot en Estrategia (opción B).
+- 2026-08-28T15:59:00Z · CIERRE ✅ · Schema Trend Intelligence + Playbook confirmado (táctica con explicación + hints estructurados; ejemplo cold-open-mejor-toma).
+- 2026-08-28T16:01:00Z · EMIT ✅ · generic-sdd → SPEC.md, CONTEXT.md, docs/adr/0001-0003.md
+- 2026-08-28T16:03:00Z · PLAN · Derivados PLAN.md (8 fases P1→P2) + TASKS.md (checklist trazable SPEC/Flujos).
+- 2026-08-28T16:10:00Z · AGENTS · Roster desarrollo: spec-guardian, content-agents-engineer, media-pipeline-engineer, integrations-engineer, integration-checker + docs/development/AGENT-ROSTER.md; product-owner actualizado.
+- 2026-08-28T16:15:00Z · AGENTS · master-orchestrator + comando /desarrollar + SPRINT-STATE.md; orquestación historia por historia.
