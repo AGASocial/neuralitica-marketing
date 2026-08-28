@@ -76,11 +76,34 @@
         }
       }
     },
+    "login": {
+      "title": "Iniciar sesión",
+      "subtitle": "Entra para acceder a tu espacio de Neuralitica.",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "submit": "Iniciar sesión",
+      "submitPending": "Iniciando sesión…",
+      "genericFailure": "No pudimos iniciar sesión. Revisa tus datos e inténtalo de nuevo.",
+      "confirmed": "Tu correo está confirmado. Inicia sesión para continuar.",
+      "confirmationFailed": "No pudimos confirmar tu correo. Puedes solicitar un nuevo mensaje de confirmación desde la página de registro.",
+      "signupLink": "¿Necesitas una cuenta? Regístrate",
+      "resetLink": "¿Olvidaste tu contraseña?",
+      "requiredField": "Este campo es obligatorio.",
+      "invalidEmail": "Introduce un correo electrónico válido.",
+      "fieldErrors": {
+        "email": {
+          "invalid_format": "Introduce un correo electrónico válido."
+        },
+        "password": {
+          "too_small": "Introduce tu contraseña."
+        }
+      }
+    },
     "pending": {
       "title": "Cuenta pendiente de activación",
       "body": "Tu correo está confirmado. Nuestro equipo activará tu cuenta pronto; te avisaremos por correo cuando esté lista.",
       "emailLabel": "Cuenta",
-      "logoutHint": "Puedes cerrar sesión y volver más tarde. El inicio de sesión estará disponible en una actualización futura."
+      "logoutHint": "Puedes cerrar sesión y volver más tarde."
     }
   }
 }

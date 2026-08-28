@@ -76,11 +76,34 @@
         }
       }
     },
+    "login": {
+      "title": "Log in",
+      "subtitle": "Sign in to access your Neuralitica workspace.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Log in",
+      "submitPending": "Signing in…",
+      "genericFailure": "We could not sign you in. Check your details and try again.",
+      "confirmed": "Your email is confirmed. Log in to continue.",
+      "confirmationFailed": "We could not confirm your email. You can request a new confirmation message from the sign-up page.",
+      "signupLink": "Need an account? Sign up",
+      "resetLink": "Forgot your password?",
+      "requiredField": "This field is required.",
+      "invalidEmail": "Enter a valid email address.",
+      "fieldErrors": {
+        "email": {
+          "invalid_format": "Enter a valid email address."
+        },
+        "password": {
+          "too_small": "Enter your password."
+        }
+      }
+    },
     "pending": {
       "title": "Account pending activation",
       "body": "Your email is confirmed. Our team will activate your account soon—we will email you when it is ready.",
       "emailLabel": "Account",
-      "logoutHint": "You can log out and return later. Login will be available in a future update."
+      "logoutHint": "You can log out and return later."
     }
   }
 }

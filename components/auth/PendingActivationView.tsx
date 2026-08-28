@@ -3,6 +3,7 @@ type PendingActivationViewProps = {
   body: string;
   emailLabel: string;
   email?: string;
+  displayName?: string;
   logoutLabel: string;
 };
 
@@ -11,8 +12,14 @@ export function PendingActivationView({
   body,
   emailLabel,
   email,
+  displayName,
   logoutLabel,
 }: PendingActivationViewProps) {
+  const showIdentity = Boolean(email || displayName);
+  const showDisplayName = Boolean(
+    displayName && displayName !== email,
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       <div>
@@ -20,7 +27,7 @@ export function PendingActivationView({
         <p style={{ margin: 0, color: "#4b5563", lineHeight: 1.5 }}>{body}</p>
       </div>
 
-      {email ? (
+      {showIdentity ? (
         <div
           style={{
             padding: "0.75rem 1rem",
@@ -28,10 +35,20 @@ export function PendingActivationView({
             background: "#f9fafb",
             border: "1px solid #e5e7eb",
             fontSize: "0.95rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.25rem",
           }}
         >
-          <span style={{ color: "#6b7280" }}>{emailLabel}: </span>
-          <strong style={{ color: "#111827" }}>{email}</strong>
+          {showDisplayName ? (
+            <strong style={{ color: "#111827" }}>{displayName}</strong>
+          ) : null}
+          {email ? (
+            <div>
+              <span style={{ color: "#6b7280" }}>{emailLabel}: </span>
+              <strong style={{ color: "#111827" }}>{email}</strong>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

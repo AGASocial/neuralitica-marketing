@@ -25,18 +25,18 @@ From `plan/stories/US-14.1/VALIDATION.md`, `CONTRACT.md` (out of scope), and `QA
 
 Consumer of BE: login page (`app/(auth)/login/`) calls the login Server Action. Pending page reuses `components/auth/PendingActivationView.tsx`. Confirmation landing uses `/pending` and/or `/login` per frozen contract.
 
-- [ ] Login page: PrimeReact form (email, password); wrap with existing `AuthShell` / locale switcher pattern from signup
-- [ ] Submit pending / loading / disabled submit; generic failure message only (no “unknown email” vs “wrong password” vs “unconfirmed” copy)
-- [ ] Links: signup (`/signup`, exists) and reset (forward reference; route need not be implemented until US-14.4)
-- [ ] On success: redirect to **dashboard** if the action says the account is active; show/redirect **account pending activation** if confirmed-but-inactive
-- [ ] Reuse `PendingActivationView`; EN/ES pending copy — remove “login will be available in a future update” now that login exists
-- [ ] Pending screen: at most the user’s own email/display name + neutral copy; no internal IDs, queue details, operator internals, or operational timestamps
-- [ ] Do not render attacker-controlled `?email=` as the account identity (fix US-14.1 pending query-param echo)
-- [ ] `next` / `redirectTo` (if present on the login URL): FE passes it through; server validates (open-redirect prevention). FE must not send the user to an unvalidated external URL
-- [ ] EN + ES copy in `messages/en.json` and `messages/es.json` (login form, generic error, links, pending updates)
-- [ ] Failure, loading, and pending states covered; clear password from client state after submit (same FE pattern as signup)
-- [ ] No Supabase SDK, tokens, or keys in the client bundle; form calls the Server Action only
-- [ ] Signup “Log in” link already points at `/login?locale=` — login page must exist so that link is not a 404
+- [x] Login page: PrimeReact form (email, password); wrap with existing `AuthShell` / locale switcher pattern from signup
+- [x] Submit pending / loading / disabled submit; generic failure message only (no “unknown email” vs “wrong password” vs “unconfirmed” copy)
+- [x] Links: signup (`/signup`, exists) and reset (forward reference; route need not be implemented until US-14.4)
+- [x] On success: redirect to **dashboard** if the action says the account is active; show/redirect **account pending activation** if confirmed-but-inactive
+- [x] Reuse `PendingActivationView`; EN/ES pending copy — remove “login will be available in a future update” now that login exists
+- [x] Pending screen: at most the user’s own email/display name + neutral copy; no internal IDs, queue details, operator internals, or operational timestamps
+- [x] Do not render attacker-controlled `?email=` as the account identity (fix US-14.1 pending query-param echo)
+- [x] `next` / `redirectTo` (if present on the login URL): FE passes it through; server validates (open-redirect prevention). FE must not send the user to an unvalidated external URL
+- [x] EN + ES copy in `messages/en.json` and `messages/es.json` (login form, generic error, links, pending updates)
+- [x] Failure, loading, and pending states covered; clear password from client state after submit (same FE pattern as signup)
+- [x] No Supabase SDK, tokens, or keys in the client bundle; form calls the Server Action only
+- [x] Signup “Log in” link already points at `/login?locale=` — login page must exist so that link is not a 404
 
 ## BE checklist
 
