@@ -35,6 +35,15 @@ export function loginRateLimitedError(): AuthErrorEnvelope {
   return authError("RATE_LIMITED", "auth.login.genericFailure");
 }
 
+/** Request-reset 429 uses the same check-email copy as success (no existence oracle). */
+export function passwordResetRateLimitedError(): AuthErrorEnvelope {
+  return authError("RATE_LIMITED", "auth.reset.checkEmail");
+}
+
+export function recoveryInvalidError(): AuthErrorEnvelope {
+  return authError("RECOVERY_INVALID", "auth.reset.invalidToken");
+}
+
 export function invalidCredentialsError(): AuthErrorEnvelope {
   return authError("INVALID_CREDENTIALS", "auth.login.genericFailure");
 }

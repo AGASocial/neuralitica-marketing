@@ -168,6 +168,43 @@ export async function isResendConfirmationRateLimited(
   }
 }
 
+/**
+ * Password-reset request: max 3 per email per hour and 10 per IP per hour.
+ * Over-limit still returns generic check-email copy (429). Store errors fail closed.
+ */
+export async function isPasswordResetRateLimited(
+  email: string,
+  ip: string,
+): Promise<boolean> {
+  try {
+    const emailHash = hashEmail(email);
+    const ipHash = hashIp(ip);
+    const since = new Date(Date.now() - 60 * 60 * 1000);
+
+    const [emailCount, ipCount] = await Promise.all([
+      countAttempts({
+        emailHash,
+        action: "password_reset_request",
+        since,
+      }),
+      countAttempts({
+        ipHash,
+        action: "password_reset_request",
+        since,
+      }),
+    ]);
+
+    if (emailCount === null || ipCount === null) {
+      return true;
+    }
+
+    return emailCount >= 3 || ipCount >= 10;
+  } catch {
+    console.error("[auth] password-reset rate limit check failed");
+    return true;
+  }
+}
+
 const LOGIN_FAILED_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_FAILED_MAX = 5;
 

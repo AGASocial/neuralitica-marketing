@@ -20,7 +20,6 @@ const EMAIL_OTP_TYPES = new Set<string>([
   "signup",
   "invite",
   "magiclink",
-  "recovery",
   "email_change",
   "email",
 ]);
@@ -51,14 +50,34 @@ function confirmationFailure(request: Request): NextResponse {
   return response;
 }
 
+function forwardRecoveryWithoutConsuming(url: URL): NextResponse {
+  return new NextResponse(null, {
+    status: 302,
+    headers: {
+      Location: `/auth/callback/recovery${url.search}`,
+      "Referrer-Policy": "no-referrer",
+      "Cache-Control": "private, no-cache, no-store, must-revalidate, max-age=0",
+      Pragma: "no-cache",
+      Expires: "0",
+    },
+  });
+}
+
 /**
  * Path A: confirm via `token_hash`+`type` (verifyOtp) or PKCE `code`
  * (exchangeCodeForSession). Drop any session cookies. 302 to `/login`.
  * Never lands on product routes. `next` / `redirectTo` ignored.
+ * Recovery is not consumed here — forwarded to `/auth/callback/recovery`.
  */
 export async function GET(request: Request): Promise<NextResponse> {
   try {
     const url = new URL(request.url);
+    const otpTypeRaw = (url.searchParams.get("type")?.trim() ?? "").toLowerCase();
+
+    if (otpTypeRaw === "recovery") {
+      return forwardRecoveryWithoutConsuming(url);
+    }
+
     const providerError = url.searchParams.get("error");
     const errorDescription = url.searchParams.get("error_description");
 

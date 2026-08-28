@@ -50,6 +50,31 @@ export function isWeakPasswordAuthError(error: AuthLikeError): boolean {
   );
 }
 
+/** Missing / expired recovery session — map to RECOVERY_INVALID, not INTERNAL_ERROR. */
+export function isMissingSessionAuthError(error: AuthLikeError): boolean {
+  if (!error) {
+    return false;
+  }
+
+  const code = errorCode(error);
+  const message = errorMessage(error);
+  const status = error?.status;
+
+  return (
+    status === 401 ||
+    code === "session_not_found" ||
+    code === "session_expired" ||
+    code === "user_not_found" ||
+    code === "invalid_jwt" ||
+    code === "bad_jwt" ||
+    message.includes("session missing") ||
+    message.includes("auth session missing") ||
+    message.includes("not authenticated") ||
+    message.includes("invalid jwt") ||
+    message.includes("jwt expired")
+  );
+}
+
 /** Swallow user-not-found style errors for enumeration-safe resend. */
 export function isBenignResendError(error: AuthLikeError): boolean {
   if (!error) {

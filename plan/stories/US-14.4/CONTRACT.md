@@ -507,7 +507,7 @@ Document in `.env.example` / ops notes (BUILD):
 | Password change | Invalidates outstanding recovery tokens (provider behavior) |
 | Used or expired token | Cannot set a password |
 
-Not a `neuramark_` table or trigger.
+Not a `neuramark_` table or trigger. **BUILD:** documented in `.env.example` (redirect allowlist `{SITE_URL}/auth/callback/recovery` + Mailer OTP expiry ≤ 3600s). Configure in the Supabase dashboard (Authentication → URL configuration / Emails).
 
 ---
 
@@ -910,5 +910,6 @@ Known interim: until US-14.5, a recovery session plus hardcoded `getCurrentUser(
 
 | Date | Change |
 |------|--------|
+| 2026-08-28 | BUILD: OTP ≤ 1 hour and recovery redirect URL documented in `.env.example` (Supabase dashboard config; no migration) |
 | 2026-08-28 | FE signoff: freeze check-email on `/reset-password`, set-password `/reset-password/new`, login `?reset=1` banner, `recoveryReady` from Server Component |
 | 2026-08-28 | Initial contract (nextjs-backend): dedicated `GET /auth/callback/recovery`, request/set-password Server Actions, additive Zod types in `lib/contracts/auth.ts` |

@@ -47,3 +47,13 @@ export function findForbiddenResendKeys(input: unknown): string[] {
 export function findForbiddenLogInKeys(input: unknown): string[] {
   return findForbiddenKeys(input, FORBIDDEN_RESEND_KEYS);
 }
+
+/** Request-reset: same privilege keys as resend (`confirmPassword` is not a request-reset field). */
+export function findForbiddenPasswordResetRequestKeys(input: unknown): string[] {
+  return findForbiddenKeys(input, FORBIDDEN_RESEND_KEYS);
+}
+
+/** Set-password: privilege keys plus `confirmPassword` / `confirm_password` (off the wire). */
+export function findForbiddenSetNewPasswordKeys(input: unknown): string[] {
+  return findForbiddenKeys(input, FORBIDDEN_SIGNUP_KEYS);
+}
