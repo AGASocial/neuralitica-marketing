@@ -29,17 +29,17 @@ From US-14.1 and US-14.2 (reuse, do not fork):
 
 Consumers of BE: forgot-password page calls the request-reset Server Action; set-new-password page calls the set-password Server Action. Emailed link hits the recovery Route Handler (not Client Component JS). Wrap with existing `AuthShell` / locale switcher.
 
-- [ ] Forgot-password page at **`/reset-password`** (login already points here): PrimeReact email field; wrap with `AuthShell`; submit pending / loading / disabled submit
-- [ ] After request: **generic “check your email”** screen (same copy for known and unknown). No “account not found”, no “email sent to X” that differs by existence. Optional: stay on the same route with a success state, or a sibling route — freeze in CONTRACT; do not leak whether the email exists
-- [ ] Set-new-password page reached **after** the Route Handler exchange (token **not** in the page URL, not in client JS): PrimeReact **password + confirm**; client-side match is UX only (`confirmPassword` stays off the wire, same as signup)
-- [ ] Expired / invalid / already-used token: **clear error** plus a **retry path** back to `/reset-password` to request a new link (EN/ES). Do not echo Supabase error text
-- [ ] Set-password page (and recovery callback 302 target) send **`Referrer-Policy: no-referrer`** so a token URL cannot leak via `Referer`
-- [ ] On successful set-password: land on **login** (user signs in with the new password). Do not send the user to dashboard/pending from this story — landing after login remains US-14.2
-- [ ] Links: back to login (`/login?locale=`); login’s “Forgot your password?” already targets this page
-- [ ] EN + ES copy in `messages/en.json` and `messages/es.json` (request form, check-email, set-password, mismatch, expired/invalid token, retry, password-policy hints). Reuse `auth.errors.*` / `auth.passwordPolicy.*` where they fit
-- [ ] Failure, loading, and pending states covered; clear password fields from client state after submit (signup/login pattern)
-- [ ] No Supabase SDK, tokens, or keys in the client bundle; forms call Server Actions only. Do not read `token_hash`, `code`, or `type` in Client Components
-- [ ] PrimeReact before custom UI; keep `"use client"` on the forms only
+- [x] Forgot-password page at **`/reset-password`** (login already points here): PrimeReact email field; wrap with `AuthShell`; submit pending / loading / disabled submit
+- [x] After request: **generic “check your email”** screen (same copy for known and unknown). No “account not found”, no “email sent to X” that differs by existence. Optional: stay on the same route with a success state, or a sibling route — freeze in CONTRACT; do not leak whether the email exists
+- [x] Set-new-password page reached **after** the Route Handler exchange (token **not** in the page URL, not in client JS): PrimeReact **password + confirm**; client-side match is UX only (`confirmPassword` stays off the wire, same as signup)
+- [x] Expired / invalid / already-used token: **clear error** plus a **retry path** back to `/reset-password` to request a new link (EN/ES). Do not echo Supabase error text
+- [x] Set-password page (and recovery callback 302 target) send **`Referrer-Policy: no-referrer`** so a token URL cannot leak via `Referer`
+- [x] On successful set-password: land on **login** (user signs in with the new password). Do not send the user to dashboard/pending from this story — landing after login remains US-14.2
+- [x] Links: back to login (`/login?locale=`); login’s “Forgot your password?” already targets this page
+- [x] EN + ES copy in `messages/en.json` and `messages/es.json` (request form, check-email, set-password, mismatch, expired/invalid token, retry, password-policy hints). Reuse `auth.errors.*` / `auth.passwordPolicy.*` where they fit
+- [x] Failure, loading, and pending states covered; clear password fields from client state after submit (signup/login pattern)
+- [x] No Supabase SDK, tokens, or keys in the client bundle; forms call Server Actions only. Do not read `token_hash`, `code`, or `type` in Client Components
+- [x] PrimeReact before custom UI; keep `"use client"` on the forms only
 
 ## BE checklist
 

@@ -86,6 +86,7 @@
       "genericFailure": "No pudimos iniciar sesión. Revisa tus datos e inténtalo de nuevo.",
       "confirmed": "Tu correo está confirmado. Inicia sesión para continuar.",
       "confirmationFailed": "No pudimos confirmar tu correo. Puedes solicitar un nuevo mensaje de confirmación desde la página de registro.",
+      "resetSuccess": "Tu contraseña se actualizó. Inicia sesión con tu nueva contraseña.",
       "signupLink": "¿Necesitas una cuenta? Regístrate",
       "resetLink": "¿Olvidaste tu contraseña?",
       "requiredField": "Este campo es obligatorio.",
@@ -96,6 +97,39 @@
         },
         "password": {
           "too_small": "Introduce tu contraseña."
+        }
+      }
+    },
+    "reset": {
+      "title": "Restablece tu contraseña",
+      "subtitle": "Introduce tu correo y enviaremos un enlace de restablecimiento si existe una cuenta.",
+      "email": "Correo electrónico",
+      "submit": "Enviar enlace",
+      "submitPending": "Enviando…",
+      "checkEmailTitle": "Revisa tu correo",
+      "checkEmail": "Si existe una cuenta con ese correo, enviamos un enlace para restablecer la contraseña.",
+      "loginLink": "Volver a iniciar sesión",
+      "requiredField": "Este campo es obligatorio.",
+      "invalidEmail": "Introduce un correo electrónico válido.",
+      "resend": "Reenviar correo de restablecimiento",
+      "resendPending": "Enviando…",
+      "resendSuccess": "Si existe una cuenta con ese correo, enviamos otro enlace para restablecer la contraseña.",
+      "setTitle": "Elige una nueva contraseña",
+      "setSubtitle": "Crea una nueva contraseña para tu cuenta.",
+      "password": "Nueva contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "setSubmit": "Actualizar contraseña",
+      "setSubmitPending": "Actualizando…",
+      "passwordHint": "Al menos 12 caracteres. Evita contraseñas comunes.",
+      "confirmPasswordMismatch": "Las contraseñas no coinciden.",
+      "invalidToken": "Este enlace no es válido o ha caducado. Solicita uno nuevo.",
+      "retry": "Solicitar un nuevo enlace",
+      "fieldErrors": {
+        "email": {
+          "invalid_format": "Introduce un correo electrónico válido."
+        },
+        "password": {
+          "too_small": "Introduce una nueva contraseña."
         }
       }
     },

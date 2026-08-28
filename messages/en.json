@@ -86,6 +86,7 @@
       "genericFailure": "We could not sign you in. Check your details and try again.",
       "confirmed": "Your email is confirmed. Log in to continue.",
       "confirmationFailed": "We could not confirm your email. You can request a new confirmation message from the sign-up page.",
+      "resetSuccess": "Your password was updated. Log in with your new password.",
       "signupLink": "Need an account? Sign up",
       "resetLink": "Forgot your password?",
       "requiredField": "This field is required.",
@@ -96,6 +97,39 @@
         },
         "password": {
           "too_small": "Enter your password."
+        }
+      }
+    },
+    "reset": {
+      "title": "Reset your password",
+      "subtitle": "Enter your email and we will send a reset link if an account exists.",
+      "email": "Email",
+      "submit": "Send reset link",
+      "submitPending": "Sending…",
+      "checkEmailTitle": "Check your email",
+      "checkEmail": "If an account exists for that email, we sent a password reset link.",
+      "loginLink": "Back to log in",
+      "requiredField": "This field is required.",
+      "invalidEmail": "Enter a valid email address.",
+      "resend": "Resend reset email",
+      "resendPending": "Sending…",
+      "resendSuccess": "If an account exists for that email, we sent another password reset link.",
+      "setTitle": "Set a new password",
+      "setSubtitle": "Choose a new password for your account.",
+      "password": "New password",
+      "confirmPassword": "Confirm password",
+      "setSubmit": "Update password",
+      "setSubmitPending": "Updating…",
+      "passwordHint": "At least 12 characters. Avoid common passwords.",
+      "confirmPasswordMismatch": "Passwords do not match.",
+      "invalidToken": "This reset link is invalid or has expired. Request a new one.",
+      "retry": "Request a new reset link",
+      "fieldErrors": {
+        "email": {
+          "invalid_format": "Enter a valid email address."
+        },
+        "password": {
+          "too_small": "Enter a new password."
         }
       }
     },

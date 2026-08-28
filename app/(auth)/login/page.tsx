@@ -9,6 +9,7 @@ type LoginPageProps = {
     redirectTo?: string;
     confirmed?: string;
     error?: string;
+    reset?: string;
   }>;
 };
 
@@ -35,11 +36,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const t = getTranslations(locale);
   const next = pickNextCandidate(params);
   const banner =
-    params.confirmed === "1"
-      ? "confirmed"
-      : params.error === "confirmation"
-        ? "confirmationFailed"
-        : undefined;
+    params.reset === "1"
+      ? "resetSuccess"
+      : params.confirmed === "1"
+        ? "confirmed"
+        : params.error === "confirmation"
+          ? "confirmationFailed"
+          : undefined;
 
   return (
     <AuthShell locale={locale}>

@@ -23,6 +23,7 @@ type LoginCopy = {
   genericFailure: string;
   confirmed: string;
   confirmationFailed: string;
+  resetSuccess: string;
   signupLink: string;
   resetLink: string;
   requiredField: string;
@@ -48,7 +49,7 @@ type LoginFormProps = {
   copy: LoginCopy;
   errorsCopy: AuthErrorsCopy;
   next?: string;
-  banner?: "confirmed" | "confirmationFailed";
+  banner?: "confirmed" | "confirmationFailed" | "resetSuccess";
 };
 
 type FormFields = {
@@ -223,6 +224,14 @@ export function LoginForm({
           <Message
             severity="error"
             text={copy.confirmationFailed}
+            style={{ width: "100%" }}
+          />
+        ) : null}
+
+        {banner === "resetSuccess" ? (
+          <Message
+            severity="success"
+            text={copy.resetSuccess}
             style={{ width: "100%" }}
           />
         ) : null}
