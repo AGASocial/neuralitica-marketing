@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import Module from "node:module";
 import { describe, it } from "node:test";
 
+import { isSupabaseAuthCookieName } from "./auth-cookie-name";
 import {
   assertAuthDevFallbackEnv,
   isAuthDevFallbackEnabled,
@@ -166,6 +168,177 @@ describe("requireActive / requireOperator decisions", () => {
     assert.equal(resolveOperatorGuard(demoted).kind, "forbidden");
     const operator: CurrentUser = { ...activeClient, role: "operator" };
     assert.equal(resolveOperatorGuard(operator).kind, "ok");
+  });
+});
+
+type NodeModuleLoad = {
+  _load: (request: string, parent: unknown, isMain: boolean) => unknown;
+};
+
+describe("logOut cookie replay", () => {
+  it("replayed pre-logout sb-* cookies do not restore a product user after local revoke", async () => {
+    const AUTH_COOKIE = "sb-localhost-auth-token";
+    const PRE_LOGOUT_VALUE = "captured-pre-logout-session";
+    const jar: { name: string; value: string; maxAge?: number }[] = [
+      { name: AUTH_COOKIE, value: PRE_LOGOUT_VALUE, maxAge: SEVEN_DAYS },
+    ];
+
+    const captured = jar
+      .filter((cookie) => isSupabaseAuthCookieName(cookie.name))
+      .map((cookie) => ({ ...cookie }));
+    assert.equal(captured.length, 1);
+    assert.equal(captured[0]?.name, AUTH_COOKIE);
+    assert.equal(captured[0]?.value, PRE_LOGOUT_VALUE);
+
+    let refreshTokenRevoked = false;
+    const authClient = {
+      auth: {
+        async getUser() {
+          if (refreshTokenRevoked) {
+            return {
+              data: { user: null },
+              error: { code: "session_not_found", status: 401 },
+            };
+          }
+          return {
+            data: {
+              user: {
+                id: "11111111-1111-4111-8111-111111111111",
+                email: activeClient.email,
+                user_metadata: { display_name: activeClient.displayName },
+              },
+            },
+            error: null,
+          };
+        },
+        async signOut(options: { scope: string }) {
+          assert.equal(options.scope, "local");
+          refreshTokenRevoked = true;
+          return { error: null };
+        },
+      },
+    };
+
+    const nodeModule = Module as unknown as NodeModuleLoad;
+    const originalLoad = nodeModule._load.bind(Module);
+    const previousEnv = {
+      AUTH_DEV_FALLBACK: process.env.AUTH_DEV_FALLBACK,
+      NODE_ENV: process.env.NODE_ENV,
+      SUPABASE_URL: process.env.SUPABASE_URL,
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    };
+
+    nodeModule._load = function (request, parent, isMain) {
+      if (request === "server-only") {
+        return {};
+      }
+      if (request === "next/headers") {
+        return {
+          cookies: async () => ({
+            getAll: () => jar.map(({ name, value }) => ({ name, value })),
+            set: (
+              name: string,
+              value: string,
+              options?: { maxAge?: number },
+            ) => {
+              const next = { name, value, maxAge: options?.maxAge };
+              const index = jar.findIndex((cookie) => cookie.name === name);
+              if (index >= 0) {
+                jar[index] = next;
+              } else {
+                jar.push(next);
+              }
+            },
+          }),
+        };
+      }
+      if (request === "@supabase/ssr") {
+        return {
+          createServerClient: () => authClient,
+          parseCookieHeader: () => [],
+        };
+      }
+      if (request === "@/lib/auth/supabase-server") {
+        return {
+          isSupabaseConfigured: () => true,
+          createServerSupabaseClient: () => ({
+            from() {
+              return {
+                select() {
+                  return {
+                    eq() {
+                      return {
+                        async maybeSingle() {
+                          return {
+                            data: {
+                              id: activeClient.id,
+                              email: activeClient.email,
+                              display_name: activeClient.displayName,
+                              preferred_locale: activeClient.preferredLocale,
+                              role: activeClient.role,
+                              active: activeClient.active,
+                            },
+                            error: null,
+                          };
+                        },
+                      };
+                    },
+                  };
+                },
+              };
+            },
+          }),
+        };
+      }
+      return originalLoad(request, parent, isMain);
+    };
+
+    try {
+      delete process.env.AUTH_DEV_FALLBACK;
+      process.env.NODE_ENV = "test";
+      process.env.SUPABASE_URL = "https://example.supabase.co";
+      process.env.SUPABASE_ANON_KEY = "test-anon-key";
+      process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role";
+
+      const { logOut } = await import("./actions/log-out.ts");
+      const result = await logOut();
+      assert.deepEqual(result, { ok: true, redirectTo: "/login" });
+      assert.equal(refreshTokenRevoked, true);
+      assert.equal(jar[0]?.value, "");
+      assert.equal(jar[0]?.maxAge, 0);
+
+      jar.splice(0, jar.length, ...captured.map((cookie) => ({ ...cookie })));
+      assert.equal(jar[0]?.value, PRE_LOGOUT_VALUE);
+
+      const { getCurrentUser } = await import("./get-current-user.ts");
+      const replayedUser = await getCurrentUser();
+      assert.equal(replayedUser, null);
+
+      assert.equal(isPublicPath("/dashboard"), false);
+      assert.equal(isPublicPath("/pending"), false);
+      assert.equal(
+        resolveActiveGuard({
+          user: replayedUser,
+          hasValidSession: false,
+        }).kind,
+        "unauthenticated",
+      );
+      assert.equal(
+        buildLoginLocation({ next: "/dashboard" }),
+        "/login?next=%2Fdashboard",
+      );
+      assert.equal(buildLoginLocation({ next: "/pending" }), "/login");
+    } finally {
+      nodeModule._load = originalLoad;
+      for (const [key, value] of Object.entries(previousEnv)) {
+        if (value === undefined) {
+          delete process.env[key];
+        } else {
+          process.env[key] = value;
+        }
+      }
+    }
   });
 });
 
