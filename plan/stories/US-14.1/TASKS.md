@@ -47,5 +47,5 @@
 - [x] SPEC-REVIEW.md
 - [x] SECURITY.md
 - [x] CONTRACT.md + FE signoff
-- [ ] VALIDATION.md PASS
-- [ ] QA.md
+- [x] VALIDATION.md PASS WITH NOTES
+- [x] QA.md APPROVE WITH CONDITIONS

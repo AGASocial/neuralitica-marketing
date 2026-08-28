@@ -77,26 +77,26 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | `clients` table (`neuramark_clients`, aka "neuramark_users" in user shorthand — same record): `auth_user_id` (FK-like link to `auth.users.id`), email, display_name, preferred_locale, `active boolean NOT NULL DEFAULT false`, `role text NOT NULL DEFAULT 'client'` constrained to `client` \| `operator` (Postgres enum or CHECK, `neuramark_` prefix), created_at; migration via Supabase migrations |
 
 **Acceptance criteria**
-- [ ] Signup is open (no invite required); after submitting, the client sees a "check your email to confirm" screen — no session into product routes
-- [ ] Supabase sends an email confirmation on signup; the account cannot log in to a pending/product state before confirming
-- [ ] After email confirmation, the client sees a neutral "account pending activation" state until an operator activates the account (US-14.5 enforces this on every request)
-- [ ] Signing up with an already-registered email returns the same generic success-style response as a new email (no user enumeration)
-- [ ] Password policy enforced server-side (minimum length; client-side hints are presentation only)
-- [ ] A `neuramark_clients` row linked to the Supabase `auth.users` record is created on signup with `active = false` (column is `NOT NULL DEFAULT false`)
-- [ ] Manual activation: operator runs `UPDATE ... SET active = true` via SQL (no admin UI — explicitly out of scope, P1 candidate); once active, the user gets full access on their next request/login with no additional step
-- [ ] Every signup creates the row with `role = 'client'`; `role` is absent from the signup request contract and cannot be set through the endpoint under any payload (promotion to `operator` is SQL-only)
-- [ ] No Supabase SDK, token, or key appears in any client bundle or browser response
-- [ ] Copy exists in English and Spanish
-- [ ] [SEC] Password policy (server-enforced): minimum 12 characters, maximum 128, all characters allowed (spaces/unicode), no composition rules; password rejected if it appears in a bundled common-password list (top ~1,000); the same policy module is reused by US-14.4
-- [ ] [SEC] Passwords never appear in logs, error messages, analytics events, URLs, or any `neuramark_` table — the plaintext password exists only in the request body and the server-side Supabase Auth call; request logging redacts password fields by key name
-- [ ] [SEC] Duplicate-email signup returns the same HTTP status, response body shape, and copy as a new-email signup, with no measurable content difference; any Supabase "user already exists" error is caught server-side and mapped to the generic response
-- [ ] [SEC] Signup endpoint is rate-limited server-side (tightened for open signup): max 5 signup attempts per IP per hour AND max 15 per IP per day, tracked in `neuramark_auth_attempts` (ip_hash, email_hash, action, attempted_at) in addition to Supabase Auth's built-in limits; over-limit requests get the same generic response with a 429
-- [ ] [SEC] Inactive accounts consume no paid resources: signup creates only the Supabase auth user and one `neuramark_clients` row; no endpoint that triggers LLM, video, TTS, or file-storage spend is reachable while `active = false` (enforced by the US-14.5 guard on every request, including direct Route Handler / Server Action calls)
-- [ ] [SEC] Any "resend confirmation email" capability is rate-limited like reset requests (max 3 per email per hour via `neuramark_auth_attempts` plus Supabase built-in limits) and returns the same generic response for known and unknown emails
-- [ ] [SEC] Signup mutation is CSRF-protected: implemented as a Server Action (Next.js origin check) or a Route Handler that rejects requests whose `Origin` header does not match the app host
-- [ ] [SEC] `auth_user_id` for the `neuramark_clients` row comes only from the server-side Supabase Auth response — never from the request; the auth-user + client-row creation is transactional or compensated (no orphaned auth users on failure)
-- [ ] [SEC] If signup establishes a session, the session cookie is newly issued server-side at that moment (never reusing any pre-existing cookie value — session fixation guard)
-- [ ] [SEC] `role` is constrained at the DB level (Postgres enum `neuramark_client_role` or a CHECK constraint) to exactly `client` | `operator` with `NOT NULL DEFAULT 'client'`, so an invalid role value is impossible regardless of write path; `role` appears in NO auth request contract (signup, login, reset) and any payload containing a `role` field is rejected or stripped before processing
+- [x] Signup is open (no invite required); after submitting, the client sees a "check your email to confirm" screen — no session into product routes
+- [x] Supabase sends an email confirmation on signup; the account cannot log in to a pending/product state before confirming
+- [ ] After email confirmation, the client sees a neutral "account pending activation" state until an operator activates the account (US-14.5 enforces this on every request) — deferred: US-14.2 callback E2E; US-14.5 pending UI enforcement
+- [x] Signing up with an already-registered email returns the same generic success-style response as a new email (no user enumeration)
+- [x] Password policy enforced server-side (minimum length; client-side hints are presentation only)
+- [x] A `neuramark_clients` row linked to the Supabase `auth.users` record is created on signup with `active = false` (column is `NOT NULL DEFAULT false`)
+- [x] Manual activation: operator runs `UPDATE ... SET active = true` via SQL (no admin UI — explicitly out of scope, P1 candidate); once active, the user gets full access on their next request/login with no additional step
+- [x] Every signup creates the row with `role = 'client'`; `role` is absent from the signup request contract and cannot be set through the endpoint under any payload (promotion to `operator` is SQL-only)
+- [x] No Supabase SDK, token, or key appears in any client bundle or browser response
+- [x] Copy exists in English and Spanish
+- [x] [SEC] Password policy (server-enforced): minimum 12 characters, maximum 128, all characters allowed (spaces/unicode), no composition rules; password rejected if it appears in a bundled common-password list (top ~1,000); the same policy module is reused by US-14.4
+- [x] [SEC] Passwords never appear in logs, error messages, analytics events, URLs, or any `neuramark_` table — the plaintext password exists only in the request body and the server-side Supabase Auth call; request logging redacts password fields by key name
+- [x] [SEC] Duplicate-email signup returns the same HTTP status, response body shape, and copy as a new-email signup, with no measurable content difference; any Supabase "user already exists" error is caught server-side and mapped to the generic response
+- [x] [SEC] Signup endpoint is rate-limited server-side (tightened for open signup): max 5 signup attempts per IP per hour AND max 15 per IP per day, tracked in `neuramark_auth_attempts` (ip_hash, email_hash, action, attempted_at) in addition to Supabase Auth's built-in limits; over-limit requests get the same generic response with a 429
+- [ ] [SEC] Inactive accounts consume no paid resources: signup creates only the Supabase auth user and one `neuramark_clients` row; no endpoint that triggers LLM, video, TTS, or file-storage spend is reachable while `active = false` (enforced by the US-14.5 guard on every request, including direct Route Handler / Server Action calls) — deferred: US-14.5 spend guard
+- [x] [SEC] Any "resend confirmation email" capability is rate-limited like reset requests (max 3 per email per hour via `neuramark_auth_attempts` plus Supabase built-in limits) and returns the same generic response for known and unknown emails
+- [x] [SEC] Signup mutation is CSRF-protected: implemented as a Server Action (Next.js origin check) or a Route Handler that rejects requests whose `Origin` header does not match the app host
+- [x] [SEC] `auth_user_id` for the `neuramark_clients` row comes only from the server-side Supabase Auth response — never from the request; the auth-user + client-row creation is transactional or compensated (no orphaned auth users on failure)
+- [x] [SEC] If signup establishes a session, the session cookie is newly issued server-side at that moment (never reusing any pre-existing cookie value — session fixation guard)
+- [x] [SEC] `role` is constrained at the DB level (Postgres enum `neuramark_client_role` or a CHECK constraint) to exactly `client` | `operator` with `NOT NULL DEFAULT 'client'`, so an invalid role value is impossible regardless of write path; `role` appears in NO auth request contract (signup, login, reset) and any payload containing a `role` field is rejected or stripped before processing
 
 **Depends on:** US-X.3 (seam definition)  
 **Priority:** P0

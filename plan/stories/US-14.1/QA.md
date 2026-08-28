@@ -1,97 +1,91 @@
 # QA Report — US-14.1
 
 **Story:** Sign up with email and password  
-**Reviewer:** qa-engineer  
+**Reviewer:** qa-engineer (re-audit after BLOCK fix loop)  
 **Date:** 2026-08-28  
 **Branch:** `feature/US-14.1-signup`  
+**Fix commit:** `66a5124431f73f08fcb06d7d6f440deeb35730c2`  
 **Standard:** Enterprise-grade (production-safe for paying customers)
 
-### Verdict: BLOCK
+### Verdict: APPROVE WITH CONDITIONS
 
-One **High** finding: signup responses diverge for new vs existing emails whenever confirmation email sending fails, which is a user-enumeration oracle. A fix loop is required (**nextjs-backend**).
+No Critical or High findings. The prior enumeration oracle is closed: confirmation-send failure and duplicate signup both return client-visible `{ ok: true }`. Rate-limit store errors fail closed. Duplicate detection no longer treats bare HTTP 422 as “already exists.” RLS is enabled with zero policies. `findAuthUserIdByEmail` is server-only and never appears in the action result.
 
-No Critical findings. Client bundle is clean (no Supabase SDK/keys). CSRF, session-fixation, password-in-DB, and `role`/`active` from the request are in good shape. `getCurrentUser()` hardcoded local user is sanctioned (not a finding). Email confirmation callback and spend guard remain deferred.
+Remaining issues are **Low** (frontend password-clear / unused `copy`, plus deferred `/pending` query-param echo and two residual hardening notes from the fix). **No further backend fix loop is required.** Frontend Lows 9 and 11 may be picked up by **nextjs-frontend** later; they must not BLOCK.
+
+---
+
+### Prior findings — verification
+
+Do not trust the implementer; each assigned-closed item was re-read at file:line.
+
+| # | Prior | Assigned | Status | Evidence |
+|---|--------|----------|--------|----------|
+| 1 | High — send-failure vs duplicate oracle | nextjs-backend | **Closed** | Send failure keeps the auth user + client row and still returns success (`lib/auth/actions/sign-up.ts:230-237`). Duplicate path also returns `authSuccess()` (`sign-up.ts:175-181`). Resend ignores send errors and always returns success (`lib/auth/actions/resend-confirmation.ts:66-68`). |
+| 2 | Medium — rate limiter fails open | nextjs-backend | **Closed** | `recordAuthAttempt` returns `false` on insert error (`lib/auth/rate-limit.ts:39-52`). `countAttempts` returns `null` on error (`rate-limit.ts:82-95`). Signup/resend treat null/false as limited (`rate-limit.ts:122-123`, `160-161`; `sign-up.ts:55-57`; `resend-confirmation.ts:56-58`). |
+| 3 | Medium — bare 422 as duplicate | nextjs-backend | **Closed** | `isDuplicateAuthError` matches codes/messages only — no `status === 422` (`lib/auth/supabase-auth-errors.ts:18-33`). `weak_password` maps to `PASSWORD_POLICY` (`supabase-auth-errors.ts:37-50`; `sign-up.ts:184-186`). |
+| 4 | Medium — duplicate path skips compensated create | nextjs-backend | **Closed** | Duplicate path backfills a missing `neuramark_clients` row (`sign-up.ts:66-113`, called at `175-181`). Lookup/insert failures are swallowed; the client still gets `{ ok: true }`. Missing `user.id` is success-shaped to avoid a new oracle (`sign-up.ts:196-201`); retry hits the duplicate backfill. |
+| 5 | Medium — no RLS on PII tables | nextjs-backend | **Closed** | `supabase/migrations/20260828140000_neuramark_auth_signup_rls.sql:5-6` enables RLS on `neuramark_clients` and `neuramark_auth_attempts`. No `CREATE POLICY` (deny-by-default for `anon`/`authenticated`; service role bypasses). |
+| 6 | Medium — undocumented `emailRedirectTo` | nextjs-backend | **Closed** | Server-only `SITE_URL` documented in `.env.example:20-23`. `getSignupEmailRedirectTo()` prefers `SITE_URL`, warns on `VERCEL_URL` fallback, omits redirect if unset (`lib/auth/send-signup-confirmation.ts:7-40`). Send failure no longer rolls back into finding 1. |
+| 7 | Low — validation not recorded | nextjs-backend | **Closed** | Validation and password-policy failures record an attempt when Supabase is configured (`sign-up.ts:125-146`). |
+| 8 | Low — no top-level try/catch | nextjs-backend | **Closed** | `signUp` (`sign-up.ts:240-250`) and `resendConfirmationEmail` (`resend-confirmation.ts:71-86`) wrap inner handlers and return `internalError()`. |
+| 9 | Low — password remains in React state | nextjs-frontend (not in this loop) | **Open** | See Findings. |
+| 10 | Low — forbidden-key check case-sensitive | nextjs-backend | **Closed** | Keys are lower-cased before set membership (`lib/auth/forbidden-fields.ts:3-13`, `16-24`, `35`). |
+| 11 | Low — unused `copy` arg | nextjs-frontend (not in this loop) | **Open** | See Findings. |
+| 12 | Low — resend not IP-capped | nextjs-backend | **Closed** | Resend is 3/email/hour **and** 10/IP/hour (`lib/auth/rate-limit.ts:133-164`). |
+| 13 | Low — `/pending` echoes `?email=` | US-14.2 | **Open (deferred)** | See Findings. |
 
 ---
 
 ### Findings
 
-#### High
-
-1. **User enumeration via email-send failure vs duplicate success**  
-   **Where:** `lib/auth/actions/sign-up.ts:74-76` (duplicate → `{ ok: true }`) vs `lib/auth/actions/sign-up.ts:119-133` (new user, `sendSignupConfirmationEmail` fails → compensate-delete + `INTERNAL_ERROR`)  
-   **What:** Duplicate emails never attempt to send mail and always return generic success. A *new* email that passes `createUser` + client insert returns `INTERNAL_ERROR` if `auth.resend` fails (SMTP, captcha, or `emailRedirectTo` not on the Supabase allowlist).  
-   **Why it matters:** An attacker who can make confirmation sending fail (or who simply hits an environment where it already fails) gets a content oracle: `INTERNAL_ERROR` ⇒ email was not registered; `{ ok: true }` ⇒ email already exists. That is the binding [SEC] enumeration control. `.env.example` does not document `SITE_URL` / `NEXT_PUBLIC_SITE_URL`; `getSignupEmailRedirectTo()` (`lib/auth/send-signup-confirmation.ts:7-18`) falls back to `VERCEL_URL`, which is often *not* in the redirect allowlist — so this oracle is likely in default Vercel deploys, not only a theoretical SMTP outage. Rolling back the user on send failure also makes the new-email path fail closed while the duplicate path stays success-shaped.  
-   **Fix direction (nextjs-backend):** Both paths must use the same client-visible outcome. Preferred: on send failure, **keep** the auth user + `neuramark_clients` row, log the failure, return `{ ok: true }`, and let resend recover (this matches `resendConfirmationEmail`, which already ignores send errors at `lib/auth/actions/resend-confirmation.ts:62-64`). Do not map send failure to `INTERNAL_ERROR` unless the duplicate path does the same. Document `SITE_URL` (or `NEXT_PUBLIC_SITE_URL`) in `.env.example` and require it in the Supabase redirect allowlist. Consider `auth.admin.generateLink({ type: "signup" })` if `auth.resend` after `admin.createUser` proves unreliable.
-
-#### Medium
-
-2. **Rate limiter fails open**  
-   **Where:** `lib/auth/rate-limit.ts:34-38` (insert error swallowed), `lib/auth/rate-limit.ts:66-71` (`countAttempts` returns `0` on error)  
-   **What:** If `neuramark_auth_attempts` cannot be written or counted, signup and resend proceed with no app-level cap. Check happens *after* record, using `>= 5` / `>= 15` / `>= 3` (`rate-limit.ts:95`, `rate-limit.ts:111`), so even the healthy path is one attempt tighter than the written max (effective 4/hour and 14/day signup; 2/hour resend) — safer, not a defect. Concurrent requests are also racy (insert then count, no lock).  
-   **Why it matters:** Binding [SEC] rate limits (5/IP/hour, 15/IP/day signup; 3/email/hour resend) disappear under store errors. Auth rate limits should fail closed.  
-   **Fix direction (nextjs-backend):** On record/count failure, return `rateLimitedError()` (or `internalError()` with the same generic copy). Optionally count *before* insert with `> 5` / `> 15` to match the written caps, and document the TOCTOU residual.
-
-3. **All HTTP 422 responses treated as “user already exists”**  
-   **Where:** `lib/auth/supabase-auth-errors.ts:18-21` (`error.status === 422`)  
-   **What:** Duplicate detection matches `email_exists` / `user_already_exists` (good) *and* any 422. GoTrue also uses 422 for `weak_password` (leaked-password protection) and some validation failures. Those become `{ ok: true }` with **no** `neuramark_clients` row.  
-   **Why it matters:** Core signup can silently no-op: the UI shows “check your email” but no account exists. Enumeration-safe, but breaks the happy path when Supabase password checks are stricter than the local policy.  
-   **Fix direction (nextjs-backend):** Match duplicate only on known codes/messages (`email_exists`, `user_already_exists`, “already registered”). Map `weak_password` to `PASSWORD_POLICY` (or generic `INTERNAL_ERROR` if you must not distinguish). Never use bare `status === 422`.
-
-4. **Duplicate short-circuit does not complete compensated creation**  
-   **Where:** `lib/auth/actions/sign-up.ts:74-76`; missing-id path `sign-up.ts:87-91` (no `deleteUser`)  
-   **What:** If `createUser` succeeds and the process dies before the client insert (timeout, missing `user.id`, deploy kill), retry hits duplicate and returns success **without** inserting `neuramark_clients` or sending mail. Binding [SEC] requires transactional or compensated auth-user + client-row creation with no orphans.  
-   **Why it matters:** Stuck identity: `auth.users` row, no client row, US-14.2 login will have nothing to load. Resend may still email, which does not repair the profile row.  
-   **Fix direction (nextjs-backend):** On duplicate, look up `neuramark_clients` by email/`auth_user_id` server-side; if missing, insert from the existing auth user (still return `{ ok: true }` either way). On missing `user.id` after create, compensate with delete. Do not echo lookup results to the client.
-
-5. **New PII tables have no RLS**  
-   **Where:** `supabase/migrations/20260828120000_neuramark_auth_signup.sql` (tables at L13 and L42; no `ENABLE ROW LEVEL SECURITY`, no policies)  
-   **What:** `neuramark_clients` (email, display_name) and `neuramark_auth_attempts` (HMAC hashes) are in `public` with default Supabase grants to `anon` / `authenticated`. This app does not ship the anon key (not a client-bundle leak), but every project still has one. SECURITY.md defers *ownership policies* to US-14.5; it does not require leaving RLS off.  
-   **Why it matters:** Anyone with project URL + anon key can read/write signup PII via PostgREST. Service role bypasses RLS, so `ENABLE ROW LEVEL SECURITY` with zero policies is deny-by-default for anon and compatible with later US-14.5 policies.  
-   **Fix direction (nextjs-backend / DB):** In this migration (or a follow-up in the same story), `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` on both tables. Add `anon`/`authenticated` policies only in US-14.5 if needed.
-
-6. **Confirmation `emailRedirectTo` is undocumented and can fail closed into finding 1**  
-   **Where:** `lib/auth/send-signup-confirmation.ts:7-18`; `.env.example` (no `SITE_URL` / `NEXT_PUBLIC_SITE_URL`)  
-   **What:** Redirect target is `NEXT_PUBLIC_SITE_URL` ?? `SITE_URL` ?? `https://$VERCEL_URL` + `/auth/callback`. Callback itself is correctly deferred to US-14.2; the problem is using an unallowlisted URL as `emailRedirectTo` so `resend` errors.  
-   **Why it matters:** Turns a missing env var into “all new signups INTERNAL_ERROR” and activates the High enumeration oracle.  
-   **Fix direction (nextjs-backend):** Add `SITE_URL` to `.env.example` and README; prefer a server-only `SITE_URL`; treat missing/invalid redirect as a logged warning rather than a rollback (see finding 1). `/auth/callback` 404 after verify remains US-14.2, not a blocker here.
+No Critical. No High. No Medium.
 
 #### Low
 
-7. **Validation / password-policy failures are not recorded in `neuramark_auth_attempts`**  
-   **Where:** `lib/auth/actions/sign-up.ts:33-43` (return before `recordAuthAttempt` at L52)  
-   **What:** SECURITY.md asked to record attempts even on validation failure to prevent policy-oracle probing. AC for *signup* limits is still met for real create attempts.  
-   **Fix direction:** Record (or at least IP-count) before returning `VALIDATION_ERROR` / `PASSWORD_POLICY`, still with generic bodies.
+1. **Password remains in React state after success** *(prior #9; not in this fix loop)*  
+   **Where:** `components/auth/SignupForm.tsx:200-202`  
+   **What:** On `{ ok: true }` the form sets `submittedEmail` and returns; `fields.password` / `confirmPassword` are not cleared. `CheckEmailView` replaces the form in the same mounted component, so the plaintext password stays in memory until unmount.  
+   **Why it matters:** SECURITY.md FE pattern is to clear form state after submit. In-memory only; not written to storage or the URL.  
+   **Fix direction (nextjs-frontend):** Zero password fields (and optionally the rest) when navigating to the check-email view.
 
-8. **Server Actions have no top-level try/catch**  
-   **Where:** `lib/auth/actions/sign-up.ts` and `lib/auth/actions/resend-confirmation.ts` (no envelope around `createUser` / network throws)  
-   **What:** Unexpected throws skip `authErrorEnvelope`. Production Next.js 15 typically returns a digest only; dev can surface Supabase messages (including duplicate text).  
-   **Fix direction:** Wrap handlers; return `internalError()`; never log or rethrow raw auth errors with passwords.
+2. **Lint: unused `copy` parameter** *(prior #11; not in this fix loop)*  
+   **Where:** `components/auth/SignupForm.tsx:81` (`resolveAuthErrorMessage`)  
+   **What:** `next lint` warning `@typescript-eslint/no-unused-vars`. Does not affect security.  
+   **Fix direction (nextjs-frontend):** Drop the unused argument.
 
-9. **Password remains in React state after success**  
-   **Where:** `components/auth/SignupForm.tsx:200-202` (sets `submittedEmail`, does not clear `fields.password`)  
-   **What:** SECURITY.md FE pattern: clear form state after submit. In-memory only; CheckEmailView stays mounted on the same component.  
-   **Fix direction (nextjs-frontend):** Zero `password` / `confirmPassword` (and optionally the rest) when navigating to the check-email view.
+3. **`/pending` echoes an unauthenticated `email` query param** *(prior #13; deferred)*  
+   **Where:** `app/(auth)/pending/page.tsx:15`  
+   **What:** Displays whatever `?email=` is supplied (React-escaped, no XSS). Does not read the database. Scaffold for US-14.2.  
+   **Fix direction (US-14.2):** After login, pass email from the session only. Do not treat this param as proof of identity.
 
-10. **Forbidden-key check is case-sensitive**  
-    **Where:** `lib/auth/forbidden-fields.ts:3-12`  
-    **What:** `Role` / `Active` are not in the set; `.strict()` still rejects them as `VALIDATION_ERROR` and they are never written. Harmless.  
-    **Fix direction:** Case-fold keys in the forbidden check, or keep as-is.
+4. **Duplicate backfill writes the current request’s `display_name` / `preferred_locale` onto an orphan profile**  
+   **Where:** `lib/auth/actions/sign-up.ts:98-103`  
+   **What:** If `createUser` reports duplicate and no `neuramark_clients` row exists, the insert uses `displayName` / `preferredLocale` from **this** request. Legitimate retry by the same person is fine. A third party who knows the email can set the display name only in the orphan case (auth user exists, profile row missing). They cannot set `role`/`active`/`auth_user_id` from the client; those stay DB defaults / looked-up id. The action still returns `{ ok: true }` with no lookup leak (`sign-up.ts:175-181`; `find-auth-user-by-email.ts` is `server-only` and returns `string \| null` only to this helper).  
+   **Why it matters:** Limited integrity on a broken-signup repair path, not account takeover or enumeration.  
+   **Fix direction (optional, nextjs-backend):** Prefer `user_metadata.display_name` from the existing auth user, or a generic placeholder, instead of the current request body.
 
-11. **Lint: unused `copy` parameter**  
-    **Where:** `components/auth/SignupForm.tsx:81` (`resolveAuthErrorMessage`)  
-    **What:** `next lint` warning `@typescript-eslint/no-unused-vars`. Does not affect security.  
-    **Fix direction (nextjs-frontend):** Drop the unused arg.
+5. **Residual: GoTrue `weak_password` vs duplicate can differ for HIBP-only passwords** *(accepted tradeoff of prior #3)*  
+   **Where:** `lib/auth/actions/sign-up.ts:174-186`  
+   **What:** Duplicate is classified first (`email_exists` / message match) → `{ ok: true }`. `weak_password` on a **new** email → `PASSWORD_POLICY`. Local denylist already rejects the same common passwords for every email **before** `createUser` (`lib/auth/password-policy.ts:22-35`), so this only applies to passwords that pass the bundled list but fail GoTrue leaked-password protection. Mapping to `PASSWORD_POLICY` is what the prior QA asked for; treating it as success was the original Medium (silent no-op).  
+   **Why it matters:** A narrow content oracle for that password class. Not scored as High/Medium because it is the prescribed fix, not a regression.  
+   **Fix direction (optional):** Expand the local denylist, or if GoTrue leaked-password is enabled, accept that policy failures on create are distinguishable from duplicate success (same class as local `PASSWORD_POLICY`, which is contract-allowed).
 
-12. **Resend is not IP-capped**  
-    **Where:** `lib/auth/rate-limit.ts:98-112`; `resend-confirmation.ts:50-58`  
-    **What:** Contract only requires 3/email/hour. One IP can insert unbounded `neuramark_auth_attempts` rows across many addresses. Signup *is* IP-capped. Residual resource exhaustion; not a contract miss.  
-    **Fix direction:** Add an IP window (e.g. aligned with US-14.4 reset: 10/IP/hour) in addition to the email cap.
+---
 
-13. **`/pending` echoes an unauthenticated `email` query param**  
-    **Where:** `app/(auth)/pending/page.tsx:15`  
-    **What:** Displays whatever `?email=` is supplied (React-escaped, no XSS). Does not read the database. Scaffold for US-14.2; do not later treat this param as proof of identity.  
-    **Fix direction (US-14.2):** After login, pass email from the session only.
+### Focus checks (this re-audit)
+
+1. **Send-failure and duplicate → same `{ ok: true }`**  
+   **Pass.** New-email send failure logs and keeps rows, then `return authSuccess()` (`sign-up.ts:230-237`). Duplicate calls `ensureClientRowForExistingAuthUser` then `return authSuccess()` (`sign-up.ts:175-181`). Missing `user.id` after create is also success-shaped (`sign-up.ts:196-201`) so it cannot revive the oracle.
+
+2. **`find-auth-user-by-email.ts` does not leak existence to the client**  
+   **Pass.** Module is `import "server-only"` (`find-auth-user-by-email.ts:1`). Failures return `null` and log only HTTP status (`:46-50`, `:62-64`). Exact email match before returning an id (`:55-61`). Caller never puts the id (or “found/not found”) on `SignUpResult`; duplicate handling always ends in `authSuccess()`.
+
+3. **Rate-limit fail-closed; no bare 422-as-duplicate; RLS with zero policies**  
+   **Pass.** See prior findings 2, 3, and 5 above.
+
+4. **New bugs / regressions from the fix**  
+   No High/Medium regressions. Duplicate backfill is enumeration-safe. Missing-`user.id` path is success-shaped (correct vs oracle; retry backfills). `weak_password` is no longer swallowed as duplicate success. Residuals are Lows 4–5 above.
 
 ---
 
@@ -99,17 +93,17 @@ No Critical findings. Client bundle is clean (no Supabase SDK/keys). CSRF, sessi
 
 | Control | Result |
 |---------|--------|
-| Supabase tokens / SDK in the browser | **Pass** — `@supabase/supabase-js` only in `lib/supabase/server.ts` (`import "server-only"`) + type import in `send-signup-confirmation.ts`. Client components call Server Actions only. Post-build grep of `.next/static`: no `@supabase`, `NEXT_PUBLIC_SUPABASE`, service-role JWT, or denylist. |
-| Rate limits present | **Implemented, with Medium gaps** — table + HMAC hashes exist; fail-open and TOCTOU (findings 2, 12). |
-| User enumeration | **Fail (High)** — finding 1 when send fails. Duplicate happy path and resend-unknown are otherwise generic `{ ok: true }`. Copy is neutral (`auth.signup.success` / `auth.signup.resendSuccess`). |
+| Supabase tokens / SDK in the browser | **Pass** — `@supabase/supabase-js` only in `lib/supabase/server.ts` (`import "server-only"`) plus type imports in `sign-up.ts` / `send-signup-confirmation.ts`. Client components call Server Actions only. Post-build grep of `.next/static`: no `@supabase`, `NEXT_PUBLIC_SUPABASE`, service-role JWT, denylist, or `gaveho@gmail`. |
+| Rate limits present | **Pass** — signup 5/IP/hour and 15/IP/day; resend 3/email/hour and 10/IP/hour. Store errors fail closed. Residual TOCTOU (insert-then-count, no lock) documented in `rate-limit.ts`; concurrent burst may slip one extra attempt. |
+| User enumeration | **Pass** — duplicate, send-failure, missing `user.id`, unique-violation `23505`, unknown-email resend, and backfill miss all return `{ ok: true }`. Copy remains neutral (`auth.signup.success` / `auth.signup.resendSuccess`). Residual Low 5 (HIBP `weak_password` vs duplicate) only. |
 | Session fixation | **Pass** — no session cookie; `persistSession: false`; `admin.createUser` only. |
-| CSRF | **Pass** — `"use server"` actions, no signup `route.ts`. Next.js 15 origin check; `next.config.ts` does not widen `allowedOrigins`. |
-| Passwords in logs / `neuramark_` tables | **Pass** — `redactAuthPayload` used on createUser failure logs; no password column; plaintext only in request → `createUser`. |
-| `role` / `active` / `auth_user_id` from request | **Pass** — forbidden-key reject; insert omits those columns (DB defaults `active=false`, `role=client`); enum `neuramark_client_role`. |
-| New spend endpoints for inactive accounts | **Pass** — signup creates auth user + one client row only. US-14.5 guard still deferred (not a finding). |
+| CSRF | **Pass** — `"use server"` actions; no signup `route.ts`. `next.config.ts` does not widen `allowedOrigins`. |
+| Passwords in logs / `neuramark_` tables | **Pass** — `redactAuthPayload` on createUser failure logs; no password column; plaintext only in request → `createUser`. |
+| `role` / `active` / `auth_user_id` from request | **Pass** — case-insensitive forbidden-key reject; inserts omit those columns (DB defaults `active=false`, `role=client`). Backfill sets `auth_user_id` from admin lookup only. |
+| New spend endpoints for inactive accounts | **Pass** — signup creates auth user + one client row only. US-14.5 guard still deferred. |
 | Extra hardcoded credentials | **Pass** — only sanctioned `gaveho@gmail.com` / Gabriel Vega in `getCurrentUser()`. |
-| `neuramark_` prefix | **Pass** — enums, tables, indexes, constraints. |
-| Parameterized data access | **Pass** — Supabase client only; no string-built SQL. |
+| `neuramark_` prefix | **Pass** — enums, tables, indexes, constraints; RLS migration alters prefixed tables only. |
+| Parameterized data access | **Pass** — Supabase client / `URLSearchParams` for admin lookup; no string-built SQL. |
 
 ---
 
@@ -118,31 +112,33 @@ No Critical findings. Client bundle is clean (no Supabase SDK/keys). CSRF, sessi
 | Check | Result |
 |-------|--------|
 | `npx tsc --noEmit` | **Pass** (exit 0) |
-| `npm run lint` | **Pass with 1 warning** — `SignupForm.tsx:81` unused `copy` (`@typescript-eslint/no-unused-vars`). Note: `next.config.ts` has `eslint.ignoreDuringBuilds: true`, so lint is not part of `next build`. |
-| `npm run build` | **Pass** — compiled, type-check during build passed, routes: `/signup`, `/pending` dynamic. |
+| `npm run lint` | **Pass with 1 warning** — `SignupForm.tsx:81` unused `copy` (`@typescript-eslint/no-unused-vars`). `next.config.ts` has `eslint.ignoreDuringBuilds: true`, so lint is not part of `next build`. |
+| `npm run build` | **Pass** — compiled; type-check during build passed; routes `/signup` and `/pending` dynamic. |
 | Existing tests | **None** — `package.json` has no `test` script; no `*.test.*` / `*.spec.*` files. |
-| Client-bundle grep (`.next/static`) | **Pass** — no `@supabase`, `supabase-js`, `NEXT_PUBLIC_SUPABASE`, `SUPABASE_SERVICE_ROLE`, `SUPABASE_URL`, `gaveho@gmail`, denylist contents, or JWT-shaped secrets. |
+| Client-bundle grep (`.next/static`) | **Pass** — no `@supabase`, `supabase-js`, `NEXT_PUBLIC_SUPABASE`, `SUPABASE_SERVICE_ROLE`, `SUPABASE_URL`, `gaveho@gmail`, `password1234`, `neuramark_clients`, `auth.admin`, or JWT-shaped secrets. |
 | Denylist | Tracked `lib/auth/data/common-passwords.json`; **1,369** entries; includes contract fixture `password1234`; happy-path `correct-horse-battery-staple-2026` not listed. |
 | EN/ES `auth.*` key parity | **Pass** — 34 keys each, no mismatches. |
 | `git ls-files lib/auth/data/common-passwords.json` | Tracked. |
+| Fix commit vs tree | `66a5124431f73f08fcb06d7d6f440deeb35730c2` is HEAD for auth files; working tree dirty only on `docs/development/SPRINT-STATE.md` (out of scope). |
 
 ---
 
 ### What Was Not Covered
 
-- **Runtime signup** against a live Supabase project (inbox delivery, `admin.createUser` + `auth.resend` behavior, unique-violation `23505` path).
+- **Runtime signup** against a live Supabase project (inbox delivery, `admin.createUser` + `auth.resend`, GoTrue admin `filter` lookup, unique-violation `23505`, leaked-password `weak_password`).
 - **Email confirmation click** — `/auth/callback` does not exist; deferred to US-14.2. Not scored as a US-14.1 functional miss.
-- **Timing side channels** (duplicate vs new duration) — not measured; content oracle in finding 1 is the blocker.
+- **Timing side channels** (duplicate vs new duration, including extra backfill HTTP) — not measured; content oracle from the prior BLOCK is closed.
 - **Concurrent burst** of signup to prove TOCTOU empirically.
 - **US-14.5 `active` spend guard** and `getCurrentUser()` session swap — deferred; hardcoded operator on `/dashboard` is sanctioned.
-- **PostgREST-with-anon-key exploit** of missing RLS — not executed (would need project URL + anon key from outside this app).
+- **PostgREST-with-anon-key** against RLS — not executed (service role bypasses; zero policies should deny `anon`/`authenticated`).
 - **Browser E2E** of the signup form (pending/loading/error). Static review of `SignupForm` / `CheckEmailView` only.
+- **Applying migration `20260828140000_neuramark_auth_signup_rls.sql`** to a live database — reviewed as SQL only.
 
 ---
 
 ### Fix loop
 
-**Required:** yes.  
-**Implementer:** **nextjs-backend** (finding 1 must be fixed to unblock; 2–6 should be addressed in the same pass). **nextjs-frontend** for Lows 9 and 11 only — not blocking.
+**Required:** no.  
+**Implementer:** none for merge. Optional **nextjs-frontend** for Lows 1–2 (prior 9 and 11). Optional later hardening for Lows 4–5 (backend). Low 3 stays with US-14.2.
 
-**Counts:** Critical **0** / High **1** / Medium **5** / Low **7**
+**Counts:** Critical **0** / High **0** / Medium **0** / Low **5**
