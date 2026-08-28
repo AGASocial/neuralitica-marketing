@@ -140,19 +140,30 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 
 | Owner | Work |
 |-------|------|
-| **FE** | Logout action in the header/user menu; confirmation optional; redirect to login page; EN/ES copy |
-| **BE** | Route Handler / Server Action that revokes the Supabase session server-side and clears the httpOnly session cookie |
+| **FE** | Logout action in the header/user menu and on pending; confirmation optional; redirect to login page; EN/ES copy |
+| **BE** | Server Action that revokes the Supabase session server-side and clears the httpOnly session cookie |
 | **DB** | — |
 
 **Acceptance criteria**
-- [ ] Logout clears the session cookie and revokes the server-side session
-- [ ] After logout, protected routes redirect to login (verified with US-14.5 guard)
-- [ ] Back button after logout does not expose authenticated data
-- [ ] Copy exists in English and Spanish
-- [ ] [SEC] Logout revokes the session in Supabase Auth server-side (sign-out / refresh-token revocation), not just cookie deletion; a captured pre-logout cookie value replayed after logout is rejected by `getCurrentUser()`
-- [ ] [SEC] Logout is a POST-only Server Action / Route Handler with the same CSRF origin check as other auth mutations; no GET request can terminate (or be forced to terminate) a session
-- [ ] [SEC] Authenticated pages are served with `Cache-Control: no-store` so the browser back button and shared-device history cannot render cached authenticated content after logout
-- [ ] [SEC] The cookie is cleared with attributes matching how it was set (name, path, domain), leaving no stale variant behind
+- [x] Logout clears the session cookie and revokes the server-side session
+- [x] After logout, protected routes redirect to login (verified with US-14.5 guard) — HTTP no-cookie 302 proven after fa48b6f; live session HTML replay unproven (QA Low #2)
+- [x] Back button after logout does not expose authenticated data
+- [x] Copy exists in English and Spanish
+- [x] [SEC] Logout revokes the session in Supabase Auth server-side (sign-out / refresh-token revocation), not just cookie deletion; a captured pre-logout cookie value replayed after logout is rejected by `getCurrentUser()` — seam-level replay; live Auth E2E unproven (validator NOTE)
+- [x] [SEC] Logout is a POST-only Server Action / Route Handler with the same CSRF origin check as other auth mutations; no GET request can terminate (or be forced to terminate) a session
+- [x] [SEC] Authenticated pages are served with `Cache-Control: no-store` so the browser back button and shared-device history cannot render cached authenticated content after logout
+- [x] [SEC] The cookie is cleared with attributes matching how it was set (name, path, domain), leaving no stale variant behind
+- [x] [SEC] Surface is a POST-only Server Action (Next.js origin check, same class as `logIn` / `signUp`) — not a Route Handler. No `GET /logout`, no GET form, no `<a href>` that logs out, no public GET logout path on the US-14.5 allowlist
+- [x] [SEC] Order: revoke then expire. User-scoped `createUserScopedAuthClient` calls `signOut({ scope: "local" })` (this refresh token) before `discardSupabaseAuthCookies` / `applySessionCookieFlags({ maxAge: 0 })`. Service-role is forbidden on this action. Retry revoke once; if it still fails, expire cookies anyway and never return `{ ok: true }`
+- [x] [SEC] Cookie delete flags match set flags: `HttpOnly`, `Secure` in production, `SameSite=Lax`, `Path=/`, host-only (`Domain` unset). Expire every `sb-*` (`isSupabaseAuthCookieName`). Do not clamp `maxAge: 0` up to 7 days
+- [x] [SEC] Scope is local (this device / this session), not global. Do not call `signOut({ scope: "global" })`. Do not ship “sign out all devices” UI. US-14.4 owns global sign-out on password reset
+- [x] [SEC] Replay coverage is automated: capture `sb-*` values, run logout, replay the old `Cookie` on `getCurrentUser()` and a product `GET /dashboard` (and `/pending`) → unauthenticated (null user / login redirect), not authenticated HTML — seam-level; live Auth E2E unproven (validator NOTE)
+- [x] [SEC] Pending can log out; do not call `requireActive()` or `requireOperator()` on this action. The same Server Action is wired on the product header island and `/pending`. Missing / already-expired session is idempotent (expire crumbs, land on login, not 500)
+- [x] [SEC] `Cache-Control: no-store` is owned by US-14.5 on `/`, `/dashboard`, `/dashboard/:path*`, and `/pending`. This story verifies Back after logout; it must not fork middleware, re-implement guards, or add a second caching scheme. Extend headers only if this story adds a new gated surface (none expected)
+- [x] [SEC] Success lands on `/login` without `next` of `/dashboard`, `/`, or `/pending`. Optional `locale=en|es` only if already on the request. Do not add `?loggedOut=1`. Never copy `Host` / `X-Forwarded-Host`. After logout, US-14.5 is the redirect for a later product GET
+- [x] [SEC] Logout request/result forbid `role`, `active`, `auth_user_id`, and `client_id`: reject or strip if present. Empty input is fine. Result bodies contain no tokens, `role`, `active`, or `client_id`. No app write to `neuramark_clients`. No `logout` value on `neuramark_auth_action`
+- [x] [SEC] Header identity stays a Server Component: client island is the control only. No `getCurrentUser()` in Client Components, no `document.cookie`, no browser Supabase SDK. Pending identity remains server-passed email + display name
+- [x] [SEC] `AUTH_DEV_FALLBACK`: logout still expires `sb-*` and redirects; it cannot revoke `DEV_USER`. Do not persist the fallback across logout or invent a fake session store
 
 **Depends on:** US-14.2, US-14.5 (redirect behavior)  
 **Priority:** P0
@@ -1189,7 +1200,7 @@ Sprint 6: US-11.1, US-11.2, US-11.3
 Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, (+ high-tier B-roll adapter when added)
 ```
 
-Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI remains US-14.3.
+Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.
 
 ---
 

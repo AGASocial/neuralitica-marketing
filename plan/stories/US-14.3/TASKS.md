@@ -18,9 +18,9 @@
 
 From US-14.5 CONTRACT / TASKS (do not reinvent):
 
-- [ ] **Revoke, then expire.** `getCurrentUser()` already treats expired/**revoked** sessions as `null` (`getUser()`, not cookie presence). Logout must revoke the refresh token in Supabase Auth so a captured pre-logout `Cookie` header replayed after logout is rejected — cookie deletion alone is not enough.
-- [ ] **Cookie delete flags match set flags.** Reuse `discardSupabaseAuthCookies` / `applySessionCookieFlags({ maxAge: 0 })`: `HttpOnly`, `Secure` in production, `SameSite=Lax`, `Path=/`, **host-only** (`Domain` unset). Do **not** clamp `maxAge: 0` up to 7 days. Expire every `sb-*` name present (`isSupabaseAuthCookieName`).
-- [ ] **Guards already ship.** Unauthenticated product → `/login` (+ safe `next`); unauthenticated `/pending` → `/login` **without** `next`. Logout’s success landing is login; do not send `next` of the page they left (user asked to leave the session).
+- [x] **Revoke, then expire.** `getCurrentUser()` already treats expired/**revoked** sessions as `null` (`getUser()`, not cookie presence). Logout must revoke the refresh token in Supabase Auth so a captured pre-logout `Cookie` header replayed after logout is rejected — cookie deletion alone is not enough.
+- [x] **Cookie delete flags match set flags.** Reuse `discardSupabaseAuthCookies` / `applySessionCookieFlags({ maxAge: 0 })`: `HttpOnly`, `Secure` in production, `SameSite=Lax`, `Path=/`, **host-only** (`Domain` unset). Do **not** clamp `maxAge: 0` up to 7 days. Expire every `sb-*` name present (`isSupabaseAuthCookieName`).
+- [x] **Guards already ship.** Unauthenticated product → `/login` (+ safe `next`); unauthenticated `/pending` → `/login` **without** `next`. Logout’s success landing is login; do not send `next` of the page they left (user asked to leave the session).
 - [x] **Header stays a Server Component.** `AppHeader` receives `CurrentUser` from `AppShell` after `requireActive("page")`. Do not import `getCurrentUser()` into a Client Component, read `document.cookie`, or add a browser Supabase SDK.
 - [x] **Pending has a session, not AppHeader.** `/pending` is outside `AppShell`. Hint copy (`auth.pending.logoutHint`) is not a control. Wire the **same** logout Server Action there so inactive users can terminate a shared-device session.
 
@@ -67,8 +67,8 @@ No schema work. Session lives in Supabase Auth + `sb-*` cookies.
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md
-- [ ] SECURITY.md
-- [x] CONTRACT.md + FE signoff
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] SPEC-REVIEW.md — ALIGNED
+- [x] SECURITY.md — APPROVE WITH CONDITIONS
+- [x] CONTRACT.md + FE signoff — 2026-08-28
+- [x] VALIDATION.md — PASS WITH NOTES
+- [x] QA.md — APPROVE (High #1 closed in fa48b6f; 2 Lows: `tsc` on replay test, live Auth E2E)
