@@ -21,22 +21,22 @@ From US-14.5 CONTRACT / TASKS (do not reinvent):
 - [ ] **Revoke, then expire.** `getCurrentUser()` already treats expired/**revoked** sessions as `null` (`getUser()`, not cookie presence). Logout must revoke the refresh token in Supabase Auth so a captured pre-logout `Cookie` header replayed after logout is rejected — cookie deletion alone is not enough.
 - [ ] **Cookie delete flags match set flags.** Reuse `discardSupabaseAuthCookies` / `applySessionCookieFlags({ maxAge: 0 })`: `HttpOnly`, `Secure` in production, `SameSite=Lax`, `Path=/`, **host-only** (`Domain` unset). Do **not** clamp `maxAge: 0` up to 7 days. Expire every `sb-*` name present (`isSupabaseAuthCookieName`).
 - [ ] **Guards already ship.** Unauthenticated product → `/login` (+ safe `next`); unauthenticated `/pending` → `/login` **without** `next`. Logout’s success landing is login; do not send `next` of the page they left (user asked to leave the session).
-- [ ] **Header stays a Server Component.** `AppHeader` receives `CurrentUser` from `AppShell` after `requireActive("page")`. Do not import `getCurrentUser()` into a Client Component, read `document.cookie`, or add a browser Supabase SDK.
-- [ ] **Pending has a session, not AppHeader.** `/pending` is outside `AppShell`. Hint copy (`auth.pending.logoutHint`) is not a control. Wire the **same** logout Server Action there so inactive users can terminate a shared-device session.
+- [x] **Header stays a Server Component.** `AppHeader` receives `CurrentUser` from `AppShell` after `requireActive("page")`. Do not import `getCurrentUser()` into a Client Component, read `document.cookie`, or add a browser Supabase SDK.
+- [x] **Pending has a session, not AppHeader.** `/pending` is outside `AppShell`. Hint copy (`auth.pending.logoutHint`) is not a control. Wire the **same** logout Server Action there so inactive users can terminate a shared-device session.
 
 ## FE checklist
 
 Consumers of BE: product header (`AppHeader` via `AppShell` on `/dashboard` and other `(app)` pages) and pending (`PendingActivationView` on `/pending`) call the logout Server Action. Success → login page.
 
-- [ ] **Header / user menu:** logout control in `components/layout/AppHeader.tsx` (PrimeReact: `Button` and/or `Menu`; optional `ConfirmDialog`). Keep `AppHeader` a Server Component; extract a small `"use client"` island for the interactive control only. Display name/email stay server-passed props — do not fetch identity on the client.
-- [ ] Confirmation is **optional** (story). If used, PrimeReact confirm; Cancel leaves the session intact. CONTRACT may freeze default on/off — do not block BUILD on a modal.
-- [ ] On success: **redirect to `/login`** (preserve `locale` if already on the request as a query param). Do **not** pass `next` of `/dashboard`, `/`, or `/pending`.
-- [ ] Pending: replace hint-only copy with a real logout control that calls the same Server Action (PrimeReact `Button`). Keep pending identity server-only (email + display name props).
-- [ ] EN + ES in `messages/en.json` / `messages/es.json` (`header.*` for the menu/button/confirm; pending button label). Do not invent a second product name for “log out.”
-- [ ] Loading / pending / error: disable double-submit while the action runs; generic failure copy if revoke fails (no Supabase text). Success is the login page, not a toast on dashboard.
-- [ ] **Cache-Control verify (do not re-implement):** authenticated product and `/pending` already send `no-store`. After logout, **Back** must not show authenticated HTML. Confirm `next.config.ts` sources `/`, `/dashboard`, `/dashboard/:path*`, `/pending` plus middleware `no-store` on gated pass-through / login 302. Gap → extend headers, don’t add a second caching scheme.
-- [ ] No GET link that logs the user out (`<a href="/logout">` or `method="get"`). The control must POST (Server Action / form).
-- [ ] No Supabase SDK, tokens, or keys in the client bundle; form/button calls the Server Action only. PrimeReact before custom UI.
+- [x] **Header / user menu:** logout control in `components/layout/AppHeader.tsx` (PrimeReact: `Button` and/or `Menu`; optional `ConfirmDialog`). Keep `AppHeader` a Server Component; extract a small `"use client"` island for the interactive control only. Display name/email stay server-passed props — do not fetch identity on the client.
+- [x] Confirmation is **optional** (story). If used, PrimeReact confirm; Cancel leaves the session intact. CONTRACT may freeze default on/off — do not block BUILD on a modal.
+- [x] On success: **redirect to `/login`** (preserve `locale` if already on the request as a query param). Do **not** pass `next` of `/dashboard`, `/`, or `/pending`.
+- [x] Pending: replace hint-only copy with a real logout control that calls the same Server Action (PrimeReact `Button`). Keep pending identity server-only (email + display name props).
+- [x] EN + ES in `messages/en.json` / `messages/es.json` (`header.*` for the menu/button/confirm; pending button label). Do not invent a second product name for “log out.”
+- [x] Loading / pending / error: disable double-submit while the action runs; generic failure copy if revoke fails (no Supabase text). Success is the login page, not a toast on dashboard.
+- [x] **Cache-Control verify (do not re-implement):** authenticated product and `/pending` already send `no-store`. After logout, **Back** must not show authenticated HTML. Confirm `next.config.ts` sources `/`, `/dashboard`, `/dashboard/:path*`, `/pending` plus middleware `no-store` on gated pass-through / login 302. Gap → extend headers, don’t add a second caching scheme.
+- [x] No GET link that logs the user out (`<a href="/logout">` or `method="get"`). The control must POST (Server Action / form).
+- [x] No Supabase SDK, tokens, or keys in the client bundle; form/button calls the Server Action only. PrimeReact before custom UI.
 
 ## BE checklist
 
@@ -69,6 +69,6 @@ No schema work. Session lives in Supabase Auth + `sb-*` cookies.
 
 - [ ] SPEC-REVIEW.md
 - [ ] SECURITY.md
-- [ ] CONTRACT.md + FE signoff
+- [x] CONTRACT.md + FE signoff
 - [ ] VALIDATION.md
 - [ ] QA.md

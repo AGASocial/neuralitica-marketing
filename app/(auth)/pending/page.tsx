@@ -77,7 +77,16 @@ export default async function PendingActivationPage({
         emailLabel={t.auth.pending.emailLabel}
         email={identity.email}
         displayName={identity.displayName}
-        logoutLabel={t.auth.pending.logoutHint}
+        logoutHint={t.auth.pending.logoutHint}
+        logoutCopy={{
+          label: t.auth.pending.logout,
+          pendingLabel: t.auth.pending.logoutPending,
+          confirmHeader: t.header.confirmHeader,
+          confirmMessage: t.header.confirmMessage,
+          confirmAccept: t.header.confirmAccept,
+          confirmReject: t.header.confirmReject,
+          stayError: t.auth.errors.forbiddenFields,
+        }}
       />
     </AuthShell>
   );

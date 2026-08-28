@@ -1,10 +1,16 @@
+import {
+  LogoutButton,
+  type LogoutButtonCopy,
+} from "@/components/auth/LogoutButton";
+
 type PendingActivationViewProps = {
   title: string;
   body: string;
   emailLabel: string;
   email?: string;
   displayName?: string;
-  logoutLabel: string;
+  logoutHint: string;
+  logoutCopy: LogoutButtonCopy;
 };
 
 export function PendingActivationView({
@@ -13,7 +19,8 @@ export function PendingActivationView({
   emailLabel,
   email,
   displayName,
-  logoutLabel,
+  logoutHint,
+  logoutCopy,
 }: PendingActivationViewProps) {
   const showIdentity = Boolean(email || displayName);
   const showDisplayName = Boolean(
@@ -53,8 +60,10 @@ export function PendingActivationView({
       ) : null}
 
       <p style={{ margin: 0, fontSize: "0.875rem", color: "#6b7280" }}>
-        {logoutLabel}
+        {logoutHint}
       </p>
+
+      <LogoutButton appearance="pending" copy={logoutCopy} />
     </div>
   );
 }
