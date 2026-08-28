@@ -8,6 +8,7 @@ import {
   normalizePathname,
   PATHNAME_HEADER,
 } from "@/lib/auth/public-routes";
+import { refreshSessionCookiesOnEdge } from "@/lib/auth/refresh-session-cookies";
 
 function hasSupabaseAuthCookie(request: NextRequest): boolean {
   return request.cookies
@@ -39,11 +40,14 @@ function withPathHeaders(
 }
 
 /**
- * Convenience only: allowlist + cookie presence.
- * Does not call getUser(), does not read neuramark_clients, does not
- * inject identity headers, and does not use the service-role key.
+ * Convenience only: allowlist + cookie presence + anon-key session refresh.
+ * Does not read neuramark_clients, does not inject identity headers, and
+ * does not use the service-role key. getUser() here is for cookie rotation
+ * only — Node requireActive() is the authorization boundary.
  */
-export function middleware(request: NextRequest): NextResponse {
+export async function middleware(
+  request: NextRequest,
+): Promise<NextResponse> {
   const pathname = normalizePathname(request.nextUrl.pathname);
   const locale = request.nextUrl.searchParams.get("locale");
   const requestHeaders = withPathHeaders(request, pathname, locale);
@@ -57,9 +61,7 @@ export function middleware(request: NextRequest): NextResponse {
     return relativeRedirect(buildLoginLocation({ next, locale }));
   }
 
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
-  response.headers.set("Cache-Control", "no-store");
-  return response;
+  return refreshSessionCookiesOnEdge(request, pathname, locale);
 }
 
 export const config = {

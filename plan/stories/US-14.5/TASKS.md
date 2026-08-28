@@ -77,6 +77,8 @@ Concrete FE consumers: `app/dashboard/page.tsx` + `components/layout/AppHeader.t
 - [x] Session expiry / null user: redirect to login, no throw that 500s the page.
 - [x] **Recovery leftover cookies:** `/reset-password/*` stays on the allowlist (US-14.4 must not 302 to product). SECURITY/CONTRACT freeze whether a recovery session on a **product** path is treated as a normal session (subject to `active`) or isolated. Do not reopen Path A/recovery landings.
 - [x] Automated coverage for: unauthenticated → login; inactive → pending/403; SQL `active=true` next request; SQL role demotion next request; production fallback throw; `maxAge` cap.
+- [x] **Edge session refresh (QA High):** middleware refreshes with the anon-key `@supabase/ssr` client + `getUser()` and writes rotated `sb-*` (`Set-Cookie`, 7-day clamp) on the document GET. RSC cookie adapter is read-only (`setAll` no-op); a successful `getUser()` is never mapped to `null`. No service-role on Edge.
+- [x] **Product route group (QA Medium):** `app/(app)/layout.tsx` calls `requireActive("page")` so new product pages inherit the gate. `/` and `/dashboard` live under the group; URLs unchanged. `/pending` and auth stay outside.
 
 ## DB checklist
 

@@ -7,7 +7,7 @@ import { isAuthDevFallbackEnabled } from "@/lib/auth/assert-dev-fallback";
 import type { CurrentUser, UserRole } from "@/lib/auth/get-current-user-types";
 import { mapClientRowToCurrentUser } from "@/lib/auth/map-client-row";
 import {
-  createUserScopedAuthClient,
+  createReadOnlyUserScopedAuthClient,
   isUserScopedAuthConfigured,
 } from "@/lib/auth/supabase-cookie";
 import {
@@ -57,28 +57,28 @@ async function loadSessionAuthUser(): Promise<SessionAuthUser | null> {
     return null;
   }
 
+  let user: User | null = null;
   try {
-    const auth = await createUserScopedAuthClient();
+    const auth = await createReadOnlyUserScopedAuthClient();
     const { data, error } = await auth.auth.getUser();
-    const user = data.user;
-
-    if (error || !user?.id) {
+    if (error || !data.user?.id) {
       return null;
     }
-
-    const email =
-      typeof user.email === "string" && user.email.length > 0
-        ? user.email.toLowerCase()
-        : "";
-
-    return {
-      id: user.id,
-      email,
-      displayName: authDisplayName(user, email),
-    };
+    user = data.user;
   } catch {
     return null;
   }
+
+  const email =
+    typeof user.email === "string" && user.email.length > 0
+      ? user.email.toLowerCase()
+      : "";
+
+  return {
+    id: user.id,
+    email,
+    displayName: authDisplayName(user, email),
+  };
 }
 
 /**

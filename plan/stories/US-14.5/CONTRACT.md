@@ -30,8 +30,8 @@ What changes:
 
 | Consumer | Route | Contract surface |
 |----------|-------|------------------|
-| Dashboard + header | `app/dashboard/layout.tsx` (new) + `app/dashboard/page.tsx`, `components/layout/AppHeader.tsx` | Product layout calls `requireActive("page")` **once**. AppHeader stays a Server Component under AppShell (dashboard-only today). Do **not** put the gate on root `app/layout.tsx` (wraps auth). Leaves do not each independently gate. |
-| Home | `app/page.tsx` (`/`) | Session-aware redirect (see [Redirect table](#redirect-table)). Stop unconditional `redirect("/dashboard")`. Outside the dashboard layout. |
+| Dashboard + header | `app/(app)/layout.tsx` + `app/(app)/dashboard/layout.tsx` + `app/(app)/dashboard/page.tsx`, `components/layout/AppHeader.tsx` | Product **route group** layout calls `requireActive("page")` so new product pages inherit the gate. Nested dashboard layout may call it again for AppShell (idempotent via React `cache()`). URLs unchanged (`/dashboard`). AppHeader stays a Server Component under AppShell. Do **not** put the gate on root `app/layout.tsx` (wraps auth). |
+| Home | `app/(app)/page.tsx` (`/`) | Under the product group (URL still `/`). Parent layout gates; page `redirect("/dashboard")`. See [Redirect table](#redirect-table). |
 | Pending activation | `app/(auth)/pending/page.tsx` | **Not public.** Server Component loads identity via `loadPendingIdentity()` (at most `email` + `displayName`). No `sessionStorage` / `?email=`. |
 | Auth pages | `/login`, `/signup`, `/reset-password`, `/reset-password/new` | Stay public. Live `sb-*` cookies must **not** 302 these to product. No “already signed in” bounce this story. |
 | Auth callbacks | `GET /auth/callback`, `GET /auth/callback/recovery` | Stay public. Landings **frozen** (US-14.2 / US-14.4). |
@@ -50,7 +50,7 @@ Copied from SECURITY.md. Do not reopen.
 | Identity | **One** seam: `getCurrentUser()`. No `client_id` cookie, no `neuramark_session` JWT, no header/query identity. Cookie does **not** carry `active`, `role`, or `client_id`. Client Components never import `getCurrentUser()`. |
 | `CurrentUser` fields | Unchanged: `id`, `email`, `displayName`, `preferredLocale`, `role`, `active`. `id` is always `neuramark_clients.id` when an object is returned. Return type becomes `CurrentUser \| null`. |
 | Allowlist | Exact table below. **`/pending` is not public.** Do not allowlist locale prefixes, `/api/*`, or “anything under `(auth)`” (`(auth)` includes `/pending`). |
-| Middleware | Convenience only. Cookie **presence** (`sb-*`), not `getUser()`, not `neuramark_clients`. **No** identity headers (`x-user-id`, `x-role`, `x-active`, …). **No** service-role / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_SECRET_KEY` on Edge. |
+| Middleware | Convenience only. Cookie **presence** (`sb-*`) for the anon 302 shortcut — not the authorization boundary. **Required:** Edge refresh with the user-scoped anon/publishable key (`createServerClient` + `getUser()`) so rotated `sb-*` cookies are written on the document GET. **Do not** 302 from `getUser()` result. **Do not** read `neuramark_clients`. **No** identity headers. **No** service-role on Edge. RSC cookie adapter is **read-only** (`setAll` no-op). |
 | Helpers | `requireActive()` before `requireOperator()`. Inactive operator has **no** access. Role never from the request. |
 | Missing client row | Do **not** invent `CurrentUser`. Treat as not-active: pages → `/pending` (email from `getUser()` at most); handlers → 403. No repair `INSERT` from the seam. Same pending copy as inactive — no “profile missing.” |
 | Dev fallback | `NODE_ENV === "development"` **AND** `AUTH_DEV_FALLBACK === "true"` (exact). Identity **fixed in code**. Production: throw at module evaluation if `AUTH_DEV_FALLBACK` is **any non-empty string** (including `"false"`). |
@@ -97,7 +97,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null>;
 | `null` | No / expired / revoked session, **or** valid session with **missing** client row |
 | Never invents | No fabricated `id` / `role` / `active`. No repair write. |
 
-Call sites that assume a non-null user (`AppHeader`, `dashboard/page.tsx`) **must** sit behind `requireActive()` (page mode) so they never render for `null` / inactive. **FE freeze:** that gate lives on the product layout (`app/dashboard/layout.tsx` or equivalent wrapping AppShell), **once**. AppHeader receives `CurrentUser` as a Server Component prop from AppShell after the layout gate — it does not call `getCurrentUser()` / `requireActive()` on its own. The dashboard page does not independently gate; it may keep `isSupabaseConfigured()` for `setupBanner` without re-resolving identity. Request-caching `getCurrentUser()` / `requireActive()` (React `cache()`) is a BUILD choice for parallel RSC safety, not a second identity API. Do **not** put `requireActive()` on root `app/layout.tsx`. `/` is outside this layout (see [Redirect table](#redirect-table)).
+Call sites that assume a non-null user (`AppHeader`, `dashboard/page.tsx`) **must** sit behind `requireActive()` (page mode) so they never render for `null` / inactive. **FE freeze (updated QA):** that gate lives on the product route group (`app/(app)/layout.tsx`). Nested `app/(app)/dashboard/layout.tsx` wrapping AppShell may call `requireActive("page")` again for the user prop (React `cache()`). AppHeader receives `CurrentUser` as a Server Component prop from AppShell after the layout gate — it does not call `getCurrentUser()` / `requireActive()` on its own. The dashboard page does not independently gate; it may keep `isSupabaseConfigured()` for `setupBanner` without re-resolving identity. Request-caching `getCurrentUser()` / `requireActive()` (React `cache()`) is a BUILD choice for parallel RSC safety, not a second identity API. Do **not** put `requireActive()` on root `app/layout.tsx`. `/` is inside the product group (URL unchanged) and redirects to `/dashboard` after the parent gate.
 
 ### Processing order (BUILD — Node only)
 
@@ -109,7 +109,7 @@ Call sites that assume a non-null user (`AppHeader`, `dashboard/page.tsx`) **mus
    - `preferredLocale`: `"en"`
    - `role`: `"operator"`
    - `active`: `true`
-3. Else: user-scoped cookie client `auth.getUser()` (signature / expiry — **not** cookie presence). Fail / null → return `null`.
+3. Else: user-scoped **read-only** cookie client `auth.getUser()` (signature / expiry — **not** cookie presence). `setAll` is a no-op in RSC so a refresh cannot throw or be mapped to `null`. Fail / null → return `null`. Session cookie persistence on GET is middleware (rule 6).
 4. Service-role (Node, `persistSession: false`) `SELECT` `neuramark_clients` where `auth_user_id` = Auth user id. No row → return `null`.
 5. Return `CurrentUser` mapped from the row (`id`, `email`, `display_name`, `preferred_locale`, `role`, `active`). **No module-level cache** of `active` / `role`.
 
@@ -246,10 +246,10 @@ Do not add locale prefixes, `/api/*` wildcards, or the `(auth)` group.
 
 1. **If pathname is public:** do **not** redirect to product/pending **even when `sb-*` cookies are present**. Required so US-14.4 set-password is not 302’d to dashboard, and so login/signup stay reachable while logged in.
 2. **If pathname is not public and no `sb-*` cookie is present:** 302 `/login` with a safe `next` (`isSafeRelativePath` / `sanitizeLoginNext`) equal to the requested product path. Preserve `locale` if already on the request as a query param (do not invent locale from `Accept-Language` as an identity signal). **Exception:** `/pending` → `/login` **without** `next` (keep `locale` if present). Never `next=/pending`.
-3. **If pathname is not public and an `sb-*` cookie is present:** pass through. **Do not** call `getUser()`, **do not** read `neuramark_clients`, **do not** branch on `active` / `role`. Node layout / `requireActive()` / `loadPendingIdentity()` apply the real gate (inactive → pending, expired cookie → login, active on `/pending` → dashboard).
+3. **If pathname is not public and an `sb-*` cookie is present:** pass through after Edge session refresh (rule 6). **Do not** 302 based on `getUser()` success/failure. **Do not** read `neuramark_clients`. **Do not** branch on `active` / `role`. Node layout / `requireActive()` / `loadPendingIdentity()` apply the real gate (inactive → pending, expired cookie → login, active on `/pending` → dashboard).
 4. **Must not** set `x-user-id`, `x-role`, `x-active`, or any other identity header.
 5. **Must not** import the service-role client or `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_SECRET_KEY`.
-6. **Optional:** refresh session cookies on Edge with the **user-scoped anon/publishable key only** (same adapter as `lib/auth/supabase-cookie.ts`). Still no `neuramark_clients` on Edge. If Server Components can persist refreshed cookies, this refresh is not required.
+6. **Required (QA High):** refresh session cookies on Edge with the **user-scoped anon/publishable key only** (`createServerClient` + `getUser()`). Write rotated `sb-*` on the **response** (`Set-Cookie`, still clamped by `applySessionCookieFlags`) and forward them on the request so RSC sees the new access token. Still no `neuramark_clients` on Edge. Server Components **cannot** persist refreshed cookies (`cookies().set` throws outside Server Actions); RSC `setAll` must be a no-op and must **not** map that path to `null` if `getUser()` succeeded.
 
 Cookie **presence** = any request cookie whose name starts with `sb-` (`isSupabaseAuthCookieName`). Presence is **not** a valid session.
 
@@ -618,7 +618,7 @@ Same body for all three (no oracle):
 
 ## FE questions (frozen 2026-08-28)
 
-1. **Active-guard call sites:** **Confirm layout once.** Product layout (`app/dashboard/layout.tsx` wrapping AppShell) calls `requireActive("page")` **once**. AppHeader is only used under AppShell (dashboard-only today). Header and dashboard page do **not** each call the gate. AppHeader stays a Server Component and receives `CurrentUser` as props from AppShell. Do **not** gate root `app/layout.tsx` (auth pages live under it). `/` is outside the dashboard layout — session-aware in `app/page.tsx`.
+1. **Active-guard call sites:** **Confirm layout once (updated).** Product route group (`app/(app)/layout.tsx`) calls `requireActive("page")` so new product pages inherit the gate. Nested dashboard layout wrapping AppShell may call it again for the user prop (idempotent). AppHeader is only used under AppShell. Header and dashboard page do **not** each call the gate independently. AppHeader stays a Server Component and receives `CurrentUser` as props from AppShell. Do **not** gate root `app/layout.tsx` (auth pages live under it). `/` is inside the product group — session-aware via the parent layout, then `redirect("/dashboard")`.
 2. **Pending identity:** **Confirm.** Server Component → view props are **only** `email` + `displayName` from `loadPendingIdentity()`. Drop `sessionStorage` / `components/auth/pending-identity.ts` / `LoginForm.storePendingIdentity`. Refresh of `/pending` shows the session user’s email. Untrusted `?email=` (and related) still stripped. Identity comes from the server seam only — not client `getCurrentUser()` (`import "server-only"`).
 3. **Login `next` from guards:** **Confirm.** Login page still maps URL `next` / `redirectTo` onto `logIn` field `next` only (existing `pickNextCandidate` + `LoginForm`). Inactive `logIn` still ignores `next`. Product unauthenticated visits keep `/login?next=<sanitized path>` (+ `locale` if present).
 4. **Auth pages with a live session:** **Confirm.** No “already signed in” redirect this story. `/login` `/signup` `/reset-password` `/reset-password/new` stay reachable with live `sb-*` cookies (required for US-14.4 set-password).
@@ -648,3 +648,4 @@ Same body for all three (no oracle):
 |------|--------|
 | 2026-08-28 | Initial contract (nextjs-backend): session-backed `getCurrentUser()`, allowlist, redirect table, `requireActive` / `requireOperator`, seed skip-if-missing. No implementation. |
 | 2026-08-28 | FE signoff: layout-once `requireActive("page")`; pending identity from `loadPendingIdentity()` (drop sessionStorage); login still maps URL `next`; auth pages stay reachable with a live session; `/` becomes session-aware; setupBanner drops identity wording; no handler 401/403 UI; anon `/pending` → `/login` without `next`. |
+| 2026-08-28 | QA High: Edge refresh is **required** (RSC cannot persist `sb-*`). RSC cookie adapter is read-only. Product pages moved under `app/(app)/` (URLs unchanged) so new pages inherit `requireActive("page")`. Allowlist and no-service-role-on-Edge unchanged. |

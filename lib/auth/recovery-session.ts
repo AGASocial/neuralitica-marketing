@@ -1,7 +1,7 @@
 import "server-only";
 
 import {
-  createUserScopedAuthClient,
+  createReadOnlyUserScopedAuthClient,
   isUserScopedAuthConfigured,
 } from "@/lib/auth/supabase-cookie";
 
@@ -19,7 +19,7 @@ export async function isRecoverySessionReady(): Promise<boolean> {
       return false;
     }
 
-    const auth = await createUserScopedAuthClient();
+    const auth = await createReadOnlyUserScopedAuthClient();
     const { data, error } = await auth.auth.getUser();
 
     return Boolean(!error && data.user?.id);

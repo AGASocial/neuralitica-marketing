@@ -7,40 +7,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { isSupabaseAuthCookieName } from "@/lib/auth/auth-cookie-name";
 import { applySessionCookieFlags } from "@/lib/auth/session-cookie-flags";
+import {
+  requireUserScopedCredentials,
+  userScopedCookieOptions,
+} from "@/lib/auth/user-scoped-credentials";
 
 export { isSupabaseAuthCookieName } from "@/lib/auth/auth-cookie-name";
 export { applySessionCookieFlags } from "@/lib/auth/session-cookie-flags";
-
-/** Server-only anon/publishable key — never `NEXT_PUBLIC_`. */
-function getAnonKey(): string | undefined {
-  return process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY;
-}
-
-export function isUserScopedAuthConfigured(): boolean {
-  return Boolean(process.env.SUPABASE_URL && getAnonKey());
-}
-
-function userScopedCookieOptions() {
-  return {
-    path: "/" as const,
-    sameSite: "lax" as const,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-  };
-}
-
-function requireUserScopedCredentials(): { url: string; anonKey: string } {
-  const url = process.env.SUPABASE_URL;
-  const anonKey = getAnonKey();
-
-  if (!url || !anonKey) {
-    throw new Error(
-      "Missing SUPABASE_URL or SUPABASE_ANON_KEY (or SUPABASE_PUBLISHABLE_KEY) for user-scoped auth.",
-    );
-  }
-
-  return { url, anonKey };
-}
+export { isUserScopedAuthConfigured } from "@/lib/auth/user-scoped-credentials";
 
 /** Discard pre-auth `sb-*` cookies (session fixation) in a Server Action. */
 export async function discardSupabaseAuthCookies(): Promise<void> {
@@ -58,7 +32,7 @@ export async function discardSupabaseAuthCookies(): Promise<void> {
 }
 
 /**
- * User-scoped `@supabase/ssr` client for Server Actions.
+ * User-scoped `@supabase/ssr` client for Server Actions (cookie writes).
  * Uses the anon key only — never the service-role client.
  */
 export async function createUserScopedAuthClient(): Promise<SupabaseClient> {
@@ -71,10 +45,33 @@ export async function createUserScopedAuthClient(): Promise<SupabaseClient> {
       getAll() {
         return cookieStore.getAll();
       },
-      setAll(cookiesToSet, _headers) {
+      setAll(cookiesToSet) {
         for (const { name, value, options } of cookiesToSet) {
           cookieStore.set(name, value, applySessionCookieFlags(options));
         }
+      },
+    },
+  });
+}
+
+/**
+ * RSC / Server Component client. `setAll` is a no-op so `getUser()` cannot
+ * throw `ReadonlyRequestCookiesError` after a token refresh. Persistence is
+ * middleware's job (`refreshSessionCookiesOnEdge`).
+ */
+export async function createReadOnlyUserScopedAuthClient(): Promise<SupabaseClient> {
+  const { url, anonKey } = requireUserScopedCredentials();
+  const cookieStore = await cookies();
+
+  return createServerClient(url, anonKey, {
+    cookieOptions: userScopedCookieOptions(),
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll() {
+        // RSC cannot persist cookies (`cookies().set` throws). Middleware
+        // already refreshed and forwarded `sb-*` on this request.
       },
     },
   });

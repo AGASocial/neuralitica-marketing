@@ -10,6 +10,7 @@ import { resolveActiveGuard, resolveOperatorGuard } from "./guard-decision";
 import { buildLoginLocation } from "./login-redirect";
 import { mapClientRowToCurrentUser } from "./map-client-row";
 import { isPublicPath, normalizePathname } from "./public-routes";
+import { shouldRefreshSessionOnEdge } from "./refresh-session-cookies";
 import {
   applySessionCookieFlags,
   SESSION_IDLE_MAX_AGE_SECONDS,
@@ -97,6 +98,22 @@ describe("public allowlist", () => {
     assert.equal(isPublicPath("/"), false);
     assert.equal(isPublicPath("/dashboard"), false);
     assert.equal(isPublicPath("/api/anything"), false);
+  });
+});
+
+describe("Edge session refresh", () => {
+  it("refreshes only non-public paths that already have an sb-* cookie", () => {
+    assert.equal(shouldRefreshSessionOnEdge("/dashboard", true), true);
+    assert.equal(shouldRefreshSessionOnEdge("/", true), true);
+    assert.equal(shouldRefreshSessionOnEdge("/pending", true), true);
+    assert.equal(shouldRefreshSessionOnEdge("/login", true), false);
+    assert.equal(shouldRefreshSessionOnEdge("/signup", true), false);
+    assert.equal(shouldRefreshSessionOnEdge("/reset-password", true), false);
+    assert.equal(shouldRefreshSessionOnEdge("/reset-password/new", true), false);
+    assert.equal(shouldRefreshSessionOnEdge("/auth/callback", true), false);
+    assert.equal(shouldRefreshSessionOnEdge("/auth/callback/recovery", true), false);
+    assert.equal(shouldRefreshSessionOnEdge("/dashboard", false), false);
+    assert.equal(shouldRefreshSessionOnEdge("/pending", false), false);
   });
 });
 
