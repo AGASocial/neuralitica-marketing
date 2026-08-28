@@ -167,3 +167,64 @@ export async function isResendConfirmationRateLimited(
     return true;
   }
 }
+
+const LOGIN_FAILED_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_FAILED_MAX = 5;
+
+/**
+ * Login: max 5 `login_failed` per (email_hash, ip_hash) per 15 minutes.
+ * Store/count errors fail closed (limited = true). No `login_success` rows.
+ */
+export async function isLoginRateLimited(
+  email: string,
+  ip: string,
+): Promise<boolean> {
+  try {
+    const count = await countAttempts({
+      emailHash: hashEmail(email),
+      ipHash: hashIp(ip),
+      action: "login_failed",
+      since: new Date(Date.now() - LOGIN_FAILED_WINDOW_MS),
+    });
+
+    if (count === null) {
+      return true;
+    }
+
+    return count >= LOGIN_FAILED_MAX;
+  } catch {
+    console.error("[auth] login rate limit check failed");
+    return true;
+  }
+}
+
+/**
+ * Clear `login_failed` rows for this (email, IP) pair so the window resets.
+ * Returns false on store error — callers must still succeed the login.
+ */
+export async function resetLoginFailedAttempts(
+  email: string,
+  ip: string,
+): Promise<boolean> {
+  try {
+    const supabase = createServerSupabaseClient();
+    const { error } = await supabase
+      .from("neuramark_auth_attempts")
+      .delete()
+      .eq("action", "login_failed")
+      .eq("email_hash", hashEmail(email))
+      .eq("ip_hash", hashIp(ip));
+
+    if (error) {
+      console.error("[auth] failed to reset login_failed attempts", {
+        code: error.code,
+      });
+      return false;
+    }
+
+    return true;
+  } catch {
+    console.error("[auth] failed to reset login_failed attempts");
+    return false;
+  }
+}

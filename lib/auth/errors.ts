@@ -30,6 +30,15 @@ export function rateLimitedError(): AuthErrorEnvelope {
   return authError("RATE_LIMITED", "auth.errors.rateLimited");
 }
 
+/** Login 429 uses the same user-facing copy as credentials failure (no distinct rate-limit string). */
+export function loginRateLimitedError(): AuthErrorEnvelope {
+  return authError("RATE_LIMITED", "auth.login.genericFailure");
+}
+
+export function invalidCredentialsError(): AuthErrorEnvelope {
+  return authError("INVALID_CREDENTIALS", "auth.login.genericFailure");
+}
+
 export function internalError(): AuthErrorEnvelope {
   return authError("INTERNAL_ERROR", "auth.errors.internal");
 }

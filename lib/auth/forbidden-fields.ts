@@ -42,3 +42,8 @@ export function findForbiddenSignUpKeys(input: unknown): string[] {
 export function findForbiddenResendKeys(input: unknown): string[] {
   return findForbiddenKeys(input, FORBIDDEN_RESEND_KEYS);
 }
+
+/** Same privilege keys as resend; login does not treat confirmPassword as forbidden (Zod .strict() rejects extras). */
+export function findForbiddenLogInKeys(input: unknown): string[] {
+  return findForbiddenKeys(input, FORBIDDEN_RESEND_KEYS);
+}
