@@ -169,19 +169,28 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | — (recovery tokens owned by Supabase Auth) |
 
 **Acceptance criteria**
-- [ ] Requesting a reset returns the same generic "check your email" response for known and unknown emails (no enumeration)
-- [ ] The emailed link leads to a set-new-password page that works exactly once per token
-- [ ] Expired or already-used tokens show a clear error with a path to request a new link
-- [ ] New password is validated server-side against the same policy as signup
-- [ ] After a successful reset the client can log in with the new password; the old password no longer works
-- [ ] Copy exists in English and Spanish
-- [ ] [SEC] Known and unknown emails get the same status code, body, and copy from the request endpoint; the Supabase recovery call's "user not found" outcome is absorbed server-side, and app code adds no timing branch that distinguishes the two
-- [ ] [SEC] Reset requests are rate-limited: max 3 requests per email per hour and max 10 per IP per hour, tracked in `neuramark_auth_attempts`; over-limit requests still return the generic "check your email" response (with 429)
-- [ ] [SEC] Recovery tokens are single-use and expire within 1 hour (Supabase Auth OTP expiry configured accordingly); a used or expired token cannot set a password, and any outstanding recovery token is invalidated when the password changes by any means
-- [ ] [SEC] The emailed link lands on a Next.js Route Handler that exchanges the recovery code for a session server-side; the token never reaches client-side JavaScript, is never logged, and the set-password page sends `Referrer-Policy: no-referrer` so the URL cannot leak via referrer
-- [ ] [SEC] A successful password reset revokes all other active sessions for that user (global sign-out), so a stolen session does not survive recovery
-- [ ] [SEC] The set-password endpoint enforces the shared password policy module (US-14.1), is CSRF-protected, and never logs the new password
-- [ ] [SEC] Password reset works identically for active, inactive, and unconfirmed accounts — same generic responses, same flow (preserving enumeration resistance); a successful reset never changes `neuramark_clients.active`, and the account remains gated on activation after the reset (recovering a password grants credential access only, never product access)
+- [x] Requesting a reset returns the same generic "check your email" response for known and unknown emails (no enumeration)
+- [x] The emailed link leads to a set-new-password page that works exactly once per token — static path complete; live inbox E2E unproven
+- [x] Expired or already-used tokens show a clear error with a path to request a new link
+- [x] New password is validated server-side against the same policy as signup
+- [x] After a successful reset the client can log in with the new password; the old password no longer works — static path complete; live inbox E2E unproven
+- [x] Copy exists in English and Spanish
+- [x] [SEC] Known and unknown emails get the same status code, body, and copy from the request endpoint; the Supabase recovery call's "user not found" outcome is absorbed server-side, and app code adds no timing branch that distinguishes the two
+- [x] [SEC] Reset requests are rate-limited: max 3 requests per email per hour and max 10 per IP per hour, tracked in `neuramark_auth_attempts`; over-limit requests still return the generic "check your email" response (with 429)
+- [x] [SEC] Recovery tokens are single-use and expire within 1 hour (Supabase Auth OTP expiry configured accordingly); a used or expired token cannot set a password, and any outstanding recovery token is invalidated when the password changes by any means — ops OTP ≤ 1h documented in CONTRACT/.env.example; live expiry unproven (validator NOTE, do not fail)
+- [x] [SEC] The emailed link lands on a Next.js Route Handler that exchanges the recovery code for a session server-side; the token never reaches client-side JavaScript, is never logged, and the set-password page sends `Referrer-Policy: no-referrer` so the URL cannot leak via referrer
+- [x] [SEC] A successful password reset revokes all other active sessions for that user (global sign-out), so a stolen session does not survive recovery
+- [x] [SEC] The set-password endpoint enforces the shared password policy module (US-14.1), is CSRF-protected, and never logs the new password
+- [x] [SEC] Password reset works identically for active, inactive, and unconfirmed accounts — same generic responses, same flow (preserving enumeration resistance); a successful reset never changes `neuramark_clients.active`, and the account remains gated on activation after the reset (recovering a password grants credential access only, never product access) — every-request `active` / identity swap is US-14.5
+- [x] [SEC] Rate-limit store errors fail closed: if `recordAuthAttempt` / count queries throw or return an error, treat the request as over-limit and return 429 with the same generic check-email copy — do not fail open; record every well-formed submitted email (known or unknown) so 429 vs 200 is not an existence oracle
+- [x] [SEC] Request-reset is CSRF-protected the same way as set-password: Server Action with origin verification (or Route Handler rejecting mismatched `Origin`); no GET can trigger a recovery email
+- [x] [SEC] Request-reset must not become an existence oracle via send/profile failure: absorb “user not found”; map provider/send failures that only occur for existing users to generic check-email success; do not read `neuramark_clients` (or confirmation status) to decide whether to send; `INTERNAL_ERROR` only for failures that also occur for unknown emails
+- [x] [SEC] Recovery `emailRedirectTo` uses server-only `SITE_URL` as the allowlisted public origin pointing at the dedicated recovery callback — never `Host` / `X-Forwarded-Host`; if origin cannot be resolved safely, omit `emailRedirectTo` rather than copying the request host
+- [x] [SEC] Dedicated recovery callback; Path A must not consume recovery tokens: primary exchange is `GET /auth/callback/recovery`; recovery `emailRedirectTo` is not `/auth/callback`; Path A does not call `verifyOtp` / `exchangeCodeForSession` for `type=recovery`; if `type=recovery` still hits Path A, 302 to `/auth/callback/recovery` with the same query without consuming the token; never 302 `/login?confirmed=1` for recovery
+- [x] [SEC] `token_hash`, `code`, access_token, and refresh_token never appear in the 302 `Location`, HTML, JSON, or client JS; they are never logged; recovery callback 302 sends `Referrer-Policy: no-referrer`; invalid, expired, missing, or already-used tokens share one generic recovery-failure (retry to `/reset-password`); expire any `sb-*` cookies on exchange failure
+- [x] [SEC] Recovery session is set-password only: cookie flags match login (`HttpOnly`, `Secure` in production, `SameSite=Lax`, `Path=/`, host-only); minted with the user-scoped client — not the service-role client; this flow never 302s to `/dashboard`, `/pending`, or other product routes; after successful set-password: `signOut({ scope: "global" })` then clear cookies; land on `/login`
+- [x] [SEC] Request-reset and set-password contracts forbid `role`, `active`, `auth_user_id`, and `client_id`; set-password forbids `confirmPassword` / `confirm_password` on the wire; success/error payloads never include tokens, `role`, `active`, `client_id`, or `auth_user_id`
+- [x] [SEC] Unconfirmed recovery must not write activation: if Supabase confirms email as a provider side effect, that is provider behavior only — no app-side confirm write and never set `neuramark_clients.active` or `role`; observable reset responses stay identical for unconfirmed vs confirmed
 
 **Depends on:** US-14.1  
 **Priority:** P0
@@ -210,7 +219,7 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 - [ ] [SEC] Route protection is deny-by-default: the middleware/guard protects every route except an explicit public allowlist (login, signup, reset pages, their endpoints, static assets); new routes are protected without opt-in
 - [ ] [SEC] Middleware is convenience, not the security boundary: every Route Handler and Server Action independently resolves identity via server-side `getCurrentUser()` and returns 401/redirect when unauthenticated; no handler trusts a header, cookie flag, or middleware-injected value from the request to assert identity
 - [ ] [SEC] `getCurrentUser()` validates the session against Supabase Auth server-side (signature/expiry verification or user lookup), not mere cookie presence; expired or revoked sessions resolve to null
-- [ ] [SEC] Session lifetime is explicit: refresh handled server-side via the httpOnly cookie (rotating refresh token), idle expiry ≤ 7 days, and the refresh token is never exposed to client JavaScript
+- [ ] [SEC] Session lifetime is explicit: refresh handled server-side via the httpOnly cookie (rotating refresh token), idle expiry ≤ 7 days, and the refresh token is never exposed to client JavaScript — includes US-14.4 QA Low #2: cap `@supabase/ssr` cookie `maxAge` (~400 days today)
 - [ ] [SEC] The dev fallback activates only when `NODE_ENV === 'development'` AND `AUTH_DEV_FALLBACK=true` are both set; in production builds the code path throws at startup if `AUTH_DEV_FALLBACK` is set, and an automated test asserts the fallback is unreachable when `NODE_ENV=production`
 - [ ] [SEC] The Supabase service-role key (used for the seed/backfill and any admin lookup) stays in server-only modules and env vars; it never appears in `NEXT_PUBLIC_*`, client bundles, or middleware that ships to the edge without need
 - [ ] [SEC] `active` is read fresh from `neuramark_clients` inside `getCurrentUser()` on every request — never cached across requests (no module-level cache, no `active` claim baked into a cookie/JWT, no client-side persistence); staleness bound is one request, so deactivation (`active = false`) takes effect on the user's very next request even with a live session, and activation likewise requires no re-login

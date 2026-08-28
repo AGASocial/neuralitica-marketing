@@ -22,8 +22,9 @@ From US-14.1 and US-14.2 (reuse, do not fork):
 - [x] **Enumeration** — same status, body shape, and copy for known and unknown emails. Absorb Supabase “user not found” server-side. No app-introduced timing branch (always invoke the recovery-email call; no early return on missing user). Mirror `resendConfirmationEmail`.
 - [x] **`SITE_URL`** — server-only allowlisted origin for recovery `emailRedirectTo` (reuse / extend `getSignupEmailRedirectTo()` pattern in `lib/auth/send-signup-confirmation.ts`). Do not build redirects from `Host` / `X-Forwarded-Host`. If `SITE_URL` is unset, do not fall through to an open redirect. Add the recovery callback path to the Supabase Auth redirect allowlist (document in `.env.example`).
 - [x] **Cookie adapter** — `lib/auth/supabase-cookie.ts` (`HttpOnly`, `Secure` in production, `SameSite=Lax`, `Path=/`). Recovery exchange uses the user-scoped cookie client; service-role client stays `persistSession: false`.
-- [ ] **Login already links here** — `LoginForm` → `/reset-password?locale=`. Implement that route; do not leave a 404. Do not invent a second forgot-password URL.
+- [x] **Login already links here** — `LoginForm` → `/reset-password?locale=`. Implement that route; do not leave a 404. Do not invent a second forgot-password URL.
 - [x] **Callback Path A must not consume recovery tokens as confirmation** — today’s `GET /auth/callback` allowlists `type=recovery` and then **drops** the session and 302s to `/login?confirmed=1`. A recovery link that hits Path A would burn a single-use token. CONTRACT freezes either a **dedicated recovery callback** (preferred) or an explicit `type=recovery` branch that does **not** follow Path A. Signup/email Path A stays frozen.
+- [ ] **Live inbox E2E** — request-reset known vs unknown, recovery-link click, set-password once, login with new password / old rejected. — deferred: validator NOTE / QA not covered (inbox unproven)
 
 ## FE checklist
 
@@ -77,8 +78,8 @@ No new product tables. Recovery tokens are owned by **Supabase Auth**. Rate limi
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md
-- [ ] SECURITY.md
-- [ ] CONTRACT.md + FE signoff
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] SPEC-REVIEW.md — ALIGNED
+- [x] SECURITY.md — APPROVE WITH CONDITIONS
+- [x] CONTRACT.md + FE signoff — 2026-08-28
+- [x] VALIDATION.md — PASS WITH NOTES
+- [x] QA.md — APPROVE (Mediums closed; 1 Low cookie `maxAge` → US-14.5)
