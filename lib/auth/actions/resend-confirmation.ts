@@ -22,7 +22,7 @@ import { sendSignupConfirmationEmail } from "@/lib/auth/send-signup-confirmation
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/auth/supabase-server";
 import { zodErrorToFieldErrors } from "@/lib/auth/zod-field-errors";
 
-export async function resendConfirmationEmail(
+async function resendConfirmationEmailInner(
   raw: unknown,
 ): Promise<ResendConfirmationResult> {
   const forbidden = findForbiddenResendKeys(raw);
@@ -47,13 +47,17 @@ export async function resendConfirmationEmail(
 
   const ip = await getClientIp();
 
-  await recordAuthAttempt({
+  const recorded = await recordAuthAttempt({
     ip,
     email: input.email,
     action: "resend_confirmation",
   });
 
-  if (await isResendConfirmationRateLimited(input.email)) {
+  if (!recorded) {
+    return rateLimitedError();
+  }
+
+  if (await isResendConfirmationRateLimited(input.email, ip)) {
     return rateLimitedError();
   }
 
@@ -62,4 +66,22 @@ export async function resendConfirmationEmail(
   await sendSignupConfirmationEmail(supabase, input.email);
 
   return authSuccess();
+}
+
+export async function resendConfirmationEmail(
+  raw: unknown,
+): Promise<ResendConfirmationResult> {
+  try {
+    return await resendConfirmationEmailInner(raw);
+  } catch (error) {
+    const code =
+      error && typeof error === "object" && "code" in error
+        ? String((error as { code: unknown }).code)
+        : undefined;
+    console.error(
+      "[auth] resendConfirmation unexpected error",
+      code ? { code } : {},
+    );
+    return internalError();
+  }
 }

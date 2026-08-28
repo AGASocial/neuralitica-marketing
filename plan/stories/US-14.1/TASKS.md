@@ -25,6 +25,13 @@
 - [x] CSRF: Server Action origin check or Route Handler Origin validation
 - [x] Password redaction in logs
 - [x] Resend confirmation (if in scope): same rate limits as reset
+- [x] Duplicate vs confirmation-send failure both return `{ ok: true }` (no enumeration oracle)
+- [x] Rate limiter fails closed on `neuramark_auth_attempts` record/count errors
+- [x] Duplicate auth errors matched by code/message only (not bare HTTP 422); `weak_password` → PASSWORD_POLICY
+- [x] Duplicate path backfills missing `neuramark_clients` row from existing auth user
+- [x] Record signup attempts on validation / password-policy failure
+- [x] Top-level try/catch on `signUp` and `resendConfirmationEmail` (generic INTERNAL_ERROR)
+- [x] Server-only `SITE_URL` for confirmation `emailRedirectTo` (allowlisted origin)
 - [ ] Block spend endpoints for `active=false` (coordinate with US-14.5 guard pattern)
 
 ## DB checklist
@@ -33,6 +40,7 @@
 - [x] Migration: `neuramark_client_role` enum or CHECK (`client` | `operator`)
 - [x] Migration: `neuramark_auth_attempts` (ip_hash, email_hash, action, attempted_at)
 - [x] Indexes as needed for rate-limit lookups
+- [x] ENABLE ROW LEVEL SECURITY on `neuramark_clients` and `neuramark_auth_attempts` (deny-by-default; no policies until US-14.5)
 
 ## Gates (orchestrator)
 

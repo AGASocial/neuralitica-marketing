@@ -607,3 +607,4 @@ export type CurrentUser = {
 | Date | Change |
 |------|--------|
 | 2026-08-28 | Initial contract (nextjs-backend) |
+| 2026-08-28 | QA hardening (no request/response shape change; FE re-signoff not required): confirmation-send failure returns the same `{ ok: true }` as duplicate email; rate-limit store errors fail closed as `RATE_LIMITED`; duplicate detection no longer uses bare HTTP 422 (`weak_password` → `PASSWORD_POLICY`). |
