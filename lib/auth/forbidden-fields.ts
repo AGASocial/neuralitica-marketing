@@ -48,6 +48,11 @@ export function findForbiddenLogInKeys(input: unknown): string[] {
   return findForbiddenKeys(input, FORBIDDEN_RESEND_KEYS);
 }
 
+/** Logout: same privilege set as login / resend. Extra keys are Zod `.strict()`, not this list. */
+export function findForbiddenLogOutKeys(input: unknown): string[] {
+  return findForbiddenKeys(input, FORBIDDEN_RESEND_KEYS);
+}
+
 /** Request-reset: same privilege keys as resend (`confirmPassword` is not a request-reset field). */
 export function findForbiddenPasswordResetRequestKeys(input: unknown): string[] {
   return findForbiddenKeys(input, FORBIDDEN_RESEND_KEYS);

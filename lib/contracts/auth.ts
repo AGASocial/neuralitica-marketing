@@ -1,5 +1,5 @@
 /**
- * Auth contract types and Zod schemas (US-14.1 signup, US-14.2 login, US-14.4 reset).
+ * Auth contract types and Zod schemas (US-14.1 signup, US-14.2 login, US-14.3 logout, US-14.4 reset).
  * FE imports types only; password policy and next-path sanitizer stay server-side.
  */
 import { z } from "zod";
@@ -10,7 +10,7 @@ import { supportedLocaleSchema } from "./providers";
 export const clientRoleSchema = z.enum(["client", "operator"]);
 export type ClientRole = z.infer<typeof clientRoleSchema>;
 
-/** DB enum neuramark_auth_action — server-only writes. No `login_success` (US-14.2). No set-password action (US-14.4). */
+/** DB enum neuramark_auth_action — server-only writes. No `login_success` (US-14.2). No `logout` (US-14.3). No set-password action (US-14.4). */
 export const authAttemptActionSchema = z.enum([
   "signup",
   "resend_confirmation",
@@ -211,3 +211,26 @@ export const setNewPasswordResultSchema = z.discriminatedUnion("ok", [
   authErrorEnvelopeSchema,
 ]);
 export type SetNewPasswordResult = z.infer<typeof setNewPasswordResultSchema>;
+
+/**
+ * Empty body only. Privilege keys (role, active, auth_user_id, client_id) are
+ * rejected before Zod. Omitted / undefined is treated as `{}` at the action.
+ */
+export const logOutInputSchema = z.object({}).strict();
+export type LogOutInput = z.infer<typeof logOutInputSchema>;
+
+/**
+ * Opaque login path after local sign-out. FE must navigate here as-is.
+ * No `next` of the page they left. No `?loggedOut=1`. Cookie is not in this body.
+ */
+export const logOutSuccessSchema = z.object({
+  ok: z.literal(true),
+  redirectTo: z.literal("/login"),
+});
+export type LogOutSuccess = z.infer<typeof logOutSuccessSchema>;
+
+export const logOutResultSchema = z.discriminatedUnion("ok", [
+  logOutSuccessSchema,
+  authErrorEnvelopeSchema,
+]);
+export type LogOutResult = z.infer<typeof logOutResultSchema>;
