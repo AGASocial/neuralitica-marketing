@@ -55,10 +55,10 @@ Request-reset is enumeration-safe: known and unknown emails share one success bo
 | Success 302 | Token-free **`/reset-password/new`**. |
 | Failure 302 | **`/reset-password/new?error=invalid`**. One failure for missing, expired, used, and provider `error` / `error_description`. Expire `sb-*` on failure. |
 | Open redirect | Callback **ignores** `next` / `redirect_to` / `redirectTo`. Relative `Location` only. Never `Host` / `X-Forwarded-Host`. |
-| Path A | Confirmation only. **Remove `"recovery"` from Path A’s `verifyOtp` allowlist at BUILD.** If `type=recovery` hits `/auth/callback`, **do not** consume the token; 302 to `/auth/callback/recovery` with the same query. Signup/email landings stay `/login?confirmed=1` / `/login?error=confirmation`. |
+| Path A | Confirmation only. **Remove `"recovery"` from Path A’s `verifyOtp` allowlist at BUILD.** If `type=recovery` hits `/auth/callback`, **do not** consume the token; 302 to `/auth/callback/recovery` with the same query. If `token_hash` is present and `type` is **missing or unknown**, same forward (do not 302 `/login?error=confirmation`). Signup/email landings stay `/login?confirmed=1` / `/login?error=confirmation`. |
 | Request-reset success | Known and unknown: `{ ok: true }`. FE always shows check-email. Never `USER_NOT_FOUND`. |
 | Request-reset 429 | Logical **429**, `code: "RATE_LIMITED"`, **`messageKey: "auth.reset.checkEmail"`** (same user-facing copy as success — **not** `auth.errors.rateLimited`). |
-| Set-password success | `{ ok: true, redirectTo: "/login?reset=1" }`. Global sign-out + clear cookies **before** returning. Never `/dashboard` or `/pending`. |
+| Set-password success | `{ ok: true, redirectTo: "/login?reset=1" }` **only after** global sign-out succeeds. Clear cookies either way. If sign-out still fails after one retry → `INTERNAL_ERROR` (not `{ ok: true }`). Never `/dashboard` or `/pending`. |
 | Invalid recovery session | Logical **401**, `code: "RECOVERY_INVALID"`, `messageKey: "auth.reset.invalidToken"`. Same copy as callback failure. Retry → `/reset-password`. |
 | Cookie presence | Set-password page learns the session exists via **httpOnly cookie + Server Component** (`recoveryReady: boolean`). Token never in the page URL, HTML, JSON, or client JS. |
 | OTP | Single-use; expire **≤ 1 hour** (Supabase Auth project config, not a `neuramark_` migration). |
@@ -167,9 +167,9 @@ The client **does not** send `token_hash`, `code`, `type`, or a user id. The rec
 3. `validatePassword` (US-14.1 module) → `400 PASSWORD_POLICY` + `passwordPolicy` enum. Distinct from recovery-invalid — the attacker already holds the recovery session.
 4. Require recovery session from cookie: `getUser()` (or equivalent) on the **user-scoped** cookie client. No request `userId`. Missing / invalid session → `RECOVERY_INVALID` (same copy as callback failure; retry to `/reset-password`).
 5. `updateUser({ password })` (or equivalent) on that same user-scoped client. Password change invalidates outstanding recovery tokens (provider behavior).
-6. `signOut({ scope: "global" })` (or equivalent refresh-token revocation) so a stolen session does not survive recovery.
-7. Expire `sb-*` cookies with the **same name / path / host-only attributes** used to set them.
-8. Return `{ ok: true, redirectTo: "/login?reset=1" }`.
+6. `signOut({ scope: "global" })` (or equivalent refresh-token revocation) so a stolen session does not survive recovery. Retry once on error or throw. Log `code`/`status` only — never the password.
+7. Expire `sb-*` cookies with the **same name / path / host-only attributes** used to set them — **whether or not** global sign-out succeeded.
+8. Return `{ ok: true, redirectTo: "/login?reset=1" }` **only if** global sign-out succeeded. If it still fails after the retry, return `INTERNAL_ERROR` (do **not** report recovery finished while other sessions may still be live).
 9. Top-level try/catch → `INTERNAL_ERROR` (no Supabase text). Never log or echo the password (`redactAuthPayload`).
 
 Do **not** INSERT/UPDATE/DELETE `neuramark_clients`. Do **not** write `active` or `role`. Do **not** 302 or return a `redirectTo` of `/dashboard`, `/pending`, or any product route.
@@ -231,6 +231,7 @@ Server Actions do not expose REST paths; status codes below are **logical** code
 | Outcome | HTTP | Body | FE behavior |
 |---------|------|------|-------------|
 | Password updated, sessions revoked | 200 | `{ ok: true, redirectTo: "/login?reset=1" }` | `router.push(redirectTo)`; clear password fields |
+| Password updated, global sign-out failed | 500 | `INTERNAL_ERROR` | Generic error; local cookies already discarded |
 | Missing / invalid / expired recovery session | 401 | `RECOVERY_INVALID` + `auth.reset.invalidToken` | Invalid-token UI + retry to `/reset-password` |
 | Password policy failure | 400 | `PASSWORD_POLICY` + `passwordPolicy` | Policy hint (length/common); session still valid until success |
 | Malformed payload | 400 | `VALIDATION_ERROR` + `fields` | Field errors |
@@ -348,7 +349,8 @@ Confirmation Path A stays frozen for `type=signup` / `type=email`: landings rema
 
 1. **Remove `"recovery"` from Path A’s `verifyOtp` type allowlist** (`EMAIL_OTP_TYPES` / equivalent). Path A must not call `verifyOtp` or `exchangeCodeForSession` for `type=recovery`.
 2. **If `type=recovery`** (with or without `token_hash` / `code` / provider `error`): **do not** consume the token. **302** to `/auth/callback/recovery` **preserving the query** (relative `Location`, `Referrer-Policy: no-referrer`). Never 302 `/login?confirmed=1` for recovery.
-3. PKCE `code` **without** `type=recovery` on `/auth/callback` remains confirmation Path A (cannot distinguish recovery PKCE). Therefore recovery emails **must not** use `/auth/callback` as `emailRedirectTo`.
+3. **If `token_hash` is present and `type` is missing or unknown** (not in Path A’s confirmation allowlist): same 302 to `/auth/callback/recovery` with the same query — do **not** 302 `/login?error=confirmation`. `type=signup` / `type=email` (and other confirmation allowlist types) stay on Path A.
+4. PKCE `code` **without** `type=recovery` on `/auth/callback` remains confirmation Path A (cannot distinguish recovery PKCE). Therefore recovery emails **must not** use `/auth/callback` as `emailRedirectTo`.
 
 Forwarding must not log the query. Strip nothing the recovery handler needs (`token_hash`, `type`, `code`, `error`, `error_description`); the recovery handler still **ignores** `next` / `redirect_to`.
 
@@ -372,7 +374,7 @@ On **recovery callback success only**:
 | Authorization | **Set-password only.** This flow never 302s to product routes. |
 | Body / JS | Access token, refresh token, `token_hash`, `code`, and cookie value **never** appear in JSON, HTML, `Location`, logs, or client JS. |
 | Service-role | Existing server client stays `persistSession: false` and is **not** the cookie client. |
-| After `setNewPassword` success | `signOut({ scope: "global" })` **then** expire cookies with matching name/path/host attributes. Cookies must not remain. |
+| After `setNewPassword` success | `signOut({ scope: "global" })` **then** expire cookies with matching name/path/host attributes. Cookies must not remain. If global sign-out fails after one retry, still expire cookies and return `INTERNAL_ERROR` — never `{ ok: true }`. |
 | After callback failure | Expire any `sb-*`. |
 | Max-Age | Follow `@supabase/ssr` defaults. |
 
@@ -714,6 +716,16 @@ FE shows `auth.reset.invalidToken` plus retry to `/reset-password`. Must not ren
 
 Signup/email Path A is unchanged: `type=signup` / `type=email` still 302 `/login?confirmed=1` or `/login?error=confirmation`.
 
+**Request (token_hash, missing/unknown type):** `GET /auth/callback?token_hash=…` (no `type`, or `type` not in the confirmation allowlist)
+
+**Response:** `302`  
+**Headers:**
+
+- `Location: /auth/callback/recovery?token_hash=…` (same query, relative)
+- `Referrer-Policy: no-referrer`
+
+**Must not** call `verifyOtp`. **Must not** land on `/login?error=confirmation`.
+
 ---
 
 ### Set-password page — recovery ready (no action call yet)
@@ -910,6 +922,7 @@ Known interim: until US-14.5, a recovery session plus hardcoded `getCurrentUser(
 
 | Date | Change |
 |------|--------|
+| 2026-08-28 | QA Medium #1: `{ ok: true }` only after global `signOut` succeeds; discard cookies either way; retry once then `INTERNAL_ERROR`. Low: Path A forwards `token_hash` with missing/unknown `type` to `/auth/callback/recovery` (signup/email Path A unchanged). FE re-signoff not required — success JSON shape and signup/email 302s unchanged. |
 | 2026-08-28 | BUILD: OTP ≤ 1 hour and recovery redirect URL documented in `.env.example` (Supabase dashboard config; no migration) |
 | 2026-08-28 | FE signoff: freeze check-email on `/reset-password`, set-password `/reset-password/new`, login `?reset=1` banner, `recoveryReady` from Server Component |
 | 2026-08-28 | Initial contract (nextjs-backend): dedicated `GET /auth/callback/recovery`, request/set-password Server Actions, additive Zod types in `lib/contracts/auth.ts` |

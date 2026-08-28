@@ -1,5 +1,7 @@
 "use server";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import {
   setNewPasswordInputSchema,
   type SetNewPasswordResult,
@@ -27,6 +29,24 @@ import {
 import { zodErrorToFieldErrors } from "@/lib/auth/zod-field-errors";
 
 const RESET_SUCCESS_REDIRECT = "/login?reset=1" as const;
+
+/** Returns true when every refresh token was revoked. Never logs the password. */
+async function tryGlobalSignOut(auth: SupabaseClient): Promise<boolean> {
+  try {
+    const { error } = await auth.auth.signOut({ scope: "global" });
+    if (!error) {
+      return true;
+    }
+    console.error("[auth] setNewPassword global signOut failed", {
+      code: error.code,
+      status: error.status,
+    });
+    return false;
+  } catch {
+    console.error("[auth] setNewPassword global signOut threw");
+    return false;
+  }
+}
 
 async function setNewPasswordInner(
   raw: unknown,
@@ -85,21 +105,16 @@ async function setNewPasswordInner(
     return internalError();
   }
 
-  try {
-    const { error: signOutError } = await auth.auth.signOut({
-      scope: "global",
-    });
-    if (signOutError) {
-      console.error("[auth] setNewPassword global signOut failed", {
-        code: signOutError.code,
-        status: signOutError.status,
-      });
-    }
-  } catch {
-    console.error("[auth] setNewPassword global signOut threw");
+  let revoked = await tryGlobalSignOut(auth);
+  if (!revoked) {
+    revoked = await tryGlobalSignOut(auth);
   }
 
   await discardSupabaseAuthCookies();
+
+  if (!revoked) {
+    return internalError();
+  }
 
   return {
     ok: true,

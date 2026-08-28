@@ -93,7 +93,9 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     if (tokenHash) {
       if (!otpType) {
-        return confirmationFailure(request);
+        // Missing or unknown type: do not treat as confirmation. Keep
+        // type=signup / type=email on Path A (parseEmailOtpType succeeds).
+        return forwardRecoveryWithoutConsuming(url);
       }
 
       if (!isSupabaseConfigured()) {
