@@ -79,7 +79,7 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 **Acceptance criteria**
 - [x] Signup is open (no invite required); after submitting, the client sees a "check your email to confirm" screen — no session into product routes
 - [x] Supabase sends an email confirmation on signup; the account cannot log in to a pending/product state before confirming
-- [ ] After email confirmation, the client sees a neutral "account pending activation" state until an operator activates the account (US-14.5 enforces this on every request) — deferred: US-14.2 callback E2E; US-14.5 pending UI enforcement
+- [ ] After email confirmation, the client sees a neutral "account pending activation" state until an operator activates the account (US-14.5 enforces this on every request) — deferred: US-14.2 Path A callback shipped (confirm → `/login?confirmed=1` → login → `/pending`); inbox E2E unproven; US-14.5 pending UI enforcement
 - [x] Signing up with an already-registered email returns the same generic success-style response as a new email (no user enumeration)
 - [x] Password policy enforced server-side (minimum length; client-side hints are presentation only)
 - [x] A `neuramark_clients` row linked to the Supabase `auth.users` record is created on signup with `active = false` (column is `NOT NULL DEFAULT false`)
@@ -113,22 +113,22 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | — (session lives in the cookie / Supabase Auth; reads `neuramark_clients.active` from US-14.1) |
 
 **Acceptance criteria**
-- [ ] Valid credentials for an ACTIVE account establish a server-side session (httpOnly cookie) and redirect to the dashboard
-- [ ] Valid credentials for a confirmed-but-INACTIVE account authenticate but land on the neutral "account pending activation" screen (EN/ES); no dashboard or product route is reachable
-- [ ] The `active` check is not a login-time-only gate: it is enforced server-side on every request via `getCurrentUser()`/route guards (US-14.5)
-- [ ] Invalid email or password shows the same generic error (no distinction between "unknown email" and "wrong password")
-- [ ] Session survives page refresh and new tab; no Supabase token is readable by browser JavaScript
-- [ ] Failure, loading, and pending states covered
-- [ ] Copy exists in English and Spanish
-- [ ] [SEC] The generic login failure returns the same status code, body shape, and copy for unknown email, wrong password, and unconfirmed account, with no timing side channel introduced by app code (the Supabase call runs for all failure paths; no early return on "user not found")
-- [ ] [SEC] Brute-force protection: max 5 failed attempts per (email, IP) per 15-minute window tracked in `neuramark_auth_attempts`; over-limit attempts return the same generic failure (with 429), and the counter resets on successful login; Supabase Auth built-in rate limits remain enabled as the second layer
-- [ ] [SEC] Session cookie is set with `HttpOnly`, `Secure` (in production), `SameSite=Lax`, and `Path=/`; no Supabase access/refresh token is readable by browser JavaScript or present in any response body
-- [ ] [SEC] Session rotation on login: a successful login always issues a fresh session cookie value; any session identifier present before authentication is discarded (session fixation guard)
-- [ ] [SEC] Login mutation is CSRF-protected: Server Action with origin verification, or Route Handler rejecting mismatched `Origin` headers
-- [ ] [SEC] The post-login redirect target (`next`/`redirectTo` parameter) is validated as a same-origin relative path: must start with a single `/`, must not start with `//` or contain a scheme/backslash; anything else falls back to `/dashboard` (open-redirect prevention)
-- [ ] [SEC] Passwords are never logged or echoed back on failure; the login handler redacts credential fields from any error/telemetry path
-- [ ] [SEC] The active/inactive distinction is revealed only AFTER successful authentication: login failures for inactive, active, unconfirmed, and nonexistent accounts are all the same generic error, and no unauthenticated request or response can be used to learn an account's activation state
-- [ ] [SEC] The pending-activation screen shows only what the user already knows (at most their own email/display name) plus neutral copy; no internal IDs, activation queue details, operator contact internals, or timestamps that leak operational information
+- [x] Valid credentials for an ACTIVE account establish a server-side session (httpOnly cookie) and redirect to the dashboard
+- [x] Valid credentials for a confirmed-but-INACTIVE account authenticate but land on the neutral "account pending activation" screen (EN/ES); no dashboard or product route is reachable — login-time landing only; every-request blocking is US-14.5
+- [ ] The `active` check is not a login-time-only gate: it is enforced server-side on every request via `getCurrentUser()`/route guards (US-14.5) — deferred: US-14.5 every-request guards / getCurrentUser swap
+- [x] Invalid email or password shows the same generic error (no distinction between "unknown email" and "wrong password")
+- [x] Session survives page refresh and new tab; no Supabase token is readable by browser JavaScript — cookie persistence; identity swap is US-14.5
+- [x] Failure, loading, and pending states covered
+- [x] Copy exists in English and Spanish
+- [x] [SEC] The generic login failure returns the same status code, body shape, and copy for unknown email, wrong password, and unconfirmed account, with no timing side channel introduced by app code (the Supabase call runs for all failure paths; no early return on "user not found")
+- [x] [SEC] Brute-force protection: max 5 failed attempts per (email, IP) per 15-minute window tracked in `neuramark_auth_attempts`; over-limit attempts return the same generic failure (with 429), and the counter resets on successful login; Supabase Auth built-in rate limits remain enabled as the second layer
+- [x] [SEC] Session cookie is set with `HttpOnly`, `Secure` (in production), `SameSite=Lax`, and `Path=/`; no Supabase access/refresh token is readable by browser JavaScript or present in any response body
+- [x] [SEC] Session rotation on login: a successful login always issues a fresh session cookie value; any session identifier present before authentication is discarded (session fixation guard)
+- [x] [SEC] Login mutation is CSRF-protected: Server Action with origin verification, or Route Handler rejecting mismatched `Origin` headers
+- [x] [SEC] The post-login redirect target (`next`/`redirectTo` parameter) is validated as a same-origin relative path: must start with a single `/`, must not start with `//` or contain a scheme/backslash; anything else falls back to `/dashboard` (open-redirect prevention)
+- [x] [SEC] Passwords are never logged or echoed back on failure; the login handler redacts credential fields from any error/telemetry path
+- [x] [SEC] The active/inactive distinction is revealed only AFTER successful authentication: login failures for inactive, active, unconfirmed, and nonexistent accounts are all the same generic error, and no unauthenticated request or response can be used to learn an account's activation state
+- [x] [SEC] The pending-activation screen shows only what the user already knows (at most their own email/display name) plus neutral copy; no internal IDs, activation queue details, operator contact internals, or timestamps that leak operational information
 
 **Depends on:** US-14.1  
 **Priority:** P0

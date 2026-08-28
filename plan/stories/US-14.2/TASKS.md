@@ -17,9 +17,9 @@
 From `plan/stories/US-14.1/VALIDATION.md`, `CONTRACT.md` (out of scope), and `QA.md`:
 
 - [x] **Email-confirmation callback Route Handler** at `/auth/callback` (matches `lib/auth/send-signup-confirmation.ts` `emailRedirectTo`). Completes confirmation so the account can log in. Must **not** grant product access (`active` still false until operator SQL).
-- [ ] **Post-confirm landing:** after the confirm click, the client reaches the pending-activation experience — either callback → `/pending`, or callback → `/login` then login of confirmed-inactive → `/pending`. Freeze the path in CONTRACT.md; E2E must prove one of them.
-- [ ] **E2E post-confirm landing** (QA + FE/BE): click the confirmation link from a real (or dashboard-copied) email; user lands on pending (directly or via login), not dashboard/product.
-- [ ] **`/pending` must not treat `?email=` as identity** (US-14.1 QA Low #13). After login, email/display name on the pending screen come from the **authenticated** result (what the user already knows). Unauthenticated query params are not proof of identity and must not be echoed as if they were.
+- [x] **Post-confirm landing:** after the confirm click, the client reaches the pending-activation experience — either callback → `/pending`, or callback → `/login` then login of confirmed-inactive → `/pending`. Freeze the path in CONTRACT.md; E2E must prove one of them. Path A frozen: callback → `/login?confirmed=1` then confirmed-inactive login → `/pending`.
+- [ ] **E2E post-confirm landing** (QA + FE/BE): click the confirmation link from a real (or dashboard-copied) email; user lands on pending (directly or via login), not dashboard/product. — deferred: validator NOTE / QA not covered (inbox click unproven)
+- [x] **`/pending` must not treat `?email=` as identity** (US-14.1 QA Low #13). After login, email/display name on the pending screen come from the **authenticated** result (what the user already knows). Unauthenticated query params are not proof of identity and must not be echoed as if they were.
 
 ## FE checklist
 
@@ -73,8 +73,8 @@ No new product tables. Session lives in the cookie / Supabase Auth. Login **read
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md
-- [ ] SECURITY.md
-- [ ] CONTRACT.md + FE signoff
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] SPEC-REVIEW.md — ALIGNED
+- [x] SECURITY.md — APPROVE WITH CONDITIONS
+- [x] CONTRACT.md + FE signoff — 2026-08-28
+- [x] VALIDATION.md — PASS WITH NOTES
+- [x] QA.md — APPROVE (0 Critical, 0 High; Medium #1 closed; 4 Low remaining, not blocking)
