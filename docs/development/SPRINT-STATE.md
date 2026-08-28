@@ -4,28 +4,28 @@
 
 ```yaml
 current_phase: 1
-current_story: US-14.5
-feature_branch: feature/US-14.5-session-guards
+current_story: US-14.3
+feature_branch: feature/US-14.3-logout
 story_status: PREP
-last_completed_story: US-14.4
+last_completed_story: US-14.5
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-28T21:30:00Z
+updated_at: 2026-08-28T22:30:00Z
 ```
 
 ## Fase 1 — Base del Cliente
 
 | Story | Status | Notes |
 |-------|--------|-------|
-| US-14.1 Sign up | done | VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS |
-| US-14.2 Login | done | VALIDATE PASS WITH NOTES; QA APPROVE; 1 AC deferred to US-14.5 |
-| US-14.4 Reset password | done | VALIDATE PASS WITH NOTES; QA APPROVE; 21/21 AC |
-| US-14.5 Session + guards | in_progress | PREP — branch `feature/US-14.5-session-guards` |
-| US-14.3 Logout | pending | Depends on US-14.5 |
+| US-14.1 Sign up | done | |
+| US-14.2 Login | done | |
+| US-14.4 Reset password | done | |
+| US-14.5 Session + guards | done | VALIDATE PASS WITH NOTES; QA APPROVE after High 366306e |
+| US-14.3 Logout | in_progress | PREP after US-14.5 CLOSE |
 | US-2.x Interview + Ficha | pending | |
 | US-3.x Preferencias visuales | pending | |
 
 ## Historial reciente
 
-- 2026-08-28 · US-14.4 CLOSE: 21/21 AC; cookie maxAge residual → US-14.5
-- 2026-08-28 · US-14.5 SELECT: session + guards; branch `feature/US-14.5-session-guards`; PREP
+- 2026-08-28 · US-14.5 CLOSE: 34/34 AC; session refresh in middleware; product layout requireActive
+- 2026-08-28 · US-14.3 SELECT: logout; continuing without waiting for /desarrollar

@@ -32,7 +32,7 @@
 - [x] Record signup attempts on validation / password-policy failure
 - [x] Top-level try/catch on `signUp` and `resendConfirmationEmail` (generic INTERNAL_ERROR)
 - [x] Server-only `SITE_URL` for confirmation `emailRedirectTo` (allowlisted origin)
-- [ ] Block spend endpoints for `active=false` (coordinate with US-14.5 guard pattern)
+- [x] Block spend endpoints for `active=false` (coordinate with US-14.5 guard pattern) — US-14.5 `requireActive()` shipped; no spend endpoints exist yet
 
 ## DB checklist
 

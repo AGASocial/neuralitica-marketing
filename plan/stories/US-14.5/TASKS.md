@@ -102,8 +102,8 @@ Seed/backfill the US-X.3 local user as a real `neuramark_clients` row linked to 
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md
-- [ ] SECURITY.md
-- [ ] CONTRACT.md + FE signoff
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] SPEC-REVIEW.md — ALIGNED
+- [x] SECURITY.md — APPROVE WITH CONDITIONS
+- [x] CONTRACT.md + FE signoff — 2026-08-28
+- [x] VALIDATION.md — PASS WITH NOTES
+- [x] QA.md — APPROVE (High #1 + Medium #1 closed in 366306e; 1 Low operator page 403 digest → defer until an operator page exists)
