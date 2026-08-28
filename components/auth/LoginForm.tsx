@@ -8,7 +8,6 @@ import { Message } from "primereact/message";
 import { Password } from "primereact/password";
 import { useState } from "react";
 
-import { storePendingIdentity } from "@/components/auth/pending-identity";
 import { logIn } from "@/lib/auth/actions/log-in";
 import type { AuthErrorEnvelope, LogInInput } from "@/lib/contracts/auth";
 import type { Locale } from "@/lib/i18n/locales";
@@ -64,10 +63,6 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function withLocale(path: string, locale: Locale): string {
   const separator = path.includes("?") ? "&" : "?";
   return `${path}${separator}locale=${encodeURIComponent(locale)}`;
-}
-
-function isPendingLanding(redirectTo: string): boolean {
-  return redirectTo === "/pending" || redirectTo.startsWith("/pending?");
 }
 
 function resolveLoginErrorMessage(
@@ -182,12 +177,6 @@ export function LoginForm({
       const result = await logIn(payload);
 
       if (result.ok) {
-        if (isPendingLanding(result.redirectTo)) {
-          storePendingIdentity({
-            email: result.email,
-            displayName: result.displayName,
-          });
-        }
         router.push(withLocale(result.redirectTo, locale));
         return;
       }

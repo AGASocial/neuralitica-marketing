@@ -24,8 +24,8 @@
       "cta": "View pipeline"
     },
     "setupBanner": {
-      "title": "Scaffold ready",
-      "body": "The app is running with the hardcoded dev user. Add Supabase credentials to .env when you are ready to connect the database."
+      "title": "Database not connected",
+      "body": "Add Supabase credentials to .env to connect the database."
     }
   },
   "header": {
@@ -41,7 +41,9 @@
       "forbiddenFields": "Something went wrong. Please try again.",
       "passwordPolicy": "Choose a stronger password and try again.",
       "rateLimited": "Too many attempts. Please wait and try again later.",
-      "internal": "Something went wrong. Please try again later."
+      "internal": "Something went wrong. Please try again later.",
+      "unauthenticated": "Please log in to continue.",
+      "forbidden": "You do not have access to that."
     },
     "passwordPolicy": {
       "TOO_SHORT": "Password must be at least 12 characters.",

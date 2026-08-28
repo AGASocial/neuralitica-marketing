@@ -24,8 +24,8 @@
       "cta": "Ver pipeline"
     },
     "setupBanner": {
-      "title": "Scaffold listo",
-      "body": "La app está en marcha con el usuario local de desarrollo. Añade las credenciales de Supabase en .env cuando quieras conectar la base de datos."
+      "title": "Base de datos no conectada",
+      "body": "Añade las credenciales de Supabase en .env para conectar la base de datos."
     }
   },
   "header": {
@@ -41,7 +41,9 @@
       "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
       "passwordPolicy": "Elige una contraseña más segura e inténtalo de nuevo.",
       "rateLimited": "Demasiados intentos. Espera un momento e inténtalo más tarde.",
-      "internal": "Algo salió mal. Inténtalo más tarde."
+      "internal": "Algo salió mal. Inténtalo más tarde.",
+      "unauthenticated": "Inicia sesión para continuar.",
+      "forbidden": "No tienes acceso a eso."
     },
     "passwordPolicy": {
       "TOO_SHORT": "La contraseña debe tener al menos 12 caracteres.",

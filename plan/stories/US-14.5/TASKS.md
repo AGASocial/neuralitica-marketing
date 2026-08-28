@@ -49,14 +49,14 @@ Middleware is **convenience** (redirect). It must not be the security boundary a
 
 Consumers of BE: protected shell (`AppHeader`, dashboard) reads `getCurrentUser()`; `/pending` reads the same seam on the server; auth pages stay public.
 
-- [ ] Auth pages (`/login`, `/signup`, `/reset-password`, `/reset-password/new`) remain reachable while logged out (existing `AuthShell` / locale switcher). Do not put them behind the product guard.
-- [ ] Unauthenticated visit to `/`, `/dashboard`, or any product route → login (not a crash or blank page). Session expiry mid-use → same redirect. Reuse `sanitizeLoginNext` / `isSafeRelativePath` if passing `next`.
-- [ ] `/pending`: Server Component loads identity via `getCurrentUser()`; pass **at most** email + display name into `PendingActivationView`. Strip/stop using `sessionStorage` (`pending-identity.ts` / `LoginForm` `storePendingIdentity`). Still strip untrusted `?email=` (and related) query keys.
-- [ ] Authenticated-but-inactive users never see dashboard / `AppShell` product chrome. Active users hitting `/pending` go to dashboard.
-- [ ] `AppHeader` stays a Server Component; display name/email come from the session-backed `getCurrentUser()`. No client-side identity (`document.cookie`, Supabase SDK, header/query user).
-- [ ] EN + ES for any new states (session expired → login, pending already exists). Update dashboard `setupBanner` copy that still says “hardcoded dev user” (`messages/en.json` / `messages/es.json`).
-- [ ] Loading / empty / error / pending covered for the new redirects. PrimeReact before custom UI. Keep `"use client"` on forms only.
-- [ ] No logout button (US-14.3). Pending logout *hint* copy may remain.
+- [x] Auth pages (`/login`, `/signup`, `/reset-password`, `/reset-password/new`) remain reachable while logged out (existing `AuthShell` / locale switcher). Do not put them behind the product guard.
+- [x] Unauthenticated visit to `/`, `/dashboard`, or any product route → login (not a crash or blank page). Session expiry mid-use → same redirect. Reuse `sanitizeLoginNext` / `isSafeRelativePath` if passing `next`.
+- [x] `/pending`: Server Component loads identity via `getCurrentUser()`; pass **at most** email + display name into `PendingActivationView`. Strip/stop using `sessionStorage` (`pending-identity.ts` / `LoginForm` `storePendingIdentity`). Still strip untrusted `?email=` (and related) query keys.
+- [x] Authenticated-but-inactive users never see dashboard / `AppShell` product chrome. Active users hitting `/pending` go to dashboard.
+- [x] `AppHeader` stays a Server Component; display name/email come from the session-backed `getCurrentUser()`. No client-side identity (`document.cookie`, Supabase SDK, header/query user).
+- [x] EN + ES for any new states (session expired → login, pending already exists). Update dashboard `setupBanner` copy that still says “hardcoded dev user” (`messages/en.json` / `messages/es.json`).
+- [x] Loading / empty / error / pending covered for the new redirects. PrimeReact before custom UI. Keep `"use client"` on forms only.
+- [x] No logout button (US-14.3). Pending logout *hint* copy may remain.
 
 ## BE checklist
 

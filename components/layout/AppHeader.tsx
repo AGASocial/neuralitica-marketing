@@ -1,12 +1,12 @@
-import { getCurrentUser } from "@/lib/auth/get-current-user";
+import type { CurrentUser } from "@/lib/auth/get-current-user";
 import { getTranslations } from "@/lib/i18n/get-translations";
 
 type AppHeaderProps = {
   locale: "en" | "es";
+  user: CurrentUser;
 };
 
-export async function AppHeader({ locale }: AppHeaderProps) {
-  const user = await getCurrentUser();
+export function AppHeader({ locale, user }: AppHeaderProps) {
   const t = getTranslations(locale);
 
   return (
