@@ -28,6 +28,8 @@ export const authErrorCodeSchema = z.enum([
   "INTERNAL_ERROR",
   "INVALID_CREDENTIALS",
   "RECOVERY_INVALID",
+  "UNAUTHENTICATED",
+  "FORBIDDEN",
 ]);
 export type AuthErrorCode = z.infer<typeof authErrorCodeSchema>;
 

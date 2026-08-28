@@ -56,6 +56,14 @@ export function forbiddenFieldsError(): AuthErrorEnvelope {
   return authError("FORBIDDEN_FIELDS", "auth.errors.forbiddenFields");
 }
 
+export function unauthenticatedError(): AuthErrorEnvelope {
+  return authError("UNAUTHENTICATED", "auth.errors.unauthenticated");
+}
+
+export function forbiddenError(): AuthErrorEnvelope {
+  return authError("FORBIDDEN", "auth.errors.forbidden");
+}
+
 export function passwordPolicyError(
   violation: PasswordPolicyViolation,
 ): AuthErrorEnvelope {

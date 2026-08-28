@@ -1,17 +1,23 @@
 import "server-only";
 
-export type UserRole = "client" | "operator";
+import { cache } from "react";
+import type { User } from "@supabase/supabase-js";
 
-export type CurrentUser = {
-  id: string;
-  email: string;
-  displayName: string;
-  preferredLocale: "en" | "es";
-  role: UserRole;
-  active: boolean;
-};
+import { isAuthDevFallbackEnabled } from "@/lib/auth/assert-dev-fallback";
+import type { CurrentUser, UserRole } from "@/lib/auth/get-current-user-types";
+import { mapClientRowToCurrentUser } from "@/lib/auth/map-client-row";
+import {
+  createUserScopedAuthClient,
+  isUserScopedAuthConfigured,
+} from "@/lib/auth/supabase-cookie";
+import {
+  createServerSupabaseClient,
+  isSupabaseConfigured,
+} from "@/lib/auth/supabase-server";
 
-/** Stable dev seed id — matches future neuramark_clients backfill (US-14.5). */
+export type { CurrentUser, UserRole };
+
+/** Stable seed id — matches US-X.3 / US-14.5 operator INSERT. */
 const DEV_USER_ID = "00000000-0000-4000-8000-000000000001";
 
 const DEV_USER: CurrentUser = {
@@ -23,18 +29,103 @@ const DEV_USER: CurrentUser = {
   active: true,
 };
 
+export type SessionAuthUser = {
+  id: string;
+  email: string;
+  displayName: string;
+};
+
+function authDisplayName(user: User, email: string): string {
+  const meta = user.user_metadata ?? {};
+  const fromMeta = [meta.display_name, meta.full_name].find(
+    (value) => typeof value === "string" && value.trim().length > 0,
+  );
+  const name = typeof fromMeta === "string" ? fromMeta.trim() : email;
+  return name.slice(0, 120);
+}
+
+async function loadSessionAuthUser(): Promise<SessionAuthUser | null> {
+  if (isAuthDevFallbackEnabled()) {
+    return {
+      id: DEV_USER.id,
+      email: DEV_USER.email,
+      displayName: DEV_USER.displayName,
+    };
+  }
+
+  if (!isUserScopedAuthConfigured()) {
+    return null;
+  }
+
+  try {
+    const auth = await createUserScopedAuthClient();
+    const { data, error } = await auth.auth.getUser();
+    const user = data.user;
+
+    if (error || !user?.id) {
+      return null;
+    }
+
+    const email =
+      typeof user.email === "string" && user.email.length > 0
+        ? user.email.toLowerCase()
+        : "";
+
+    return {
+      id: user.id,
+      email,
+      displayName: authDisplayName(user, email),
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Single identity seam (US-X.3). All server routes resolve the current user here.
- * Auth stories (US-14.x) swap this implementation without changing call sites.
+ * Validated Auth session (`getUser()` — signature/expiry, not cookie presence).
+ * Not a product identity API. `id` is `auth.users.id`, never `CurrentUser.id`.
  */
-export async function getCurrentUser(): Promise<CurrentUser> {
-  if (
-    process.env.NODE_ENV === "development" &&
-    process.env.AUTH_DEV_FALLBACK === "true"
-  ) {
+export const getSessionAuthUser = cache(loadSessionAuthUser);
+
+async function loadCurrentUser(): Promise<CurrentUser | null> {
+  if (isAuthDevFallbackEnabled()) {
     return DEV_USER;
   }
 
-  // Until US-14.5 lands, non-dev builds still use the hardcoded user.
-  return DEV_USER;
+  const authUser = await getSessionAuthUser();
+  if (!authUser) {
+    return null;
+  }
+
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+
+  try {
+    const supabase = createServerSupabaseClient();
+    const { data, error } = await supabase
+      .from("neuramark_clients")
+      .select("id, email, display_name, preferred_locale, role, active")
+      .eq("auth_user_id", authUser.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("[auth] getCurrentUser client lookup failed", {
+        code: error.code,
+      });
+      return null;
+    }
+
+    return mapClientRowToCurrentUser(data);
+  } catch {
+    console.error("[auth] getCurrentUser client lookup threw");
+    return null;
+  }
 }
+
+/**
+ * Single identity seam. Session → `neuramark_clients` by `auth_user_id`.
+ * `active` / `role` are read fresh every request (React `cache()` is request-local).
+ * Default path never returns the hardcoded user.
+ */
+export const getCurrentUser = cache(loadCurrentUser);

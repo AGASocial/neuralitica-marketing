@@ -1,13 +1,15 @@
 import "server-only";
 
-import {
-  createServerClient,
-  parseCookieHeader,
-  type CookieOptions,
-} from "@supabase/ssr";
+import { createServerClient, parseCookieHeader } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+
+import { isSupabaseAuthCookieName } from "@/lib/auth/auth-cookie-name";
+import { applySessionCookieFlags } from "@/lib/auth/session-cookie-flags";
+
+export { isSupabaseAuthCookieName } from "@/lib/auth/auth-cookie-name";
+export { applySessionCookieFlags } from "@/lib/auth/session-cookie-flags";
 
 /** Server-only anon/publishable key — never `NEXT_PUBLIC_`. */
 function getAnonKey(): string | undefined {
@@ -16,47 +18,6 @@ function getAnonKey(): string | undefined {
 
 export function isUserScopedAuthConfigured(): boolean {
   return Boolean(process.env.SUPABASE_URL && getAnonKey());
-}
-
-type SessionCookieSetOptions = {
-  httpOnly: true;
-  secure: boolean;
-  sameSite: "lax";
-  path: "/";
-  maxAge?: number;
-  expires?: Date;
-};
-
-/**
- * Contract cookie flags. Host-only (no Domain). `Secure` in production.
- * Max-Age follows `@supabase/ssr` when the library supplies it.
- */
-export function applySessionCookieFlags(
-  incoming?: CookieOptions,
-): SessionCookieSetOptions {
-  const options: SessionCookieSetOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-  };
-
-  if (typeof incoming?.maxAge === "number") {
-    options.maxAge = incoming.maxAge;
-  }
-
-  if (incoming?.expires) {
-    options.expires =
-      incoming.expires instanceof Date
-        ? incoming.expires
-        : new Date(incoming.expires);
-  }
-
-  return options;
-}
-
-export function isSupabaseAuthCookieName(name: string): boolean {
-  return name.startsWith("sb-");
 }
 
 function userScopedCookieOptions() {

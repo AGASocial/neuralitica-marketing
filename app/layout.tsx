@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import "@/lib/auth/assert-dev-fallback";
 import { PrimeProvider } from "@/components/providers/PrimeProvider";
 
 import "primeicons/primeicons.css";

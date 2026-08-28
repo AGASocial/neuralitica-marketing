@@ -1,5 +1,3 @@
-import "server-only";
-
 const DASHBOARD = "/dashboard";
 const MAX_NEXT_LENGTH = 2048;
 
