@@ -1,6 +1,6 @@
 /**
- * Auth contract types and Zod schemas (US-14.1).
- * FE imports types only; password policy validation stays server-side.
+ * Auth contract types and Zod schemas (US-14.1 signup, US-14.2 login).
+ * FE imports types only; password policy and next-path sanitizer stay server-side.
  */
 import { z } from "zod";
 
@@ -10,7 +10,7 @@ import { supportedLocaleSchema } from "./providers";
 export const clientRoleSchema = z.enum(["client", "operator"]);
 export type ClientRole = z.infer<typeof clientRoleSchema>;
 
-/** DB enum neuramark_auth_action — server-only writes */
+/** DB enum neuramark_auth_action — server-only writes. No `login_success` (US-14.2). */
 export const authAttemptActionSchema = z.enum([
   "signup",
   "resend_confirmation",
@@ -26,6 +26,7 @@ export const authErrorCodeSchema = z.enum([
   "PASSWORD_POLICY",
   "RATE_LIMITED",
   "INTERNAL_ERROR",
+  "INVALID_CREDENTIALS",
 ]);
 export type AuthErrorCode = z.infer<typeof authErrorCodeSchema>;
 
@@ -91,7 +92,7 @@ export const authErrorEnvelopeSchema = z.object({
   ok: z.literal(false),
   error: z.object({
     code: authErrorCodeSchema,
-    /** i18n keys under auth.errors.* — FE maps to EN/ES copy */
+    /** i18n keys under auth.errors.* / auth.login.* — FE maps to EN/ES copy */
     messageKey: z.string(),
     fields: authFieldErrorsSchema.optional(),
     passwordPolicy: passwordPolicyViolationSchema.optional(),
@@ -112,3 +113,42 @@ export const resendConfirmationResultSchema = z.discriminatedUnion("ok", [
 export type ResendConfirmationResult = z.infer<
   typeof resendConfirmationResultSchema
 >;
+
+/** Optional `next` is a candidate only; server sanitizes after successful active login. */
+export const logInInputSchema = z
+  .object({
+    email: z
+      .string()
+      .trim()
+      .min(1)
+      .max(320)
+      .email()
+      .transform((v) => v.toLowerCase()),
+    password: z.string().min(1).max(128),
+    next: z.string().max(2048).optional(),
+  })
+  .strict();
+export type LogInInput = z.infer<typeof logInInputSchema>;
+
+/**
+ * Opaque landing path. FE must navigate here as-is.
+ * `/pending` when inactive or missing client row; otherwise sanitized `next` or `/dashboard`.
+ * Cookie is not part of this JSON body.
+ */
+export const logInSuccessSchema = z.object({
+  ok: z.literal(true),
+  redirectTo: z
+    .string()
+    .min(1)
+    .max(2048)
+    .refine((value) => value.startsWith("/") && !value.startsWith("//")),
+  email: z.string().min(1).max(320),
+  displayName: z.string().min(1).max(120),
+});
+export type LogInSuccess = z.infer<typeof logInSuccessSchema>;
+
+export const logInResultSchema = z.discriminatedUnion("ok", [
+  logInSuccessSchema,
+  authErrorEnvelopeSchema,
+]);
+export type LogInResult = z.infer<typeof logInResultSchema>;
