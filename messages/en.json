@@ -30,5 +30,57 @@
   },
   "header": {
     "signedInAs": "Signed in as"
+  },
+  "auth": {
+    "localeSwitcher": {
+      "en": "English",
+      "es": "Español"
+    },
+    "errors": {
+      "validation": "Please check the highlighted fields and try again.",
+      "forbiddenFields": "Something went wrong. Please try again.",
+      "passwordPolicy": "Choose a stronger password and try again.",
+      "rateLimited": "Too many attempts. Please wait and try again later.",
+      "internal": "Something went wrong. Please try again later."
+    },
+    "passwordPolicy": {
+      "TOO_SHORT": "Password must be at least 12 characters.",
+      "TOO_LONG": "Password must be 128 characters or fewer.",
+      "COMMON_PASSWORD": "That password is too common. Choose a different one."
+    },
+    "signup": {
+      "title": "Create your account",
+      "subtitle": "Sign up to access your Neuralitica workspace.",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "displayName": "Display name",
+      "submit": "Create account",
+      "submitPending": "Creating account…",
+      "passwordHint": "At least 12 characters. Avoid common passwords.",
+      "success": "If an account can be created with this email, check your inbox to confirm.",
+      "checkEmailTitle": "Check your email",
+      "loginLink": "Already have an account? Log in",
+      "confirmPasswordMismatch": "Passwords do not match.",
+      "requiredField": "This field is required.",
+      "invalidEmail": "Enter a valid email address.",
+      "resend": "Resend confirmation email",
+      "resendPending": "Sending…",
+      "resendSuccess": "If an account exists for that email, we sent another confirmation message.",
+      "fieldErrors": {
+        "email": {
+          "invalid_format": "Enter a valid email address."
+        },
+        "displayName": {
+          "too_small": "Display name is required."
+        }
+      }
+    },
+    "pending": {
+      "title": "Account pending activation",
+      "body": "Your email is confirmed. Our team will activate your account soon—we will email you when it is ready.",
+      "emailLabel": "Account",
+      "logoutHint": "You can log out and return later. Login will be available in a future update."
+    }
   }
 }

@@ -30,5 +30,57 @@
   },
   "header": {
     "signedInAs": "Sesión iniciada como"
+  },
+  "auth": {
+    "localeSwitcher": {
+      "en": "English",
+      "es": "Español"
+    },
+    "errors": {
+      "validation": "Revisa los campos marcados e inténtalo de nuevo.",
+      "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+      "passwordPolicy": "Elige una contraseña más segura e inténtalo de nuevo.",
+      "rateLimited": "Demasiados intentos. Espera un momento e inténtalo más tarde.",
+      "internal": "Algo salió mal. Inténtalo más tarde."
+    },
+    "passwordPolicy": {
+      "TOO_SHORT": "La contraseña debe tener al menos 12 caracteres.",
+      "TOO_LONG": "La contraseña debe tener 128 caracteres o menos.",
+      "COMMON_PASSWORD": "Esa contraseña es muy común. Elige otra."
+    },
+    "signup": {
+      "title": "Crea tu cuenta",
+      "subtitle": "Regístrate para acceder a tu espacio de Neuralitica.",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "displayName": "Nombre para mostrar",
+      "submit": "Crear cuenta",
+      "submitPending": "Creando cuenta…",
+      "passwordHint": "Al menos 12 caracteres. Evita contraseñas comunes.",
+      "success": "Si se puede crear una cuenta con este correo, revisa tu bandeja de entrada para confirmar.",
+      "checkEmailTitle": "Revisa tu correo",
+      "loginLink": "¿Ya tienes cuenta? Inicia sesión",
+      "confirmPasswordMismatch": "Las contraseñas no coinciden.",
+      "requiredField": "Este campo es obligatorio.",
+      "invalidEmail": "Introduce un correo electrónico válido.",
+      "resend": "Reenviar correo de confirmación",
+      "resendPending": "Enviando…",
+      "resendSuccess": "Si existe una cuenta con ese correo, enviamos otro mensaje de confirmación.",
+      "fieldErrors": {
+        "email": {
+          "invalid_format": "Introduce un correo electrónico válido."
+        },
+        "displayName": {
+          "too_small": "El nombre para mostrar es obligatorio."
+        }
+      }
+    },
+    "pending": {
+      "title": "Cuenta pendiente de activación",
+      "body": "Tu correo está confirmado. Nuestro equipo activará tu cuenta pronto; te avisaremos por correo cuando esté lista.",
+      "emailLabel": "Cuenta",
+      "logoutHint": "Puedes cerrar sesión y volver más tarde. El inicio de sesión estará disponible en una actualización futura."
+    }
   }
 }
