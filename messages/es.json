@@ -245,6 +245,16 @@
     "title": "Ficha viva",
     "updatedAt": "Última actualización {date}",
     "emptySection": "Ninguna",
+    "edit": "Editar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "saving": "Guardando…",
+    "toastSuccess": "Ficha viva actualizada — los agentes usarán la nueva información en la próxima ejecución.",
+    "addItem": "Añadir",
+    "removeItem": "Quitar",
+    "itemPlaceholder": "Añadir un elemento",
+    "chipsHintRequired": "Añade al menos un elemento. Máximo 20.",
+    "chipsHintOptional": "Opcional. Déjalo vacío si no hay ninguno. Máximo 20.",
     "sections": {
       "services": "Servicios",
       "zone": "Zona",
@@ -262,6 +272,21 @@
     "error": {
       "body": "No pudimos cargar tu ficha viva. Actualiza la página para intentarlo de nuevo.",
       "ctaDashboard": "Volver al panel"
+    },
+    "errors": {
+      "validation": "Revisa las secciones marcadas e inténtalo de nuevo.",
+      "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+      "payloadTooLarge": "Tu ficha es demasiado grande. Acorta el texto e inténtalo de nuevo.",
+      "notFound": "No encontramos una ficha viva para actualizar. Completa primero la entrevista inicial.",
+      "conflict": "No se pudo actualizar esta ficha viva. Actualiza e inténtalo de nuevo.",
+      "internal": "Algo salió mal. Inténtalo de nuevo más tarde.",
+      "required": "Esta sección es obligatoria.",
+      "tooSmallList": "Añade al menos un elemento.",
+      "tooSmallText": "Introduce una descripción.",
+      "tooBigItems": "Demasiados elementos.",
+      "tooBigText": "El texto es demasiado largo.",
+      "invalidType": "Revisa esta sección e inténtalo de nuevo.",
+      "unrecognizedKey": "Revisa esta sección e inténtalo de nuevo."
     }
   }
 }

@@ -245,6 +245,16 @@
     "title": "Living profile",
     "updatedAt": "Last updated {date}",
     "emptySection": "None",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "toastSuccess": "Living profile updated — agents will use the new info on the next run.",
+    "addItem": "Add",
+    "removeItem": "Remove",
+    "itemPlaceholder": "Add an item",
+    "chipsHintRequired": "Add at least one item. Maximum 20.",
+    "chipsHintOptional": "Optional. Leave empty if none. Maximum 20.",
     "sections": {
       "services": "Services",
       "zone": "Zone",
@@ -262,6 +272,21 @@
     "error": {
       "body": "We could not load your living profile. Refresh the page to try again.",
       "ctaDashboard": "Back to dashboard"
+    },
+    "errors": {
+      "validation": "Please check the highlighted sections and try again.",
+      "forbiddenFields": "Something went wrong. Please try again.",
+      "payloadTooLarge": "Your profile is too large. Shorten the text and try again.",
+      "notFound": "We could not find a living profile to update. Complete the initial interview first.",
+      "conflict": "This living profile could not be updated. Refresh and try again.",
+      "internal": "Something went wrong. Please try again later.",
+      "required": "This section is required.",
+      "tooSmallList": "Add at least one item.",
+      "tooSmallText": "Enter a description.",
+      "tooBigItems": "Too many items.",
+      "tooBigText": "Text is too long.",
+      "invalidType": "Please check this section and try again.",
+      "unrecognizedKey": "Please check this section and try again."
     }
   }
 }

@@ -5,23 +5,49 @@ import Link from "next/link";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 
-import {
-  INTERVIEW_STEP_ORDER,
-  getDescription,
-  getListItems,
-  isTextStep,
-} from "@/components/interview/step-helpers";
+import { LivingProfileEditor } from "@/components/profile/LivingProfileEditor";
 import type { InterviewStepKey } from "@/lib/contracts/interview";
-import type {
-  BusinessProfileFields,
-  BusinessProfileForClientResult,
-} from "@/lib/contracts/profile";
+import type { BusinessProfileForClientResult } from "@/lib/contracts/profile";
+
+type StepFieldCopy = {
+  question: string;
+  helper: string;
+  placeholder: string;
+};
 
 type LivingProfileCopy = {
   title: string;
   updatedAt: string;
   emptySection: string;
   sections: Record<InterviewStepKey, string>;
+  edit: string;
+  save: string;
+  cancel: string;
+  saving: string;
+  toastSuccess: string;
+  addItem: string;
+  removeItem: string;
+  itemPlaceholder: string;
+  chipsHintRequired: string;
+  chipsHintOptional: string;
+  steps: Record<InterviewStepKey, StepFieldCopy>;
+  errors: {
+    validation: string;
+    forbiddenFields: string;
+    payloadTooLarge: string;
+    notFound: string;
+    unauthenticated: string;
+    forbidden: string;
+    conflict: string;
+    internal: string;
+    required: string;
+    tooSmallList: string;
+    tooSmallText: string;
+    tooBigItems: string;
+    tooBigText: string;
+    invalidType: string;
+    unrecognizedKey: string;
+  };
   empty: {
     body: string;
     ctaInterview: string;
@@ -39,20 +65,10 @@ type LivingProfileViewProps = {
   copy: LivingProfileCopy;
 };
 
-function formatUpdatedAt(iso: string, locale: string): string {
-  try {
-    return new Intl.DateTimeFormat(locale, {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
-}
-
 /**
- * Read-only Living profile / Ficha viva (US-2.1).
- * Free-text + list items as React text nodes only — no dangerouslySetInnerHTML.
+ * Living profile / Ficha viva (US-2.1 + US-2.2).
+ * Missing → CTA /interview (no create via edit). Exists → edit chrome.
+ * Free-text as React text nodes / controlled inputs only — no dangerouslySetInnerHTML.
  */
 export function LivingProfileView({
   result,
@@ -105,47 +121,37 @@ export function LivingProfileView({
     );
   }
 
-  const updatedLabel =
-    result.updatedAt != null
-      ? copy.updatedAt.replace(
-          "{date}",
-          formatUpdatedAt(result.updatedAt, locale),
-        )
-      : null;
-
   return (
-    <ProfileShell title={copy.title} subtitle={updatedLabel}>
-      {INTERVIEW_STEP_ORDER.map((step) => (
-        <section
-          key={step}
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e5e7eb",
-            borderRadius: "8px",
-            padding: "1rem 1.25rem",
-          }}
-        >
-          <h2 style={{ margin: "0 0 0.75rem", fontSize: "1.1rem" }}>
-            {copy.sections[step]}
-          </h2>
-          <SectionBody
-            step={step}
-            fields={result.fields}
-            emptyLabel={copy.emptySection}
-          />
-        </section>
-      ))}
-    </ProfileShell>
+    <LivingProfileEditor
+      initial={result}
+      locale={locale}
+      title={copy.title}
+      copy={{
+        updatedAt: copy.updatedAt,
+        emptySection: copy.emptySection,
+        sections: copy.sections,
+        edit: copy.edit,
+        save: copy.save,
+        cancel: copy.cancel,
+        saving: copy.saving,
+        toastSuccess: copy.toastSuccess,
+        addItem: copy.addItem,
+        removeItem: copy.removeItem,
+        itemPlaceholder: copy.itemPlaceholder,
+        chipsHintRequired: copy.chipsHintRequired,
+        chipsHintOptional: copy.chipsHintOptional,
+        steps: copy.steps,
+        errors: copy.errors,
+      }}
+    />
   );
 }
 
 function ProfileShell({
   title,
-  subtitle,
   children,
 }: {
   title: string;
-  subtitle?: string | null;
   children: ReactNode;
 }) {
   return (
@@ -160,45 +166,8 @@ function ProfileShell({
     >
       <div>
         <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem" }}>{title}</h1>
-        {subtitle ? (
-          <p style={{ margin: 0, color: "#6b7280", fontSize: "0.875rem" }}>
-            {subtitle}
-          </p>
-        ) : null}
       </div>
       {children}
     </div>
-  );
-}
-
-function SectionBody({
-  step,
-  fields,
-  emptyLabel,
-}: {
-  step: InterviewStepKey;
-  fields: BusinessProfileFields;
-  emptyLabel: string;
-}) {
-  if (isTextStep(step)) {
-    const description = getDescription(fields, step);
-    return (
-      <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-        {description || emptyLabel}
-      </p>
-    );
-  }
-
-  const items = getListItems(fields, step);
-  if (items.length === 0) {
-    return <p style={{ margin: 0 }}>{emptyLabel}</p>;
-  }
-
-  return (
-    <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
-      {items.map((item, index) => (
-        <li key={`${index}-${item}`}>{item}</li>
-      ))}
-    </ul>
   );
 }
