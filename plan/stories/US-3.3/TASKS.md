@@ -114,10 +114,10 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 - [x] SECURITY.md (security-architect — magic bytes; storage outside web root; serve ownership; consent gate; S3 interface; virus scan lean)
 - [x] CONTRACT.md authored (nextjs-backend) + FE signoff — Reviewed by FE: yes — 2026-08-29
 - [x] BUILD (FE + BE + DB)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] VALIDATION.md — PASS WITH NOTES
+- [x] QA.md — APPROVE WITH CONDITIONS (0 Critical, 0 High, 0 Medium, 3 Low; CLOSE yes)
 
-**Status:** BUILD (2026-08-29). FE + BE/DB slices complete. AC remain unchecked in `plan/USER_STORIES.md` until VALIDATION CLOSE.
+**Status:** CLOSED (2026-08-29). All gates complete; AC checked in `plan/USER_STORIES.md`. Next recommended: **US-3.4**.
 
 ---
 

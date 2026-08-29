@@ -446,15 +446,15 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | `media_assets` (client_id, type, path, metadata JSON) |
 
 **Acceptance criteria**
-- [ ] At least one reference asset required before own-avatar production
-- [ ] Assets listed and deletable before first generation
-- [ ] Failed upload shows recoverable error
-- [ ] [SEC] Upload endpoint rejects files over a configured size limit and any MIME type outside an image/video allowlist; type is verified from file content (magic bytes), not the client-supplied Content-Type or extension
-- [ ] [SEC] Stored filenames are server-generated (e.g. UUID + safe extension); the original client filename is stored as metadata only and never used to build the storage path (path traversal guard)
-- [ ] [SEC] Files are stored outside the web root / `public` directory and served through a route that checks the asset belongs to the current user; `media_assets.path` values are relative keys, not absolute filesystem paths
-- [ ] [SEC] Uploads are only accepted when an active (non-revoked) avatar consent exists for the client
-- [ ] [SEC] Delete removes both the DB row and the stored file, and is only allowed for assets owned by the server-resolved current user
-- [ ] [SEC] Storage layer is behind a small server-side interface (local disk now, S3 later) so credentials and paths never appear client-side
+- [x] At least one reference asset required before own-avatar production — `hasOwnAvatarReferenceAssets` helper + unit tests; live job gate wiring US-8.x (validator NOTE)
+- [x] Assets listed and deletable before first generation
+- [x] Failed upload shows recoverable error
+- [x] [SEC] Upload endpoint rejects files over a configured size limit and any MIME type outside an image/video allowlist; type is verified from file content (magic bytes), not the client-supplied Content-Type or extension
+- [x] [SEC] Stored filenames are server-generated (e.g. UUID + safe extension); the original client filename is stored as metadata only and never used to build the storage path (path traversal guard)
+- [x] [SEC] Files are stored outside the web root / `public` directory and served through a route that checks the asset belongs to the current user; `media_assets.path` values are relative keys, not absolute filesystem paths
+- [x] [SEC] Uploads are only accepted when an active (non-revoked) avatar consent exists for the client
+- [x] [SEC] Delete removes both the DB row and the stored file, and is only allowed for assets owned by the server-resolved current user
+- [x] [SEC] Storage layer is behind a small server-side interface (local disk now, S3 later) so credentials and paths never appear client-side
 
 **Security note:** likeness reference media is the most sensitive data in the system; design storage keys and the serving route so migrating to S3 with signed URLs is a swap, not a rewrite.
 
@@ -1203,7 +1203,7 @@ Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, (+ high-tier B-roll a
 
 Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.
 
-Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. **US-1.3** is CLOSED (`plan/stories/US-1.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; no fix loop). Builds FE `6f55df4` / BE `4b5de0c`. **US-2.1** is CLOSED (`plan/stories/US-2.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Low non-blocking; no fix loop). Builds FE `76e84c3` / BE `10da494`. **US-2.2** is CLOSED (`plan/stories/US-2.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 2 Low non-blocking; no fix loop). Builds FE `6b99910` / BE `bd7ad08`. **US-2.3** is CLOSED (`plan/stories/US-2.3/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 0 Medium, 1 Low non-blocking; no fix loop). Build BE `bf19e95` (no FE). Sprint 1 Interview Builder complete. **US-3.1** is CLOSED (`plan/stories/US-3.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 5 Low; CLOSE yes). Builds FE `c0caaee` / BE `6e2121c`. **US-3.2** is CLOSED (`plan/stories/US-3.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; CLOSE yes). Builds FE `7a11571` / BE `ff280ed`. Next recommended: **US-3.3** (Upload avatar reference assets; Depends on US-3.2; Sprint 2).
+Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. **US-1.3** is CLOSED (`plan/stories/US-1.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; no fix loop). Builds FE `6f55df4` / BE `4b5de0c`. **US-2.1** is CLOSED (`plan/stories/US-2.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Low non-blocking; no fix loop). Builds FE `76e84c3` / BE `10da494`. **US-2.2** is CLOSED (`plan/stories/US-2.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 2 Low non-blocking; no fix loop). Builds FE `6b99910` / BE `bd7ad08`. **US-2.3** is CLOSED (`plan/stories/US-2.3/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 0 Medium, 1 Low non-blocking; no fix loop). Build BE `bf19e95` (no FE). Sprint 1 Interview Builder complete. **US-3.1** is CLOSED (`plan/stories/US-3.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 5 Low; CLOSE yes). Builds FE `c0caaee` / BE `6e2121c`. **US-3.2** is CLOSED (`plan/stories/US-3.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; CLOSE yes). Builds FE `7a11571` / BE `ff280ed`. **US-3.3** is CLOSED (`plan/stories/US-3.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 0 Medium, 3 Low; CLOSE yes). Builds FE `ca18258` / BE `63c8c64`. Next recommended: **US-3.4** (Enforce generic avatar representation rules; Depends on US-3.1; Sprint 2).
 
 ---
 

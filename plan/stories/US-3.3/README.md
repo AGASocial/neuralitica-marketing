@@ -1,14 +1,14 @@
 # US-3.3 — Upload avatar reference assets (own avatar)
 
-**Status:** PREP — `README.md` + `TASKS.md` only. Gates (SPEC-REVIEW · SECURITY · CONTRACT · BUILD · VALIDATION · QA) **not started**.
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (9/9 AC; FE `ca18258`, BE `63c8c64`).
 
 **As a** Cliente, **I want** to upload photos or clips for my avatar, **so that** generated videos resemble me when authorized.
 
 Ship **referencias de avatar propio**: Cliente uploads portrait photos or short clips as likeness reference media for **Avatar propio autorizado**, with format/size hints, list + preview, recoverable upload errors, and delete-before-first-generation. All uploads gated on live **Consentimiento de avatar** (`hasActiveAvatarConsent`). Files persist via a **storage interface** (local disk now, S3 later) with magic-byte MIME validation, server-generated keys, storage outside `public/`, and ownership-checked serving route. Export a small **“at least one reference asset”** helper for later US-8 job gates — **no** full video-job creation or generation enforcement in this story.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-3.3 (unchecked until VALIDATION CLOSE).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-3.3 (checked on CLOSE).
 
-**This folder:** [`plan/stories/US-3.3/`](./) — `README.md` · `TASKS.md` · *(SPEC-REVIEW · SECURITY · CONTRACT · VALIDATION · QA — pending gates)*.
+**This folder:** [`plan/stories/US-3.3/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · [`CONTRACT.md`](./CONTRACT.md) (frozen) · `VALIDATION.md` · `QA.md`.
 
 **Branch:** `feature/US-3.3-avatar-assets`
 
@@ -17,6 +17,21 @@ Ship **referencias de avatar propio**: Cliente uploads portrait photos or short 
 **Unblocks:** US-8.x talking-head jobs (reference assets required) · US-8.3 manual upload (shared validation stack) · US-9.2 logo upload (shared validation stack) · downstream “reject avatar propio without assets” at job time (full enforcement US-8 / US-10 — stub helper only here).
 
 **Carry-forward (SECURITY_BASELINE):** shared upload validation stack (size → magic-byte allowlist → server key → storage outside web root → ownership-checked serve) must be designed as one server module reused by US-8.3 / US-9.2 later — US-3.3 **authors** the module; siblings **consume** it in their stories.
+
+---
+
+## Close verdicts
+
+| Gate | Verdict |
+|------|---------|
+| SPEC-REVIEW | ALIGNED (avatar references only; shared upload stack; consent gate; no B-roll scope creep) |
+| SECURITY | APPROVE WITH CONDITIONS |
+| CONTRACT | Frozen, Reviewed by FE (2026-08-29) |
+| BUILD | FE `ca18258` · BE `63c8c64` |
+| VALIDATION | PASS WITH NOTES |
+| QA | APPROVE WITH CONDITIONS (0 Critical, 0 High, 0 Medium, 3 Low; CLOSE yes) |
+
+**QA handoff (non-blocking):** align list-loader `maxAssets`/`canUpload` with env override helper; optional hardening for concurrent upload cap race and delete partial-failure UX. Wire `hasOwnAvatarReferenceAssets` + consent at US-8 job create. Productized AV scan and video-duration probe remain deferred per CONTRACT/SECURITY.
 
 ---
 
