@@ -1,6 +1,6 @@
 # US-2.3 — Expose profile to agents (API contract)
 
-**Status:** CONTRACT frozen (FE N/A — 2026-08-29); ready for BE BUILD. AC unchecked until VALIDATE.
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE (5/5 AC; BE `bf19e95`, no FE).
 
 **As a** System, **I want** a stable profile contract for all agents, **so that** strategy, script, and QA agents do not re-parse raw interview data.
 

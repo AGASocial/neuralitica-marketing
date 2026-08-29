@@ -95,9 +95,11 @@ Concrete consumers (later stories, not built here): Content Strategy, Video Scri
 - [x] SPEC-REVIEW.md (spec-guardian — S3.M3 agent contract; Strategy input Ficha viva)
 - [x] SECURITY.md (security-architect — **who may pass `clientId`**; IDOR; server-only; minimal DTO)
 - [x] CONTRACT.md authored (nextjs-backend) — FE signoff **N/A — 2026-08-29** (no UI)
-- [x] BUILD (BE only)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] BUILD (BE only) — `bf19e95`
+- [x] VALIDATION.md — PASS WITH NOTES
+- [x] QA.md — APPROVE (0 Critical, 0 High, 0 Medium, 1 Low non-blocking; CLOSE can proceed)
+
+**Status:** CLOSED (2026-08-29). All gates complete; AC checked in `plan/USER_STORIES.md`.
 
 **PREP complete when:** `README.md` + this `TASKS.md` exist; AC in `USER_STORIES.md` remain unchecked; no CONTRACT/SECURITY/code from PO.
 

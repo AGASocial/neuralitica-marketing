@@ -378,11 +378,11 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | — |
 
 **Acceptance criteria**
-- [ ] Single server function used by Content Strategy, Video Script, Caption, QA agents
-- [ ] Contract documented in code types
-- [ ] Returns 404-safe empty state for pre-onboarding clients
-- [ ] [SEC] `getBusinessProfileForAgents` is a server-only module (never imported into client bundles) and is the only path agents use to read profile data
-- [ ] [SEC] Contract output excludes fields agents do not need (no consent record internals, no raw interview blobs) — minimal response shape by design
+- [x] Single server function used by Content Strategy, Video Script, Caption, QA agents
+- [x] Contract documented in code types
+- [x] Returns 404-safe empty state for pre-onboarding clients
+- [x] [SEC] `getBusinessProfileForAgents` is a server-only module (never imported into client bundles) and is the only path agents use to read profile data
+- [x] [SEC] Contract output excludes fields agents do not need (no consent record internals, no raw interview blobs) — minimal response shape by design
 
 **Depends on:** US-2.1
 
@@ -1203,7 +1203,7 @@ Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, (+ high-tier B-roll a
 
 Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.
 
-Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. **US-1.3** is CLOSED (`plan/stories/US-1.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; no fix loop). Builds FE `6f55df4` / BE `4b5de0c`. **US-2.1** is CLOSED (`plan/stories/US-2.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Low non-blocking; no fix loop). Builds FE `76e84c3` / BE `10da494`. **US-2.2** is CLOSED (`plan/stories/US-2.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 2 Low non-blocking; no fix loop). Builds FE `6b99910` / BE `bd7ad08`. Next recommended: **US-2.3** (expose profile to agents; Depends on US-2.1).
+Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. **US-1.3** is CLOSED (`plan/stories/US-1.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; no fix loop). Builds FE `6f55df4` / BE `4b5de0c`. **US-2.1** is CLOSED (`plan/stories/US-2.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Low non-blocking; no fix loop). Builds FE `76e84c3` / BE `10da494`. **US-2.2** is CLOSED (`plan/stories/US-2.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 2 Low non-blocking; no fix loop). Builds FE `6b99910` / BE `bd7ad08`. **US-2.3** is CLOSED (`plan/stories/US-2.3/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 0 Medium, 1 Low non-blocking; no fix loop). Build BE `bf19e95` (no FE). Sprint 1 Interview Builder complete. Next recommended: **US-3.1** (Preferencias / visual mode; Depends on US-2.1; Sprint 2).
 
 ---
 
