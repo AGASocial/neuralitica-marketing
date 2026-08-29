@@ -1,6 +1,7 @@
 /**
- * Living profile / Ficha viva view + edit contract (US-2.1 / US-2.2).
+ * Living profile / Ficha viva view + edit contract (US-2.1 / US-2.2 / US-2.3).
  * FE imports types only; validation stays server-side.
+ * Agent DTO types are distinct from Cliente view types (US-2.3).
  */
 import { z } from "zod";
 
@@ -11,6 +12,9 @@ import {
 
 /** Ficha viva fields jsonb — 1:1 with complete interview answers (V1). */
 export type BusinessProfileFields = InterviewAnswersComplete;
+
+/** Trusted job-context clientId for getBusinessProfileForAgents. */
+export const agentClientIdSchema = z.string().uuid();
 
 export const businessProfileViewSchema = z
   .object({
@@ -50,6 +54,62 @@ export type BusinessProfileForClientResult =
   | BusinessProfileView
   | BusinessProfileMissing
   | BusinessProfileLoadFailed;
+
+/**
+ * Minimal Ficha viva projection for trusted server agents / orchestration (US-2.3).
+ * Distinct from BusinessProfileView / BusinessProfileForClientResult.
+ */
+export const businessProfileForAgentsViewSchema = z
+  .object({
+    exists: z.literal(true),
+    /** Echo of trusted arg — server-only DTO; never client-bundled */
+    clientId: z.string().uuid(),
+    /** Required positive int for agent traceability (US-2.2 bumps) */
+    version: z.number().int().positive(),
+    fields: interviewAnswersCompleteSchema,
+    /**
+     * Preferencias / Modalidad de producción summary — stub until US-3.x.
+     * Key MUST be present; value MUST be null in this story.
+     */
+    visualModeSummary: z.null(),
+    /** Optional ISO timestamptz freshness */
+    updatedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .strict();
+
+export type BusinessProfileForAgentsView = z.infer<
+  typeof businessProfileForAgentsViewSchema
+>;
+
+export const businessProfileForAgentsMissingSchema = z
+  .object({
+    exists: z.literal(false),
+  })
+  .strict();
+
+export type BusinessProfileForAgentsMissing = z.infer<
+  typeof businessProfileForAgentsMissingSchema
+>;
+
+/**
+ * Soft load / corrupt failure — distinct from bare missing.
+ * Do not invent fields; do not add foreign-tenant oracle codes.
+ */
+export const businessProfileForAgentsLoadFailedSchema = z
+  .object({
+    exists: z.literal(false),
+    loadFailed: z.literal(true),
+  })
+  .strict();
+
+export type BusinessProfileForAgentsLoadFailed = z.infer<
+  typeof businessProfileForAgentsLoadFailedSchema
+>;
+
+export type BusinessProfileForAgentsResult =
+  | BusinessProfileForAgentsView
+  | BusinessProfileForAgentsMissing
+  | BusinessProfileForAgentsLoadFailed;
 
 /**
  * Full seven-key replace (US-2.2). Reuse interviewAnswersCompleteSchema (.strict()).

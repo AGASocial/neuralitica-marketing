@@ -1,5 +1,8 @@
 import { interviewAnswersCompleteSchema } from "@/lib/contracts/interview";
-import type { BusinessProfileForClientResult } from "@/lib/contracts/profile";
+import type {
+  BusinessProfileForAgentsResult,
+  BusinessProfileForClientResult,
+} from "@/lib/contracts/profile";
 
 export type ProfileSelectRow = {
   fields: unknown;
@@ -65,5 +68,42 @@ export function mapBusinessProfileRow(params: {
     fields: fieldsParsed.data,
     ...(updatedAt !== undefined ? { updatedAt } : {}),
     ...(version !== undefined ? { version } : {}),
+  };
+}
+
+/**
+ * Map a SELECT row to the agent DTO (US-2.3).
+ * Requires positive version when exists; adds clientId + visualModeSummary: null.
+ * Pure — safe for unit tests; not a browser identity surface.
+ */
+export function mapBusinessProfileRowForAgents(params: {
+  clientId: string;
+  data: ProfileSelectRow | null;
+  error: { code?: string } | null;
+}): BusinessProfileForAgentsResult {
+  const base = mapBusinessProfileRow({
+    data: params.data,
+    error: params.error,
+  });
+
+  if (!base.exists) {
+    if ("loadFailed" in base && base.loadFailed) {
+      return { exists: false, loadFailed: true };
+    }
+    return { exists: false };
+  }
+
+  if (base.version === undefined) {
+    console.error("[profile] agents version invalid", { code: "invalid_version" });
+    return { exists: false, loadFailed: true };
+  }
+
+  return {
+    exists: true,
+    clientId: params.clientId,
+    version: base.version,
+    fields: base.fields,
+    visualModeSummary: null,
+    ...(base.updatedAt !== undefined ? { updatedAt: base.updatedAt } : {}),
   };
 }
