@@ -104,6 +104,7 @@ describe("public allowlist", () => {
     assert.equal(isPublicPath("/pending"), false);
     assert.equal(isPublicPath("/"), false);
     assert.equal(isPublicPath("/dashboard"), false);
+    assert.equal(isPublicPath("/interview"), false);
     assert.equal(isPublicPath("/api/anything"), false);
   });
 });

@@ -1202,6 +1202,8 @@ Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, (+ high-tier B-roll a
 
 Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.
 
+Sprint 1 Interview Builder: **US-1.1** is in PREP (`plan/stories/US-1.1/`). Acceptance criteria stay unchecked until requirements-validator.
+
 ---
 
 ## MVP cut line (matches roadmap)
