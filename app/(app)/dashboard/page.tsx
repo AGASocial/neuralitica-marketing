@@ -6,6 +6,7 @@ import type {
 } from "@/lib/contracts/interview";
 import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
 import { getInterviewDashboardSummary } from "@/lib/interview/get-interview-dashboard-summary";
+import { getBusinessProfileForClient } from "@/lib/profile/get-business-profile-for-client";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 import type enMessages from "@/messages/en.json";
 
@@ -77,6 +78,7 @@ export default async function DashboardPage() {
 
   let interviewSummary: InterviewDashboardSummary | undefined;
   let interviewLoadFailed = false;
+  let profileExists = false;
 
   try {
     interviewSummary = await getInterviewDashboardSummary();
@@ -85,6 +87,16 @@ export default async function DashboardPage() {
       throw error;
     }
     interviewLoadFailed = true;
+  }
+
+  try {
+    const profile = await getBusinessProfileForClient();
+    profileExists = profile.exists === true;
+  } catch (error) {
+    if (isNextNavigationError(error)) {
+      throw error;
+    }
+    profileExists = false;
   }
 
   const interviewCard = buildInterviewCard(
@@ -99,12 +111,20 @@ export default async function DashboardPage() {
     href: "/profile",
   };
 
-  const cards: DashboardCard[] = [
-    interviewCard,
-    profileCard,
-    t.dashboard.approvalsCard,
-    t.dashboard.productionCard,
-  ];
+  // When Ficha viva exists: elevate as primary/first card — no hard redirect.
+  const cards: DashboardCard[] = profileExists
+    ? [
+        profileCard,
+        interviewCard,
+        t.dashboard.approvalsCard,
+        t.dashboard.productionCard,
+      ]
+    : [
+        interviewCard,
+        profileCard,
+        t.dashboard.approvalsCard,
+        t.dashboard.productionCard,
+      ];
 
   return (
     <DashboardView

@@ -242,11 +242,25 @@
     }
   },
   "profile": {
-    "stub": {
-      "title": "Ficha viva",
-      "body": "Tu entrevista inicial fue enviada. Tu ficha viva está lista.",
-      "emptyBody": "Completa tu entrevista inicial para crear tu ficha viva.",
+    "title": "Ficha viva",
+    "updatedAt": "Última actualización {date}",
+    "emptySection": "Ninguna",
+    "sections": {
+      "services": "Servicios",
+      "zone": "Zona",
+      "tone": "Tono",
+      "offers": "Ofertas",
+      "objections": "Objeciones",
+      "style": "Estilo",
+      "restrictions": "Restricciones"
+    },
+    "empty": {
+      "body": "Completa tu entrevista inicial para crear tu ficha viva.",
       "ctaInterview": "Ir a la entrevista inicial",
+      "ctaDashboard": "Volver al panel"
+    },
+    "error": {
+      "body": "No pudimos cargar tu ficha viva. Actualiza la página para intentarlo de nuevo.",
       "ctaDashboard": "Volver al panel"
     }
   }

@@ -1,7 +1,8 @@
-import { ProfileStubView } from "@/components/profile/ProfileStubView";
+import { LivingProfileView } from "@/components/profile/LivingProfileView";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import type { BusinessProfileForClientResult } from "@/lib/contracts/profile";
 import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
-import { getProfileStubSummary } from "@/lib/profile/get-profile-stub-summary";
+import { getBusinessProfileForClient } from "@/lib/profile/get-business-profile-for-client";
 
 export const dynamic = "force-dynamic";
 
@@ -17,36 +18,41 @@ function isNextNavigationError(error: unknown): boolean {
 }
 
 /**
- * Stub Living profile / Ficha viva (US-1.3). Full field grid is US-2.1 in place.
+ * Living profile / Ficha viva — read-only (US-2.1).
  * Auth via `(app)` layout `requireActive("page")`. Cache: no-store in next.config.
+ * Identity: getBusinessProfileForClient() arity 0 only — no client/profile id params.
  */
 export default async function ProfilePage() {
   const user = await getCurrentUser();
   const locale = resolveLocale(user?.preferredLocale);
   const t = getTranslations(locale);
 
-  let profileReady = false;
+  let result: BusinessProfileForClientResult = {
+    exists: false,
+    loadFailed: true,
+  };
 
   try {
-    const summary = await getProfileStubSummary();
-    profileReady = summary?.exists === true;
+    result = await getBusinessProfileForClient();
   } catch (error) {
     if (isNextNavigationError(error)) {
       throw error;
     }
-    profileReady = false;
+    result = { exists: false, loadFailed: true };
   }
 
   return (
-    <ProfileStubView
+    <LivingProfileView
+      result={result}
+      locale={locale}
       copy={{
-        title: t.profile.stub.title,
-        body: t.profile.stub.body,
-        emptyBody: t.profile.stub.emptyBody,
-        ctaInterview: t.profile.stub.ctaInterview,
-        ctaDashboard: t.profile.stub.ctaDashboard,
+        title: t.profile.title,
+        updatedAt: t.profile.updatedAt,
+        emptySection: t.profile.emptySection,
+        sections: t.profile.sections,
+        empty: t.profile.empty,
+        error: t.profile.error,
       }}
-      profileReady={profileReady}
     />
   );
 }

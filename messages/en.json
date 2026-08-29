@@ -242,11 +242,25 @@
     }
   },
   "profile": {
-    "stub": {
-      "title": "Living profile",
-      "body": "Your initial interview was submitted. Your living profile is ready.",
-      "emptyBody": "Complete your initial interview to create your living profile.",
+    "title": "Living profile",
+    "updatedAt": "Last updated {date}",
+    "emptySection": "None",
+    "sections": {
+      "services": "Services",
+      "zone": "Zone",
+      "tone": "Tone",
+      "offers": "Offers",
+      "objections": "Objections",
+      "style": "Style",
+      "restrictions": "Restrictions"
+    },
+    "empty": {
+      "body": "Complete your initial interview to create your living profile.",
       "ctaInterview": "Go to initial interview",
+      "ctaDashboard": "Back to dashboard"
+    },
+    "error": {
+      "body": "We could not load your living profile. Refresh the page to try again.",
       "ctaDashboard": "Back to dashboard"
     }
   }
