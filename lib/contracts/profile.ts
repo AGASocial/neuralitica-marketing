@@ -9,6 +9,7 @@ import {
   interviewAnswersCompleteSchema,
   type InterviewAnswersComplete,
 } from "@/lib/contracts/interview";
+import { visualModeSummarySchema } from "@/lib/contracts/visual-preferences";
 
 /** Ficha viva fields jsonb — 1:1 with complete interview answers (V1). */
 export type BusinessProfileFields = InterviewAnswersComplete;
@@ -68,10 +69,10 @@ export const businessProfileForAgentsViewSchema = z
     version: z.number().int().positive(),
     fields: interviewAnswersCompleteSchema,
     /**
-     * Preferencias / Modalidad de producción summary — stub until US-3.x.
-     * Key MUST be present; value MUST be null in this story.
+     * Preferencias allowlist summary (US-3.1).
+     * null when no Preferencias row; omit consent internals.
      */
-    visualModeSummary: z.null(),
+    visualModeSummary: visualModeSummarySchema.nullable(),
     /** Optional ISO timestamptz freshness */
     updatedAt: z.string().datetime({ offset: true }).optional(),
   })

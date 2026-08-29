@@ -78,17 +78,20 @@ Concrete BE consumers: Server Action upsert Preferencias (CONTRACT name); RSC lo
 
 Concrete FE consumers: settings RSC page; Preferencias Client form calling Server Action; optional dashboard/nav link.
 
-- [ ] **Migration** for Preferencias table (`neuramark_visual_preferences` — CONTRACT freezes columns: allowlist vs single `mode`, `generic_avatar_id`, `faceless_style`, `updated_at`, optional `rules`).
-- [ ] **Loader** (arity 0): own Preferencias by `getCurrentUser().id` or explicit empty/missing.
-- [ ] **Server Action upsert** (CONTRACT name): `requireActive("handler")`; Zod enum/allowlist + `faceless_style` when required; identity from session only.
-- [ ] **[SEC] Enum validation** server-side; reject unknown modes.
-- [ ] **[SEC] Reject `own_avatar` without active consent** — independent of UI; soft gate if consent table missing (fail closed). Do **not** implement full US-3.2 ledger APIs.
-- [ ] Attach **mode rules stubs** if CONTRACT requires (e.g. server-set `must_disclose_not_owner` for generic) — not client-writable.
-- [ ] **No silent regenerate:** upsert must not enqueue jobs / regenerate strategy/scripts/media; automated test proves no generation side effects.
-- [ ] Parameterized queries; service-role Node only; never log unnecessary PII.
-- [ ] `revalidatePath` for settings (and nav consumers if needed).
-- [ ] Optional: populate `visualModeSummary` in `getBusinessProfileForAgents` when Preferencias exist (CONTRACT freezes shape).
-- [ ] Automated tests: happy path persist; enum reject; `own_avatar` without consent rejected; faceless requires style; foreign `client_id` ignored; no job enqueue on save.
+- [x] **Migration** for Preferencias table (`neuramark_visual_preferences` — CONTRACT freezes columns: allowlist vs single `mode`, `generic_avatar_id`, `faceless_style`, `updated_at`, optional `rules`).
+- [x] **Loader** (arity 0): own Preferencias by `getCurrentUser().id` or explicit empty/missing.
+- [x] **Server Action upsert** (CONTRACT name): `requireActive("handler")`; Zod enum/allowlist + `faceless_style` when required; identity from session only.
+- [x] **[SEC] Enum validation** server-side; reject unknown modes.
+- [x] **[SEC] Reject `own_avatar` without active consent** — independent of UI; soft gate if consent table missing (fail closed). Do **not** implement full US-3.2 ledger APIs.
+- [x] Attach **mode rules stubs** if CONTRACT requires (e.g. server-set `must_disclose_not_owner` for generic) — not client-writable.
+- [x] **No silent regenerate:** upsert must not enqueue jobs / regenerate strategy/scripts/media; automated test proves no generation side effects.
+- [x] Parameterized queries; service-role Node only; never log unnecessary PII.
+- [x] `revalidatePath` for settings (and nav consumers if needed).
+- [x] Optional: populate `visualModeSummary` in `getBusinessProfileForAgents` when Preferencias exist (CONTRACT freezes shape).
+- [x] Automated tests: happy path persist; enum reject; `own_avatar` without consent rejected; faceless requires style; foreign `client_id` ignored; no job enqueue on save.
+
+
+**BE note (US-3.1 BUILD):** `visualModeSummary` populated from Preferencias allowlist in `getBusinessProfileForAgents` (soft same-BUILD). Migration applied via `supabase/migrations/20260829210000_neuramark_visual_preferences.sql`. Settings UI remains FE.
 
 **AC mapping (for validator later):** Three modes + copy; stored + settings UI; no silent regenerate; no recording requirement; `faceless_style`; [SEC] enum + consent reject.
 
@@ -98,11 +101,11 @@ Concrete FE consumers: settings RSC page; Preferencias Client form calling Serve
 
 All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
-- [ ] Create **`neuramark_visual_preferences`** (SPEC name) — map story work-table `visual_preferences` columns: `client_id` (UNIQUE FK → `neuramark_clients`), mode/allowlist representation (CONTRACT), `generic_avatar_id` (nullable), `faceless_style` (jsonb), `updated_at` (+ trigger), optional `rules` jsonb for US-3.4 stub.
-- [ ] RLS: zero policies / deny-by-default (match profile pattern); access only via service-role server.
-- [ ] **Do not** create full `neuramark_avatar_consents` ledger here (US-3.2) — soft consent check may no-op/fail-closed against missing table.
-- [ ] **Do not** create `media_assets` here (US-3.3).
-- [ ] No writes of Preferencias onto `neuramark_business_profiles.fields`.
+- [x] Create **`neuramark_visual_preferences`** (SPEC name) — map story work-table `visual_preferences` columns: `client_id` (UNIQUE FK → `neuramark_clients`), mode/allowlist representation (CONTRACT), `generic_avatar_id` (nullable), `faceless_style` (jsonb), `updated_at` (+ trigger), optional `rules` jsonb for US-3.4 stub.
+- [x] RLS: zero policies / deny-by-default (match profile pattern); access only via service-role server.
+- [x] **Do not** create full `neuramark_avatar_consents` ledger here (US-3.2) — soft consent check may no-op/fail-closed against missing table.
+- [x] **Do not** create `media_assets` here (US-3.3).
+- [x] No writes of Preferencias onto `neuramark_business_profiles.fields`.
 
 ---
 

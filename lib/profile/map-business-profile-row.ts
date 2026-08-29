@@ -3,6 +3,7 @@ import type {
   BusinessProfileForAgentsResult,
   BusinessProfileForClientResult,
 } from "@/lib/contracts/profile";
+import type { VisualModeSummary } from "@/lib/contracts/visual-preferences";
 
 export type ProfileSelectRow = {
   fields: unknown;
@@ -72,14 +73,16 @@ export function mapBusinessProfileRow(params: {
 }
 
 /**
- * Map a SELECT row to the agent DTO (US-2.3).
- * Requires positive version when exists; adds clientId + visualModeSummary: null.
+ * Map a SELECT row to the agent DTO (US-2.3 / US-3.1).
+ * Requires positive version when exists; adds clientId + visualModeSummary.
+ * visualModeSummary defaults null; caller may pass allowlist projection when Preferencias exist.
  * Pure — safe for unit tests; not a browser identity surface.
  */
 export function mapBusinessProfileRowForAgents(params: {
   clientId: string;
   data: ProfileSelectRow | null;
   error: { code?: string } | null;
+  visualModeSummary?: VisualModeSummary | null;
 }): BusinessProfileForAgentsResult {
   const base = mapBusinessProfileRow({
     data: params.data,
@@ -103,7 +106,7 @@ export function mapBusinessProfileRowForAgents(params: {
     clientId: params.clientId,
     version: base.version,
     fields: base.fields,
-    visualModeSummary: null,
+    visualModeSummary: params.visualModeSummary ?? null,
     ...(base.updatedAt !== undefined ? { updatedAt: base.updatedAt } : {}),
   };
 }
