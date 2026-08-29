@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import type { CurrentUser } from "@/lib/auth/get-current-user";
 import { getTranslations } from "@/lib/i18n/get-translations";
@@ -22,7 +24,29 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
         borderBottom: "1px solid #e5e7eb",
       }}
     >
-      <div style={{ fontWeight: 700, fontSize: "1.125rem" }}>{t.appName}</div>
+      <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+        <div style={{ fontWeight: 700, fontSize: "1.125rem" }}>{t.appName}</div>
+        <nav
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "1rem",
+            fontSize: "0.95rem",
+          }}
+        >
+          <Link href="/dashboard" style={{ color: "#374151", textDecoration: "none" }}>
+            {t.header.nav.dashboard}
+          </Link>
+          {user.role === "operator" ? (
+            <Link
+              href="/operator/playbook"
+              style={{ color: "#374151", textDecoration: "none" }}
+            >
+              {t.header.nav.playbook}
+            </Link>
+          ) : null}
+        </nav>
+      </div>
       <div
         style={{
           display: "flex",

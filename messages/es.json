@@ -45,7 +45,11 @@
     "confirmHeader": "¿Cerrar sesión?",
     "confirmMessage": "Tendrás que iniciar sesión de nuevo en este dispositivo.",
     "confirmAccept": "Cerrar sesión",
-    "confirmReject": "Cancelar"
+    "confirmReject": "Cancelar",
+    "nav": {
+      "dashboard": "Panel",
+      "playbook": "Playbook de formatos"
+    }
   },
   "auth": {
     "localeSwitcher": {
@@ -446,6 +450,144 @@
         "unauthenticated": "Inicia sesión para gestionar referencias.",
         "forbidden": "No tienes permiso para gestionar referencias.",
         "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
+      }
+    }
+  },
+  "playbook": {
+    "loading": {
+      "list": "Cargando playbook de formatos…",
+      "form": "Cargando formato…"
+    },
+    "list": {
+      "title": "Playbook de formatos",
+      "subtitle": "Curar formatos evergreen de Reel para la producción de contenido.",
+      "create": "Nuevo formato",
+      "empty": "Aún no hay formatos. Crea el primer formato de Reel para el catálogo.",
+      "loadError": "No pudimos cargar el playbook de formatos. Actualiza la página para intentarlo de nuevo.",
+      "backDashboard": "Volver al panel",
+      "edit": "Editar",
+      "columns": {
+        "slug": "Slug",
+        "titulo": "Título",
+        "status": "Estado",
+        "version": "Versión",
+        "updatedAt": "Actualizado",
+        "actions": "Acciones"
+      },
+      "status": {
+        "active": "Activo",
+        "archived": "Archivado"
+      }
+    },
+    "form": {
+      "createTitle": "Nuevo formato de Reel",
+      "editTitle": "Editar formato de Reel",
+      "subtitle": "Define estructura, hooks e indicaciones que los agentes usan al planificar contenido.",
+      "save": "Guardar cambios",
+      "create": "Crear formato",
+      "cancel": "Volver al listado",
+      "saving": "Guardando…",
+      "archiving": "Archivando…",
+      "archive": "Archivar formato",
+      "backList": "Volver al listado",
+      "toastCreateSuccess": "Formato creado.",
+      "toastSaveSuccess": "Formato guardado.",
+      "toastArchiveSuccess": "Formato archivado.",
+      "versionLabel": "Versión {version}",
+      "archivedBanner": "Este formato está archivado. Es solo lectura y queda excluido de la planificación de agentes.",
+      "versionConflict": "Otra persona actualizó este formato. Recarga para ver la última versión antes de guardar de nuevo.",
+      "reload": "Recargar",
+      "fields": {
+        "slug": "Slug",
+        "slugHint": "Identificador en kebab-case minúsculas. No se puede cambiar después de crear.",
+        "titulo": "Título",
+        "explicacion": "Explicación",
+        "estructura": "Beats de estructura",
+        "estructuraHint": "Beats ordenados que describen el flujo del Reel (p. ej. Hook, Tip, CTA).",
+        "hookType": "Tipo de hook",
+        "duracionIdealSeg": "Duración ideal (segundos)",
+        "modalidades": "Modalidades de producción recomendadas",
+        "modalidadesHint": "Déjalo vacío para permitir cualquier modalidad al asignar.",
+        "rubros": "Rubros",
+        "rubrosHint": "Déjalo vacío para aplicar a todos los rubros.",
+        "guionHints": "Indicaciones de guion",
+        "guionHintsHint": "Orientación para el agente de guion cuando se elige este formato.",
+        "editingHints": "Incluir indicaciones de edición",
+        "editingHintsHint": "Técnicas opcionales para el montaje.",
+        "ctaTipo": "Tipo de CTA",
+        "ejemploReferencia": "Ejemplo de referencia (solo Operator)",
+        "ejemploReferenciaHint": "Enlace o nota interna de referencia. Nunca se muestra a clientes ni agentes."
+      },
+      "list": {
+        "addItem": "Añadir ítem",
+        "removeItem": "Quitar ítem",
+        "beatPlaceholder": "Etiqueta del beat",
+        "hintPlaceholder": "Indicación de guion",
+        "editingHintPlaceholder": "Indicación de edición"
+      },
+      "confirmArchive": {
+        "header": "¿Archivar este formato?",
+        "message": "Los formatos archivados siguen visibles aquí pero quedan excluidos de la planificación de agentes. En V1 no se puede deshacer.",
+        "accept": "Archivar",
+        "reject": "Cancelar"
+      }
+    },
+    "errors": {
+      "validation": "Revisa los campos resaltados e inténtalo de nuevo.",
+      "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+      "notFound": "No se encontró ese formato.",
+      "duplicateSlug": "Ese slug ya está en uso.",
+      "versionConflict": "Este formato se actualizó en otro lugar. Recarga e inténtalo de nuevo.",
+      "alreadyArchived": "Los formatos archivados no se pueden editar.",
+      "internal": "Algo salió mal. Inténtalo de nuevo más tarde.",
+      "slugRequired": "Introduce un slug.",
+      "slugFormat": "El slug debe ser kebab-case en minúsculas (letras, números, guiones)."
+    },
+    "enums": {
+      "hookTypes": {
+        "question": "Pregunta",
+        "bold_claim": "Afirmación contundente",
+        "pain_point": "Punto de dolor",
+        "curiosity_gap": "Brecha de curiosidad",
+        "statistic": "Estadística",
+        "before_after_tease": "Teaser antes/después",
+        "objection_callout": "Llamada a objeción",
+        "myth_statement": "Afirmación de mito",
+        "local_hook": "Hook local",
+        "quick_tip": "Tip rápido"
+      },
+      "ctaTipos": {
+        "dm": "Mensaje directo",
+        "link_in_bio": "Enlace en bio",
+        "call": "Llamada telefónica",
+        "visit": "Visita",
+        "book": "Reservar cita",
+        "comment": "Comentario",
+        "save": "Guardar",
+        "follow": "Seguir",
+        "none": "Ninguno"
+      },
+      "rubros": {
+        "plumbing": "Plomería",
+        "hvac": "HVAC",
+        "electrical": "Electricidad",
+        "cleaning": "Limpieza",
+        "landscaping": "Jardinería",
+        "auto_repair": "Reparación automotriz",
+        "beauty": "Belleza",
+        "fitness": "Fitness",
+        "restaurant": "Restaurante",
+        "retail": "Retail",
+        "professional_services": "Servicios profesionales",
+        "healthcare": "Salud",
+        "real_estate": "Bienes raíces",
+        "home_services": "Servicios para el hogar",
+        "other": "Otro"
+      },
+      "modalities": {
+        "own_avatar": "Avatar propio autorizado",
+        "generic_avatar": "Avatar genérico",
+        "faceless": "Video sin rostro / B-roll"
       }
     }
   }

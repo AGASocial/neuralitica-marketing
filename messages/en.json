@@ -45,7 +45,11 @@
     "confirmHeader": "Log out?",
     "confirmMessage": "You will need to log in again on this device.",
     "confirmAccept": "Log out",
-    "confirmReject": "Cancel"
+    "confirmReject": "Cancel",
+    "nav": {
+      "dashboard": "Dashboard",
+      "playbook": "Format catalog"
+    }
   },
   "auth": {
     "localeSwitcher": {
@@ -446,6 +450,144 @@
         "unauthenticated": "Sign in to manage references.",
         "forbidden": "You do not have permission to manage references.",
         "internal": "Something went wrong. Please try again later."
+      }
+    }
+  },
+  "playbook": {
+    "loading": {
+      "list": "Loading format catalog…",
+      "form": "Loading format…"
+    },
+    "list": {
+      "title": "Format catalog",
+      "subtitle": "Curate evergreen Reel formats for content production.",
+      "create": "New format",
+      "empty": "No formats yet. Create the first Reel format for the catalog.",
+      "loadError": "We could not load the format catalog. Refresh the page to try again.",
+      "backDashboard": "Back to dashboard",
+      "edit": "Edit",
+      "columns": {
+        "slug": "Slug",
+        "titulo": "Title",
+        "status": "Status",
+        "version": "Version",
+        "updatedAt": "Updated",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "archived": "Archived"
+      }
+    },
+    "form": {
+      "createTitle": "New Reel format",
+      "editTitle": "Edit Reel format",
+      "subtitle": "Define structure, hooks, and hints agents use when planning content.",
+      "save": "Save changes",
+      "create": "Create format",
+      "cancel": "Back to list",
+      "saving": "Saving…",
+      "archiving": "Archiving…",
+      "archive": "Archive format",
+      "backList": "Back to list",
+      "toastCreateSuccess": "Format created.",
+      "toastSaveSuccess": "Format saved.",
+      "toastArchiveSuccess": "Format archived.",
+      "versionLabel": "Version {version}",
+      "archivedBanner": "This format is archived. It is read-only and excluded from agent planning.",
+      "versionConflict": "Someone else updated this format. Reload to see the latest version before saving again.",
+      "reload": "Reload",
+      "fields": {
+        "slug": "Slug",
+        "slugHint": "Lowercase kebab-case identifier. Cannot be changed after creation.",
+        "titulo": "Title",
+        "explicacion": "Explanation",
+        "estructura": "Structure beats",
+        "estructuraHint": "Ordered beats that describe the Reel flow (e.g. Hook, Tip, CTA).",
+        "hookType": "Hook type",
+        "duracionIdealSeg": "Ideal duration (seconds)",
+        "modalidades": "Recommended production modalities",
+        "modalidadesHint": "Leave empty to allow any modality at assignment time.",
+        "rubros": "Industries (rubros)",
+        "rubrosHint": "Leave empty to apply to all industries.",
+        "guionHints": "Script hints",
+        "guionHintsHint": "Guidance for the script agent when this format is selected.",
+        "editingHints": "Include editing hints",
+        "editingHintsHint": "Optional techniques for media assembly.",
+        "ctaTipo": "CTA type",
+        "ejemploReferencia": "Reference example (Operator only)",
+        "ejemploReferenciaHint": "Internal reference link or note. Never shown to clients or agents."
+      },
+      "list": {
+        "addItem": "Add item",
+        "removeItem": "Remove item",
+        "beatPlaceholder": "Beat label",
+        "hintPlaceholder": "Script hint",
+        "editingHintPlaceholder": "Editing hint"
+      },
+      "confirmArchive": {
+        "header": "Archive this format?",
+        "message": "Archived formats stay visible here but are excluded from agent planning. This cannot be undone in V1.",
+        "accept": "Archive",
+        "reject": "Cancel"
+      }
+    },
+    "errors": {
+      "validation": "Please check the highlighted fields and try again.",
+      "forbiddenFields": "Something went wrong. Please try again.",
+      "notFound": "That format was not found.",
+      "duplicateSlug": "That slug is already in use.",
+      "versionConflict": "This format was updated elsewhere. Reload and try again.",
+      "alreadyArchived": "Archived formats cannot be edited.",
+      "internal": "Something went wrong. Please try again later.",
+      "slugRequired": "Enter a slug.",
+      "slugFormat": "Slug must be lowercase kebab-case (letters, numbers, hyphens)."
+    },
+    "enums": {
+      "hookTypes": {
+        "question": "Question",
+        "bold_claim": "Bold claim",
+        "pain_point": "Pain point",
+        "curiosity_gap": "Curiosity gap",
+        "statistic": "Statistic",
+        "before_after_tease": "Before/after tease",
+        "objection_callout": "Objection callout",
+        "myth_statement": "Myth statement",
+        "local_hook": "Local hook",
+        "quick_tip": "Quick tip"
+      },
+      "ctaTipos": {
+        "dm": "Direct message",
+        "link_in_bio": "Link in bio",
+        "call": "Phone call",
+        "visit": "Visit",
+        "book": "Book appointment",
+        "comment": "Comment",
+        "save": "Save",
+        "follow": "Follow",
+        "none": "None"
+      },
+      "rubros": {
+        "plumbing": "Plumbing",
+        "hvac": "HVAC",
+        "electrical": "Electrical",
+        "cleaning": "Cleaning",
+        "landscaping": "Landscaping",
+        "auto_repair": "Auto repair",
+        "beauty": "Beauty",
+        "fitness": "Fitness",
+        "restaurant": "Restaurant",
+        "retail": "Retail",
+        "professional_services": "Professional services",
+        "healthcare": "Healthcare",
+        "real_estate": "Real estate",
+        "home_services": "Home services",
+        "other": "Other"
+      },
+      "modalities": {
+        "own_avatar": "Authorized own avatar",
+        "generic_avatar": "Generic avatar",
+        "faceless": "Faceless video / B-roll"
       }
     }
   }

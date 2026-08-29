@@ -53,14 +53,14 @@
 
 Concrete BE consumers: Operator Server Actions for list/create/update/archive; RSC loader for Playbook list/detail.
 
-- [ ] **Operator Playbook list** page (CONTRACT path): table/cards of formatos with slug, titulo, active/archived status, version.
-- [ ] **Create / edit form** for all SPEC fields (beats editor for `estructura`, arrays for hints/rubros/modalidades).
-- [ ] **Archive action** with confirm; archived rows visually distinct; cannot archive if CONTRACT defines constraints.
-- [ ] **Slug read-only** on edit (immutable after create).
-- [ ] Loading / empty / error / success states on list and forms.
-- [ ] EN + ES strings in `messages/en.json` / `es.json` for Operator chrome (not necessarily translating seed catalog content unless CONTRACT says so).
-- [ ] No Supabase in Client Components; no bypass of Operator gate in client routing.
-- [ ] Do **not** build Trend UI (US-16.2) or Strategy brief UI (US-4.1).
+- [x] **Operator Playbook list** page (CONTRACT path): table/cards of formatos with slug, titulo, active/archived status, version.
+- [x] **Create / edit form** for all SPEC fields (beats editor for `estructura`, arrays for hints/rubros/modalidades).
+- [x] **Archive action** with confirm; archived rows visually distinct; cannot archive if CONTRACT defines constraints.
+- [x] **Slug read-only** on edit (immutable after create).
+- [x] **Loading / empty / error / success** states on list and forms.
+- [x] **EN + ES strings** in `messages/en.json` / `es.json` for Operator chrome (not necessarily translating seed catalog content unless CONTRACT says so).
+- [x] **No Supabase in Client Components**; no bypass of Operator gate in client routing.
+- [x] Do **not** build Trend UI (US-16.2) or Strategy brief UI (US-4.1).
 
 ---
 
@@ -68,16 +68,16 @@ Concrete BE consumers: Operator Server Actions for list/create/update/archive; R
 
 Concrete FE consumers: Operator Playbook pages; future US-4.1/US-5.1 via `getPlaybookForAgents()` only.
 
-- [ ] **Migration** `neuramark_content_playbooks` (CONTRACT freezes columns: `slug` UNIQUE, `version`, payload jsonb, `active`, timestamps, `archived_at`).
-- [ ] **Zod schemas** for Formato de Reel (create/update/read/agent DTO variants).
-- [ ] **Seed migration** with five V1 formatos (TASKS.md list).
-- [ ] **Server Actions** (CONTRACT names): list, getBySlug, create, update, archive — all `requireOperator("handler")`.
-- [ ] **[SEC] Server-side Zod** on every write; reject unknown `hook_type` / modalidad enum values.
-- [ ] **[SEC] Slug immutability** enforced in update handler.
-- [ ] **`getPlaybookForAgents()`** server-only helper: active formatos, validated output, no Operator-only fields.
-- [ ] Parameterized queries; service-role Node only; never log full payloads unnecessarily.
-- [ ] `revalidatePath` for Operator Playbook routes after mutations.
-- [ ] Automated tests: CRUD happy path; duplicate slug rejected; archive excludes from agent helper; non-operator gets 403; agent DTO omits `ejemplo_referencia`.
+- [x] **Migration** `neuramark_content_playbooks` (CONTRACT freezes columns: `slug` UNIQUE, `version`, payload jsonb, `active`, timestamps, `archived_at`).
+- [x] **Zod schemas** for Formato de Reel (create/update/read/agent DTO variants).
+- [x] **Seed migration** with five V1 formatos (TASKS.md list).
+- [x] **Server Actions** (CONTRACT names): list, getBySlug, create, update, archive — all `requireOperator("handler")`.
+- [x] **[SEC] Server-side Zod** on every write; reject unknown `hook_type` / modalidad enum values.
+- [x] **[SEC] Slug immutability** enforced in update handler.
+- [x] **`getPlaybookForAgents()`** server-only helper: active formatos, validated output, no Operator-only fields.
+- [x] Parameterized queries; service-role Node only; never log full payloads unnecessarily.
+- [x] `revalidatePath` for Operator Playbook routes after mutations.
+- [x] Automated tests: CRUD happy path; duplicate slug rejected; archive excludes from agent helper; non-operator gets 403; agent DTO omits `ejemplo_referencia`.
 
 ---
 
@@ -85,12 +85,12 @@ Concrete FE consumers: Operator Playbook pages; future US-4.1/US-5.1 via `getPla
 
 All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
-- [ ] Create **`neuramark_content_playbooks`** per CONTRACT (jsonb payload or normalized — freeze in CONTRACT).
-- [ ] UNIQUE on `slug`; index on `active` / `archived_at` if needed for list queries.
-- [ ] **Seed** five formatos with stable slugs and minimal valid payloads.
-- [ ] RLS: zero policies / deny-by-default (match Fase 1 pattern).
-- [ ] **Do not** create `neuramark_trend_snapshots` here (US-16.2).
-- [ ] **Do not** create `neuramark_content_strategies` here (US-4.1).
+- [x] Create **`neuramark_content_playbooks`** per CONTRACT (jsonb payload or normalized — freeze in CONTRACT).
+- [x] UNIQUE on `slug`; index on `active` / `archived_at` if needed for list queries.
+- [x] **Seed** five formatos with stable slugs and minimal valid payloads.
+- [x] RLS: zero policies / deny-by-default (match Fase 1 pattern).
+- [x] **Do not** create `neuramark_trend_snapshots` here (US-16.2).
+- [x] **Do not** create `neuramark_content_strategies` here (US-4.1).
 
 ---
 
