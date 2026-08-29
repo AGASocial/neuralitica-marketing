@@ -6,7 +6,12 @@
     "interviewCard": {
       "title": "Initial interview",
       "body": "Complete your guided interview so we can learn your business.",
-      "cta": "Start"
+      "cta": "Start",
+      "resumeBody": "You left off at {step}. Continue when you are ready.",
+      "resumeCta": "Resume",
+      "completedBody": "Your initial interview is complete. You can review your answers.",
+      "completedCta": "View answers",
+      "loadError": "We could not load interview status. Refresh the page to try again."
     },
     "profileCard": {
       "title": "Business profile",
@@ -158,7 +163,10 @@
     "next": "Next",
     "save": "Save",
     "saving": "Saving…",
+    "saveAndContinueLater": "Save & continue later",
+    "saveAndContinueLaterPending": "Saving…",
     "progressSaved": "Progress saved",
+    "backToDashboard": "Back to dashboard",
     "loading": "Loading…",
     "emptyIntro": "Start with the services you offer. You can go back to earlier steps at any time.",
     "addItem": "Add",

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 
 import type { InterviewAnswers, InterviewStepKey } from "@/lib/contracts/interview";
@@ -16,6 +18,7 @@ type InterviewCompletedCopy = {
   completedTitle: string;
   completedBody: string;
   none: string;
+  backToDashboard: string;
   steps: Record<
     InterviewStepKey,
     {
@@ -59,6 +62,17 @@ export function InterviewCompletedView({
         text={copy.completedBody}
         style={{ width: "100%" }}
       />
+
+      <div>
+        <Link href="/dashboard" style={{ textDecoration: "none" }}>
+          <Button
+            type="button"
+            label={copy.backToDashboard}
+            severity="secondary"
+            outlined
+          />
+        </Link>
+      </div>
 
       {INTERVIEW_STEP_ORDER.map((step) => (
         <section

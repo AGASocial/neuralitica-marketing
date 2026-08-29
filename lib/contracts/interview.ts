@@ -139,3 +139,19 @@ export const persistInterviewDraftResultSchema = z.discriminatedUnion("ok", [
 export type PersistInterviewDraftResult = z.infer<
   typeof persistInterviewDraftResultSchema
 >;
+
+/** Dashboard interview card — omit answers and session UUID (US-1.2) */
+export const interviewDashboardSummarySchema = z
+  .object({
+    status: interviewSessionStatusSchema,
+    currentStep: interviewStepKeySchema,
+    hasProgress: z.boolean(),
+  })
+  .strict();
+
+export type InterviewDashboardSummaryRow = z.infer<
+  typeof interviewDashboardSummarySchema
+>;
+
+/** `null` = no row → not started (Start CTA) */
+export type InterviewDashboardSummary = InterviewDashboardSummaryRow | null;

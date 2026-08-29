@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 import { Steps } from "primereact/steps";
@@ -49,17 +50,21 @@ type Banner = {
   text: string;
 };
 
+type PendingMode = "next" | "leave" | null;
+
 export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProps) {
+  const router = useRouter();
   const [answers, setAnswers] = useState<InterviewAnswers>(draft.answers);
   const [viewStep, setViewStep] = useState<InterviewStepKey>(draft.currentStep);
   const [status, setStatus] = useState(draft.status);
-  const [pending, setPending] = useState(false);
+  const [pendingMode, setPendingMode] = useState<PendingMode>(null);
   const [banner, setBanner] = useState<Banner | null>(
     Object.keys(draft.answers).length === 0 && draft.status === "draft"
       ? { severity: "info", text: copy.emptyIntro }
       : null,
   );
 
+  const pending = pendingMode !== null;
   const readOnly = status === "completed";
   const activeIndex = stepIndex(viewStep);
   const isLastStep = viewStep === "restrictions";
@@ -251,19 +256,18 @@ export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProp
     });
   }
 
-  async function handleNext(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function runPersist(mode: Exclude<PendingMode, null>): Promise<boolean> {
     if (pending || readOnly) {
-      return;
+      return false;
     }
 
     const clientError = validateCurrentStep();
     if (clientError) {
       setBanner({ severity: "error", text: clientError });
-      return;
+      return false;
     }
 
-    setPending(true);
+    setPendingMode(mode);
     setBanner(null);
 
     try {
@@ -276,17 +280,32 @@ export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProp
         setAnswers(result.draft.answers);
         setViewStep(result.draft.currentStep);
         setStatus(result.draft.status);
-        if (viewStep === "restrictions") {
-          setBanner({ severity: "success", text: copy.progressSaved });
-        }
-        return;
+        return true;
       }
 
       handlePersistFailure(result);
+      return false;
     } catch {
       setBanner({ severity: "error", text: copy.errors.internal });
+      return false;
     } finally {
-      setPending(false);
+      setPendingMode(null);
+    }
+  }
+
+  async function handleNext(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const stepBeforePersist = viewStep;
+    const ok = await runPersist("next");
+    if (ok && stepBeforePersist === "restrictions") {
+      setBanner({ severity: "success", text: copy.progressSaved });
+    }
+  }
+
+  async function handleSaveAndContinueLater() {
+    const ok = await runPersist("leave");
+    if (ok) {
+      router.push("/dashboard");
     }
   }
 
@@ -299,6 +318,7 @@ export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProp
           completedTitle: copy.completedTitle,
           completedBody: copy.completedBody,
           none: copy.none,
+          backToDashboard: copy.backToDashboard,
           steps: copy.steps,
         }}
         banner={banner?.severity === "error" ? banner.text : undefined}
@@ -371,7 +391,9 @@ export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProp
           style={{
             display: "flex",
             justifyContent: "space-between",
+            alignItems: "center",
             gap: "0.75rem",
+            flexWrap: "wrap",
           }}
         >
           <Button
@@ -382,12 +404,40 @@ export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProp
             onClick={goBack}
             disabled={pending || activeIndex === 0}
           />
-          <Button
-            type="submit"
-            label={pending ? copy.saving : isLastStep ? copy.save : copy.next}
-            loading={pending}
-            disabled={pending}
-          />
+          <div
+            style={{
+              display: "flex",
+              gap: "0.75rem",
+              flexWrap: "wrap",
+              marginLeft: "auto",
+            }}
+          >
+            <Button
+              type="button"
+              label={
+                pendingMode === "leave"
+                  ? copy.saveAndContinueLaterPending
+                  : copy.saveAndContinueLater
+              }
+              severity="secondary"
+              outlined
+              onClick={handleSaveAndContinueLater}
+              loading={pendingMode === "leave"}
+              disabled={pending}
+            />
+            <Button
+              type="submit"
+              label={
+                pendingMode === "next"
+                  ? copy.saving
+                  : isLastStep
+                    ? copy.save
+                    : copy.next
+              }
+              loading={pendingMode === "next"}
+              disabled={pending}
+            />
+          </div>
         </div>
       </form>
     </div>

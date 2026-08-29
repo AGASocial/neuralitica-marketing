@@ -6,7 +6,12 @@
     "interviewCard": {
       "title": "Entrevista inicial",
       "body": "Completa la entrevista guiada para que conozcamos tu negocio.",
-      "cta": "Comenzar"
+      "cta": "Comenzar",
+      "resumeBody": "Te quedaste en {step}. Continúa cuando estés listo.",
+      "resumeCta": "Reanudar",
+      "completedBody": "Tu entrevista inicial está completa. Puedes revisar tus respuestas.",
+      "completedCta": "Ver respuestas",
+      "loadError": "No pudimos cargar el estado de la entrevista. Actualiza la página para intentarlo de nuevo."
     },
     "profileCard": {
       "title": "Perfil del negocio",
@@ -158,7 +163,10 @@
     "next": "Siguiente",
     "save": "Guardar",
     "saving": "Guardando…",
+    "saveAndContinueLater": "Guardar y continuar después",
+    "saveAndContinueLaterPending": "Guardando…",
     "progressSaved": "Progreso guardado",
+    "backToDashboard": "Volver al panel",
     "loading": "Cargando…",
     "emptyIntro": "Empieza por los servicios que ofreces. Puedes volver a los pasos anteriores en cualquier momento.",
     "addItem": "Añadir",
