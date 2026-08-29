@@ -311,9 +311,9 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 
 | Owner | Work |
 |-------|------|
-| **FE** | Success confirmation screen; redirect to Business Profile review |
-| **BE** | On submit: validate completeness → enqueue or invoke profile builder → link session → profile |
-| **DB** | FK `business_profiles.source_interview_id` |
+| **FE** | Success confirmation screen; redirect to Business Profile review (**minimal stub/success route OK** until US-2.1 ships the full Ficha viva page — full profile UI is out of scope here) |
+| **BE** | On submit: validate completeness → create/update Ficha viva → mark session `completed`; link session → profile |
+| **DB** | `neuramark_business_profiles` (+ FK `source_interview_id`, unique for idempotency) |
 
 **Acceptance criteria**
 - [ ] Submitting a complete interview creates exactly one business profile (or updates draft profile)
@@ -322,7 +322,8 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 - [ ] [SEC] Completeness is verified server-side at submit time; a client cannot mark a session `completed` by flipping a status field in the request
 - [ ] [SEC] Idempotency is enforced with a DB-level constraint (e.g. unique `business_profiles.source_interview_id`), not only application logic
 
-**Depends on:** US-1.1, US-2.1
+**Depends on:** US-1.1, US-1.2  
+**Note:** Profile review UI after submit may be a **stub/success route** until US-2.1 delivers the full Ficha viva page. US-1.3 owns creating/updating `neuramark_business_profiles`; US-2.1 owns reading and rendering them.
 
 ---
 
@@ -343,7 +344,7 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 - [ ] Missing profile shows onboarding CTA, not empty crash
 - [ ] [SEC] Profile is fetched by the server-resolved current user; the endpoint does not accept an arbitrary `client_id` parameter from the browser
 
-**Depends on:** US-1.3
+**Depends on:** US-1.3 (creates/updates `neuramark_business_profiles`)
 
 ---
 
@@ -1202,7 +1203,7 @@ Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, (+ high-tier B-roll a
 
 Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.
 
-Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. Next in Sprint 1 list is US-1.3 (blocked on circular US-2.1 dep — resolve before SELECT).
+Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. **US-1.3** is SELECTED (`plan/stories/US-1.3/`) — circular dep with US-2.1 broken: US-1.3 Depends on US-1.1 + US-1.2 (creates profile + stub review); US-2.1 Depends on US-1.3 (full Ficha viva page).
 
 ---
 
