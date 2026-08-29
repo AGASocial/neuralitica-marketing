@@ -105,14 +105,14 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — Trend schema vs SPEC §3; Operator-only; no Strategy jobs)
+- [x] SPEC-REVIEW.md (spec-guardian — Trend schema vs SPEC §3; Operator-only; no Strategy jobs) — ALIGNED
 - [ ] SECURITY.md (security-architect — Operator gate; server-only agent helper; no client leakage of `ejemplo_referencia`; untrusted-input note for US-4.1+)
 - [ ] CONTRACT.md authored (nextjs-backend) + FE signoff
 - [ ] BUILD (FE + BE + DB + content-agents-engineer for agent helper)
 - [ ] VALIDATION.md
 - [ ] QA.md
 
-**Status:** PREP (2026-08-29). Gates not started. AC remain unchecked in `plan/USER_STORIES.md`. **Next gate:** SPEC-REVIEW (spec-guardian).
+**Status:** PREP (2026-08-29). SPEC-REVIEW ALIGNED. AC remain unchecked in `plan/USER_STORIES.md`. **Next gate:** SECURITY (security-architect).
 
 ---
 

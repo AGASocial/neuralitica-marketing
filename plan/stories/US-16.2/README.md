@@ -8,7 +8,7 @@ Ship **Trend Intelligence manual V1**: Operator curates a weekly **Snapshot de t
 
 **Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-16.2 (unchecked until CLOSE).
 
-**This folder:** [`plan/stories/US-16.2/`](./) — `README.md` · `TASKS.md` (PREP). `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` — **not yet authored**.
+**This folder:** [`plan/stories/US-16.2/`](./) — `README.md` · `TASKS.md` (PREP) · [`SPEC-REVIEW.md`](./SPEC-REVIEW.md) (ALIGNED). `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` — **not yet authored**.
 
 **Branch:** `feature/US-16.2-trend-snapshot`
 
@@ -22,7 +22,7 @@ Ship **Trend Intelligence manual V1**: Operator curates a weekly **Snapshot de t
 
 | Gate | Verdict |
 |------|---------|
-| SPEC-REVIEW | Pending |
+| SPEC-REVIEW | ALIGNED |
 | SECURITY | Pending |
 | CONTRACT | Pending |
 | BUILD | Pending |
