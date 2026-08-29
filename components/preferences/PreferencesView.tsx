@@ -35,6 +35,8 @@ type PreferencesCopy = {
   toastSuccess: string;
   emptyHint: string;
   disclosureNote: string;
+  disclosureLine: string;
+  disclosurePreviewNote: string;
   ownAvatarDisabledConsent: string;
   ownAvatarAssetsNote: string;
   modes: Record<VisualModality, ModeCopy>;
@@ -136,6 +138,8 @@ export function PreferencesView({
         toastSuccess: copy.toastSuccess,
         emptyHint: copy.emptyHint,
         disclosureNote: copy.disclosureNote,
+        disclosureLine: copy.disclosureLine,
+        disclosurePreviewNote: copy.disclosurePreviewNote,
         ownAvatarDisabledConsent: copy.ownAvatarDisabledConsent,
         ownAvatarAssetsNote: copy.ownAvatarAssetsNote,
         modes: copy.modes,

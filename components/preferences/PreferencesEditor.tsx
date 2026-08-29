@@ -15,6 +15,7 @@ import {
   AvatarReferencesSection,
   type AvatarReferencesCopy,
 } from "@/components/preferences/AvatarReferencesSection";
+import { GenericAvatarDisclosurePreview } from "@/components/preferences/GenericAvatarDisclosurePreview";
 import type { AvatarConsentForClientResult } from "@/lib/contracts/avatar-consent";
 import type { AvatarReferenceAssetsPageResult } from "@/lib/contracts/media-assets";
 import {
@@ -47,6 +48,8 @@ type PreferencesEditorCopy = {
   toastSuccess: string;
   emptyHint: string;
   disclosureNote: string;
+  disclosureLine: string;
+  disclosurePreviewNote: string;
   ownAvatarDisabledConsent: string;
   ownAvatarAssetsNote: string;
   modes: Record<VisualModality, ModeCopy>;
@@ -160,6 +163,11 @@ export function PreferencesEditor({
   const consentActive = consent.active;
   const allowlistHasOwnAvatar = server.allowedModes.includes("own_avatar");
   const hasFaceless = draftModes.includes("faceless");
+  const showGenericDisclosure =
+    server.rules?.must_disclose_not_owner === true ||
+    draftModes.includes("generic_avatar");
+  const genericInDraft = draftModes.includes("generic_avatar");
+  const disclosureSeverity: "warn" | "info" = genericInDraft ? "warn" : "info";
   const dirty =
     JSON.stringify(sortModes(draftModes)) !==
       JSON.stringify(sortModes(server.allowedModes)) ||
@@ -515,14 +523,20 @@ export function PreferencesEditor({
         </section>
       ) : null}
 
-      {server.rules?.must_disclose_not_owner ||
-      draftModes.includes("generic_avatar") ? (
+      {showGenericDisclosure ? (
         <Message
-          severity="info"
+          severity={disclosureSeverity}
           text={copy.disclosureNote}
           style={{ width: "100%" }}
         />
       ) : null}
+
+      <GenericAvatarDisclosurePreview
+        visible={showGenericDisclosure}
+        variant="preferences"
+        line={copy.disclosureLine}
+        previewNote={copy.disclosurePreviewNote}
+      />
     </PreferencesShell>
   );
 }

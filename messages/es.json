@@ -294,6 +294,9 @@
       "unrecognizedKey": "Revisa esta sección e inténtalo de nuevo."
     }
   },
+  "legal": {
+    "genericAvatarDisclosure": "Este video utiliza un presentador de IA que no es el dueño del negocio."
+  },
   "preferences": {
     "title": "Preferencias de producción visual",
     "subtitle": "Elige qué modalidades podemos usar al producir tus Reels.",
@@ -303,7 +306,10 @@
     "saving": "Guardando…",
     "toastSuccess": "Preferencias guardadas. Las nuevas producciones usarán estas modalidades.",
     "emptyHint": "Aún no hay modalidades seleccionadas. Puedes guardar una selección vacía, o elegir una o más opciones abajo.",
-    "disclosureNote": "Cuando el avatar genérico profesional está habilitado, los guiones deben indicar que no eres tú.",
+    "disclosureNote": "Cuando el avatar genérico profesional está habilitado, los guiones y el texto en pantalla deben incluir esta declaración.",
+    "disclosurePreview": {
+      "note": "Solo vista previa — no es tu paquete final de aprobación."
+    },
     "ownAvatarDisabledConsent": "El avatar propio autorizado requiere un consentimiento de avatar activo antes de poder seleccionarlo. El consentimiento se gestiona por separado y no se otorga al guardar preferencias.",
     "ownAvatarAssetsNote": "Nunca te pediremos grabar video o audio. La producción con avatar propio usa referencias subidas más adelante — no grabación en vivo.",
     "modes": {

@@ -101,6 +101,8 @@ export default async function PreferencesPage() {
         toastSuccess: t.preferences.toastSuccess,
         emptyHint: t.preferences.emptyHint,
         disclosureNote: t.preferences.disclosureNote,
+        disclosureLine: t.legal.genericAvatarDisclosure,
+        disclosurePreviewNote: t.preferences.disclosurePreview.note,
         ownAvatarDisabledConsent: t.preferences.ownAvatarDisabledConsent,
         ownAvatarAssetsNote: t.preferences.ownAvatarAssetsNote,
         modes: t.preferences.modes,

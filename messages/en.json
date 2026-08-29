@@ -294,6 +294,9 @@
       "unrecognizedKey": "Please check this section and try again."
     }
   },
+  "legal": {
+    "genericAvatarDisclosure": "This video uses an AI presenter who is not the business owner."
+  },
   "preferences": {
     "title": "Visual production preferences",
     "subtitle": "Choose which modalities we may use when producing your Reels.",
@@ -303,7 +306,10 @@
     "saving": "Saving…",
     "toastSuccess": "Preferences saved. New productions will use these modalities.",
     "emptyHint": "No modalities selected yet. You can save an empty selection, or choose one or more options below.",
-    "disclosureNote": "When a professional generic avatar is enabled, scripts must disclose it is not you.",
+    "disclosureNote": "When Professional generic avatar is enabled, scripts and on-screen text must include this disclosure.",
+    "disclosurePreview": {
+      "note": "Preview only — not your final approval package."
+    },
     "ownAvatarDisabledConsent": "Authorized own avatar requires active avatar consent before it can be selected. Consent is managed separately and is not granted by saving preferences.",
     "ownAvatarAssetsNote": "You will never be asked to record video or audio. Own-avatar production uses uploaded reference assets later — not live recording.",
     "modes": {
