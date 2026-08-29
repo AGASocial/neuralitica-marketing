@@ -400,12 +400,12 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | `visual_preferences` (client_id, mode, generic_avatar_id, faceless_style, updated_at) |
 
 **Acceptance criteria**
-- [ ] Three modes selectable with clear product copy per roadmap rules
-- [ ] Mode stored on profile and shown in settings
-- [ ] Changing mode does not silently regenerate in-flight content
-- [ ] No mode ever requires the client to record video or audio; own-avatar uses uploaded reference assets only (roadmap hard rule: no human recording)
-- [ ] Faceless mode captures a style preference (voice + text + stock/B-roll) stored in `faceless_style`
-- [ ] [SEC] `visual_mode` value is validated server-side against the enum; selecting `own_avatar` is rejected server-side when no active consent exists, independent of UI disabling (defense in depth with US-3.2)
+- [x] Three modes selectable with clear product copy per roadmap rules
+- [x] Mode stored on profile and shown in settings
+- [x] Changing mode does not silently regenerate in-flight content
+- [x] No mode ever requires the client to record video or audio; own-avatar uses uploaded reference assets only (roadmap hard rule: no human recording)
+- [x] Faceless mode captures a style preference (voice + text + stock/B-roll) stored in `faceless_style`
+- [x] [SEC] `visual_mode` value is validated server-side against the enum; selecting `own_avatar` is rejected server-side when no active consent exists, independent of UI disabling (defense in depth with US-3.2)
 
 **Depends on:** US-2.1
 
@@ -1203,7 +1203,7 @@ Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, (+ high-tier B-roll a
 
 Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.
 
-Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. **US-1.3** is CLOSED (`plan/stories/US-1.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; no fix loop). Builds FE `6f55df4` / BE `4b5de0c`. **US-2.1** is CLOSED (`plan/stories/US-2.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Low non-blocking; no fix loop). Builds FE `76e84c3` / BE `10da494`. **US-2.2** is CLOSED (`plan/stories/US-2.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 2 Low non-blocking; no fix loop). Builds FE `6b99910` / BE `bd7ad08`. **US-2.3** is CLOSED (`plan/stories/US-2.3/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 0 Medium, 1 Low non-blocking; no fix loop). Build BE `bf19e95` (no FE). Sprint 1 Interview Builder complete. Next recommended: **US-3.1** (Preferencias / visual mode; Depends on US-2.1; Sprint 2).
+Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. **US-1.3** is CLOSED (`plan/stories/US-1.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; no fix loop). Builds FE `6f55df4` / BE `4b5de0c`. **US-2.1** is CLOSED (`plan/stories/US-2.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Low non-blocking; no fix loop). Builds FE `76e84c3` / BE `10da494`. **US-2.2** is CLOSED (`plan/stories/US-2.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 2 Low non-blocking; no fix loop). Builds FE `6b99910` / BE `bd7ad08`. **US-2.3** is CLOSED (`plan/stories/US-2.3/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 0 Medium, 1 Low non-blocking; no fix loop). Build BE `bf19e95` (no FE). Sprint 1 Interview Builder complete. **US-3.1** is CLOSED (`plan/stories/US-3.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 5 Low; CLOSE yes). Builds FE `c0caaee` / BE `6e2121c`. Next recommended: **US-3.2** (Consentimiento de avatar; Depends on US-3.1; Sprint 2).
 
 ---
 

@@ -1,18 +1,33 @@
 # US-3.1 — Choose visual production mode
 
-**Status:** PREP (active) — branch `feature/US-3.1-visual-mode`.
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (6/6 AC; FE `c0caaee`, BE `6e2121c`).
 
 **As a** Cliente, **I want** to pick how my Reels will look (own avatar, generic avatar, or faceless), **so that** content matches my comfort and brand rules.
 
 Ship **Preferencias de producción visual**: Cliente configures which production modalities they accept (Avatar propio autorizado · Avatar genérico profesional · Video sin rostro / B-roll), with clear product copy, EN/ES, and server persistence. Modes that are unavailable (e.g. Avatar propio without Consentimiento de avatar) are disabled in UI **and** rejected server-side. Changing preferences **must not** silently regenerate in-flight content. No mode ever requires the Cliente to record video or audio (roadmap hard rule). Faceless captures a `faceless_style` preference. Sibling consent ledger UI/API (US-3.2), reference uploads (US-3.3), and QA disclosure flags UI (US-3.4) stay **out** — soft stubs / gates only where SEC requires.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-3.1 (do not redefine; do **not** mark done in PREP)
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-3.1 (checked on CLOSE).
 
-**This folder:** [`plan/stories/US-3.1/`](./) — `README.md` + `TASKS.md` (this PREP). `SPEC-REVIEW.md`, `SECURITY.md`, and `CONTRACT.md` are authored in later gates, not here.
+**This folder:** [`plan/stories/US-3.1/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · [`CONTRACT.md`](./CONTRACT.md) (frozen) · `VALIDATION.md` · `QA.md`.
 
-**Depends on:** [US-2.1](../US-2.1/) ✅ CLOSED — Ficha viva exists (Cliente has a profile context). Runtime identity: [US-14.5](../US-14.5/) (`getCurrentUser()` / `requireActive()`). Continuity: [US-2.2](../US-2.2/) ✅ PATCH must **not** write Preferencias; [US-2.3](../US-2.3/) ✅ `visualModeSummary: null` stub until this story populates Preferencias for agents.
+**Depends on:** [US-2.1](../US-2.1/) ✅ CLOSED — Ficha viva exists (Cliente has a profile context). Runtime identity: [US-14.5](../US-14.5/) (`getCurrentUser()` / `requireActive()`). Continuity: [US-2.2](../US-2.2/) ✅ PATCH must **not** write Preferencias; [US-2.3](../US-2.3/) ✅ `visualModeSummary` populated from Preferencias allowlist when row exists.
 
 **Unblocks:** [US-3.2](../../USER_STORIES.md) (Consentimiento de avatar) · [US-3.3](../../USER_STORIES.md) (reference assets) · [US-3.4](../../USER_STORIES.md) (generic disclosure rules) · Content Strategy / cost policy / talking-head jobs that require Preferencias allowlist (later phases).
+
+---
+
+## Close verdicts
+
+| Gate | Verdict |
+|------|---------|
+| SPEC-REVIEW | ALIGNED (allowlist; SPEC S3.M4 wins) |
+| SECURITY | APPROVE WITH CONDITIONS |
+| CONTRACT | Frozen, Reviewed by FE (2026-08-29) |
+| BUILD | FE `c0caaee` · BE `6e2121c` |
+| VALIDATION | PASS WITH NOTES |
+| QA | APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 5 Low; CLOSE yes) |
+
+**QA handoff (non-blocking):** harden `hasActiveAvatarConsent` for multi-row ledger in **US-3.2**; optional Low polish (`server-only` on helpers, split `FACELESS_STYLE_DEFAULT`, RSC `PreferencesView`, test lint).
 
 ---
 
@@ -42,7 +57,7 @@ Ship **Preferencias de producción visual**: Cliente configures which production
 |--------|------------|
 | US-2.1 | Cliente Ficha viva at `/profile`; identity arity 0. Preferencias are **not** on the Ficha viva edit surface. |
 | US-2.2 | PATCH strips/rejects Preferencias / `visual_mode` even if smuggled — keep that bar. |
-| US-2.3 | Agents DTO has `visualModeSummary: null` until Preferencias exist — extend when CONTRACT freezes summary shape. |
+| US-2.3 | Agents DTO has `visualModeSummary` from Preferencias allowlist when row exists. |
 | Auth US-14.5 | `requireActive` / `getCurrentUser()` for Cliente mutations and settings RSC. |
 
 **US-3.1 adds Preferencias persistence + settings UI** — separate from Ficha viva fields; defense-in-depth consent check for `own_avatar`.
@@ -59,7 +74,3 @@ Ship **Preferencias de producción visual**: Cliente configures which production
 
 Use **Preferencias de producción visual**, **Modalidad de producción** (when referring to per-slot assignment — future), **Cliente**, **Operator**, **Avatar propio autorizado**, **Avatar genérico profesional**, **Video sin rostro** / **B-roll / sin presencia**, **Consentimiento de avatar**, **Ficha viva**.  
 _Evitar:_ avatar mode / visual preferences (as entity names), visual mode selector, single mode, production mode, own_avatar / generic_avatar / faceless (in product copy — OK as enum), consent ledger (in product copy), Business Profile / perfil de negocio, admin / staff.
-
-## Ready for SPEC?
-
-**Yes, with one known tension for spec-guardian.** SPEC §3 S3.M4 already names Preferencias (multi-selección allowlist), table `neuramark_visual_preferences`, no human recording, change preferences does not silent-regenerate, reject own-avatar without consent. USER_STORIES § US-3.1 AC remain the checkbox source of truth but describe a single `visual_mode` column — **SPEC wins until amended**; open question #1 below. Remaining open questions are SECURITY/CONTRACT freezes (route, `faceless_style` shape, consent soft-gate, regenerate proof), not blockers to start SPEC-REVIEW.

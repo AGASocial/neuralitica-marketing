@@ -111,14 +111,14 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — S3.M4 Preferencias allowlist vs story single-mode wording; table name; no recording; no silent regenerate)
-- [ ] SECURITY.md (security-architect — enum SEC; consent soft gate; IDOR; rules not client-writable)
-- [ ] CONTRACT.md authored (nextjs-backend) + FE signoff
-- [ ] BUILD (FE + BE + DB)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] SPEC-REVIEW.md (spec-guardian — S3.M4 Preferencias allowlist vs story single-mode wording; table name; no recording; no silent regenerate) — ALIGNED
+- [x] SECURITY.md (security-architect — enum SEC; consent soft gate; IDOR; rules not client-writable) — APPROVE WITH CONDITIONS
+- [x] CONTRACT.md authored (nextjs-backend) + FE signoff — Frozen, Reviewed by FE (2026-08-29)
+- [x] BUILD (FE + BE + DB) — FE `c0caaee` · BE `6e2121c`
+- [x] VALIDATION.md — PASS WITH NOTES
+- [x] QA.md — APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 5 Low; CLOSE can proceed)
 
-**PREP complete when:** `README.md` + this `TASKS.md` exist; AC in `USER_STORIES.md` remain unchecked; no CONTRACT/SECURITY/code from PO.
+**Status:** CLOSED (2026-08-29). All gates complete; AC checked in `plan/USER_STORIES.md`. Next recommended: **US-3.2**.
 
 ---
 
