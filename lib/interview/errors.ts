@@ -38,6 +38,11 @@ export function interviewConflictError(): InterviewErrorEnvelope {
   return interviewError("CONFLICT", "interview.errors.conflict");
 }
 
+/** No interview session row to submit (US-1.3). */
+export function interviewNotFoundError(): InterviewErrorEnvelope {
+  return interviewError("CONFLICT", "interview.errors.notFound");
+}
+
 export function interviewInternalError(): InterviewErrorEnvelope {
   return interviewError("INTERNAL_ERROR", "interview.errors.internal");
 }

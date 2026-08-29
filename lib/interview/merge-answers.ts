@@ -26,7 +26,14 @@ const STRIP_KEYS = new Set([
   "id",
   "session_id",
   "sessionid",
+  "source_interview_id",
+  "sourceinterviewid",
+  "profile_id",
+  "profileid",
 ]);
+
+/** Submit-only: ignore client answers as SoT (strip before empty-body parse). */
+const SUBMIT_STRIP_KEYS = new Set(["answers"]);
 
 export type DraftWriteDecision = "insert" | "update" | "conflict";
 
@@ -53,6 +60,88 @@ export function stripInterviewIdentityKeys(input: unknown): unknown {
     next[key] = value;
   }
   return next;
+}
+
+/**
+ * Submit input prep (US-1.3): strip identity/linkage keys + client `answers`
+ * (DB is SoT), then Zod-parse as empty object.
+ */
+export function stripSubmitInterviewInput(input: unknown): unknown {
+  const identityStripped = stripInterviewIdentityKeys(input);
+  if (
+    identityStripped === null ||
+    typeof identityStripped !== "object" ||
+    Array.isArray(identityStripped)
+  ) {
+    return identityStripped;
+  }
+
+  const next: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(
+    identityStripped as Record<string, unknown>,
+  )) {
+    if (SUBMIT_STRIP_KEYS.has(key.toLowerCase())) {
+      continue;
+    }
+    next[key] = value;
+  }
+  return next;
+}
+
+/**
+ * Fail-closed ordering gate: never mark completed unless profile upsert succeeded.
+ * Used by submit path and unit tests (SECURITY fail-closed).
+ */
+export function mayMarkInterviewCompleted(
+  profileUpsertSucceeded: boolean,
+): boolean {
+  return profileUpsertSucceeded === true;
+}
+
+export type SubmitSessionDecision =
+  | { kind: "not_found" }
+  | { kind: "already_completed"; sessionId: string; answers: InterviewAnswers }
+  | { kind: "draft"; sessionId: string; answers: InterviewAnswers };
+
+/** Decide submit path from own session row (identity already resolved). */
+export function decideSubmitSessionPath(
+  row: { id: string; status: string; answers: unknown } | null,
+): SubmitSessionDecision {
+  if (row == null) {
+    return { kind: "not_found" };
+  }
+  const answers = coerceStoredAnswers(row.answers);
+  if (row.status === "completed") {
+    return {
+      kind: "already_completed",
+      sessionId: row.id,
+      answers,
+    };
+  }
+  return {
+    kind: "draft",
+    sessionId: row.id,
+    answers,
+  };
+}
+
+export function buildSubmitSuccess(params: {
+  alreadyCompleted: boolean;
+  version: number;
+}): {
+  ok: true;
+  alreadyCompleted: boolean;
+  redirectTo: "/profile";
+  profile: { exists: true; version: number };
+  interview: { status: "completed" };
+} {
+  return {
+    ok: true,
+    alreadyCompleted: params.alreadyCompleted,
+    redirectTo: "/profile",
+    profile: { exists: true, version: params.version },
+    interview: { status: "completed" },
+  };
 }
 
 export function mergeInterviewAnswers(

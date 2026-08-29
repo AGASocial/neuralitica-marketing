@@ -58,6 +58,9 @@ function zodIssueToFieldCode(issue: ZodIssue): string {
     case "too_big":
       return "too_big";
     case "invalid_type":
+      if ("received" in issue && issue.received === "undefined") {
+        return "required";
+      }
       return "invalid_type";
     case "unrecognized_keys":
       return "unrecognized_key";
