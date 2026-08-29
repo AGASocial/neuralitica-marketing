@@ -18,6 +18,11 @@
       "body": "Review the living profile generated from your initial interview.",
       "cta": "View living profile"
     },
+    "preferencesCard": {
+      "title": "Visual production preferences",
+      "body": "Choose which production modalities you accept for your Reels.",
+      "cta": "Open preferences"
+    },
     "approvalsCard": {
       "title": "Pending approvals",
       "body": "Reels waiting for your review before publishing.",
@@ -287,6 +292,69 @@
       "tooBigText": "Text is too long.",
       "invalidType": "Please check this section and try again.",
       "unrecognizedKey": "Please check this section and try again."
+    }
+  },
+  "preferences": {
+    "title": "Visual production preferences",
+    "subtitle": "Choose which modalities we may use when producing your Reels.",
+    "updatedAt": "Last updated {date}",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "toastSuccess": "Preferences saved. New productions will use these modalities.",
+    "emptyHint": "No modalities selected yet. You can save an empty selection, or choose one or more options below.",
+    "disclosureNote": "When a professional generic avatar is enabled, scripts must disclose it is not you.",
+    "ownAvatarDisabledConsent": "Authorized own avatar requires active avatar consent before it can be selected. Consent is managed separately and is not granted by saving preferences.",
+    "ownAvatarAssetsNote": "You will never be asked to record video or audio. Own-avatar production uses uploaded reference assets later — not live recording.",
+    "modes": {
+      "own_avatar": {
+        "label": "Authorized own avatar",
+        "description": "Reels that visually resemble you, only after you have granted avatar consent.",
+        "example": "Example: a talking-head Reel that looks like you presenting an offer, built from uploaded reference photos or clips."
+      },
+      "generic_avatar": {
+        "label": "Professional generic avatar",
+        "description": "A stock professional presenter that is clearly not you.",
+        "example": "Example: a polished talking-head Reel with a catalog presenter explaining a service."
+      },
+      "faceless": {
+        "label": "Faceless video / B-roll",
+        "description": "No on-camera face — product, place, and motion-led visuals with optional voice or captions.",
+        "example": "Example: B-roll of your work area with captions and a short voiceover, without showing a person."
+      }
+    },
+    "facelessStyle": {
+      "title": "Faceless video style",
+      "voice": "Voice / audio",
+      "onScreenText": "On-screen text",
+      "broll": "B-roll / imagery",
+      "voiceOptions": {
+        "none": "No voice",
+        "ai_voiceover": "AI voiceover",
+        "music_only": "Music only"
+      },
+      "onScreenTextOptions": {
+        "none": "No on-screen text",
+        "captions": "Captions",
+        "headline_and_captions": "Headline and captions"
+      },
+      "brollOptions": {
+        "stock": "Stock imagery",
+        "product_led": "Product-led",
+        "mixed": "Mixed"
+      }
+    },
+    "error": {
+      "body": "We could not load your visual production preferences. Refresh the page to try again.",
+      "ctaDashboard": "Back to dashboard"
+    },
+    "errors": {
+      "validation": "Please check your selections and try again.",
+      "forbiddenFields": "Something went wrong. Please try again.",
+      "payloadTooLarge": "Your preferences payload is too large. Simplify and try again.",
+      "ownAvatarConsentRequired": "Authorized own avatar requires active avatar consent. That option stays unavailable until consent is granted.",
+      "internal": "Something went wrong. Please try again later.",
+      "facelessStyleRequired": "Choose a faceless video style when Faceless video / B-roll is selected."
     }
   }
 }

@@ -111,17 +111,24 @@ export default async function DashboardPage() {
     href: "/profile",
   };
 
+  const preferencesCard: DashboardCard = {
+    ...t.dashboard.preferencesCard,
+    href: "/settings/preferences",
+  };
+
   // When Ficha viva exists: elevate as primary/first card — no hard redirect.
   const cards: DashboardCard[] = profileExists
     ? [
         profileCard,
         interviewCard,
+        preferencesCard,
         t.dashboard.approvalsCard,
         t.dashboard.productionCard,
       ]
     : [
         interviewCard,
         profileCard,
+        preferencesCard,
         t.dashboard.approvalsCard,
         t.dashboard.productionCard,
       ];

@@ -18,6 +18,11 @@
       "body": "Revisa la ficha viva generada a partir de tu entrevista inicial.",
       "cta": "Ver ficha viva"
     },
+    "preferencesCard": {
+      "title": "Preferencias de producción visual",
+      "body": "Elige qué modalidades de producción aceptas para tus Reels.",
+      "cta": "Abrir preferencias"
+    },
     "approvalsCard": {
       "title": "Aprobaciones pendientes",
       "body": "Reels en espera de tu revisión antes de publicar.",
@@ -287,6 +292,69 @@
       "tooBigText": "El texto es demasiado largo.",
       "invalidType": "Revisa esta sección e inténtalo de nuevo.",
       "unrecognizedKey": "Revisa esta sección e inténtalo de nuevo."
+    }
+  },
+  "preferences": {
+    "title": "Preferencias de producción visual",
+    "subtitle": "Elige qué modalidades podemos usar al producir tus Reels.",
+    "updatedAt": "Última actualización {date}",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "saving": "Guardando…",
+    "toastSuccess": "Preferencias guardadas. Las nuevas producciones usarán estas modalidades.",
+    "emptyHint": "Aún no hay modalidades seleccionadas. Puedes guardar una selección vacía, o elegir una o más opciones abajo.",
+    "disclosureNote": "Cuando el avatar genérico profesional está habilitado, los guiones deben indicar que no eres tú.",
+    "ownAvatarDisabledConsent": "El avatar propio autorizado requiere un consentimiento de avatar activo antes de poder seleccionarlo. El consentimiento se gestiona por separado y no se otorga al guardar preferencias.",
+    "ownAvatarAssetsNote": "Nunca te pediremos grabar video o audio. La producción con avatar propio usa referencias subidas más adelante — no grabación en vivo.",
+    "modes": {
+      "own_avatar": {
+        "label": "Avatar propio autorizado",
+        "description": "Reels que se parecen a ti, solo después de que hayas otorgado el consentimiento de avatar.",
+        "example": "Ejemplo: un Reel hablando a cámara que se parece a ti presentando una oferta, creado a partir de fotos o clips de referencia subidos."
+      },
+      "generic_avatar": {
+        "label": "Avatar genérico profesional",
+        "description": "Un presentador profesional de catálogo que claramente no eres tú.",
+        "example": "Ejemplo: un Reel pulido con un presentador de catálogo explicando un servicio."
+      },
+      "faceless": {
+        "label": "Video sin rostro / B-roll",
+        "description": "Sin rostro en cámara — visuales de producto, lugar y movimiento con voz o subtítulos opcionales.",
+        "example": "Ejemplo: B-roll de tu zona de trabajo con subtítulos y una voz en off breve, sin mostrar a una persona."
+      }
+    },
+    "facelessStyle": {
+      "title": "Estilo de video sin rostro",
+      "voice": "Voz / audio",
+      "onScreenText": "Texto en pantalla",
+      "broll": "B-roll / imágenes",
+      "voiceOptions": {
+        "none": "Sin voz",
+        "ai_voiceover": "Voz en off con IA",
+        "music_only": "Solo música"
+      },
+      "onScreenTextOptions": {
+        "none": "Sin texto en pantalla",
+        "captions": "Subtítulos",
+        "headline_and_captions": "Titular y subtítulos"
+      },
+      "brollOptions": {
+        "stock": "Imágenes de stock",
+        "product_led": "Orientado al producto",
+        "mixed": "Mixto"
+      }
+    },
+    "error": {
+      "body": "No pudimos cargar tus preferencias de producción visual. Actualiza la página para intentarlo de nuevo.",
+      "ctaDashboard": "Volver al panel"
+    },
+    "errors": {
+      "validation": "Revisa tus selecciones e inténtalo de nuevo.",
+      "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+      "payloadTooLarge": "El payload de preferencias es demasiado grande. Simplifica e inténtalo de nuevo.",
+      "ownAvatarConsentRequired": "El avatar propio autorizado requiere un consentimiento de avatar activo. Esa opción permanece no disponible hasta que se otorgue el consentimiento.",
+      "internal": "Algo salió mal. Inténtalo de nuevo más tarde.",
+      "facelessStyleRequired": "Elige un estilo de video sin rostro cuando Video sin rostro / B-roll esté seleccionado."
     }
   }
 }
