@@ -10,8 +10,13 @@ import "server-only";
  * clientId: UUID from trusted server/job context only — never browser
  * body/query/headers as authority. Does NOT call requireActive / session.
  *
- * US-3.1 soft: when Preferencias row exists, visualModeSummary = { allowedModes };
- * if absent or soft-fail, keep null. Omit consent internals.
+ * US-3.4: when Preferencias row exists, visualModeSummary =
+ * { allowedModes, mustDiscloseNotOwner } derived server-side via
+ * resolveVisualPreferencesRules (allowlist-level proxy until US-4.x per-slot
+ * Modalidad). If absent or soft-fail, keep null. Omit consent internals.
+ *
+ * US-5.1 / US-10.1 MUST read mustDiscloseNotOwner from this helper only —
+ * never from request body, job client JSON, or LLM output.
  */
 
 import {
@@ -20,6 +25,7 @@ import {
 } from "@/lib/contracts/profile";
 import {
   visualModalitySchema,
+  visualPreferencesRulesSchema,
   type VisualModeSummary,
 } from "@/lib/contracts/visual-preferences";
 import {
@@ -30,6 +36,7 @@ import {
   createServerSupabaseClient,
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
+import { resolveVisualPreferencesRules } from "@/lib/visual-preferences/helpers";
 
 async function loadVisualModeSummaryForAgents(
   clientId: string,
@@ -38,7 +45,7 @@ async function loadVisualModeSummaryForAgents(
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
       .from("neuramark_visual_preferences")
-      .select("allowed_modes")
+      .select("allowed_modes, rules")
       .eq("client_id", clientId)
       .maybeSingle();
 
@@ -46,7 +53,8 @@ async function loadVisualModeSummaryForAgents(
       return null;
     }
 
-    const rawModes = (data as { allowed_modes: unknown }).allowed_modes;
+    const row = data as { allowed_modes: unknown; rules: unknown };
+    const rawModes = row.allowed_modes;
     if (!Array.isArray(rawModes)) {
       return null;
     }
@@ -64,7 +72,18 @@ async function loadVisualModeSummaryForAgents(
       return null;
     }
 
-    return { allowedModes };
+    const rulesParsed = visualPreferencesRulesSchema.safeParse(row.rules);
+    const storedRules = rulesParsed.success ? rulesParsed.data : null;
+
+    const resolved = resolveVisualPreferencesRules({
+      allowedModes,
+      storedRules,
+    });
+
+    return {
+      allowedModes,
+      mustDiscloseNotOwner: resolved.must_disclose_not_owner,
+    };
   } catch {
     return null;
   }

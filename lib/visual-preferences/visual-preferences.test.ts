@@ -29,6 +29,7 @@ import {
   isFacelessStylePayloadTooLarge,
   mapUpsertVisualPreferencesResult,
   mapVisualPreferencesRow,
+  resolveVisualPreferencesRules,
   zodPreferencesErrorToFieldErrors,
 } from "./helpers.ts";
 
@@ -174,6 +175,12 @@ describe("findForbiddenUpsertVisualPreferencesKeys", () => {
     assert.ok(
       findForbiddenUpsertVisualPreferencesKeys({
         allowedModes: ["generic_avatar"],
+        mustDiscloseNotOwner: false,
+      }).includes("mustDiscloseNotOwner"),
+    );
+    assert.ok(
+      findForbiddenUpsertVisualPreferencesKeys({
+        allowedModes: ["generic_avatar"],
         must_disclose_not_owner: false,
       }).length > 0,
     );
@@ -231,6 +238,71 @@ describe("deriveVisualPreferencesRules (server-owned)", () => {
   });
 });
 
+describe("resolveVisualPreferencesRules (read-path authority)", () => {
+  it("returns derived rules when stored rules match", () => {
+    assert.deepEqual(
+      resolveVisualPreferencesRules({
+        allowedModes: ["generic_avatar"],
+        storedRules: { must_disclose_not_owner: true },
+      }),
+      { must_disclose_not_owner: true },
+    );
+  });
+
+  it("prefers derivation on drift when generic in allowlist", () => {
+    assert.deepEqual(
+      resolveVisualPreferencesRules({
+        allowedModes: ["generic_avatar"],
+        storedRules: { must_disclose_not_owner: false },
+      }),
+      { must_disclose_not_owner: true },
+    );
+  });
+
+  it("prefers derivation on drift when generic absent from allowlist", () => {
+    assert.deepEqual(
+      resolveVisualPreferencesRules({
+        allowedModes: ["faceless"],
+        storedRules: { must_disclose_not_owner: true },
+      }),
+      { must_disclose_not_owner: false },
+    );
+  });
+
+  it("returns derived when storedRules is null", () => {
+    assert.deepEqual(
+      resolveVisualPreferencesRules({
+        allowedModes: ["generic_avatar"],
+        storedRules: null,
+      }),
+      { must_disclose_not_owner: true },
+    );
+  });
+});
+
+describe("buildVisualPreferencesUpsertPayload toggle generic", () => {
+  it("flips must_disclose_not_owner when generic toggled", () => {
+    const withGeneric = buildVisualPreferencesUpsertPayload({
+      clientId: CLIENT_ID,
+      input: {
+        allowedModes: ["generic_avatar", "faceless"],
+        facelessStyle: FACELESS_STYLE,
+        genericAvatarId: null,
+      },
+    });
+    const withoutGeneric = buildVisualPreferencesUpsertPayload({
+      clientId: CLIENT_ID,
+      input: {
+        allowedModes: ["faceless"],
+        facelessStyle: FACELESS_STYLE,
+        genericAvatarId: null,
+      },
+    });
+    assert.deepEqual(withGeneric.rules, { must_disclose_not_owner: true });
+    assert.deepEqual(withoutGeneric.rules, { must_disclose_not_owner: false });
+  });
+});
+
 describe("buildVisualPreferencesUpsertPayload", () => {
   it("uses server clientId and derived rules; never trusts body tenant", () => {
     const payload = buildVisualPreferencesUpsertPayload({
@@ -283,6 +355,23 @@ describe("mapVisualPreferencesRow / upsert result DTO", () => {
         updatedAt: "2026-08-29T21:41:00.000Z",
       });
       assert.equal(JSON.stringify(success).includes("client_id"), false);
+    }
+  });
+
+  it("resolves drifted stored rules on read (generic in allowlist)", () => {
+    const mapped = mapVisualPreferencesRow({
+      data: {
+        allowed_modes: ["generic_avatar"],
+        faceless_style: null,
+        generic_avatar_id: null,
+        rules: { must_disclose_not_owner: false },
+        updated_at: "2026-08-29T21:41:00.000Z",
+      },
+      error: null,
+    });
+    assert.equal(mapped.kind, "exists");
+    if (mapped.kind === "exists") {
+      assert.deepEqual(mapped.rules, { must_disclose_not_owner: true });
     }
   });
 

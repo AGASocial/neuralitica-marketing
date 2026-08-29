@@ -10,6 +10,7 @@ import {
   businessProfileForAgentsMissingSchema,
   businessProfileForAgentsViewSchema,
 } from "../contracts/profile";
+import { visualModeSummarySchema } from "../contracts/visual-preferences";
 import { interviewAnswersCompleteSchema } from "../contracts/interview";
 import { isPublicPath } from "../auth/public-routes";
 import { mapBusinessProfileRowForAgents } from "./map-business-profile-row.ts";
@@ -83,6 +84,8 @@ describe("getBusinessProfileForAgents module (server-only)", () => {
     assert.match(source, /Video Script/);
     assert.match(source, /Caption/);
     assert.match(source, /QA/);
+    assert.match(source, /mustDiscloseNotOwner/);
+    assert.match(source, /resolveVisualPreferencesRules/);
     assert.equal(/\brequireActive\s*\(/.test(source), false);
   });
 
@@ -222,6 +225,49 @@ describe("mapBusinessProfileRowForAgents outcomes", () => {
     });
     assert.equal(parsed.success, false);
   });
+
+  it("visualModeSummary requires mustDiscloseNotOwner (US-3.4)", () => {
+    assert.equal(
+      visualModeSummarySchema.safeParse({
+        allowedModes: ["generic_avatar"],
+      }).success,
+      false,
+    );
+    assert.equal(
+      visualModeSummarySchema.safeParse({
+        allowedModes: ["generic_avatar", "faceless"],
+        mustDiscloseNotOwner: true,
+      }).success,
+      true,
+    );
+  });
+
+  it("accepts visualModeSummary with mustDiscloseNotOwner in agent view", () => {
+    const result = mapBusinessProfileRowForAgents({
+      clientId: CLIENT_ID,
+      data: {
+        fields: COMPLETE_FIELDS,
+        version: 2,
+        updated_at: "2026-08-29T16:00:00.000Z",
+      },
+      error: null,
+      visualModeSummary: {
+        allowedModes: ["generic_avatar", "faceless"],
+        mustDiscloseNotOwner: true,
+      },
+    });
+    assert.equal(result.exists, true);
+    if (result.exists) {
+      assert.deepEqual(result.visualModeSummary, {
+        allowedModes: ["generic_avatar", "faceless"],
+        mustDiscloseNotOwner: true,
+      });
+      assert.equal(
+        businessProfileForAgentsViewSchema.safeParse(result).success,
+        true,
+      );
+    }
+  });
 });
 
 describe("getBusinessProfileForAgents soft outcomes", () => {
@@ -234,6 +280,78 @@ describe("getBusinessProfileForAgents soft outcomes", () => {
       assert.deepEqual(result, { exists: false });
       assert.equal("loadFailed" in result, false);
       assert.equal(JSON.stringify(result).includes("FORBIDDEN"), false);
+    });
+  });
+
+  it("loads mustDiscloseNotOwner from Preferencias via resolveVisualPreferencesRules", async () => {
+    await withServerOnlyStub(async () => {
+      const nodeModule = Module as unknown as NodeModuleLoad;
+      const originalLoad = nodeModule._load.bind(Module);
+
+      nodeModule._load = function (request, parent, isMain) {
+        if (request === "server-only") {
+          return {};
+        }
+        if (
+          request === "@/lib/supabase/server" ||
+          String(request).includes("lib/supabase/server")
+        ) {
+          return {
+            isSupabaseConfigured: () => true,
+            createServerSupabaseClient: () => ({
+              from(table: string) {
+                const builder: Record<string, unknown> = {};
+                const self = () => builder;
+                builder.select = self;
+                builder.eq = self;
+                builder.maybeSingle = async () => {
+                  if (table === "neuramark_business_profiles") {
+                    return {
+                      data: {
+                        fields: COMPLETE_FIELDS,
+                        version: 1,
+                        updated_at: "2026-08-29T16:00:00.000Z",
+                      },
+                      error: null,
+                    };
+                  }
+                  if (table === "neuramark_visual_preferences") {
+                    return {
+                      data: {
+                        allowed_modes: ["generic_avatar"],
+                        rules: { must_disclose_not_owner: false },
+                      },
+                      error: null,
+                    };
+                  }
+                  return { data: null, error: null };
+                };
+                return builder;
+              },
+            }),
+          };
+        }
+        return originalLoad(request, parent, isMain);
+      };
+
+      try {
+        clearAgentsModuleCache();
+        const { getBusinessProfileForAgents } = await import(
+          `./get-business-profile-for-agents.ts?agents-mock=${Date.now()}`
+        );
+        const result = await getBusinessProfileForAgents(CLIENT_ID);
+        assert.equal("loadFailed" in result && result.loadFailed, false);
+        assert.equal(result.exists, true);
+        if (result.exists) {
+          assert.deepEqual(result.visualModeSummary, {
+            allowedModes: ["generic_avatar"],
+            mustDiscloseNotOwner: true,
+          });
+        }
+      } finally {
+        nodeModule._load = originalLoad;
+        clearAgentsModuleCache();
+      }
     });
   });
 });

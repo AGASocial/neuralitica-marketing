@@ -76,6 +76,39 @@ export function deriveVisualPreferencesRules(
   };
 }
 
+/**
+ * Read-path authority for rules.must_disclose_not_owner.
+ * Prefer derivation from allowed_modes; on stored drift, use derived value
+ * and log anomaly — never fail open to false when generic ∈ allowlist.
+ */
+export function resolveVisualPreferencesRules(params: {
+  allowedModes: readonly VisualModality[];
+  storedRules: VisualPreferencesRules | null;
+}): VisualPreferencesRules {
+  const derived = deriveVisualPreferencesRules(params.allowedModes);
+
+  if (params.storedRules == null) {
+    return derived;
+  }
+
+  const parsed = visualPreferencesRulesSchema.safeParse(params.storedRules);
+  if (!parsed.success) {
+    return derived;
+  }
+
+  if (
+    parsed.data.must_disclose_not_owner !== derived.must_disclose_not_owner
+  ) {
+    console.error("[preferences] rules drift", {
+      stored: parsed.data.must_disclose_not_owner,
+      derived: derived.must_disclose_not_owner,
+    });
+    return derived;
+  }
+
+  return parsed.data;
+}
+
 export function facelessStyleUtf8ByteLength(
   facelessStyle: FacelessStyle | null | undefined,
 ): number {
@@ -198,11 +231,16 @@ export function mapVisualPreferencesRow(params: {
     return { kind: "loadFailed" };
   }
 
-  const rules = parseRules(params.data.rules);
-  if (!rules) {
+  const storedRules = parseRules(params.data.rules);
+  if (!storedRules) {
     console.error("[preferences] rules invalid", { code: "invalid_type" });
     return { kind: "loadFailed" };
   }
+
+  const rules = resolveVisualPreferencesRules({
+    allowedModes,
+    storedRules,
+  });
 
   const updatedAt = toIsoUpdatedAt(params.data.updated_at);
   if (!updatedAt) {

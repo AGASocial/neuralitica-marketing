@@ -72,15 +72,15 @@ Concrete BE consumers: Preferencias loader (existing — includes `rules`); opti
 
 Concrete FE consumers: Preferencias loader (unchanged shape + rules); disclosure text helper for preview component; agents DTO consumers (US-5.1 / US-10.1 — soft same-BUILD tests only).
 
-- [ ] **Verify enforce** `must_disclose_not_owner` on upsert path: persisted `rules` always equals `deriveVisualPreferencesRules(allowed_modes)`; add/extend tests for toggle generic on/off.
-- [ ] **Read paths:** Preferencias SELECT + mapper surface `rules.must_disclose_not_owner` consistently; reject/handle corrupt `rules` jsonb as `loadFailed` (existing pattern).
-- [ ] **Widen `getBusinessProfileForAgents`:** include `mustDiscloseNotOwner` in `visualModeSummary` when Preferencias row exists; `null` summary when no row; update Zod `.strict()` agent schema + unit tests.
-- [ ] **[SEC] Flag not client-writable:** extend tests — any upsert body with `rules`, `must_disclose_not_owner`, `mustDiscloseNotOwner` → `FORBIDDEN_FIELDS` / validation reject (US-3.1 continuity).
-- [ ] **Export QA check stub** e.g. `lib/qa/checks/generic-avatar-not-owner.ts`: deterministic evaluator + `GENERIC_AVATAR_NOT_OWNER_CHECK_KEY` + `QA_CHECK_SEVERITY.blocking` constant for US-10.1 import.
-- [ ] **Unit tests** for QA stub: pass when flag false; fail when flag true + owner-claim phrases; pass when flag true + disclosure phrase present; ES fixture strings.
-- [ ] **Optional:** `getGenericAvatarDisclosurePreviewText(locale)` server helper returning i18n key or string for FE preview — CONTRACT freezes.
-- [ ] Document US-10.1 / US-5.1 integration point in module header (MUST-import comment pattern from US-2.3).
-- [ ] Do **not** invoke LLM; do **not** write `neuramark_qa_reports`; do **not** build approval package API.
+- [x] **Verify enforce** `must_disclose_not_owner` on upsert path: persisted `rules` always equals `deriveVisualPreferencesRules(allowed_modes)`; add/extend tests for toggle generic on/off.
+- [x] **Read paths:** Preferencias SELECT + mapper surface `rules.must_disclose_not_owner` consistently; reject/handle corrupt `rules` jsonb as `loadFailed` (existing pattern).
+- [x] **Widen `getBusinessProfileForAgents`:** include `mustDiscloseNotOwner` in `visualModeSummary` when Preferencias row exists; `null` summary when no row; update Zod `.strict()` agent schema + unit tests.
+- [x] **[SEC] Flag not client-writable:** extend tests — any upsert body with `rules`, `must_disclose_not_owner`, `mustDiscloseNotOwner` → `FORBIDDEN_FIELDS` / validation reject (US-3.1 continuity).
+- [x] **Export QA check stub** e.g. `lib/qa/checks/generic-avatar-not-owner.ts`: deterministic evaluator + `GENERIC_AVATAR_NOT_OWNER_CHECK_KEY` + `QA_CHECK_SEVERITY.blocking` constant for US-10.1 import.
+- [x] **Unit tests** for QA stub: pass when flag false; fail when flag true + owner-claim phrases; pass when flag true + disclosure phrase present; ES fixture strings.
+- [x] **Optional:** `buildGenericDisclosurePromptHint(locale)` server helper returning i18n key or string for FE preview — CONTRACT freezes.
+- [x] Document US-10.1 / US-5.1 integration point in module header (MUST-import comment pattern from US-2.3).
+- [x] Do **not** invoke LLM; do **not** write `neuramark_qa_reports`; do **not** build approval package API.
 
 **AC mapping (for validator later):** Generic mode sets flag (persist + DTO); QA stub fails owner-claim scripts when flag true; `[SEC]` server-side only; `[SEC]` blocking class stub for US-10.1.
 

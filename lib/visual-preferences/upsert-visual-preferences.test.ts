@@ -239,6 +239,35 @@ describe("upsertVisualPreferences action (isolated)", () => {
     }
   });
 
+  it("rejects mustDiscloseNotOwner before write (FORBIDDEN_FIELDS)", async () => {
+    let fromCalled = false;
+    const restore = installUpsertMocks({
+      from: () => {
+        fromCalled = true;
+        throw new Error("must not write");
+      },
+    });
+
+    try {
+      clearUpsertModuleCache();
+      const { upsertVisualPreferences } = await import(
+        `./upsert-visual-preferences.ts?test=5-${Date.now()}`
+      );
+      const result = await upsertVisualPreferences({
+        allowedModes: ["generic_avatar"],
+        facelessStyle: null,
+        mustDiscloseNotOwner: false,
+      } as never);
+      assert.equal(result.ok, false);
+      if (!result.ok) {
+        assert.equal(result.error.code, "FORBIDDEN_FIELDS");
+      }
+      assert.equal(fromCalled, false);
+    } finally {
+      restore();
+    }
+  });
+
   it("returns UNAUTHENTICATED when requireActive throws 401", async () => {
     class FakeAuthGuardError extends Error {
       status = 401 as const;

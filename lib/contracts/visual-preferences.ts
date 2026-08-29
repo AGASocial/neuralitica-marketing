@@ -187,10 +187,11 @@ export type UpsertVisualPreferencesResult = z.infer<
   typeof upsertVisualPreferencesResultSchema
 >;
 
-/** Soft agent summary shape (US-2.3 widen) — allowlist only; omit consent. */
+/** Soft agent summary shape (US-2.3 / US-3.4) — allowlist + disclosure flag; omit consent. */
 export const visualModeSummarySchema = z
   .object({
     allowedModes: z.array(visualModalitySchema).max(3),
+    mustDiscloseNotOwner: z.boolean(),
   })
   .strict();
 
