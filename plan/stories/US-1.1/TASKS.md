@@ -108,11 +108,11 @@ All objects `neuramark_` prefix (table, enum, indexes, trigger, policies if any)
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md
-- [ ] SECURITY.md
-- [ ] CONTRACT.md + FE signoff
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] SPEC-REVIEW.md
+- [x] SECURITY.md
+- [x] CONTRACT.md + FE signoff
+- [x] VALIDATION.md
+- [x] QA.md
 
 ## Open questions (do not block PREP; freeze in SPEC-REVIEW / SECURITY / CONTRACT)
 

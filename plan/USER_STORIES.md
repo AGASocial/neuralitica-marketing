@@ -272,14 +272,14 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | `interview_sessions` (client_id, status, current_step, answers JSON, created_at, updated_at) |
 
 **Acceptance criteria**
-- [ ] Client can complete all interview sections in one sitting or save and resume (US-1.2)
-- [ ] Answers are stored as structured JSON, not free-form blobs only
-- [ ] Invalid or incomplete required fields block advance with clear messages
-- [ ] Copy exists in English and Spanish
-- [ ] [SEC] All interview answers are re-validated server-side against a typed schema (Zod); client-side validation is presentation only
-- [ ] [SEC] Interview sessions are created and loaded only for the client resolved via server-side `getCurrentUser()`; no `client_id` accepted from the request body or query string
-- [ ] [SEC] Total `answers` JSON payload rejected above a configured size limit (e.g. 64 KB) with a 413/400, preventing storage abuse
-- [ ] [SEC] Free-text answers are stored as data and always rendered escaped; they are never interpolated into HTML, SQL, or shell commands
+- [x] Client can complete all interview sections in one sitting or save and resume (US-1.2) — 1.1 persists drafts so the wizard can finish in one sitting and survive refresh; dedicated dashboard resume is US-1.2 (out of scope here; validator did not fail this)
+- [x] Answers are stored as structured JSON, not free-form blobs only
+- [x] Invalid or incomplete required fields block advance with clear messages
+- [x] Copy exists in English and Spanish
+- [x] [SEC] All interview answers are re-validated server-side against a typed schema (Zod); client-side validation is presentation only
+- [x] [SEC] Interview sessions are created and loaded only for the client resolved via server-side `getCurrentUser()`; no `client_id` accepted from the request body or query string
+- [x] [SEC] Total `answers` JSON payload rejected above a configured size limit (e.g. 64 KB) with a 413/400, preventing storage abuse
+- [x] [SEC] Free-text answers are stored as data and always rendered escaped; they are never interpolated into HTML, SQL, or shell commands
 
 **Depends on:** none  
 **Output:** structured interview answers
@@ -1202,7 +1202,7 @@ Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, (+ high-tier B-roll a
 
 Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.
 
-Sprint 1 Interview Builder: **US-1.1** is in PREP (`plan/stories/US-1.1/`). Acceptance criteria stay unchecked until requirements-validator.
+Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). Dedicated dashboard resume remains US-1.2.
 
 ---
 
