@@ -2,8 +2,11 @@ import { PreferencesView } from "@/components/preferences/PreferencesView";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import type { AvatarConsentForClientResult } from "@/lib/contracts/avatar-consent";
 import { AVATAR_CONSENT_DISCLOSURE_V1 } from "@/lib/contracts/avatar-consent";
+import type { AvatarReferenceAssetsPageResult } from "@/lib/contracts/media-assets";
+import { AVATAR_REFERENCE_MAX_ASSETS } from "@/lib/contracts/media-assets";
 import type { VisualPreferencesForClientResult } from "@/lib/contracts/visual-preferences";
 import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getAvatarReferenceAssetsForClient } from "@/lib/media/get-avatar-reference-assets-for-client";
 import { getAvatarConsentForClient } from "@/lib/visual-preferences/get-avatar-consent-for-client";
 import { getVisualPreferencesForClient } from "@/lib/visual-preferences/get-visual-preferences-for-client";
 
@@ -21,10 +24,10 @@ function isNextNavigationError(error: unknown): boolean {
 }
 
 /**
- * Preferencias de producción visual (US-3.1).
+ * Preferencias de producción visual (US-3.1 / US-3.2 / US-3.3).
  * Auth via `(app)` layout `requireActive("page")`. Cache: no-store in next.config.
- * Identity: getVisualPreferencesForClient() arity 0 only — no client/prefs id params.
- * Mutation: upsertVisualPreferences(body) Server Action (no tenant args).
+ * Identity: arity-0 loaders only — no client/prefs/asset id params.
+ * Mutations: upsertVisualPreferences · grant/revoke consent · upload/delete references.
  * Not on `/profile` edit chrome.
  */
 export default async function PreferencesPage() {
@@ -45,11 +48,21 @@ export default async function PreferencesPage() {
     reason: "load_failed",
   };
 
+  let references: AvatarReferenceAssetsPageResult = {
+    assets: [],
+    maxAssets: AVATAR_REFERENCE_MAX_ASSETS,
+    canUpload: false,
+    ownAvatarConsentActive: false,
+    loadFailed: true,
+  };
+
   try {
-    [result, consent] = await Promise.all([
+    const [prefsResult, consentResult] = await Promise.all([
       getVisualPreferencesForClient(),
       getAvatarConsentForClient(),
     ]);
+    result = prefsResult;
+    consent = consentResult;
   } catch (error) {
     if (isNextNavigationError(error)) {
       throw error;
@@ -57,10 +70,26 @@ export default async function PreferencesPage() {
     result = { exists: false, loadFailed: true };
   }
 
+  try {
+    references = await getAvatarReferenceAssetsForClient();
+  } catch (error) {
+    if (isNextNavigationError(error)) {
+      throw error;
+    }
+    references = {
+      assets: [],
+      maxAssets: AVATAR_REFERENCE_MAX_ASSETS,
+      canUpload: false,
+      ownAvatarConsentActive: consent.active,
+      loadFailed: true,
+    };
+  }
+
   return (
     <PreferencesView
       result={result}
       consent={consent}
+      references={references}
       locale={locale}
       copy={{
         title: t.preferences.title,
@@ -84,6 +113,7 @@ export default async function PreferencesPage() {
         error: t.preferences.error,
       }}
       consentCopy={t.preferences.consent}
+      referencesCopy={t.preferences.references}
     />
   );
 }

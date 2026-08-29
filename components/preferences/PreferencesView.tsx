@@ -6,11 +6,13 @@ import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 
 import type { AvatarConsentCopy } from "@/components/preferences/AvatarConsentSection";
+import type { AvatarReferencesCopy } from "@/components/preferences/AvatarReferencesSection";
 import {
   PreferencesEditor,
   type PreferencesFormInitial,
 } from "@/components/preferences/PreferencesEditor";
 import type { AvatarConsentForClientResult } from "@/lib/contracts/avatar-consent";
+import type { AvatarReferenceAssetsPageResult } from "@/lib/contracts/media-assets";
 import type {
   FacelessStyle,
   VisualModality,
@@ -64,21 +66,25 @@ type PreferencesCopy = {
 type PreferencesViewProps = {
   result: VisualPreferencesForClientResult;
   consent: AvatarConsentForClientResult;
+  references: AvatarReferenceAssetsPageResult;
   locale: string;
   copy: PreferencesCopy;
   consentCopy: AvatarConsentCopy;
+  referencesCopy: AvatarReferencesCopy;
 };
 
 /**
- * Preferencias settings view (US-3.1).
+ * Preferencias settings view (US-3.1 / US-3.3).
  * Load-failed → error + dashboard CTA. Missing/exists → editor with empty defaults.
  */
 export function PreferencesView({
   result,
   consent,
+  references,
   locale,
   copy,
   consentCopy,
+  referencesCopy,
 }: PreferencesViewProps) {
   if (result.exists === false && "loadFailed" in result && result.loadFailed) {
     return (
@@ -116,10 +122,12 @@ export function PreferencesView({
     <PreferencesEditor
       initial={initial}
       consent={consent}
+      references={references}
       locale={locale}
       title={copy.title}
       subtitle={copy.subtitle}
       consentCopy={consentCopy}
+      referencesCopy={referencesCopy}
       copy={{
         updatedAt: copy.updatedAt,
         save: copy.save,

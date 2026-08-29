@@ -398,6 +398,49 @@
         "forbidden": "No tienes permiso para gestionar el consentimiento de avatar.",
         "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
       }
+    },
+    "references": {
+      "title": "Referencias",
+      "subtitle": "Sube fotos de retrato o clips cortos para la producción con avatar propio autorizado. Solo selector de archivos — nunca te pedimos grabar.",
+      "hints": "Formatos permitidos: JPEG, PNG, WebP (hasta {imageMax} MiB) y MP4 o MOV (hasta {videoMax} MiB). Máximo {maxAssets} referencias.",
+      "empty": "Aún no hay referencias. Sube al menos una foto o clip corto antes de poder producir con avatar propio.",
+      "consentRequired": "Otorga el consentimiento de avatar arriba antes de subir referencias. Las referencias existentes siguen disponibles para ver o eliminar.",
+      "limitReached": "Alcanzaste el número máximo de referencias. Elimina una para subir otra.",
+      "upload": "Subir referencia",
+      "uploading": "Subiendo…",
+      "delete": "Eliminar referencia",
+      "deleting": "Eliminando…",
+      "previewAlt": "Vista previa de {filename}",
+      "typeImage": "Foto",
+      "typeVideo": "Clip",
+      "sizeLabel": "Tamaño: {size}",
+      "dateLabel": "Añadida el {date}",
+      "filenameLabel": "{filename}",
+      "countLabel": "{count} de {max} referencias",
+      "toastUploadSuccess": "Referencia subida.",
+      "toastDeleteSuccess": "Referencia eliminada.",
+      "loadFailed": "No pudimos cargar tus referencias. Actualiza la página para intentarlo de nuevo.",
+      "confirmDelete": {
+        "header": "¿Eliminar esta referencia?",
+        "message": "¿Quitar “{filename}” de tu cuenta? Esta acción no se puede deshacer.",
+        "accept": "Eliminar",
+        "reject": "Mantener"
+      },
+      "errors": {
+        "validation": "Revisa el archivo e inténtalo de nuevo.",
+        "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+        "missingFile": "Elige una foto o clip corto para subir.",
+        "invalidFileType": "Ese tipo de archivo no está permitido. Usa JPEG, PNG, WebP, MP4 o MOV.",
+        "fileTooLarge": "Ese archivo es demasiado grande. Usa una foto más pequeña (hasta 10 MiB) o un clip (hasta 50 MiB).",
+        "videoTooLong": "Ese clip es demasiado largo. Usa un clip de 30 segundos o menos.",
+        "assetLimitReached": "Ya tienes el número máximo de referencias. Elimina una para subir otra.",
+        "ownAvatarConsentRequired": "Otorga el consentimiento de avatar antes de subir referencias.",
+        "notFound": "No se encontró esa referencia. Actualiza e inténtalo de nuevo.",
+        "referencedByJob": "Esta referencia está en uso por un trabajo de producción y aún no se puede eliminar.",
+        "unauthenticated": "Inicia sesión para gestionar referencias.",
+        "forbidden": "No tienes permiso para gestionar referencias.",
+        "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
+      }
     }
   }
 }

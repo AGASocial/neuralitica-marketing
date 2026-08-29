@@ -11,7 +11,12 @@ import {
   AvatarConsentSection,
   type AvatarConsentCopy,
 } from "@/components/preferences/AvatarConsentSection";
+import {
+  AvatarReferencesSection,
+  type AvatarReferencesCopy,
+} from "@/components/preferences/AvatarReferencesSection";
 import type { AvatarConsentForClientResult } from "@/lib/contracts/avatar-consent";
+import type { AvatarReferenceAssetsPageResult } from "@/lib/contracts/media-assets";
 import {
   FACELESS_STYLE_DEFAULT,
   type FacelessStyle,
@@ -85,11 +90,13 @@ type FormSnapshot = {
 type PreferencesEditorProps = {
   initial: PreferencesFormInitial;
   consent: AvatarConsentForClientResult;
+  references: AvatarReferenceAssetsPageResult;
   locale: string;
   title: string;
   subtitle: string;
   copy: PreferencesEditorCopy;
   consentCopy: AvatarConsentCopy;
+  referencesCopy: AvatarReferencesCopy;
 };
 
 function cloneModes(modes: VisualModality[]): VisualModality[] {
@@ -131,11 +138,13 @@ function sortModes(modes: VisualModality[]): VisualModality[] {
 export function PreferencesEditor({
   initial,
   consent,
+  references,
   locale,
   title,
   subtitle,
   copy,
   consentCopy,
+  referencesCopy,
 }: PreferencesEditorProps) {
   const toastRef = useRef<Toast>(null);
   const [server, setServer] = useState(() => snapshotFromInitial(initial));
@@ -345,6 +354,13 @@ export function PreferencesEditor({
         locale={locale}
         copy={consentCopy}
         allowlistHasOwnAvatar={allowlistHasOwnAvatar}
+        preferencesPending={pending}
+      />
+
+      <AvatarReferencesSection
+        initial={references}
+        locale={locale}
+        copy={referencesCopy}
         preferencesPending={pending}
       />
 

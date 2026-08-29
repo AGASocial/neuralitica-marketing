@@ -398,6 +398,49 @@
         "forbidden": "You do not have permission to manage avatar consent.",
         "internal": "Something went wrong. Please try again later."
       }
+    },
+    "references": {
+      "title": "Reference assets",
+      "subtitle": "Upload portrait photos or short clips used for authorized own-avatar production. File picker only — we never ask you to record.",
+      "hints": "Allowed formats: JPEG, PNG, WebP (up to {imageMax} MiB) and MP4 or MOV (up to {videoMax} MiB). Maximum {maxAssets} references.",
+      "empty": "No references yet. Upload at least one photo or short clip before own-avatar production can run.",
+      "consentRequired": "Grant avatar consent above before uploading references. Existing references stay available to view or delete.",
+      "limitReached": "You have reached the maximum number of references. Delete one to upload another.",
+      "upload": "Upload reference",
+      "uploading": "Uploading…",
+      "delete": "Delete reference",
+      "deleting": "Deleting…",
+      "previewAlt": "Preview of {filename}",
+      "typeImage": "Photo",
+      "typeVideo": "Clip",
+      "sizeLabel": "Size: {size}",
+      "dateLabel": "Added {date}",
+      "filenameLabel": "{filename}",
+      "countLabel": "{count} of {max} references",
+      "toastUploadSuccess": "Reference uploaded.",
+      "toastDeleteSuccess": "Reference deleted.",
+      "loadFailed": "We could not load your references. Refresh the page to try again.",
+      "confirmDelete": {
+        "header": "Delete this reference?",
+        "message": "Remove “{filename}” from your account? This cannot be undone.",
+        "accept": "Delete",
+        "reject": "Keep"
+      },
+      "errors": {
+        "validation": "Please check the file and try again.",
+        "forbiddenFields": "Something went wrong. Please try again.",
+        "missingFile": "Choose a photo or short clip to upload.",
+        "invalidFileType": "That file type is not allowed. Use JPEG, PNG, WebP, MP4, or MOV.",
+        "fileTooLarge": "That file is too large. Use a smaller photo (up to 10 MiB) or clip (up to 50 MiB).",
+        "videoTooLong": "That clip is too long. Use a clip of 30 seconds or less.",
+        "assetLimitReached": "You already have the maximum number of references. Delete one to upload another.",
+        "ownAvatarConsentRequired": "Grant avatar consent before uploading references.",
+        "notFound": "That reference was not found. Refresh and try again.",
+        "referencedByJob": "This reference is used by a production job and cannot be deleted yet.",
+        "unauthenticated": "Sign in to manage references.",
+        "forbidden": "You do not have permission to manage references.",
+        "internal": "Something went wrong. Please try again later."
+      }
     }
   }
 }
