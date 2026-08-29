@@ -11,14 +11,8 @@ import "server-only";
  * Active formatos only; ejemplo_referencia stripped.
  */
 
-import {
-  playbookPayloadCoreSchema,
-  type PlaybookForAgentsResult,
-} from "@/lib/contracts/playbook";
-import {
-  mapPlaybookPayloadToAgentDto,
-  type PlaybookSelectRow,
-} from "@/lib/playbook/map-playbook-row";
+import type { PlaybookForAgentsResult } from "@/lib/contracts/playbook";
+import { mapPlaybookRowsForAgents } from "@/lib/playbook/map-playbook-rows-for-agents";
 import {
   createServerSupabaseClient,
   isSupabaseConfigured,
@@ -38,31 +32,8 @@ export async function getPlaybookForAgents(): Promise<PlaybookForAgentsResult> {
     .is("archived_at", null)
     .order("slug", { ascending: true });
 
-  if (error) {
-    console.error("[playbook] agents load failed", { code: error.code });
-    return { formats: [], loadFailed: true };
-  }
-
-  const formats = [];
-  for (const row of (data ?? []) as Pick<PlaybookSelectRow, "slug" | "payload">[]) {
-    const payloadParsed = playbookPayloadCoreSchema.safeParse(row.payload);
-    if (!payloadParsed.success) {
-      console.error("[playbook] agents row skipped", { slug: row.slug });
-      continue;
-    }
-
-    const dto = mapPlaybookPayloadToAgentDto(row.slug, payloadParsed.data);
-    if (!dto) {
-      console.error("[playbook] agents dto invalid", { slug: row.slug });
-      continue;
-    }
-
-    formats.push(dto);
-  }
-
-  if (formats.length === 0 && (data?.length ?? 0) > 0) {
-    return { formats: [], loadFailed: true };
-  }
-
-  return { formats };
+  return mapPlaybookRowsForAgents({
+    rows: data,
+    error,
+  });
 }

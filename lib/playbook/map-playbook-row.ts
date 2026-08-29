@@ -136,7 +136,6 @@ export const FORBIDDEN_PLAYBOOK_CREATE_KEYS = [
   "role",
   "auth_user_id",
   "authUserId",
-  "expectedVersion",
 ] as const;
 
 export const FORBIDDEN_PLAYBOOK_UPDATE_KEYS = [
