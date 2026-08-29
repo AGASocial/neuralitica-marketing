@@ -1,5 +1,7 @@
 # US-1.2 — Save and resume interview
 
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (5/5 AC; FE `37f1f81`, BE `9abfb90`).
+
 Cliente pauses the **Entrevista inicial** and continues later: explicit **Save & continue later**, dashboard **incomplete interview** prompt (with last progress / resume cursor), draft continuity across refresh and new browser sessions, and **completed** sessions treated as read-only (server-enforced) unless an Operator reopens.
 
 **Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-1.2 (do not redefine; do **not** mark done in PREP)

@@ -296,11 +296,11 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | `interview_sessions.status` enum: `draft` \| `completed` |
 
 **Acceptance criteria**
-- [ ] Returning client sees incomplete interview prompt on dashboard
-- [ ] Draft survives page refresh and new browser session
-- [ ] Completed interviews are read-only unless operator reopens
-- [ ] [SEC] Read-only enforcement for `completed` sessions happens server-side: mutation endpoints/Server Actions reject writes to completed sessions regardless of what the UI allows
-- [ ] [SEC] Resume loads the draft by the server-resolved current user only; a session ID supplied by the client is validated to belong to that user (IDOR guard for future multi-tenancy)
+- [x] Returning client sees incomplete interview prompt on dashboard
+- [x] Draft survives page refresh and new browser session
+- [x] Completed interviews are read-only unless operator reopens
+- [x] [SEC] Read-only enforcement for `completed` sessions happens server-side: mutation endpoints/Server Actions reject writes to completed sessions regardless of what the UI allows
+- [x] [SEC] Resume loads the draft by the server-resolved current user only; a session ID supplied by the client is validated to belong to that user (IDOR guard for future multi-tenancy)
 
 **Depends on:** US-1.1
 
@@ -1202,7 +1202,7 @@ Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, (+ high-tier B-roll a
 
 Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.
 
-Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). Dedicated dashboard resume remains US-1.2.
+Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. Next in Sprint 1 list is US-1.3 (blocked on circular US-2.1 dep — resolve before SELECT).
 
 ---
 
