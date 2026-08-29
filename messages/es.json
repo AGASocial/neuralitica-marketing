@@ -48,7 +48,8 @@
     "confirmReject": "Cancelar",
     "nav": {
       "dashboard": "Panel",
-      "playbook": "Playbook de formatos"
+      "playbook": "Playbook de formatos",
+      "trends": "Snapshots de tendencias"
     }
   },
   "auth": {
@@ -589,6 +590,129 @@
         "generic_avatar": "Avatar genérico",
         "faceless": "Video sin rostro / B-roll"
       }
+    }
+  },
+  "trend": {
+    "loading": {
+      "list": "Cargando snapshots de tendencias…",
+      "week": "Cargando snapshot semanal…",
+      "form": "Cargando táctica…"
+    },
+    "list": {
+      "title": "Snapshots de tendencias",
+      "subtitle": "Curar tácticas de tendencia semanales para estrategia de contenido y guiones.",
+      "publish": "Publicar semana",
+      "publishDialogTitle": "Publicar una semana nueva",
+      "publishDialogHint": "Elige cualquier fecha de la semana que quieras publicar. La normalizamos al lunes ISO de esa semana.",
+      "publishDialogWeekLabel": "Semana",
+      "publishDialogSubmit": "Publicar",
+      "publishDialogCancel": "Cancelar",
+      "publishing": "Publicando…",
+      "empty": "Aún no hay snapshots de tendencias. Publica la primera semana para empezar a curar tácticas.",
+      "loadError": "No pudimos cargar los snapshots de tendencias. Actualiza la página para intentarlo de nuevo.",
+      "backDashboard": "Volver al panel",
+      "toastPublishSuccess": "Semana publicada.",
+      "manage": "Gestionar",
+      "columns": {
+        "weekStart": "Semana",
+        "entryCount": "Tácticas",
+        "activeEntryCount": "Activas",
+        "publishedAt": "Publicado",
+        "updatedAt": "Actualizado",
+        "actions": "Acciones"
+      }
+    },
+    "week": {
+      "title": "Snapshot semanal",
+      "subtitle": "Añade y edita tácticas para esta semana ISO.",
+      "addEntry": "Añadir táctica",
+      "backList": "Volver a semanas",
+      "empty": "Aún no hay tácticas en esta semana. Añade la primera táctica para poblar el snapshot.",
+      "publishedLabel": "Publicado",
+      "updatedLabel": "Actualizado",
+      "edit": "Editar",
+      "columns": {
+        "prioridad": "Prioridad",
+        "titulo": "Título",
+        "slug": "Slug",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "status": {
+        "active": "Activa",
+        "inactive": "Inactiva"
+      }
+    },
+    "form": {
+      "createTitle": "Nueva táctica de tendencia",
+      "editTitle": "Editar táctica de tendencia",
+      "subtitle": "Define hooks, estructura e indicaciones que los agentes usan al vincular tendencias semanales a slots de Reel.",
+      "save": "Guardar cambios",
+      "create": "Añadir táctica",
+      "cancel": "Volver a la semana",
+      "saving": "Guardando…",
+      "deactivating": "Desactivando…",
+      "deactivate": "Desactivar táctica",
+      "backWeek": "Volver a la semana",
+      "toastCreateSuccess": "Táctica añadida.",
+      "toastSaveSuccess": "Táctica guardada.",
+      "toastDeactivateSuccess": "Táctica desactivada.",
+      "inactiveBanner": "Esta táctica está inactiva. Es solo lectura y queda excluida de la planificación de agentes.",
+      "fields": {
+        "slug": "Slug",
+        "slugHint": "Identificador en kebab-case minúsculas. No se puede cambiar después de crear.",
+        "titulo": "Título",
+        "prioridadSemana": "Prioridad de semana (1–5)",
+        "explicacion": "Explicación",
+        "evitar": "Incluir anti-patrones (evitar)",
+        "evitarHint": "Patrones u ángulos opcionales a evitar para esta táctica.",
+        "estructura": "Beats de estructura",
+        "estructuraHint": "Beats ordenados del flujo del Reel (p. ej. Cold open, Contexto, CTA).",
+        "hookType": "Tipo de hook",
+        "duracionColdOpen": "Duración del cold open (segundos)",
+        "duracionTotal": "Duración total (segundos)",
+        "modalidades": "Modalidades de producción recomendadas",
+        "modalidadesHint": "Déjalo vacío para permitir cualquier modalidad al asignar.",
+        "rubros": "Rubros",
+        "rubrosHint": "Déjalo vacío para aplicar a todos los rubros.",
+        "formatosPlaybook": "Formatos de Playbook compatibles",
+        "formatosPlaybookHint": "Selecciona al menos un formato activo del catálogo.",
+        "guionHints": "Indicaciones de guion",
+        "guionHintsHint": "Orientación para el agente de guion cuando se elige esta táctica.",
+        "editingHints": "Incluir indicaciones de edición",
+        "editingHintsHint": "Técnicas opcionales para el montaje.",
+        "ejemploReferencia": "Ejemplo de referencia (solo Operator)",
+        "ejemploReferenciaHint": "Enlace o nota interna de referencia. Nunca se muestra a clientes ni agentes."
+      },
+      "list": {
+        "addItem": "Añadir ítem",
+        "removeItem": "Quitar ítem",
+        "beatPlaceholder": "Etiqueta del beat",
+        "hintPlaceholder": "Indicación de guion",
+        "editingHintPlaceholder": "Indicación de edición"
+      },
+      "confirmDeactivate": {
+        "header": "¿Desactivar esta táctica?",
+        "message": "Las tácticas inactivas siguen visibles aquí pero quedan excluidas de la planificación de agentes. En V1 no se puede deshacer.",
+        "accept": "Desactivar",
+        "reject": "Cancelar"
+      },
+      "errors": {
+        "slugRequired": "Introduce un slug.",
+        "slugFormat": "El slug debe ser kebab-case en minúsculas (letras, números, guiones).",
+        "formatosRequired": "Selecciona al menos un formato de Playbook compatible."
+      }
+    },
+    "errors": {
+      "validation": "Revisa los campos resaltados e inténtalo de nuevo.",
+      "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+      "notFound": "No se encontró esa táctica.",
+      "weekNotFound": "No se encontró el snapshot de esa semana.",
+      "duplicateSlug": "Ese slug ya se usa en esta semana.",
+      "weekStartMismatch": "La semana de esta táctica no coincide con el snapshot.",
+      "invalidPlaybookSlug": "Uno o más slugs de formato de Playbook no son válidos o están archivados.",
+      "notMonday": "El inicio de semana debe ser un lunes ISO.",
+      "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
     }
   }
 }

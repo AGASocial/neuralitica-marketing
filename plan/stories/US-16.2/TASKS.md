@@ -61,15 +61,15 @@
 
 Concrete BE consumers: Operator Server Actions for publish/update snapshot and entry CRUD within week; RSC loader for Trend week list/detail.
 
-- [ ] **Operator Trend hub** page (CONTRACT path): week picker or list of published `week_start` values; link to edit snapshot for selected week.
-- [ ] **Week snapshot editor**: list entries with `prioridad_semana`, `activo`, `titulo`, `slug`; add/edit/deactivate táctica forms.
-- [ ] **Táctica form** for all SPEC fields (beats editor for `estructura`, arrays for hints, `duracion_ideal_seg` object fields, `formatos_playbook_compatibles[]` multi-select from active Playbook slugs).
-- [ ] **Deactivate action** with confirm; inactive entries visually distinct; agent consumption excludes them.
-- [ ] **Slug read-only** on edit (immutable after create within snapshot).
-- [ ] **Loading / empty / error / success** states on list and forms (including empty week with publish CTA).
-- [ ] **EN + ES strings** in `messages/en.json` / `es.json` for Operator chrome.
-- [ ] **No Supabase in Client Components**; no bypass of Operator gate in client routing.
-- [ ] Do **not** build Strategy brief UI (US-4.1) or scraping admin.
+- [x] **Operator Trend hub** page (CONTRACT path): week picker or list of published `week_start` values; link to edit snapshot for selected week.
+- [x] **Week snapshot editor**: list entries with `prioridad_semana`, `activo`, `titulo`, `slug`; add/edit/deactivate táctica forms.
+- [x] **Táctica form** for all SPEC fields (beats editor for `estructura`, arrays for hints, `duracion_ideal_seg` object fields, `formatos_playbook_compatibles[]` multi-select from active Playbook slugs).
+- [x] **Deactivate action** with confirm; inactive entries visually distinct; agent consumption excludes them.
+- [x] **Slug read-only** on edit (immutable after create within snapshot).
+- [x] **Loading / empty / error / success** states on list and forms (including empty week with publish CTA).
+- [x] **EN + ES strings** in `messages/en.json` / `es.json` for Operator chrome.
+- [x] **No Supabase in Client Components**; no bypass of Operator gate in client routing.
+- [x] Do **not** build Strategy brief UI (US-4.1) or scraping admin.
 
 ---
 

@@ -38,12 +38,20 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
             {t.header.nav.dashboard}
           </Link>
           {user.role === "operator" ? (
-            <Link
-              href="/operator/playbook"
-              style={{ color: "#374151", textDecoration: "none" }}
-            >
-              {t.header.nav.playbook}
-            </Link>
+            <>
+              <Link
+                href="/operator/playbook"
+                style={{ color: "#374151", textDecoration: "none" }}
+              >
+                {t.header.nav.playbook}
+              </Link>
+              <Link
+                href="/operator/trends"
+                style={{ color: "#374151", textDecoration: "none" }}
+              >
+                {t.header.nav.trends}
+              </Link>
+            </>
           ) : null}
         </nav>
       </div>

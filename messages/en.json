@@ -48,7 +48,8 @@
     "confirmReject": "Cancel",
     "nav": {
       "dashboard": "Dashboard",
-      "playbook": "Format catalog"
+      "playbook": "Format catalog",
+      "trends": "Trend snapshots"
     }
   },
   "auth": {
@@ -589,6 +590,129 @@
         "generic_avatar": "Generic avatar",
         "faceless": "Faceless video / B-roll"
       }
+    }
+  },
+  "trend": {
+    "loading": {
+      "list": "Loading trend snapshots…",
+      "week": "Loading week snapshot…",
+      "form": "Loading táctica…"
+    },
+    "list": {
+      "title": "Trend snapshots",
+      "subtitle": "Curate weekly tácticas de tendencia for content strategy and scripting.",
+      "publish": "Publish week",
+      "publishDialogTitle": "Publish a new week",
+      "publishDialogHint": "Pick any date in the week you want to publish. We normalize it to the ISO Monday for that week.",
+      "publishDialogWeekLabel": "Week",
+      "publishDialogSubmit": "Publish",
+      "publishDialogCancel": "Cancel",
+      "publishing": "Publishing…",
+      "empty": "No trend snapshots yet. Publish the first week to start curating tácticas.",
+      "loadError": "We could not load trend snapshots. Refresh the page to try again.",
+      "backDashboard": "Back to dashboard",
+      "toastPublishSuccess": "Week published.",
+      "manage": "Manage",
+      "columns": {
+        "weekStart": "Week",
+        "entryCount": "Tácticas",
+        "activeEntryCount": "Active",
+        "publishedAt": "Published",
+        "updatedAt": "Updated",
+        "actions": "Actions"
+      }
+    },
+    "week": {
+      "title": "Week snapshot",
+      "subtitle": "Add and edit tácticas for this ISO week.",
+      "addEntry": "Add táctica",
+      "backList": "Back to weeks",
+      "empty": "No tácticas in this week yet. Add the first táctica to populate the snapshot.",
+      "publishedLabel": "Published",
+      "updatedLabel": "Updated",
+      "edit": "Edit",
+      "columns": {
+        "prioridad": "Priority",
+        "titulo": "Title",
+        "slug": "Slug",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      }
+    },
+    "form": {
+      "createTitle": "New táctica de tendencia",
+      "editTitle": "Edit táctica de tendencia",
+      "subtitle": "Define hooks, structure, and hints agents use when attaching weekly trends to Reel slots.",
+      "save": "Save changes",
+      "create": "Add táctica",
+      "cancel": "Back to week",
+      "saving": "Saving…",
+      "deactivating": "Deactivating…",
+      "deactivate": "Deactivate táctica",
+      "backWeek": "Back to week",
+      "toastCreateSuccess": "Táctica added.",
+      "toastSaveSuccess": "Táctica saved.",
+      "toastDeactivateSuccess": "Táctica deactivated.",
+      "inactiveBanner": "This táctica is inactive. It is read-only and excluded from agent planning.",
+      "fields": {
+        "slug": "Slug",
+        "slugHint": "Lowercase kebab-case identifier. Cannot be changed after creation.",
+        "titulo": "Title",
+        "prioridadSemana": "Week priority (1–5)",
+        "explicacion": "Explanation",
+        "evitar": "Include anti-patterns (evitar)",
+        "evitarHint": "Optional patterns or angles to avoid for this táctica.",
+        "estructura": "Structure beats",
+        "estructuraHint": "Ordered beats for the Reel flow (e.g. Cold open, Context, CTA).",
+        "hookType": "Hook type",
+        "duracionColdOpen": "Cold open duration (seconds)",
+        "duracionTotal": "Total duration (seconds)",
+        "modalidades": "Recommended production modalities",
+        "modalidadesHint": "Leave empty to allow any modality at assignment time.",
+        "rubros": "Industries (rubros)",
+        "rubrosHint": "Leave empty to apply to all industries.",
+        "formatosPlaybook": "Compatible Playbook formats",
+        "formatosPlaybookHint": "Select at least one active format from the catalog.",
+        "guionHints": "Script hints",
+        "guionHintsHint": "Guidance for the script agent when this táctica is selected.",
+        "editingHints": "Include editing hints",
+        "editingHintsHint": "Optional techniques for media assembly.",
+        "ejemploReferencia": "Reference example (Operator only)",
+        "ejemploReferenciaHint": "Internal reference link or note. Never shown to clients or agents."
+      },
+      "list": {
+        "addItem": "Add item",
+        "removeItem": "Remove item",
+        "beatPlaceholder": "Beat label",
+        "hintPlaceholder": "Script hint",
+        "editingHintPlaceholder": "Editing hint"
+      },
+      "confirmDeactivate": {
+        "header": "Deactivate this táctica?",
+        "message": "Inactive tácticas stay visible here but are excluded from agent planning. This cannot be undone in V1.",
+        "accept": "Deactivate",
+        "reject": "Cancel"
+      },
+      "errors": {
+        "slugRequired": "Enter a slug.",
+        "slugFormat": "Slug must be lowercase kebab-case (letters, numbers, hyphens).",
+        "formatosRequired": "Select at least one compatible Playbook format."
+      }
+    },
+    "errors": {
+      "validation": "Please check the highlighted fields and try again.",
+      "forbiddenFields": "Something went wrong. Please try again.",
+      "notFound": "That táctica was not found.",
+      "weekNotFound": "That week snapshot was not found.",
+      "duplicateSlug": "That slug is already used in this week.",
+      "weekStartMismatch": "The week for this táctica does not match the snapshot.",
+      "invalidPlaybookSlug": "One or more Playbook format slugs are invalid or archived.",
+      "notMonday": "Week start must be an ISO Monday.",
+      "internal": "Something went wrong. Please try again later."
     }
   }
 }
