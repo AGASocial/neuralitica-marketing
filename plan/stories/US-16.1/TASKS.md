@@ -96,14 +96,14 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — Playbook schema vs SPEC §3; Operator-only; no Strategy jobs)
-- [ ] SECURITY.md (security-architect — Operator gate; server-only agent helper; no client leakage of `ejemplo_referencia`)
-- [ ] CONTRACT.md authored (nextjs-backend) + FE signoff — "Reviewed by FE" line
-- [ ] BUILD (FE + BE + DB + content-agents-engineer for agent helper)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] SPEC-REVIEW.md (spec-guardian — Playbook schema vs SPEC §3; Operator-only; no Strategy jobs) — ALIGNED
+- [x] SECURITY.md (security-architect — Operator gate; server-only agent helper; no client leakage of `ejemplo_referencia`) — APPROVE WITH CONDITIONS
+- [x] CONTRACT.md authored (nextjs-backend) + FE signoff — Reviewed by FE: yes 2026-08-29
+- [x] BUILD (FE + BE + DB + content-agents-engineer for agent helper) — FE `d78a699` · BE `5792a63` · agents `bab3047`
+- [x] VALIDATION.md — PASS WITH NOTES
+- [x] QA.md — APPROVE WITH NOTES (0 Critical, 0 High, 3 Low; CLOSE yes)
 
-**Status:** PREP. Next gate: **SPEC-REVIEW** after PO handoff to orchestrator.
+**Status:** CLOSED (2026-08-29). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** **US-16.2** — Publish weekly trend snapshot (manual).
 
 ---
 
