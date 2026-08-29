@@ -1,9 +1,11 @@
 import "server-only";
 
 import {
+  trendEntryAgentDtoSchema,
   trendEntryCoreSchema,
   trendWeekListItemSchema,
   trendSnapshotOperatorViewSchema,
+  type TrendEntryAgentDto,
   type TrendEntryCore,
   type TrendWeekListItem,
   type TrendSnapshotOperatorView,
@@ -61,4 +63,28 @@ export function mapTrendSnapshotOperatorView(
 
 export function serializeEntries(entries: TrendEntryCore[]): TrendEntryCore[] {
   return entries.map((entry) => trendEntryCoreSchema.parse(entry));
+}
+
+export function mapTrendEntryToAgentDto(
+  entry: TrendEntryCore,
+): TrendEntryAgentDto | null {
+  const mapped = trendEntryAgentDtoSchema.safeParse({
+    slug: entry.slug,
+    titulo: entry.titulo,
+    weekStart: entry.week_start,
+    prioridadSemana: entry.prioridad_semana,
+    fuente: entry.fuente,
+    explicacion: entry.explicacion,
+    evitar: entry.evitar,
+    hookType: entry.hook_type,
+    estructura: entry.estructura,
+    guionHints: entry.guion_hints,
+    editingHints: entry.editing_hints,
+    duracionIdealSeg: entry.duracion_ideal_seg,
+    modalidadesRecomendadas: entry.modalidades_recomendadas,
+    rubros: entry.rubros,
+    formatosPlaybookCompatibles: entry.formatos_playbook_compatibles,
+  });
+
+  return mapped.success ? mapped.data : null;
 }

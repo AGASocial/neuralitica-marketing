@@ -77,17 +77,17 @@ Concrete BE consumers: Operator Server Actions for publish/update snapshot and e
 
 Concrete FE consumers: Operator Trend pages; future US-4.1 via `getTrendSnapshotForWeek()` only.
 
-- [ ] **Migration** `neuramark_trend_snapshots` (CONTRACT freezes columns: `week_start` UNIQUE `date`, `entries` jsonb, `published_at`, `updated_at`).
-- [ ] **Zod schemas** for Snapshot row + Táctica de tendencia (create/update/read/agent DTO variants).
-- [ ] **Seed migration** with `cold-open-mejor-toma` in canonical week (TASKS.md / CONTRACT).
-- [ ] **Server Actions** (CONTRACT names): list weeks, getByWeekStart, publishOrUpdateSnapshot, addEntry, updateEntry, deactivateEntry — all `requireOperator("handler")`.
-- [ ] **[SEC] Server-side Zod** on every write; `prioridad_semana` bounded 1–5; `fuente` forced to `manual` in V1 writes.
-- [ ] **[SEC] Slug immutability** enforced in entry update handler.
-- [ ] **Playbook slug validation** on write via `getPlaybookForAgents()` active slugs.
-- [ ] **`getTrendSnapshotForWeek(weekStart)`** server-only helper: snapshot for week or empty state; `activo = true` entries only; no Operator-only fields.
-- [ ] Parameterized queries; service-role Node only; never log full payloads unnecessarily.
-- [ ] `revalidatePath` for Operator Trend routes after mutations.
-- [ ] Automated tests: publish/update happy path; duplicate `week_start` upsert semantics; unknown playbook slug rejected; deactivate excludes from agent helper; non-operator gets 403; agent DTO omits `ejemplo_referencia`; empty week returns safe empty state.
+- [x] **Migration** `neuramark_trend_snapshots` (CONTRACT freezes columns: `week_start` UNIQUE `date`, `entries` jsonb, `published_at`, `updated_at`).
+- [x] **Zod schemas** for Snapshot row + Táctica de tendencia (create/update/read/agent DTO variants).
+- [x] **Seed migration** with `cold-open-mejor-toma` in canonical week (TASKS.md / CONTRACT).
+- [x] **Server Actions** (CONTRACT names): list weeks, getByWeekStart, publishOrUpdateSnapshot, addEntry, updateEntry, deactivateEntry — all `requireOperator("handler")`.
+- [x] **[SEC] Server-side Zod** on every write; `prioridad_semana` bounded 1–5; `fuente` forced to `manual` in V1 writes.
+- [x] **[SEC] Slug immutability** enforced in entry update handler.
+- [x] **Playbook slug validation** on write via `getPlaybookForAgents()` active slugs.
+- [x] **`getTrendSnapshotForWeek(weekStart)`** server-only helper: snapshot for week or empty state; `activo = true` entries only; no Operator-only fields.
+- [x] Parameterized queries; service-role Node only; never log full payloads unnecessarily.
+- [x] `revalidatePath` for Operator Trend routes after mutations.
+- [x] Automated tests: publish/update happy path; duplicate `week_start` upsert semantics; unknown playbook slug rejected; deactivate excludes from agent helper; non-operator gets 403; agent DTO omits `ejemplo_referencia`; empty week returns safe empty state.
 
 ---
 
@@ -95,11 +95,11 @@ Concrete FE consumers: Operator Trend pages; future US-4.1 via `getTrendSnapshot
 
 All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
-- [ ] Create **`neuramark_trend_snapshots`** per CONTRACT (`week_start` UNIQUE, `entries` jsonb, timestamps).
-- [ ] **Seed** one snapshot with `cold-open-mejor-toma` and valid `formatos_playbook_compatibles` referencing US-16.1 seed slugs.
-- [ ] RLS: zero policies / deny-by-default (match Fase 1 / US-16.1 pattern).
-- [ ] **Do not** create `neuramark_content_strategies` here (US-4.1).
-- [ ] **Do not** alter `neuramark_content_playbooks` (US-16.1).
+- [x] Create **`neuramark_trend_snapshots`** per CONTRACT (`week_start` UNIQUE, `entries` jsonb, timestamps).
+- [x] **Seed** one snapshot with `cold-open-mejor-toma` and valid `formatos_playbook_compatibles` referencing US-16.1 seed slugs.
+- [x] RLS: zero policies / deny-by-default (match Fase 1 / US-16.1 pattern).
+- [x] **Do not** create `neuramark_content_strategies` here (US-4.1).
+- [x] **Do not** alter `neuramark_content_playbooks` (US-16.1).
 
 ---
 

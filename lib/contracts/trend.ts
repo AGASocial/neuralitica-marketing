@@ -290,3 +290,36 @@ export const addTrendEntryInputSchema = z
   .strict();
 
 export type AddTrendEntryInput = z.infer<typeof addTrendEntryInputSchema>;
+
+export const trendEntryAgentDtoSchema = z
+  .object({
+    slug: playbookSlugSchema,
+    titulo: playbookTituloSchema,
+    weekStart: trendWeekStartSchema,
+    prioridadSemana: trendPrioridadSemanaSchema,
+    fuente: trendFuenteSchema,
+    explicacion: playbookExplicacionSchema,
+    evitar: trendEvitarSchema.optional(),
+    hookType: playbookHookTypeSchema,
+    estructura: z.array(playbookBeatSchema).min(1).max(12),
+    guionHints: z.array(playbookHintSchema).min(1).max(20),
+    editingHints: z.array(playbookEditingHintSchema).max(15).optional(),
+    duracionIdealSeg: trendDuracionIdealSegSchema,
+    modalidadesRecomendadas: z.array(visualModalitySchema).max(3),
+    rubros: z.array(playbookRubroSchema).max(15),
+    formatosPlaybookCompatibles: z.array(playbookSlugSchema).min(1).max(10),
+  })
+  .strict();
+
+export type TrendEntryAgentDto = z.infer<typeof trendEntryAgentDtoSchema>;
+
+export const trendSnapshotForWeekSuccessSchema = z
+  .object({
+    weekStart: trendWeekStartSchema,
+    entries: z.array(trendEntryAgentDtoSchema),
+  })
+  .strict();
+
+export type TrendSnapshotForWeekResult = z.infer<
+  typeof trendSnapshotForWeekSuccessSchema
+>;
