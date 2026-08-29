@@ -1,6 +1,6 @@
 # US-1.3 — Submit interview for profile generation
 
-**Status:** PREP — SELECTED (`feature/US-1.3-submit-interview-profile`). AC unchecked until requirements-validator.
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (5/5 AC; FE `6f55df4`, BE `4b5de0c`).
 
 **As a** System, **I want** a completed Entrevista inicial to trigger Ficha viva creation, **so that** downstream agents have canonical context.
 
