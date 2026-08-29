@@ -465,26 +465,22 @@ describe("hasActiveAvatarConsent fail-closed", () => {
           isSupabaseConfigured: () => true,
           createServerSupabaseClient: () => ({
             from() {
-              return {
-                select() {
-                  return {
-                    eq() {
-                      return {
-                        async maybeSingle() {
-                          return {
-                            data: null,
-                            error: {
-                              code: "PGRST205",
-                              message:
-                                "Could not find the table 'public.neuramark_avatar_consents' in the schema cache",
-                            },
-                          };
-                        },
-                      };
-                    },
-                  };
+              const builder: Record<string, unknown> = {};
+              const self = () => builder;
+              builder.select = self;
+              builder.eq = self;
+              builder.is = self;
+              builder.order = self;
+              builder.limit = self;
+              builder.maybeSingle = async () => ({
+                data: null,
+                error: {
+                  code: "PGRST205",
+                  message:
+                    "Could not find the table 'public.neuramark_avatar_consents' in the schema cache",
                 },
-              };
+              });
+              return builder;
             },
           }),
         };

@@ -1,18 +1,15 @@
 import "server-only";
 
 /**
- * Fail-closed Consentimiento de avatar probe (pre–US-3.2 soft gate).
+ * Fail-closed Consentimiento de avatar probe (US-3.2 hardened).
  * @param clientId — must be server-resolved getCurrentUser().id (or trusted job id later).
  * Never invent consent rows. Never default true.
  *
- * Semantics (binding — SECURITY):
- * - Consent table missing → false
- * - No row for clientId → false
- * - Row revoked (revoked_at set) → false
- * - Active non-revoked row → true
- * - Probe / query / unexpected error → false
+ * Active iff row with revoked_at IS NULL AND consent_version = CURRENT constant.
+ * Query: filter active subset, order consented_at desc, limit 1 — then version-match.
  */
 
+import { CURRENT_AVATAR_CONSENT_VERSION } from "@/lib/visual-preferences/avatar-consent-version";
 import {
   createServerSupabaseClient,
   isSupabaseConfigured,
@@ -21,7 +18,9 @@ import {
 const CONSENT_TABLE = "neuramark_avatar_consents";
 
 type ConsentRow = {
+  consent_version: unknown;
   revoked_at: unknown;
+  consented_at: unknown;
 };
 
 function isMissingRelationError(error: {
@@ -59,8 +58,11 @@ export async function hasActiveAvatarConsent(
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
       .from(CONSENT_TABLE)
-      .select("revoked_at")
+      .select("consent_version, revoked_at, consented_at")
       .eq("client_id", clientId)
+      .is("revoked_at", null)
+      .order("consented_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (error) {
@@ -80,7 +82,7 @@ export async function hasActiveAvatarConsent(
       return false;
     }
 
-    return true;
+    return row.consent_version === CURRENT_AVATAR_CONSENT_VERSION;
   } catch {
     return false;
   }

@@ -70,20 +70,22 @@ Concrete BE consumers: Server Actions grant/revoke Consentimiento (CONTRACT name
 
 Concrete FE consumers: Preferencias / Consentimiento Client form(s) calling grant/revoke Server Actions; settings RSC loader for consent status.
 
-- [ ] **FIRST — Harden `hasActiveAvatarConsent`** for append-only multi-row ledger: `revoked_at IS NULL`, order (`consented_at` desc), limit 1 / maybeSingle on active subset; fail closed on errors; unit test multi-row + one active (US-3.1 QA Medium). Apply before relying on grant/revoke in Preferencias gate.
-- [ ] **Migration** for `neuramark_avatar_consents` (CONTRACT freezes columns/indexes/constraints).
-- [ ] **Loader** (arity 0): own consent status (active?, `consented_at`, `consent_version`) by `getCurrentUser().id`.
-- [ ] **Server Action grant** (CONTRACT name): `requireActive("handler")`; explicit affirmative only; server timestamp; store current `consent_version` constant; identity from session only; **no** side effect from Preferencias upsert.
-- [ ] **Server Action revoke** (CONTRACT name): set `revoked_at` on active row (append-only rules); never delete; invoke **stub** `cancelQueuedOwnAvatarJobs` (no-op / safe if jobs table absent).
-- [ ] **[SEC] Append-only:** no in-place mutation of historical consent fields; no DELETE; full audit trail preserved.
-- [ ] **[SEC] Disclosure version:** store exact `consent_version` shown; bump constant ⇒ re-consent required per PO lean / CONTRACT.
-- [ ] **[SEC] Video-job re-check stub:** helper that job creation will call (document + unit test); Preferencias gate continues to call hardened probe.
-- [ ] **[SEC] Explicit grant only:** no endpoint/action sets consent as side effect of another operation (incl. Preferencias save).
-- [ ] Parameterized queries; service-role Node only; never log unnecessary PII / full disclosure dumps in production logs.
-- [ ] `revalidatePath` for Preferencias / consent surface after grant/revoke.
-- [ ] Automated tests: grant → active; revoke → inactive + Preferencias `own_avatar` rejected; version stored; multi-row probe; foreign `client_id` ignored; Preferencias save does not grant; stub cancel invoked on revoke; fail-closed probe errors.
+- [x] **FIRST — Harden `hasActiveAvatarConsent`** for append-only multi-row ledger: `revoked_at IS NULL`, order (`consented_at` desc), limit 1 / maybeSingle on active subset; fail closed on errors; unit test multi-row + one active (US-3.1 QA Medium). Apply before relying on grant/revoke in Preferencias gate.
+- [x] **Migration** for `neuramark_avatar_consents` (CONTRACT freezes columns/indexes/constraints).
+- [x] **Loader** (arity 0): own consent status (active?, `consented_at`, `consent_version`) by `getCurrentUser().id`.
+- [x] **Server Action grant** (CONTRACT name): `requireActive("handler")`; explicit affirmative only; server timestamp; store current `consent_version` constant; identity from session only; **no** side effect from Preferencias upsert.
+- [x] **Server Action revoke** (CONTRACT name): set `revoked_at` on active row (append-only rules); never delete; invoke **stub** `cancelQueuedOwnAvatarJobs` (no-op / safe if jobs table absent).
+- [x] **[SEC] Append-only:** no in-place mutation of historical consent fields; no DELETE; full audit trail preserved.
+- [x] **[SEC] Disclosure version:** store exact `consent_version` shown; bump constant ⇒ re-consent required per PO lean / CONTRACT.
+- [x] **[SEC] Video-job re-check stub:** helper that job creation will call (document + unit test); Preferencias gate continues to call hardened probe.
+- [x] **[SEC] Explicit grant only:** no endpoint/action sets consent as side effect of another operation (incl. Preferencias save).
+- [x] Parameterized queries; service-role Node only; never log unnecessary PII / full disclosure dumps in production logs.
+- [x] `revalidatePath` for Preferencias / consent surface after grant/revoke.
+- [x] Automated tests: grant → active; revoke → inactive + Preferencias `own_avatar` rejected; version stored; multi-row probe; foreign `client_id` ignored; Preferencias save does not grant; stub cancel invoked on revoke; fail-closed probe errors.
 
 **AC mapping (for validator later):** Cannot select own avatar without consent; version string stored; revoke blocks new own-avatar; [SEC] append-only; [SEC] disclosure version; [SEC] job-time re-check (stub); [SEC] explicit grant only; [SEC] revoke immediate + cancel queued stub.
+
+**BE BUILD note (2026-08-29):** Satisfies Preferencias continuity AC (hardened probe + upsert reject), version-stored grant, revoke immediacy + cancel stub, append-only + IDOR tests. Validator checks `USER_STORIES.md` AC — do not check those here.
 
 ---
 
@@ -91,11 +93,11 @@ Concrete FE consumers: Preferencias / Consentimiento Client form(s) calling gran
 
 All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
-- [ ] Create **`neuramark_avatar_consents`**: `client_id` (FK → `neuramark_clients`), `consented_at` (timestamptz, server-set), `consent_version` (text), `revoked_at` (nullable timestamptz), PK `id`. Index supporting active probe (e.g. `(client_id)` where `revoked_at IS NULL` — CONTRACT freezes).
-- [ ] RLS: zero policies / deny-by-default; access only via service-role server.
-- [ ] **Do not** create `media_assets` here (US-3.3).
-- [ ] **Do not** create full `neuramark_video_jobs` cancel schema here unless already present — stub only.
-- [ ] No writes of consent onto `neuramark_business_profiles.fields` or Preferencias row as authoritative cache.
+- [x] Create **`neuramark_avatar_consents`**: `client_id` (FK → `neuramark_clients`), `consented_at` (timestamptz, server-set), `consent_version` (text), `revoked_at` (nullable timestamptz), PK `id`. Index supporting active probe (e.g. `(client_id)` where `revoked_at IS NULL` — CONTRACT freezes).
+- [x] RLS: zero policies / deny-by-default; access only via service-role server.
+- [x] **Do not** create `media_assets` here (US-3.3).
+- [x] **Do not** create full `neuramark_video_jobs` cancel schema here unless already present — stub only.
+- [x] No writes of consent onto `neuramark_business_profiles.fields` or Preferencias row as authoritative cache.
 
 ---
 
