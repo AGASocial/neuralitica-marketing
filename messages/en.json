@@ -4,9 +4,9 @@
     "title": "Dashboard",
     "subtitle": "Your content production at a glance.",
     "interviewCard": {
-      "title": "Business interview",
+      "title": "Initial interview",
       "body": "Complete your guided interview so we can learn your business.",
-      "cta": "Start interview"
+      "cta": "Start"
     },
     "profileCard": {
       "title": "Business profile",
@@ -148,6 +148,84 @@
       "logoutHint": "You can log out and return later.",
       "logout": "Log out",
       "logoutPending": "Logging out…"
+    }
+  },
+  "interview": {
+    "title": "Initial interview",
+    "subtitle": "A few questions about your business so we can write in your voice.",
+    "progress": "{current} / {total}",
+    "back": "Back",
+    "next": "Next",
+    "save": "Save",
+    "saving": "Saving…",
+    "progressSaved": "Progress saved",
+    "loading": "Loading…",
+    "emptyIntro": "Start with the services you offer. You can go back to earlier steps at any time.",
+    "addItem": "Add",
+    "removeItem": "Remove",
+    "itemPlaceholder": "Type an item and add it",
+    "none": "None",
+    "chipsHintRequired": "Add at least one item to continue. Maximum 20.",
+    "chipsHintOptional": "Optional. Leave empty if none. Maximum 20.",
+    "completedTitle": "This interview is complete",
+    "completedBody": "Your answers are shown below and cannot be edited.",
+    "steps": {
+      "services": {
+        "label": "Services",
+        "question": "What services do you offer?",
+        "helper": "List the services customers can hire you for.",
+        "placeholder": "Emergency plumbing"
+      },
+      "zone": {
+        "label": "Zone",
+        "question": "Where do you serve customers?",
+        "helper": "Describe your service area: cities, neighborhoods, or ZIP codes.",
+        "placeholder": "Austin, Texas and nearby ZIP codes"
+      },
+      "tone": {
+        "label": "Tone",
+        "question": "How should your business sound to customers?",
+        "helper": "Describe the voice you want: warm, direct, formal, or something else.",
+        "placeholder": "Warm, plain language, no slang"
+      },
+      "offers": {
+        "label": "Offers",
+        "question": "What offers or promotions should we mention?",
+        "helper": "List current offers, memberships, or guarantees we may include.",
+        "placeholder": "Same-week visit for members"
+      },
+      "objections": {
+        "label": "Objections",
+        "question": "What objections do customers often raise?",
+        "helper": "List common doubts or comparisons you hear before someone hires you.",
+        "placeholder": "Price compared to big chains"
+      },
+      "style": {
+        "label": "Style",
+        "question": "How should we write?",
+        "helper": "Sentence length, local details, phrases to use or avoid in the writing itself.",
+        "placeholder": "Short sentences, local landmarks"
+      },
+      "restrictions": {
+        "label": "Restrictions",
+        "question": "What must we never say or promise?",
+        "helper": "Words, claims, or topics to avoid. Leave empty if there are none.",
+        "placeholder": "Never promise same-day arrival"
+      }
+    },
+    "errors": {
+      "validation": "Please check this step and try again.",
+      "forbiddenFields": "Something went wrong. Please try again.",
+      "payloadTooLarge": "Your answers are too large. Shorten the text and try again.",
+      "conflict": "This interview can no longer be edited.",
+      "internal": "Something went wrong. Please try again later.",
+      "required": "This step is required.",
+      "tooSmallList": "Add at least one item.",
+      "tooSmallText": "Enter a description.",
+      "tooBigItems": "Too many items.",
+      "tooBigText": "Text is too long.",
+      "invalidType": "Please check this step and try again.",
+      "unrecognizedKey": "Please check this step and try again."
     }
   }
 }

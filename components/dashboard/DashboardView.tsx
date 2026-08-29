@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Message } from "primereact/message";
 
@@ -7,6 +9,7 @@ type DashboardCard = {
   title: string;
   body: string;
   cta: string;
+  href?: string;
 };
 
 type DashboardViewProps = {
@@ -49,7 +52,13 @@ export function DashboardView({
       >
         {cards.map((card) => (
           <Card key={card.title} title={card.title} subTitle={card.body}>
-            <p style={{ margin: 0, color: "#6b7280" }}>{card.cta}</p>
+            {card.href ? (
+              <Link href={card.href} style={{ textDecoration: "none" }}>
+                <Button type="button" label={card.cta} />
+              </Link>
+            ) : (
+              <p style={{ margin: 0, color: "#6b7280" }}>{card.cta}</p>
+            )}
           </Card>
         ))}
       </div>

@@ -12,7 +12,7 @@ export default async function DashboardPage() {
   const supabaseReady = isSupabaseConfigured();
 
   const cards = [
-    t.dashboard.interviewCard,
+    { ...t.dashboard.interviewCard, href: "/interview" },
     t.dashboard.profileCard,
     t.dashboard.approvalsCard,
     t.dashboard.productionCard,

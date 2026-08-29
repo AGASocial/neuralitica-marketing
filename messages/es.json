@@ -4,9 +4,9 @@
     "title": "Panel",
     "subtitle": "Tu producción de contenido de un vistazo.",
     "interviewCard": {
-      "title": "Entrevista del negocio",
+      "title": "Entrevista inicial",
       "body": "Completa la entrevista guiada para que conozcamos tu negocio.",
-      "cta": "Iniciar entrevista"
+      "cta": "Comenzar"
     },
     "profileCard": {
       "title": "Perfil del negocio",
@@ -148,6 +148,84 @@
       "logoutHint": "Puedes cerrar sesión y volver más tarde.",
       "logout": "Cerrar sesión",
       "logoutPending": "Cerrando sesión…"
+    }
+  },
+  "interview": {
+    "title": "Entrevista inicial",
+    "subtitle": "Unas preguntas sobre tu negocio para escribir con tu voz.",
+    "progress": "{current} / {total}",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "progressSaved": "Progreso guardado",
+    "loading": "Cargando…",
+    "emptyIntro": "Empieza por los servicios que ofreces. Puedes volver a los pasos anteriores en cualquier momento.",
+    "addItem": "Añadir",
+    "removeItem": "Quitar",
+    "itemPlaceholder": "Escribe un elemento y añádelo",
+    "none": "Ninguno",
+    "chipsHintRequired": "Añade al menos un elemento para continuar. Máximo 20.",
+    "chipsHintOptional": "Opcional. Déjalo vacío si no hay ninguno. Máximo 20.",
+    "completedTitle": "Esta entrevista está completa",
+    "completedBody": "Tus respuestas se muestran a continuación y no se pueden editar.",
+    "steps": {
+      "services": {
+        "label": "Servicios",
+        "question": "¿Qué servicios ofreces?",
+        "helper": "Lista los servicios que los clientes pueden contratar.",
+        "placeholder": "Fontanería de emergencia"
+      },
+      "zone": {
+        "label": "Zona",
+        "question": "¿Dónde atiendes a tus clientes?",
+        "helper": "Describe tu zona de servicio: ciudades, barrios o códigos postales.",
+        "placeholder": "Austin, Texas y códigos postales cercanos"
+      },
+      "tone": {
+        "label": "Tono",
+        "question": "¿Cómo debe sonar tu negocio para los clientes?",
+        "helper": "Describe la voz que quieres: cercana, directa, formal u otra.",
+        "placeholder": "Cálido, lenguaje sencillo, sin jerga"
+      },
+      "offers": {
+        "label": "Ofertas",
+        "question": "¿Qué ofertas o promociones debemos mencionar?",
+        "helper": "Lista ofertas vigentes, membresías o garantías que podamos incluir.",
+        "placeholder": "Visita en la misma semana para miembros"
+      },
+      "objections": {
+        "label": "Objeciones",
+        "question": "¿Qué objeciones plantean a menudo los clientes?",
+        "helper": "Lista dudas o comparaciones habituales antes de contratarte.",
+        "placeholder": "Precio comparado con grandes cadenas"
+      },
+      "style": {
+        "label": "Estilo",
+        "question": "¿Cómo debemos escribir?",
+        "helper": "Longitud de las frases, detalles locales, expresiones que usar o evitar.",
+        "placeholder": "Frases cortas, puntos de referencia locales"
+      },
+      "restrictions": {
+        "label": "Restricciones",
+        "question": "¿Qué no debemos decir ni prometer nunca?",
+        "helper": "Palabras, afirmaciones o temas a evitar. Déjalo vacío si no hay ninguno.",
+        "placeholder": "Nunca prometas llegada el mismo día"
+      }
+    },
+    "errors": {
+      "validation": "Revisa este paso e inténtalo de nuevo.",
+      "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+      "payloadTooLarge": "Tus respuestas son demasiado largas. Acorta el texto e inténtalo de nuevo.",
+      "conflict": "Esta entrevista ya no se puede modificar.",
+      "internal": "Algo salió mal. Inténtalo más tarde.",
+      "required": "Este paso es obligatorio.",
+      "tooSmallList": "Añade al menos un elemento.",
+      "tooSmallText": "Escribe una descripción.",
+      "tooBigItems": "Demasiados elementos.",
+      "tooBigText": "El texto es demasiado largo.",
+      "invalidType": "Revisa este paso e inténtalo de nuevo.",
+      "unrecognizedKey": "Revisa este paso e inténtalo de nuevo."
     }
   }
 }
