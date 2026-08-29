@@ -19,6 +19,7 @@ type InterviewCompletedCopy = {
   completedBody: string;
   none: string;
   backToDashboard: string;
+  viewProfile: string;
   steps: Record<
     InterviewStepKey,
     {
@@ -63,7 +64,16 @@ export function InterviewCompletedView({
         style={{ width: "100%" }}
       />
 
-      <div>
+      <div
+        style={{
+          display: "flex",
+          gap: "0.75rem",
+          flexWrap: "wrap",
+        }}
+      >
+        <Link href="/profile" style={{ textDecoration: "none" }}>
+          <Button type="button" label={copy.viewProfile} />
+        </Link>
         <Link href="/dashboard" style={{ textDecoration: "none" }}>
           <Button
             type="button"

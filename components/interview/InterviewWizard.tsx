@@ -7,6 +7,7 @@ import { Steps } from "primereact/steps";
 import { useMemo, useState } from "react";
 
 import { persistInterviewDraft } from "@/lib/interview/actions/persist-interview-draft";
+import { submitInterview } from "@/lib/interview/actions/submit-interview";
 import type {
   InterviewAnswers,
   InterviewDraftView,
@@ -14,6 +15,7 @@ import type {
   InterviewStepKey,
   PersistInterviewDraftInput,
   PersistInterviewDraftResult,
+  SubmitInterviewResult,
 } from "@/lib/contracts/interview";
 import type enMessages from "@/messages/en.json";
 
@@ -50,7 +52,53 @@ type Banner = {
   text: string;
 };
 
-type PendingMode = "next" | "leave" | null;
+type PendingMode = "next" | "leave" | "submit" | null;
+
+function stepSatisfied(
+  answers: InterviewAnswers,
+  step: InterviewStepKey,
+): boolean {
+  if (isTextStep(step)) {
+    const text = getDescription(answers, step).trim();
+    return text.length >= 1 && text.length <= MAX_DESCRIPTION_LENGTH;
+  }
+
+  const items = getListItems(answers, step)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (items.some((item) => item.length > MAX_ITEM_LENGTH)) {
+    return false;
+  }
+  if (items.length > MAX_LIST_ITEMS) {
+    return false;
+  }
+  if (isRequiredListStep(step)) {
+    return items.length >= 1;
+  }
+  // restrictions: empty allowed
+  return true;
+}
+
+function answersWithCurrentStep(
+  answers: InterviewAnswers,
+  viewStep: InterviewStepKey,
+  items: string[],
+  description: string,
+): InterviewAnswers {
+  if (isTextStep(viewStep)) {
+    return {
+      ...answers,
+      [viewStep]: { description: description.trim() },
+    };
+  }
+  return {
+    ...answers,
+    [viewStep]: {
+      items: items.map((item) => item.trim()).filter(Boolean),
+    },
+  };
+}
 
 export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProps) {
   const router = useRouter();
@@ -70,6 +118,11 @@ export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProp
   const isLastStep = viewStep === "restrictions";
   const items = getListItems(answers, viewStep);
   const description = getDescription(answers, viewStep);
+
+  const presentationComplete = useMemo(() => {
+    const merged = answersWithCurrentStep(answers, viewStep, items, description);
+    return INTERVIEW_STEP_ORDER.every((step) => stepSatisfied(merged, step));
+  }, [answers, viewStep, items, description]);
 
   const stepModel = useMemo(
     () =>
@@ -158,6 +211,7 @@ export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProp
       "interview.errors.forbiddenFields": copy.errors.forbiddenFields,
       "interview.errors.payloadTooLarge": copy.errors.payloadTooLarge,
       "interview.errors.conflict": copy.errors.conflict,
+      "interview.errors.notFound": copy.errors.notFound,
       "interview.errors.internal": copy.errors.internal,
       "auth.errors.unauthenticated": authErrors.unauthenticated,
       "auth.errors.forbidden": authErrors.forbidden,
@@ -256,6 +310,23 @@ export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProp
     });
   }
 
+  function handleSubmitFailure(result: Extract<SubmitInterviewResult, { ok: false }>) {
+    const { error } = result;
+
+    if (error.code === "VALIDATION_ERROR" && error.fields) {
+      const owner = applyValidationFields(error.fields);
+      if (owner && owner !== viewStep) {
+        setViewStep(owner);
+      }
+      return;
+    }
+
+    setBanner({
+      severity: "error",
+      text: messageForCode(error.code, error.messageKey),
+    });
+  }
+
   async function runPersist(mode: Exclude<PendingMode, null>): Promise<boolean> {
     if (pending || readOnly) {
       return false;
@@ -295,17 +366,72 @@ export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProp
 
   async function handleNext(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const stepBeforePersist = viewStep;
-    const ok = await runPersist("next");
-    if (ok && stepBeforePersist === "restrictions") {
-      setBanner({ severity: "success", text: copy.progressSaved });
+    if (isLastStep) {
+      await handleSubmit();
+      return;
     }
+    await runPersist("next");
   }
 
   async function handleSaveAndContinueLater() {
     const ok = await runPersist("leave");
     if (ok) {
       router.push("/dashboard");
+    }
+  }
+
+  /**
+   * Persist dirty last step, then submit with empty body (DB answers are SoT).
+   * Never send answers / status / client_id on submit.
+   */
+  async function handleSubmit() {
+    if (pending || readOnly || !isLastStep) {
+      return;
+    }
+
+    const clientError = validateCurrentStep();
+    if (clientError) {
+      setBanner({ severity: "error", text: clientError });
+      return;
+    }
+
+    setPendingMode("submit");
+    setBanner(null);
+
+    try {
+      const persistResult = await persistInterviewDraft({
+        currentStep: viewStep,
+        answers: buildPayload(),
+      });
+
+      if (!persistResult.ok) {
+        handlePersistFailure(persistResult);
+        return;
+      }
+
+      setAnswers(persistResult.draft.answers);
+      setStatus(persistResult.draft.status);
+
+      if (persistResult.draft.status === "completed") {
+        setBanner({ severity: "success", text: copy.submitSuccess });
+        router.push("/profile");
+        return;
+      }
+
+      const result = await submitInterview();
+
+      if (result.ok) {
+        setStatus("completed");
+        setBanner({ severity: "success", text: copy.submitSuccess });
+        router.push(result.redirectTo);
+        return;
+      }
+
+      handleSubmitFailure(result);
+    } catch {
+      setBanner({ severity: "error", text: copy.errors.internal });
+    } finally {
+      setPendingMode(null);
     }
   }
 
@@ -319,6 +445,7 @@ export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProp
           completedBody: copy.completedBody,
           none: copy.none,
           backToDashboard: copy.backToDashboard,
+          viewProfile: copy.viewProfile,
           steps: copy.steps,
         }}
         banner={banner?.severity === "error" ? banner.text : undefined}
@@ -425,18 +552,23 @@ export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProp
               loading={pendingMode === "leave"}
               disabled={pending}
             />
-            <Button
-              type="submit"
-              label={
-                pendingMode === "next"
-                  ? copy.saving
-                  : isLastStep
-                    ? copy.save
-                    : copy.next
-              }
-              loading={pendingMode === "next"}
-              disabled={pending}
-            />
+            {isLastStep ? (
+              <Button
+                type="submit"
+                label={
+                  pendingMode === "submit" ? copy.submitPending : copy.submit
+                }
+                loading={pendingMode === "submit"}
+                disabled={pending || !presentationComplete}
+              />
+            ) : (
+              <Button
+                type="submit"
+                label={pendingMode === "next" ? copy.saving : copy.next}
+                loading={pendingMode === "next"}
+                disabled={pending}
+              />
+            )}
           </div>
         </div>
       </form>

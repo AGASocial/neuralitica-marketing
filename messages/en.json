@@ -9,14 +9,14 @@
       "cta": "Start",
       "resumeBody": "You left off at {step}. Continue when you are ready.",
       "resumeCta": "Resume",
-      "completedBody": "Your initial interview is complete. You can review your answers.",
-      "completedCta": "View answers",
+      "completedBody": "Your initial interview is complete. Open your living profile.",
+      "completedCta": "View living profile",
       "loadError": "We could not load interview status. Refresh the page to try again."
     },
     "profileCard": {
-      "title": "Business profile",
-      "body": "Review and refine the profile generated from your interview.",
-      "cta": "View profile"
+      "title": "Living profile",
+      "body": "Review the living profile generated from your initial interview.",
+      "cta": "View living profile"
     },
     "approvalsCard": {
       "title": "Pending approvals",
@@ -165,8 +165,12 @@
     "saving": "Saving…",
     "saveAndContinueLater": "Save & continue later",
     "saveAndContinueLaterPending": "Saving…",
+    "submit": "Submit interview",
+    "submitPending": "Submitting…",
+    "submitSuccess": "Initial interview submitted. Opening your living profile…",
     "progressSaved": "Progress saved",
     "backToDashboard": "Back to dashboard",
+    "viewProfile": "View living profile",
     "loading": "Loading…",
     "emptyIntro": "Start with the services you offer. You can go back to earlier steps at any time.",
     "addItem": "Add",
@@ -226,6 +230,7 @@
       "forbiddenFields": "Something went wrong. Please try again.",
       "payloadTooLarge": "Your answers are too large. Shorten the text and try again.",
       "conflict": "This interview can no longer be edited.",
+      "notFound": "We could not find an interview to submit. Start the initial interview first.",
       "internal": "Something went wrong. Please try again later.",
       "required": "This step is required.",
       "tooSmallList": "Add at least one item.",
@@ -234,6 +239,15 @@
       "tooBigText": "Text is too long.",
       "invalidType": "Please check this step and try again.",
       "unrecognizedKey": "Please check this step and try again."
+    }
+  },
+  "profile": {
+    "stub": {
+      "title": "Living profile",
+      "body": "Your initial interview was submitted. Your living profile is ready.",
+      "emptyBody": "Complete your initial interview to create your living profile.",
+      "ctaInterview": "Go to initial interview",
+      "ctaDashboard": "Back to dashboard"
     }
   }
 }

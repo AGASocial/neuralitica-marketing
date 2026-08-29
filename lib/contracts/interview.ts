@@ -155,3 +155,66 @@ export type InterviewDashboardSummaryRow = z.infer<
 
 /** `null` = no row → not started (Start CTA) */
 export type InterviewDashboardSummary = InterviewDashboardSummaryRow | null;
+
+/**
+ * Completeness at submit (US-1.3): all seven keys required.
+ * Same caps / advance rules as US-1.1 per step; empty restrictions.items OK.
+ */
+export const interviewAnswersCompleteSchema = z
+  .object({
+    services: interviewServicesStepSchema,
+    zone: interviewZoneStepSchema,
+    tone: interviewToneStepSchema,
+    offers: interviewOffersStepSchema,
+    objections: interviewObjectionsStepSchema,
+    style: interviewStyleStepSchema,
+    restrictions: interviewRestrictionsStepSchema,
+  })
+  .strict();
+export type InterviewAnswersComplete = z.infer<
+  typeof interviewAnswersCompleteSchema
+>;
+
+/** Prefer `{}` or omit. Client answers are never SoT for submit (US-1.3). */
+export const submitInterviewInputSchema = z.object({}).strict();
+export type SubmitInterviewInput = z.infer<typeof submitInterviewInputSchema>;
+
+export const submitInterviewSuccessSchema = z.object({
+  ok: z.literal(true),
+  /** false = first successful complete; true = idempotent re-submit */
+  alreadyCompleted: z.boolean(),
+  /** FE navigates here after success confirmation */
+  redirectTo: z.literal("/profile"),
+  /** Minimal — no raw fields dump (US-2.1 owns full render) */
+  profile: z
+    .object({
+      exists: z.literal(true),
+      version: z.number().int().positive(),
+    })
+    .strict(),
+  /** Interview status after submit — always completed on ok: true */
+  interview: z
+    .object({
+      status: z.literal("completed"),
+    })
+    .strict(),
+});
+export type SubmitInterviewSuccess = z.infer<typeof submitInterviewSuccessSchema>;
+
+export const submitInterviewResultSchema = z.discriminatedUnion("ok", [
+  submitInterviewSuccessSchema,
+  interviewErrorEnvelopeSchema,
+]);
+export type SubmitInterviewResult = z.infer<typeof submitInterviewResultSchema>;
+
+/** Ficha viva fields jsonb — 1:1 with complete interview answers (V1). */
+export type BusinessProfileFields = InterviewAnswersComplete;
+
+/** Stub `/profile` RSC summary (US-1.3) — no fields dump, no ids. */
+export const profileStubSummarySchema = z
+  .object({
+    exists: z.boolean(),
+    version: z.number().int().positive().nullable(),
+  })
+  .strict();
+export type ProfileStubSummary = z.infer<typeof profileStubSummarySchema>;

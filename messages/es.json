@@ -9,14 +9,14 @@
       "cta": "Comenzar",
       "resumeBody": "Te quedaste en {step}. Continúa cuando estés listo.",
       "resumeCta": "Reanudar",
-      "completedBody": "Tu entrevista inicial está completa. Puedes revisar tus respuestas.",
-      "completedCta": "Ver respuestas",
+      "completedBody": "Tu entrevista inicial está completa. Abre tu ficha viva.",
+      "completedCta": "Ver ficha viva",
       "loadError": "No pudimos cargar el estado de la entrevista. Actualiza la página para intentarlo de nuevo."
     },
     "profileCard": {
-      "title": "Perfil del negocio",
-      "body": "Revisa y ajusta el perfil generado a partir de tu entrevista.",
-      "cta": "Ver perfil"
+      "title": "Ficha viva",
+      "body": "Revisa la ficha viva generada a partir de tu entrevista inicial.",
+      "cta": "Ver ficha viva"
     },
     "approvalsCard": {
       "title": "Aprobaciones pendientes",
@@ -165,8 +165,12 @@
     "saving": "Guardando…",
     "saveAndContinueLater": "Guardar y continuar después",
     "saveAndContinueLaterPending": "Guardando…",
+    "submit": "Enviar entrevista",
+    "submitPending": "Enviando…",
+    "submitSuccess": "Entrevista inicial enviada. Abriendo tu ficha viva…",
     "progressSaved": "Progreso guardado",
     "backToDashboard": "Volver al panel",
+    "viewProfile": "Ver ficha viva",
     "loading": "Cargando…",
     "emptyIntro": "Empieza por los servicios que ofreces. Puedes volver a los pasos anteriores en cualquier momento.",
     "addItem": "Añadir",
@@ -226,6 +230,7 @@
       "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
       "payloadTooLarge": "Tus respuestas son demasiado largas. Acorta el texto e inténtalo de nuevo.",
       "conflict": "Esta entrevista ya no se puede modificar.",
+      "notFound": "No encontramos una entrevista para enviar. Empieza la entrevista inicial primero.",
       "internal": "Algo salió mal. Inténtalo más tarde.",
       "required": "Este paso es obligatorio.",
       "tooSmallList": "Añade al menos un elemento.",
@@ -234,6 +239,15 @@
       "tooBigText": "El texto es demasiado largo.",
       "invalidType": "Revisa este paso e inténtalo de nuevo.",
       "unrecognizedKey": "Revisa este paso e inténtalo de nuevo."
+    }
+  },
+  "profile": {
+    "stub": {
+      "title": "Ficha viva",
+      "body": "Tu entrevista inicial fue enviada. Tu ficha viva está lista.",
+      "emptyBody": "Completa tu entrevista inicial para crear tu ficha viva.",
+      "ctaInterview": "Ir a la entrevista inicial",
+      "ctaDashboard": "Volver al panel"
     }
   }
 }

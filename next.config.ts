@@ -34,6 +34,14 @@ const nextConfig: NextConfig = {
         headers: [{ key: "Cache-Control", value: "no-store" }],
       },
       {
+        source: "/profile",
+        headers: [{ key: "Cache-Control", value: "no-store" }],
+      },
+      {
+        source: "/profile/:path*",
+        headers: [{ key: "Cache-Control", value: "no-store" }],
+      },
+      {
         source: "/pending",
         headers: [{ key: "Cache-Control", value: "no-store" }],
       },

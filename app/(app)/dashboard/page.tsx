@@ -54,7 +54,7 @@ function buildInterviewCard(
       title: cardCopy.title,
       body: cardCopy.completedBody,
       cta: cardCopy.completedCta,
-      href: "/interview",
+      href: "/profile",
     };
   }
 
@@ -94,9 +94,14 @@ export default async function DashboardPage() {
     interviewLoadFailed,
   );
 
+  const profileCard: DashboardCard = {
+    ...t.dashboard.profileCard,
+    href: "/profile",
+  };
+
   const cards: DashboardCard[] = [
     interviewCard,
-    t.dashboard.profileCard,
+    profileCard,
     t.dashboard.approvalsCard,
     t.dashboard.productionCard,
   ];
