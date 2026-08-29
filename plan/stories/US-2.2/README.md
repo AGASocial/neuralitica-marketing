@@ -1,6 +1,6 @@
 # US-2.2 — Edit business profile
 
-**Status:** CONTRACT frozen — FE signoff pending (no product code until `Reviewed by FE: yes`).
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (5/5 AC; FE `6b99910`, BE `bd7ad08`).
 
 **As a** Cliente, **I want** to update my Ficha viva, **so that** agents use current information without redoing the full Entrevista inicial.
 
