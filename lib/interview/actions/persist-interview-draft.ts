@@ -234,6 +234,7 @@ async function persistInterviewDraftInner(
   }
 
   revalidatePath("/interview");
+  revalidatePath("/dashboard");
   return {
     ok: true,
     draft: toInterviewDraftView(saved),

@@ -2,9 +2,11 @@ import {
   INTERVIEW_ANSWERS_MAX_UTF8_BYTES,
   INTERVIEW_STEP_ORDER,
   interviewAnswersStoredSchema,
+  interviewDashboardSummarySchema,
   interviewSessionStatusSchema,
   interviewStepKeySchema,
   type InterviewAnswers,
+  type InterviewDashboardSummaryRow,
   type InterviewDraftView,
   type InterviewSessionStatus,
   type InterviewStepKey,
@@ -220,4 +222,58 @@ export function parseSessionRow(row: {
     answers: view.answers,
     status: view.status,
   };
+}
+
+/**
+ * Meaningful progress for dashboard Start vs Resume (US-1.2 freeze).
+ * `hasProgress = (current_step !== 'services') OR (at least one answers key present)`.
+ */
+export function computeHasProgress(
+  currentStep: InterviewStepKey,
+  answers: InterviewAnswers,
+): boolean {
+  if (currentStep !== "services") {
+    return true;
+  }
+  return (
+    answers.services != null ||
+    answers.zone != null ||
+    answers.tone != null ||
+    answers.offers != null ||
+    answers.objections != null ||
+    answers.style != null ||
+    answers.restrictions != null
+  );
+}
+
+/** Pure row → dashboard summary (answers used only for hasProgress; never returned). */
+export function toDashboardSummary(row: {
+  current_step: unknown;
+  answers: unknown;
+  status: unknown;
+}): InterviewDashboardSummaryRow {
+  const parsed = parseSessionRow(row);
+  const summary = {
+    status: parsed.status,
+    currentStep: parsed.current_step,
+    hasProgress: computeHasProgress(parsed.current_step, parsed.answers),
+  };
+  return interviewDashboardSummarySchema.parse(summary);
+}
+
+/**
+ * Map a SELECT result to the dashboard card payload.
+ * `null` row → not started (Start CTA). No get-or-create.
+ */
+export function summarizeInterviewSessionRow(
+  row: {
+    current_step: unknown;
+    answers: unknown;
+    status: unknown;
+  } | null,
+): InterviewDashboardSummaryRow | null {
+  if (row == null) {
+    return null;
+  }
+  return toDashboardSummary(row);
 }

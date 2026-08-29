@@ -68,14 +68,14 @@ Concrete BE consumers: dashboard RSC needs interview status summary for current 
 
 Concrete FE consumers: dashboard incomplete/completed prompt; wizard Save & continue later; `/interview` completed read-only (already partially present).
 
-- [ ] **Interview status for dashboard:** server helper (RSC-callable) returns a minimal summary for `requireActive()` user only — e.g. `{ status, currentStep, hasProgress }` (exact shape in CONTRACT). **No** `client_id` parameter. Prefer omit raw `answers` from the dashboard payload (not needed for the prompt).
-- [ ] Do **not** get-or-create a draft solely to render the dashboard card (avoid creating empty rows on every dashboard hit). If no row → “not started”.
-- [ ] **Save & continue later:** reuse `persistInterviewDraft` or a thin Server Action wrapper that persists then returns ok for FE navigation; still `requireActive("handler")`; still reject `status` / privilege fields; still `UPDATE … AND status = 'draft'`.
-- [ ] **Completed read-only (server):** confirm every write path rejects completed (409). Add automated coverage if US-1.1 left gaps (e.g. mocked action with completed row). No client-supplied `status` flip to unlock writes.
-- [ ] **[SEC] IDOR:** any accepted session id is ownership-checked against `getCurrentUser().id`; foreign id → not found / empty (CONTRACT code). Primary load remains by user id. Strip unused id keys consistently with US-1.1 unless CONTRACT switches a surface to validate-and-use.
-- [ ] CSRF: Server Actions only for mutations (same class as US-1.1). No public interview Route Handler required.
-- [ ] `revalidatePath('/dashboard')` and `/interview` on successful persist / save-and-leave so the incomplete prompt updates.
-- [ ] Automated tests: dashboard summary scoped to current user; no row → not started; draft+progress → incomplete; completed → read-only summary; persist on completed → 409; foreign session id (if accepted) does not leak; Save & continue later happy path.
+- [x] **Interview status for dashboard:** server helper (RSC-callable) returns a minimal summary for `requireActive()` user only — e.g. `{ status, currentStep, hasProgress }` (exact shape in CONTRACT). **No** `client_id` parameter. Prefer omit raw `answers` from the dashboard payload (not needed for the prompt).
+- [x] Do **not** get-or-create a draft solely to render the dashboard card (avoid creating empty rows on every dashboard hit). If no row → “not started”.
+- [x] **Save & continue later:** reuse `persistInterviewDraft` or a thin Server Action wrapper that persists then returns ok for FE navigation; still `requireActive("handler")`; still reject `status` / privilege fields; still `UPDATE … AND status = 'draft'`.
+- [x] **Completed read-only (server):** confirm every write path rejects completed (409). Add automated coverage if US-1.1 left gaps (e.g. mocked action with completed row). No client-supplied `status` flip to unlock writes.
+- [x] **[SEC] IDOR:** any accepted session id is ownership-checked against `getCurrentUser().id`; foreign id → not found / empty (CONTRACT code). Primary load remains by user id. Strip unused id keys consistently with US-1.1 unless CONTRACT switches a surface to validate-and-use.
+- [x] CSRF: Server Actions only for mutations (same class as US-1.1). No public interview Route Handler required.
+- [x] `revalidatePath('/dashboard')` and `/interview` on successful persist / save-and-leave so the incomplete prompt updates.
+- [x] Automated tests: dashboard summary scoped to current user; no row → not started; draft+progress → incomplete; completed → read-only summary; persist on completed → 409; foreign session id (if accepted) does not leak; Save & continue later happy path.
 
 ---
 
@@ -83,10 +83,10 @@ Concrete FE consumers: dashboard incomplete/completed prompt; wizard Save & cont
 
 All objects keep `neuramark_` prefix.
 
-- [ ] **Verify** enum `neuramark_interview_session_status` (`draft` \| `completed`) and table `neuramark_interview_sessions` from US-1.1 — **no duplicate migration** unless SECURITY requires new objects.
-- [ ] No schema change required for dashboard read of `status` + `current_step`.
-- [ ] If Operator reopen is an in-app action: SECURITY/CONTRACT decide whether a new audit table/column is required; otherwise **SQL-only reopen** needs **no** migration (document in SECURITY / ops note).
-- [ ] Still no `neuramark_business_profiles` in this story.
+- [x] **Verify** enum `neuramark_interview_session_status` (`draft` \| `completed`) and table `neuramark_interview_sessions` from US-1.1 — **no duplicate migration** unless SECURITY requires new objects.
+- [x] No schema change required for dashboard read of `status` + `current_step`.
+- [x] If Operator reopen is an in-app action: SECURITY/CONTRACT decide whether a new audit table/column is required; otherwise **SQL-only reopen** needs **no** migration (document in SECURITY / ops note).
+- [x] Still no `neuramark_business_profiles` in this story.
 
 ---
 

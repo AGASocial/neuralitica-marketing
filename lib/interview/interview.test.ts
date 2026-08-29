@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import Module from "node:module";
 import { describe, it } from "node:test";
 
 import {
+  interviewDashboardSummarySchema,
   persistInterviewDraftInputSchema,
   type InterviewAnswers,
 } from "../contracts/interview";
@@ -13,6 +15,7 @@ import {
 } from "./errors";
 import {
   coerceStoredAnswers,
+  computeHasProgress,
   decideDraftWrite,
   decideUniqueRaceWrite,
   findForbiddenInterviewKeys,
@@ -20,6 +23,8 @@ import {
   mergeInterviewAnswers,
   resumeCursorAfterSave,
   stripInterviewIdentityKeys,
+  summarizeInterviewSessionRow,
+  toDashboardSummary,
   toInterviewDraftView,
 } from "./merge-answers";
 import { zodInterviewErrorToFieldErrors } from "./zod-field-errors";
@@ -231,5 +236,176 @@ describe("write predicate / completed CONFLICT", () => {
     assert.equal(view.currentStep, "restrictions");
     assert.equal("id" in view, false);
     assert.equal("client_id" in view, false);
+  });
+});
+
+describe("computeHasProgress (US-1.2 freeze)", () => {
+  it("is false for empty draft at services", () => {
+    assert.equal(computeHasProgress("services", {}), false);
+  });
+
+  it("is true when any answers key is present at services", () => {
+    assert.equal(
+      computeHasProgress("services", {
+        services: { items: ["Emergency plumbing"] },
+      }),
+      true,
+    );
+    assert.equal(
+      computeHasProgress("services", {
+        restrictions: { items: [] },
+      }),
+      true,
+    );
+  });
+
+  it("is true whenever current_step is past services", () => {
+    assert.equal(computeHasProgress("zone", {}), true);
+    assert.equal(computeHasProgress("tone", {}), true);
+    assert.equal(computeHasProgress("restrictions", {}), true);
+  });
+});
+
+describe("toDashboardSummary (US-1.2)", () => {
+  it("maps empty draft to Start shape (hasProgress false)", () => {
+    const summary = toDashboardSummary({
+      current_step: "services",
+      answers: {},
+      status: "draft",
+    });
+    assert.deepEqual(summary, {
+      status: "draft",
+      currentStep: "services",
+      hasProgress: false,
+    });
+    assert.equal("answers" in summary, false);
+    assert.equal("id" in summary, false);
+    assert.equal("client_id" in summary, false);
+    assert.equal(interviewDashboardSummarySchema.safeParse(summary).success, true);
+  });
+
+  it("maps draft with progress to Resume shape", () => {
+    const summary = toDashboardSummary({
+      current_step: "tone",
+      answers: {
+        services: { items: ["Emergency plumbing"] },
+        zone: { description: "Austin metro" },
+      },
+      status: "draft",
+    });
+    assert.deepEqual(summary, {
+      status: "draft",
+      currentStep: "tone",
+      hasProgress: true,
+    });
+    assert.equal("answers" in summary, false);
+  });
+
+  it("maps completed without returning answers", () => {
+    const summary = toDashboardSummary({
+      current_step: "restrictions",
+      answers: {
+        services: { items: ["Emergency plumbing"] },
+        zone: { description: "Austin metro" },
+        tone: { description: "Warm and plain" },
+        offers: { items: ["Same-week visit"] },
+        objections: { items: ["Price"] },
+        style: { description: "Short sentences" },
+        restrictions: { items: [] },
+      },
+      status: "completed",
+    });
+    assert.deepEqual(summary, {
+      status: "completed",
+      currentStep: "restrictions",
+      hasProgress: true,
+    });
+    assert.equal("answers" in summary, false);
+  });
+});
+
+describe("summarizeInterviewSessionRow (US-1.2 dashboard)", () => {
+  it("returns null when no row (not started → Start)", () => {
+    assert.equal(summarizeInterviewSessionRow(null), null);
+  });
+
+  it("returns empty draft / progress / completed without answers or ids", () => {
+    assert.deepEqual(
+      summarizeInterviewSessionRow({
+        current_step: "services",
+        answers: {},
+        status: "draft",
+      }),
+      {
+        status: "draft",
+        currentStep: "services",
+        hasProgress: false,
+      },
+    );
+
+    assert.deepEqual(
+      summarizeInterviewSessionRow({
+        current_step: "tone",
+        answers: { services: { items: ["Emergency plumbing"] } },
+        status: "draft",
+      }),
+      {
+        status: "draft",
+        currentStep: "tone",
+        hasProgress: true,
+      },
+    );
+
+    const completed = summarizeInterviewSessionRow({
+      current_step: "restrictions",
+      answers: {
+        services: { items: ["Emergency plumbing"] },
+        restrictions: { items: [] },
+      },
+      status: "completed",
+    });
+    assert.deepEqual(completed, {
+      status: "completed",
+      currentStep: "restrictions",
+      hasProgress: true,
+    });
+    assert.ok(completed);
+    assert.equal("answers" in completed, false);
+    assert.equal("id" in completed, false);
+    assert.equal("client_id" in completed, false);
+  });
+});
+
+describe("getInterviewDashboardSummary signature (IDOR)", () => {
+  it("accepts no client_id / session id parameters", async () => {
+    const nodeModule = Module as unknown as {
+      _load: (
+        request: string,
+        parent: NodeModule | null | undefined,
+        isMain: boolean,
+      ) => unknown;
+    };
+    const originalLoad = nodeModule._load;
+    nodeModule._load = function (request, parent, isMain) {
+      if (request === "server-only") {
+        return {};
+      }
+      return originalLoad(request, parent, isMain);
+    };
+    try {
+      for (const key of Object.keys(require.cache)) {
+        if (
+          key.replace(/\\/g, "/").includes("/lib/interview/get-interview-dashboard-summary")
+        ) {
+          delete require.cache[key];
+        }
+      }
+      const { getInterviewDashboardSummary } = await import(
+        "./get-interview-dashboard-summary.ts"
+      );
+      assert.equal(getInterviewDashboardSummary.length, 0);
+    } finally {
+      nodeModule._load = originalLoad;
+    }
   });
 });
