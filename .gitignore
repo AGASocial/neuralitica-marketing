@@ -20,6 +20,9 @@
 # production
 /build
 
+# local media storage (US-3.3 LocalDiskStorage — outside public/)
+/var/media/
+
 # misc
 .DS_Store
 *.pem

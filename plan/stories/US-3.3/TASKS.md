@@ -76,21 +76,21 @@ Concrete BE consumers: upload Server Action or multipart Route Handler (CONTRACT
 
 Concrete FE consumers: Preferencias RSC loader extended with avatar reference list + consent flag; upload/delete actions; serve route for preview/download.
 
-- [ ] **Migration** `neuramark_media_assets` (CONTRACT freezes columns, indexes, constraints).
-- [ ] **`MediaStorage` interface** + **`LocalDiskStorage`** implementation (root outside `public/`); **`S3Storage`** stub implementing interface (no prod creds required in this story).
-- [ ] **Shared upload validator** module: size limit, magic-byte MIME allowlist, server-generated key, metadata capture — export for US-8.3 / US-9.2.
-- [ ] **Upload endpoint** (CONTRACT name — Server Action with FormData or Route Handler): `requireActive("handler")`; consent gate; run validator; storage put; insert row; return safe DTO.
-- [ ] **List loader** (arity 0): avatar references for `getCurrentUser().id` ordered by `created_at`.
-- [ ] **Delete endpoint** (CONTRACT name): ownership check; delete storage + DB row; enforce “before first generation” rule per CONTRACT.
-- [ ] **Serve Route Handler** (CONTRACT path): session + ownership; stream from storage interface; never expose raw filesystem paths.
-- [ ] **`hasOwnAvatarReferenceAssets(clientId)`** helper + unit tests (US-8 stub — no job writes).
-- [ ] **[SEC] Magic bytes** — detected MIME from file content, not client headers/extensions.
-- [ ] **[SEC] Server-generated keys** — UUID + safe extension; original filename metadata only.
-- [ ] **[SEC] Storage outside web root** — `storage_key` relative; no `public/` writes.
-- [ ] **[SEC] Consent gate** on upload only when active consent exists.
-- [ ] **[SEC] IDOR** — foreign asset id → 404; parameterized queries; service-role Node only.
-- [ ] `revalidatePath` for Preferencias after upload/delete.
-- [ ] Automated tests: upload happy path; oversize reject; bad MIME reject; no consent reject; delete removes file + row; serve rejects other user's asset; helper true/false counts.
+- [x] **Migration** `neuramark_media_assets` (CONTRACT freezes columns, indexes, constraints).
+- [x] **`MediaStorage` interface** + **`LocalDiskStorage`** implementation (root outside `public/`); **`S3Storage`** stub implementing interface (no prod creds required in this story).
+- [x] **Shared upload validator** module: size limit, magic-byte MIME allowlist, server-generated key, metadata capture — export for US-8.3 / US-9.2.
+- [x] **Upload endpoint** (CONTRACT name — Server Action with FormData or Route Handler): `requireActive("handler")`; consent gate; run validator; storage put; insert row; return safe DTO.
+- [x] **List loader** (arity 0): avatar references for `getCurrentUser().id` ordered by `created_at`.
+- [x] **Delete endpoint** (CONTRACT name): ownership check; delete storage + DB row; enforce “before first generation” rule per CONTRACT.
+- [x] **Serve Route Handler** (CONTRACT path): session + ownership; stream from storage interface; never expose raw filesystem paths.
+- [x] **`hasOwnAvatarReferenceAssets(clientId)`** helper + unit tests (US-8 stub — no job writes).
+- [x] **[SEC] Magic bytes** — detected MIME from file content, not client headers/extensions.
+- [x] **[SEC] Server-generated keys** — UUID + safe extension; original filename metadata only.
+- [x] **[SEC] Storage outside web root** — `storage_key` relative; no `public/` writes.
+- [x] **[SEC] Consent gate** on upload only when active consent exists.
+- [x] **[SEC] IDOR** — foreign asset id → 404; parameterized queries; service-role Node only.
+- [x] `revalidatePath` for Preferencias after upload/delete.
+- [x] Automated tests: upload happy path; oversize reject; bad MIME reject; no consent reject; delete removes file + row; serve rejects other user's asset; helper true/false counts.
 
 **AC mapping (for validator later):** ≥1 asset before production (helper); list + delete before generation; recoverable upload error; all `[SEC]` rows in USER_STORIES § US-3.3.
 
@@ -100,24 +100,24 @@ Concrete FE consumers: Preferencias RSC loader extended with avatar reference li
 
 All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
-- [ ] Create **`neuramark_media_assets`**: `client_id`, `asset_type`, `storage_key`, `metadata` jsonb, `created_at`, PK `id`. Index `(client_id, asset_type)` for list + count helper.
-- [ ] RLS: zero policies / deny-by-default; access only via service-role server.
-- [ ] **Do not** add Preferencias FK column unless CONTRACT amends (PO lean: client_id only).
-- [ ] **Do not** create `neuramark_video_jobs` or generation tables here.
-- [ ] **Do not** store absolute filesystem paths in `storage_key`.
+- [x] Create **`neuramark_media_assets`**: `client_id`, `asset_type`, `storage_key`, `metadata` jsonb, `created_at`, PK `id`. Index `(client_id, asset_type)` for list + count helper.
+- [x] RLS: zero policies / deny-by-default; access only via service-role server.
+- [x] **Do not** add Preferencias FK column unless CONTRACT amends (PO lean: client_id only).
+- [x] **Do not** create `neuramark_video_jobs` or generation tables here.
+- [x] **Do not** store absolute filesystem paths in `storage_key`.
 
 ---
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — avatar references only; shared upload stack; consent gate; no B-roll scope creep)
-- [ ] SECURITY.md (security-architect — magic bytes; storage outside web root; serve ownership; consent gate; S3 interface; virus scan lean)
-- [ ] CONTRACT.md authored (nextjs-backend) + FE signoff — *Reviewed by FE* line pending
-- [ ] BUILD (FE + BE + DB)
+- [x] SPEC-REVIEW.md (spec-guardian — avatar references only; shared upload stack; consent gate; no B-roll scope creep)
+- [x] SECURITY.md (security-architect — magic bytes; storage outside web root; serve ownership; consent gate; S3 interface; virus scan lean)
+- [x] CONTRACT.md authored (nextjs-backend) + FE signoff — Reviewed by FE: yes — 2026-08-29
+- [x] BUILD (FE + BE + DB)
 - [ ] VALIDATION.md
 - [ ] QA.md
 
-**Status:** PREP (2026-08-29). Gates not started. AC remain unchecked in `plan/USER_STORIES.md` until VALIDATION CLOSE.
+**Status:** BUILD (2026-08-29). FE + BE/DB slices complete. AC remain unchecked in `plan/USER_STORIES.md` until VALIDATION CLOSE.
 
 ---
 
