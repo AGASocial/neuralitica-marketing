@@ -1,14 +1,14 @@
 # US-16.2 — Publish weekly trend snapshot (manual)
 
-**Status:** PREP — story folder scaffolded; gates not started.
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium non-blocking, 4 Low; CLOSE yes). Builds FE `3660506` · BE `4474fb1`.
 
 **As an** Operator, **I want** to publish and edit a weekly **Snapshot de tendencias**, **so that** Strategy and Script agents can attach prioritized **Tácticas de tendencia** per Reel slot when relevant.
 
 Ship **Trend Intelligence manual V1**: Operator curates a weekly **Snapshot de tendencias** in `neuramark_trend_snapshots` with schema-validated **Táctica de tendencia** entries, Operator-only publish/edit UI (EN/ES), seed táctica `cold-open-mejor-toma`, and a server-only `getTrendSnapshotForWeek(weekStart)` contract for downstream agents. Content Strategy jobs (US-4.1), scraping-based Trend (P1), and auto-activation stay **out**.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-16.2 (unchecked until CLOSE).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-16.2 (checked on CLOSE).
 
-**This folder:** [`plan/stories/US-16.2/`](./) — `README.md` · `TASKS.md` (PREP) · [`SPEC-REVIEW.md`](./SPEC-REVIEW.md) (ALIGNED). `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` — **not yet authored**.
+**This folder:** [`plan/stories/US-16.2/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · [`CONTRACT.md`](./CONTRACT.md) (frozen) · `VALIDATION.md` · `QA.md`.
 
 **Branch:** `feature/US-16.2-trend-snapshot`
 
@@ -18,18 +18,20 @@ Ship **Trend Intelligence manual V1**: Operator curates a weekly **Snapshot de t
 
 ---
 
-## Gates (orchestrator)
+## Close verdicts
 
 | Gate | Verdict |
 |------|---------|
 | SPEC-REVIEW | ALIGNED |
-| SECURITY | Pending |
-| CONTRACT | Pending |
-| BUILD | Pending |
-| VALIDATION | Pending |
-| QA | Pending |
+| SECURITY | APPROVE WITH CONDITIONS |
+| CONTRACT | Frozen, Reviewed by FE (2026-08-29) |
+| BUILD | FE `3660506` · BE `4474fb1` |
+| VALIDATION | PASS WITH NOTES |
+| QA | APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium, 4 Low; CLOSE yes) |
 
-**Sprint 2b milestone:** **US-16.2 closes Trend half of Sprint 2b** (Playbook = US-16.1 ✅). After CLOSE: Phase 2 integration report, then **US-4.1** Content Strategy.
+**QA handoff (non-blocking):** optimistic concurrency on entry read-modify-write (Medium); add `/operator` + `/operator/:path*` `Cache-Control: no-store` in `next.config.ts`; CONTRACT duplicate-array `superRefine` on write schemas; isolated loader test for non-operator page gate; extend `trend.test.ts` for deactivate / `published_at` / mutation chain. Live Operator Trend CRUD smoke against staging Supabase recommended before production deploy.
+
+**Fase 2 milestone:** **US-16.2 closes Trend half of Sprint 2b** (Playbook = US-16.1 ✅). **Fase 2 complete** (Playbook + Trend; US-16.1–US-16.2). **Next:** Phase 2 integration report (`docs/development/integration-reports/PHASE-2.md` via integration-checker), then **US-X.4** / **US-4.1** Content Strategy.
 
 ---
 

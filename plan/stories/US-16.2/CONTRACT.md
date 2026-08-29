@@ -1,4 +1,4 @@
-Reviewed by FE: pending
+Reviewed by FE: yes — 2026-08-29 — FE will implement Operator Trend UI against this freeze (`/operator/trends` week list + publish flow, `/operator/trends/[weekStart]` entry list/editor, táctica form mirroring Playbook patterns with `duracion_ideal_seg` object, `prioridad_semana`, `formatos_playbook_compatibles[]` multi-select from filtered active Playbook slugs, deactivate confirm, snake_case entry payloads in forms, EN/ES chrome).
 
 # API Contract — US-16.2 Publish weekly trend snapshot (manual)
 
@@ -1188,7 +1188,7 @@ publishedAt, updatedAt, id
 - [x] Seed `week_start` + `cold-open-mejor-toma` payload frozen
 - [x] `revalidatePath` targets listed
 - [x] EN/ES Operator chrome; plain-text táctica fields
-- [ ] **Reviewed by FE:** pending
+- [x] **Reviewed by FE:** yes — 2026-08-29
 
 After FE signoff, BUILD may proceed. Any contract change after freeze requires an update to this file + FE re-signoff.
 

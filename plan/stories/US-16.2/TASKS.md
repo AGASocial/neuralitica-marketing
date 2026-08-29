@@ -106,13 +106,13 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 ## Gates (orchestrator)
 
 - [x] SPEC-REVIEW.md (spec-guardian — Trend schema vs SPEC §3; Operator-only; no Strategy jobs) — ALIGNED
-- [ ] SECURITY.md (security-architect — Operator gate; server-only agent helper; no client leakage of `ejemplo_referencia`; untrusted-input note for US-4.1+)
-- [ ] CONTRACT.md authored (nextjs-backend) + FE signoff
-- [ ] BUILD (FE + BE + DB + content-agents-engineer for agent helper)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] SECURITY.md (security-architect — Operator gate; server-only agent helper; no client leakage of `ejemplo_referencia`; untrusted-input note for US-4.1+) — APPROVE WITH CONDITIONS
+- [x] CONTRACT.md authored (nextjs-backend) + FE signoff — Reviewed by FE: yes 2026-08-29
+- [x] BUILD (FE + BE + DB + content-agents-engineer for agent helper) — FE `3660506` · BE `4474fb1`
+- [x] VALIDATION.md — PASS WITH NOTES
+- [x] QA.md — APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium, 4 Low; CLOSE yes)
 
-**Status:** PREP (2026-08-29). SPEC-REVIEW ALIGNED. AC remain unchecked in `plan/USER_STORIES.md`. **Next gate:** SECURITY (security-architect).
+**Status:** CLOSED (2026-08-29). All gates complete; AC checked in `plan/USER_STORIES.md`. **Fase 2 complete** (Playbook + Trend; US-16.1–US-16.2). **Next:** Phase 2 integration report (`docs/development/integration-reports/PHASE-2.md` via integration-checker), then **US-X.4** / **US-4.1**.
 
 ---
 
