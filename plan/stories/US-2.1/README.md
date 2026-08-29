@@ -1,6 +1,6 @@
 # US-2.1 — View canonical business profile
 
-**Status:** PREP — folder + TASKS only (no CONTRACT / SECURITY / code from PO).
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (4/4 AC; FE `76e84c3`, BE `10da494`).
 
 **As a** Cliente, **I want** to see a living summary of my business, **so that** I can confirm the system understood me correctly.
 

@@ -339,10 +339,10 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | `business_profiles` (client_id, fields JSON, version, updated_at) |
 
 **Acceptance criteria**
-- [ ] Profile renders all core fields from interview
-- [ ] Profile loads on dashboard as default post-onboarding view
-- [ ] Missing profile shows onboarding CTA, not empty crash
-- [ ] [SEC] Profile is fetched by the server-resolved current user; the endpoint does not accept an arbitrary `client_id` parameter from the browser
+- [x] Profile renders all core fields from interview
+- [x] Profile loads on dashboard as default post-onboarding view
+- [x] Missing profile shows onboarding CTA, not empty crash
+- [x] [SEC] Profile is fetched by the server-resolved current user; the endpoint does not accept an arbitrary `client_id` parameter from the browser
 
 **Depends on:** US-1.3 (creates/updates `neuramark_business_profiles`)
 
@@ -1203,7 +1203,7 @@ Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, (+ high-tier B-roll a
 
 Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.
 
-Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. **US-1.3** is CLOSED (`plan/stories/US-1.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; no fix loop). Builds FE `6f55df4` / BE `4b5de0c`. Next recommended: **US-2.1** (full Ficha viva page; Depends on US-1.3).
+Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. **US-1.3** is CLOSED (`plan/stories/US-1.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; no fix loop). Builds FE `6f55df4` / BE `4b5de0c`. **US-2.1** is CLOSED (`plan/stories/US-2.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Low non-blocking; no fix loop). Builds FE `76e84c3` / BE `10da494`. Next recommended: **US-2.2** (edit Ficha viva; Depends on US-2.1).
 
 ---
 
