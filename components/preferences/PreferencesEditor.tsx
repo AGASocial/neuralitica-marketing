@@ -8,6 +8,11 @@ import { Message } from "primereact/message";
 import { Toast } from "primereact/toast";
 
 import {
+  AvatarConsentSection,
+  type AvatarConsentCopy,
+} from "@/components/preferences/AvatarConsentSection";
+import type { AvatarConsentForClientResult } from "@/lib/contracts/avatar-consent";
+import {
   FACELESS_STYLE_DEFAULT,
   type FacelessStyle,
   type UpsertVisualPreferencesErrorCode,
@@ -79,10 +84,12 @@ type FormSnapshot = {
 
 type PreferencesEditorProps = {
   initial: PreferencesFormInitial;
+  consent: AvatarConsentForClientResult;
   locale: string;
   title: string;
   subtitle: string;
   copy: PreferencesEditorCopy;
+  consentCopy: AvatarConsentCopy;
 };
 
 function cloneModes(modes: VisualModality[]): VisualModality[] {
@@ -123,10 +130,12 @@ function sortModes(modes: VisualModality[]): VisualModality[] {
  */
 export function PreferencesEditor({
   initial,
+  consent,
   locale,
   title,
   subtitle,
   copy,
+  consentCopy,
 }: PreferencesEditorProps) {
   const toastRef = useRef<Toast>(null);
   const [server, setServer] = useState(() => snapshotFromInitial(initial));
@@ -139,7 +148,8 @@ export function PreferencesEditor({
   const [pending, setPending] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
 
-  const consentActive = initial.ownAvatarConsentActive;
+  const consentActive = consent.active;
+  const allowlistHasOwnAvatar = server.allowedModes.includes("own_avatar");
   const hasFaceless = draftModes.includes("faceless");
   const dirty =
     JSON.stringify(sortModes(draftModes)) !==
@@ -329,6 +339,14 @@ export function PreferencesEditor({
       {server.allowedModes.length === 0 && !dirty ? (
         <Message severity="info" text={copy.emptyHint} style={{ width: "100%" }} />
       ) : null}
+
+      <AvatarConsentSection
+        consent={consent}
+        locale={locale}
+        copy={consentCopy}
+        allowlistHasOwnAvatar={allowlistHasOwnAvatar}
+        preferencesPending={pending}
+      />
 
       <div
         style={{

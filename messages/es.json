@@ -355,6 +355,49 @@
       "ownAvatarConsentRequired": "El avatar propio autorizado requiere un consentimiento de avatar activo. Esa opción permanece no disponible hasta que se otorgue el consentimiento.",
       "internal": "Algo salió mal. Inténtalo de nuevo más tarde.",
       "facelessStyleRequired": "Elige un estilo de video sin rostro cuando Video sin rostro / B-roll esté seleccionado."
+    },
+    "consent": {
+      "title": "Consentimiento de avatar",
+      "disclosureV1": [
+        "Al otorgar el consentimiento de avatar, autorizas a Neuralitica a generar contenido en video que se parezca visualmente a ti usando referencias subidas — no grabación en vivo.",
+        "Confirmas que tienes derecho a autorizar el uso de tu imagen para Reels de marketing producidos bajo tu cuenta.",
+        "Puedes revocar este consentimiento en cualquier momento. La revocación detiene nuevas producciones con avatar propio; no elimina automáticamente el avatar propio autorizado de tus preferencias guardadas hasta que las edites.",
+        "Esta versión del aviso se registra para auditoría cuando otorgas el consentimiento."
+      ],
+      "affirmationLabel": "He leído y acepto el aviso de consentimiento de avatar anterior.",
+      "grant": "Otorgar consentimiento",
+      "revoke": "Revocar consentimiento",
+      "granting": "Otorgando…",
+      "revoking": "Revocando…",
+      "consentedAt": "Consentimiento otorgado el {date}.",
+      "versionLabel": "Versión del aviso: {version}",
+      "staleAllowlistWarning": "Tus preferencias guardadas aún incluyen avatar propio autorizado, pero el consentimiento ya no está activo. Quita esa modalidad u otorga el consentimiento de nuevo antes de guardar.",
+      "confirmRevoke": {
+        "header": "¿Revocar consentimiento de avatar?",
+        "message": "Las nuevas producciones con avatar propio quedarán bloqueadas. Tus preferencias guardadas no se cambian automáticamente — puede que debas editarlas por separado.",
+        "accept": "Revocar consentimiento",
+        "reject": "Mantener consentimiento"
+      },
+      "toastGrantSuccess": "Consentimiento de avatar otorgado. Ya puedes habilitar avatar propio autorizado en tus preferencias.",
+      "toastRevokeSuccess": "Consentimiento de avatar revocado. Las nuevas producciones con avatar propio quedan bloqueadas.",
+      "toastAlreadyActive": "El consentimiento de avatar ya está activo.",
+      "inactiveReason": {
+        "none": "Aún no has otorgado consentimiento de avatar.",
+        "revoked": "El consentimiento de avatar fue revocado. Otorga el consentimiento de nuevo para habilitar avatar propio autorizado.",
+        "version_mismatch": "El texto del aviso se actualizó. Otorga el consentimiento de nuevo para seguir usando avatar propio autorizado.",
+        "load_failed": "No pudimos cargar el estado del consentimiento de avatar. Actualiza la página para intentarlo de nuevo."
+      },
+      "errors": {
+        "validation": "Revisa tus selecciones de consentimiento e inténtalo de nuevo.",
+        "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+        "versionMismatch": "La versión del aviso cambió. Actualiza la página e inténtalo de nuevo.",
+        "affirmationRequired": "Marca la casilla de acuerdo antes de otorgar el consentimiento.",
+        "alreadyActive": "El consentimiento de avatar ya está activo.",
+        "notActive": "No hay consentimiento de avatar activo para revocar.",
+        "unauthenticated": "Inicia sesión para gestionar el consentimiento de avatar.",
+        "forbidden": "No tienes permiso para gestionar el consentimiento de avatar.",
+        "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
+      }
     }
   }
 }

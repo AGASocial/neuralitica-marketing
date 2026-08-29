@@ -5,10 +5,12 @@ import Link from "next/link";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 
+import type { AvatarConsentCopy } from "@/components/preferences/AvatarConsentSection";
 import {
   PreferencesEditor,
   type PreferencesFormInitial,
 } from "@/components/preferences/PreferencesEditor";
+import type { AvatarConsentForClientResult } from "@/lib/contracts/avatar-consent";
 import type {
   FacelessStyle,
   VisualModality,
@@ -61,8 +63,10 @@ type PreferencesCopy = {
 
 type PreferencesViewProps = {
   result: VisualPreferencesForClientResult;
+  consent: AvatarConsentForClientResult;
   locale: string;
   copy: PreferencesCopy;
+  consentCopy: AvatarConsentCopy;
 };
 
 /**
@@ -71,8 +75,10 @@ type PreferencesViewProps = {
  */
 export function PreferencesView({
   result,
+  consent,
   locale,
   copy,
+  consentCopy,
 }: PreferencesViewProps) {
   if (result.exists === false && "loadFailed" in result && result.loadFailed) {
     return (
@@ -109,9 +115,11 @@ export function PreferencesView({
   return (
     <PreferencesEditor
       initial={initial}
+      consent={consent}
       locale={locale}
       title={copy.title}
       subtitle={copy.subtitle}
+      consentCopy={consentCopy}
       copy={{
         updatedAt: copy.updatedAt,
         save: copy.save,

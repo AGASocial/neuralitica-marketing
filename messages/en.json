@@ -355,6 +355,49 @@
       "ownAvatarConsentRequired": "Authorized own avatar requires active avatar consent. That option stays unavailable until consent is granted.",
       "internal": "Something went wrong. Please try again later.",
       "facelessStyleRequired": "Choose a faceless video style when Faceless video / B-roll is selected."
+    },
+    "consent": {
+      "title": "Avatar consent",
+      "disclosureV1": [
+        "By granting avatar consent, you authorize Neuralitica to generate video content that visually resembles you using uploaded reference assets — not live recording.",
+        "You confirm you have the right to authorize use of your likeness for marketing Reels produced under your account.",
+        "You may revoke this consent at any time. Revocation stops new own-avatar productions; it does not automatically remove authorized own avatar from your saved preferences until you edit them.",
+        "This disclosure version is recorded for audit when you grant consent."
+      ],
+      "affirmationLabel": "I have read and agree to the avatar consent disclosure above.",
+      "grant": "Grant consent",
+      "revoke": "Revoke consent",
+      "granting": "Granting…",
+      "revoking": "Revoking…",
+      "consentedAt": "Consent granted on {date}.",
+      "versionLabel": "Disclosure version: {version}",
+      "staleAllowlistWarning": "Your saved preferences still include authorized own avatar, but consent is no longer active. Remove that modality or grant consent again before saving.",
+      "confirmRevoke": {
+        "header": "Revoke avatar consent?",
+        "message": "New own-avatar productions will be blocked. Your saved preferences are not changed automatically — you may still need to edit them separately.",
+        "accept": "Revoke consent",
+        "reject": "Keep consent"
+      },
+      "toastGrantSuccess": "Avatar consent granted. You can now enable authorized own avatar in your preferences.",
+      "toastRevokeSuccess": "Avatar consent revoked. New own-avatar productions are blocked.",
+      "toastAlreadyActive": "Avatar consent is already active.",
+      "inactiveReason": {
+        "none": "You have not granted avatar consent yet.",
+        "revoked": "Avatar consent was revoked. Grant consent again to enable authorized own avatar.",
+        "version_mismatch": "The disclosure text has been updated. Grant consent again to continue using authorized own avatar.",
+        "load_failed": "We could not load avatar consent status. Refresh the page to try again."
+      },
+      "errors": {
+        "validation": "Please check your consent selections and try again.",
+        "forbiddenFields": "Something went wrong. Please try again.",
+        "versionMismatch": "The disclosure version changed. Refresh the page and try again.",
+        "affirmationRequired": "Check the agreement box before granting consent.",
+        "alreadyActive": "Avatar consent is already active.",
+        "notActive": "There is no active avatar consent to revoke.",
+        "unauthenticated": "Sign in to manage avatar consent.",
+        "forbidden": "You do not have permission to manage avatar consent.",
+        "internal": "Something went wrong. Please try again later."
+      }
     }
   }
 }

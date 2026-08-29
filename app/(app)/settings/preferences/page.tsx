@@ -1,7 +1,10 @@
 import { PreferencesView } from "@/components/preferences/PreferencesView";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import type { AvatarConsentForClientResult } from "@/lib/contracts/avatar-consent";
+import { AVATAR_CONSENT_DISCLOSURE_V1 } from "@/lib/contracts/avatar-consent";
 import type { VisualPreferencesForClientResult } from "@/lib/contracts/visual-preferences";
 import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getAvatarConsentForClient } from "@/lib/visual-preferences/get-avatar-consent-for-client";
 import { getVisualPreferencesForClient } from "@/lib/visual-preferences/get-visual-preferences-for-client";
 
 export const dynamic = "force-dynamic";
@@ -34,8 +37,19 @@ export default async function PreferencesPage() {
     loadFailed: true,
   };
 
+  let consent: AvatarConsentForClientResult = {
+    active: false,
+    consentedAt: null,
+    consentVersion: null,
+    currentConsentVersion: AVATAR_CONSENT_DISCLOSURE_V1,
+    reason: "load_failed",
+  };
+
   try {
-    result = await getVisualPreferencesForClient();
+    [result, consent] = await Promise.all([
+      getVisualPreferencesForClient(),
+      getAvatarConsentForClient(),
+    ]);
   } catch (error) {
     if (isNextNavigationError(error)) {
       throw error;
@@ -46,6 +60,7 @@ export default async function PreferencesPage() {
   return (
     <PreferencesView
       result={result}
+      consent={consent}
       locale={locale}
       copy={{
         title: t.preferences.title,
@@ -68,6 +83,7 @@ export default async function PreferencesPage() {
         },
         error: t.preferences.error,
       }}
+      consentCopy={t.preferences.consent}
     />
   );
 }
