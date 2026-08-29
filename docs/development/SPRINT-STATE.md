@@ -4,25 +4,26 @@
 
 ```yaml
 current_phase: 1
-current_story: US-3.4
-feature_branch: feature/US-3.4-generic-avatar-rules
-story_status: VALIDATE
-last_completed_story: US-3.3
+current_story: null
+feature_branch: null
+story_status: PHASE_INTEGRATION
+last_completed_story: US-3.4
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T06:00:00Z
+updated_at: 2026-08-30T06:30:00Z
 ```
 
 ## Fase 1 — Base del Cliente
 
 | Story | Status | Notes |
 |-------|--------|-------|
-| US-14.1–US-14.5 Auth | done | |
-| US-1.1–US-2.3 / US-3.1–US-3.3 | done | |
-| US-3.4 Enforce generic avatar rules | VALIDATE | FE `a0b0a80` · BE `eadf356` |
-| Fase 1 integration | pending | After US-3.4 |
+| US-14.x Auth | done | |
+| US-1.x Interview | done | |
+| US-2.x Profile | done | |
+| US-3.1–US-3.4 Preferencias | done | Module complete |
+| Phase integration | pending | integration-checker → PHASE-1.md |
 
 ## Historial reciente
 
-- 2026-08-29 · US-3.4 BUILD: FE `a0b0a80` · BE `eadf356` (91/91). Gate → VALIDATE.
-- 2026-08-29 · Idle tick started US-3.4 pipeline.
+- 2026-08-29 · Idle tick: US-3.4 CLOSE (FE `a0b0a80` · BE `eadf356`). Fase 1 stories done → PHASE_INTEGRATION.
+- 2026-08-29 · US-3.3 CLOSE.

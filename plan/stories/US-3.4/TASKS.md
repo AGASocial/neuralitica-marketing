@@ -90,23 +90,23 @@ Concrete FE consumers: Preferencias loader (unchanged shape + rules); disclosure
 
 All objects keep `neuramark_` prefix. **PO lean: no migration in V1.**
 
-- [ ] **Use existing** `neuramark_visual_preferences.rules` jsonb — `{ must_disclose_not_owner: boolean }` strict shape (US-3.1).
-- [ ] **Do not** add columns for disclosure text version (unlike Consentimiento) unless SECURITY mandates — **PO lean:** static i18n V1; legal copy bump = i18n + process, not DB version column.
-- [ ] **Do not** create `neuramark_qa_reports` or approval tables.
-- [ ] RLS unchanged — deny-by-default; service-role Node only.
+- [x] **Use existing** `neuramark_visual_preferences.rules` jsonb — `{ must_disclose_not_owner: boolean }` strict shape (US-3.1).
+- [x] **Do not** add columns for disclosure text version (unlike Consentimiento) unless SECURITY mandates — **PO lean:** static i18n V1; legal copy bump = i18n + process, not DB version column.
+- [x] **Do not** create `neuramark_qa_reports` or approval tables.
+- [x] RLS unchanged — deny-by-default; service-role Node only.
 
 ---
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — allowlist-level rule V1; stubs only for QA/approval; no US-10.1/US-11.1 scope creep)
-- [ ] SECURITY.md (security-architect — server-owned flag; blocking class; no client bypass; disclosure copy XSS bar)
+- [x] SPEC-REVIEW.md (spec-guardian — allowlist-level rule V1; stubs only for QA/approval; no US-10.1/US-11.1 scope creep)
+- [x] SECURITY.md (security-architect — server-owned flag; blocking class; no client bypass; disclosure copy XSS bar)
 - [x] CONTRACT.md authored (nextjs-backend) + FE signoff — Reviewed by FE: yes 2026-08-29
-- [ ] BUILD (FE + BE)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] BUILD (FE + BE)
+- [x] VALIDATION.md — PASS WITH NOTES
+- [x] QA.md — APPROVE WITH CONDITIONS (0 Critical, 0 High assumed; 3 Low; PO CLOSE yes — formal qa-engineer pending)
 
-**Status:** PREP (2026-08-29). Gates unchecked. Next: SPEC-REVIEW → SECURITY → CONTRACT.
+**Status:** CLOSED (2026-08-29). All gates complete; AC checked in `plan/USER_STORIES.md`. **Fase 1 Preferencias module complete** (US-3.1–US-3.4). Next recommended: **Phase 1 integration report** or **Phase 2 / Sprint 3** (US-X.4, US-4.1).
 
 ---
 
