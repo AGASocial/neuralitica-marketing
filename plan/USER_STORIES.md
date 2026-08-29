@@ -482,6 +482,68 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 
 ---
 
+## Phase 2 — Playbook + Tendencias (PLAN Fase 2)
+
+> **PLAN/TASKS alignment:** This section is **PLAN Fase 2** (`TASKS.md` § Fase 2 — Playbook + Tendencias). It must complete before Content Strategy (US-4.1) consumes playbook slugs and weekly trend snapshots. The **Estrategia y guiones** agents below remain the next backlog slice after Playbook + Trend land.
+
+### Module: Content Playbook (P0)
+
+#### US-16.1 — Curate evergreen Reel format catalog (Playbook)
+**As an** Operator, **I want** to create and maintain a versioned catalog of **Formatos de Reel**, **so that** Strategy, Script, and Assembly agents use consistent structure and hints instead of ad-hoc prompts.
+
+| Owner | Work |
+|-------|------|
+| **FE** | Operator-only Playbook UI: list/create/edit/archive formatos; form fields map to schema (slug, titulo, explicacion, estructura beats, hook_type, duracion_ideal_seg, modalidades_recomendadas, rubros, guion_hints, editing_hints, cta_tipo, ejemplo_referencia); loading/empty/error states; EN/ES copy |
+| **BE** | Operator-gated Server Actions / Route Handlers for CRUD; Zod schema for **Formato de Reel**; server helper `getPlaybookForAgents()` (server-only, typed, minimal agent DTO); slug uniqueness; optimistic versioning on update |
+| **DB** | `content_playbooks` → `neuramark_content_playbooks` (slug UNIQUE, version, payload JSON schema-validated, `active`, `created_at`, `updated_at`, optional `archived_at`); seed migration for initial formatos |
+
+**Acceptance criteria**
+- [ ] Operator can list, create, edit, and archive formatos; archived formatos are not offered to agents but history remains queryable
+- [ ] Each formato stores SPEC fields: `slug`, `titulo`, `explicacion`, `estructura` (ordered beats), `hook_type`, `duracion_ideal_seg`, `modalidades_recomendadas`, `rubros` (empty = all rubros), `guion_hints`, optional `editing_hints`, `cta_tipo`, optional Operator-only `ejemplo_referencia`
+- [ ] Seed includes at minimum: tip rápido, antes/después, objeción, oferta local, mito vs realidad (stable slugs frozen in migration)
+- [ ] `getPlaybookForAgents()` returns active formatos only, schema-validated, server-only; excludes Operator-only reference fields from agent DTO
+- [ ] Slug is immutable after create; duplicate slug rejected server-side
+- [ ] Copy exists in English and Spanish
+- [ ] Operator-only: all Playbook mutations and list/detail endpoints reject non-operator sessions server-side (403)
+- [ ] [SEC] Playbook payload re-validated server-side on every write (Zod); client-side validation is presentation only
+- [ ] [SEC] `getPlaybookForAgents()` is server-only (never imported into Client Components) and is the only path agents use to read playbook data
+- [ ] [SEC] `ejemplo_referencia` and other Operator-only fields never appear in client-session responses or agent DTOs
+- [ ] [SEC] No LLM calls, video jobs, or client-scoped mutations in this story — catalog CRUD + read contract only
+
+**Depends on:** Fase 1 complete (US-1.3, US-2.3, US-3.4, US-14.5 — operator gate + profile context exist; no Strategy/Script jobs yet)  
+**Priority:** P0
+
+---
+
+### Module: Trend Intelligence — manual V1 (P0)
+
+#### US-16.2 — Publish weekly trend snapshot (manual)
+**As an** Operator, **I want** to publish and edit a weekly **Snapshot de tendencias**, **so that** Strategy and Script agents can attach prioritized **Tácticas de tendencia** per Reel slot when relevant.
+
+| Owner | Work |
+|-------|------|
+| **FE** | Operator-only Trend UI: pick `week_start` (ISO week); list/add/edit/deactivate entries; form for **Táctica de tendencia** fields; show `prioridad_semana` (1–5); loading/empty/error states; EN/ES copy |
+| **BE** | Operator-gated Server Actions for publish/update snapshot; Zod schema for snapshot + entries; `getTrendSnapshotForWeek(weekStart)` server helper (server-only); enforce one active snapshot per `week_start`; validate `formatos_playbook_compatibles[]` slugs against active Playbook |
+| **DB** | `trend_snapshots` → `neuramark_trend_snapshots` (`week_start` UNIQUE, `entries` JSON array, `published_at`, `updated_at`); seed migration for canonical `cold-open-mejor-toma` entry |
+
+**Acceptance criteria**
+- [ ] Operator can publish or update the snapshot for a given `week_start`; at most one active snapshot row per week
+- [ ] Each **Táctica de tendencia** entry stores SPEC fields: `slug`, `titulo`, `week_start`, `activo`, `prioridad_semana` (1–5), `fuente` (`manual` \| `scraping` \| `operator_review` — V1 writes `manual` only), `explicacion`, optional `evitar`, optional Operator-only `ejemplo_referencia`, `hook_type`, `estructura[]`, `guion_hints[]`, `editing_hints[]`, `duracion_ideal_seg` (e.g. `{ cold_open: 2, total: 25 }`), `modalidades_recomendadas`, `rubros[]`, `formatos_playbook_compatibles[]`
+- [ ] Seed includes canonical V1 example `cold-open-mejor-toma` with cold-open + rewind editing hints
+- [ ] `getTrendSnapshotForWeek(weekStart)` returns the snapshot for that week or a safe empty state; server-only; entries filtered to `activo = true` for agent consumption
+- [ ] `formatos_playbook_compatibles` slugs validated against active Playbook rows (reject unknown slugs on write)
+- [ ] Copy exists in English and Spanish
+- [ ] Operator-only: all Trend mutations and reads for Operator UI reject non-operator sessions server-side (403)
+- [ ] [SEC] Snapshot and entry payloads re-validated server-side on every write (Zod); `prioridad_semana` bounded 1–5
+- [ ] [SEC] `getTrendSnapshotForWeek()` is server-only and is the only path agents use to read trend data; no scraping agent or auto-activation in V1
+- [ ] [SEC] Operator-only reference fields (`ejemplo_referencia`) never appear in client-session responses or agent DTOs
+- [ ] [SEC] Trend data is treated as untrusted input when later injected into LLM prompts (storage story only — prompt containment verified in US-4.1+)
+
+**Depends on:** US-16.1, Fase 1 complete (US-14.5 operator gate)  
+**Priority:** P0
+
+---
+
 ## Phase 2 — Estrategia y guiones
 
 ### Module: Content Strategy Agent (P0)
@@ -506,7 +568,7 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 - [ ] [SEC] Client-authored profile text is passed to the LLM as clearly delimited data, and agent output is validated against a typed brief schema before storage (prompt-injection containment: malformed or out-of-schema output is rejected, not stored)
 - [ ] [SEC] "Generate strategy" is rate-limited/debounced server-side per client to prevent runaway LLM spend from repeated clicks or scripted calls
 
-**Depends on:** US-2.3, US-3.1, US-X.4
+**Depends on:** US-2.3, US-3.1, US-16.1, US-16.2, US-X.4
 
 ---
 
@@ -1194,6 +1256,7 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 Sprint 1: US-X.3, US-X.1, US-1.1, US-1.2, US-1.3, US-2.1, US-2.2, US-2.3
 Sprint 1b (Auth): US-14.1, US-14.2, US-14.4, US-14.5, US-14.3
 Sprint 2: US-3.1, US-3.2, US-3.3, US-3.4, US-X.2 (onboarding screens)
+Sprint 2b (Playbook + Trend): US-16.1, US-16.2
 Sprint 3: US-X.4, US-4.1, US-4.2, US-5.1, US-5.2, US-6.1, US-6.2
 Sprint 4: US-7.1, US-7.2, US-8.1, US-8.2, US-8.6, US-8.3, US-8.4, US-9.3
 Sprint 5: US-8.5, US-9.1, US-9.2, US-7.3, US-7.4, US-10.1, US-10.2
@@ -1203,7 +1266,7 @@ Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, (+ high-tier B-roll a
 
 Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.
 
-Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. **US-1.3** is CLOSED (`plan/stories/US-1.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; no fix loop). Builds FE `6f55df4` / BE `4b5de0c`. **US-2.1** is CLOSED (`plan/stories/US-2.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Low non-blocking; no fix loop). Builds FE `76e84c3` / BE `10da494`. **US-2.2** is CLOSED (`plan/stories/US-2.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 2 Low non-blocking; no fix loop). Builds FE `6b99910` / BE `bd7ad08`. **US-2.3** is CLOSED (`plan/stories/US-2.3/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 0 Medium, 1 Low non-blocking; no fix loop). Build BE `bf19e95` (no FE). Sprint 1 Interview Builder complete. **US-3.1** is CLOSED (`plan/stories/US-3.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 5 Low; CLOSE yes). Builds FE `c0caaee` / BE `6e2121c`. **US-3.2** is CLOSED (`plan/stories/US-3.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; CLOSE yes). Builds FE `7a11571` / BE `ff280ed`. **US-3.3** is CLOSED (`plan/stories/US-3.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 0 Medium, 3 Low; CLOSE yes). Builds FE `ca18258` / BE `63c8c64`. **US-3.4** is CLOSED (`plan/stories/US-3.4/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High assumed — formal QA pending; PO CLOSE yes). Builds FE `a0b0a80` / BE `eadf356`. **Fase 1 Preferencias module complete** (US-3.1–US-3.4). Next recommended: **Phase 1 integration report** (`docs/development/integration-reports/PHASE-1.md` via integration-checker) **or** **Phase 2 / Sprint 3** (US-X.4, US-4.1).
+Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. **US-1.3** is CLOSED (`plan/stories/US-1.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; no fix loop). Builds FE `6f55df4` / BE `4b5de0c`. **US-2.1** is CLOSED (`plan/stories/US-2.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Low non-blocking; no fix loop). Builds FE `76e84c3` / BE `10da494`. **US-2.2** is CLOSED (`plan/stories/US-2.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 2 Low non-blocking; no fix loop). Builds FE `6b99910` / BE `bd7ad08`. **US-2.3** is CLOSED (`plan/stories/US-2.3/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 0 Medium, 1 Low non-blocking; no fix loop). Build BE `bf19e95` (no FE). Sprint 1 Interview Builder complete. **US-3.1** is CLOSED (`plan/stories/US-3.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 5 Low; CLOSE yes). Builds FE `c0caaee` / BE `6e2121c`. **US-3.2** is CLOSED (`plan/stories/US-3.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; CLOSE yes). Builds FE `7a11571` / BE `ff280ed`. **US-3.3** is CLOSED (`plan/stories/US-3.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 0 Medium, 3 Low; CLOSE yes). Builds FE `ca18258` / BE `63c8c64`. **US-3.4** is CLOSED (`plan/stories/US-3.4/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High assumed — formal QA pending; PO CLOSE yes). Builds FE `a0b0a80` / BE `eadf356`. **Fase 1 Preferencias module complete** (US-3.1–US-3.4). Next recommended: **Phase 1 integration report** (`docs/development/integration-reports/PHASE-1.md` via integration-checker) **then** **Fase 2 Playbook + Trend** — start **US-16.1** (`plan/stories/US-16.1/`), then **US-16.2**, before Sprint 3 strategy agents (US-X.4, US-4.1).
 
 ---
 
