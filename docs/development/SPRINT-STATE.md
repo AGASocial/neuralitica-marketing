@@ -4,29 +4,29 @@
 
 ```yaml
 current_phase: 2
-current_story: null
-feature_branch: null
-story_status: SELECT
+current_story: US-16.1
+feature_branch: feature/US-16.1-content-playbook
+story_status: PREP
 last_completed_story: US-3.4
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T07:00:00Z
+updated_at: 2026-08-30T07:30:00Z
 ```
 
 ## Fase 1 — Base del Cliente
 
 | Status | Notes |
 |--------|-------|
-| **complete** | integration-checker CONNECTED (`PHASE-1.md`) · 0 blocking gaps |
+| **complete** | integration CONNECTED (`PHASE-1.md`) |
 
-## Fase 2 — Inteligencia de contenido (manual V1)
+## Fase 2 — Playbook + Tendencias (manual V1)
 
 | Story | Status | Notes |
 |-------|--------|-------|
-| Content Playbook | pending | **Next SELECT** (PLAN Fase 2; may need PO stories) |
-| Trend Intelligence manual | pending | |
+| US-16.1 Content Playbook | PREP | Branch `feature/US-16.1-content-playbook` |
+| US-16.2 Trend snapshot manual | pending | Depends US-16.1 |
 
 ## Historial reciente
 
-- 2026-08-29 · Idle tick: Fase 1 integration CONNECTED. Phase 2 SELECT.
-- 2026-08-29 · US-3.4 CLOSE. Fase 1 stories complete.
+- 2026-08-29 · Idle tick: PO added US-16.1/US-16.2; US-16.1 PREP. Gate → SPEC next.
+- 2026-08-29 · Fase 1 integration CONNECTED. Phase 2 SELECT.
