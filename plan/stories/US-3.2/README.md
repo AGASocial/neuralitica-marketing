@@ -1,20 +1,35 @@
 # US-3.2 — Capture consent for own avatar
 
-**Status:** PREP — gates not started.
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (8/8 AC; FE `7a11571`, BE `ff280ed`).
 
 **As a** Cliente, **I want** to explicitly authorize use of my likeness, **so that** Avatar propio autorizado is legally and ethically enabled.
 
 Ship **Consentimiento de avatar**: explicit affirmative grant (+ revoke) of likeness authorization for Avatar propio autorizado, with disclosure text version stored for audit, append-only ledger semantics, EN/ES UI, and server-side enforcement that Preferencias cannot persist `own_avatar` without active consent. Replace US-3.1’s soft fail-closed probe (missing table) with a real ledger behind hardened `hasActiveAvatarConsent`. Video-job creation re-check and revoke→cancel queued own-avatar jobs are **stubs/design hooks** until US-8.x / US-10.x exist — no job cancel UI here. Reference uploads (US-3.3) stay **out**.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-3.2 (unchecked until VALIDATE/CLOSE — do **not** check off in PREP).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-3.2 (checked on CLOSE).
 
-**This folder:** [`plan/stories/US-3.2/`](./) — `README.md` · `TASKS.md` · (later) `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
+**This folder:** [`plan/stories/US-3.2/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · [`CONTRACT.md`](./CONTRACT.md) (frozen) · `VALIDATION.md` · `QA.md`.
 
 **Depends on:** [US-3.1](../US-3.1/) ✅ CLOSED — Preferencias UI at `/settings/preferences`, enum/allowlist SEC, soft `hasActiveAvatarConsent` fail-closed probe. Runtime identity: [US-14.5](../US-14.5/) (`getCurrentUser()` / `requireActive()`). Continuity: Preferencias upsert must keep rejecting `own_avatar` without active consent (now against real ledger).
 
 **Unblocks:** [US-3.3](../../USER_STORIES.md) (reference assets — uploads only when consent active) · US-8.x / US-10.x (live consent re-check at Job create; revoke cancels queued own-avatar jobs).
 
 **Carry-forward (US-3.1 QA Medium):** harden `hasActiveAvatarConsent` for append-only multi-row ledger (`revoked_at IS NULL`, order, limit 1) — **first BE task** before grant/revoke APIs land.
+
+---
+
+## Close verdicts
+
+| Gate | Verdict |
+|------|---------|
+| SPEC-REVIEW | ALIGNED (Consentimiento append-only; Preferencias continuity; job stubs) |
+| SECURITY | APPROVE WITH CONDITIONS |
+| CONTRACT | Frozen, Reviewed by FE (2026-08-29) |
+| BUILD | FE `7a11571` · BE `ff280ed` |
+| VALIDATION | PASS WITH NOTES |
+| QA | APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; CLOSE yes) |
+
+**QA handoff (non-blocking):** fix version-mismatch re-consent path **before any `AVATAR_CONSENT_DISCLOSURE_V*` bump** (QA Medium #1); optional Low polish (unify version constant; `server-only` on Preferencias helpers). Wire real job re-check + cancel at US-8.x / US-10.x.
 
 ---
 

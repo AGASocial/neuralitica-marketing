@@ -103,14 +103,14 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — Consentimiento append-only; `neuramark_avatar_consents`; re-check en Job; revocación cancela cola; Preferencias reject without consent)
-- [ ] SECURITY.md (security-architect — append-only; version; explicit grant; revoke cancel stub; IDOR; no browser Supabase)
-- [ ] CONTRACT.md authored (nextjs-backend) + FE signoff
-- [ ] BUILD (FE + BE + DB)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] SPEC-REVIEW.md (spec-guardian — Consentimiento append-only; `neuramark_avatar_consents`; re-check en Job; revocación cancela cola; Preferencias reject without consent) — ALIGNED
+- [x] SECURITY.md (security-architect — append-only; version; explicit grant; revoke cancel stub; IDOR; no browser Supabase) — APPROVE WITH CONDITIONS
+- [x] CONTRACT.md authored (nextjs-backend) + FE signoff — Frozen, Reviewed by FE (2026-08-29)
+- [x] BUILD (FE + BE + DB) — FE `7a11571` · BE `ff280ed`
+- [x] VALIDATION.md — PASS WITH NOTES
+- [x] QA.md — APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; CLOSE can proceed)
 
-**Status:** PREP. AC in `plan/USER_STORIES.md` remain **unchecked**. Do not edit `docs/development/SPRINT-STATE.md` from this PREP write.
+**Status:** CLOSED (2026-08-29). All gates complete; AC checked in `plan/USER_STORIES.md`. Next recommended: **US-3.3**.
 
 ---
 

@@ -421,14 +421,14 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | `avatar_consents` (client_id, consented_at, consent_version, revoked_at) |
 
 **Acceptance criteria**
-- [ ] Own avatar cannot be selected without consent
-- [ ] Consent version string stored for audit
-- [ ] Revoking consent blocks new own-avatar generations
-- [ ] [SEC] Consent records are append-only: revocation sets `revoked_at` on the existing row; consent rows are never updated in place or deleted, preserving a full audit trail
-- [ ] [SEC] The exact disclosure text version shown at consent time (`consent_version`) is stored with the record; changing the disclosure text requires re-consent under a new version
-- [ ] [SEC] Consent status is re-checked server-side at video-job creation time (not only at mode selection), so a revocation between selection and generation still blocks the job
-- [ ] [SEC] Consent can only be granted via an explicit affirmative action recorded with server timestamp; no endpoint or Server Action can set consent as a side effect of another operation
-- [ ] [SEC] Revocation takes effect immediately for new jobs and cancels queued (not yet submitted) own-avatar jobs; in-flight provider jobs are flagged for operator review
+- [x] Own avatar cannot be selected without consent
+- [x] Consent version string stored for audit
+- [x] Revoking consent blocks new own-avatar generations
+- [x] [SEC] Consent records are append-only: revocation sets `revoked_at` on the existing row; consent rows are never updated in place or deleted, preserving a full audit trail
+- [x] [SEC] The exact disclosure text version shown at consent time (`consent_version`) is stored with the record; changing the disclosure text requires re-consent under a new version
+- [x] [SEC] Consent status is re-checked server-side at video-job creation time (not only at mode selection), so a revocation between selection and generation still blocks the job
+- [x] [SEC] Consent can only be granted via an explicit affirmative action recorded with server timestamp; no endpoint or Server Action can set consent as a side effect of another operation
+- [x] [SEC] Revocation takes effect immediately for new jobs and cancels queued (not yet submitted) own-avatar jobs; in-flight provider jobs are flagged for operator review
 
 **Security note:** likeness consent is the legal backbone of own-avatar mode — treat `avatar_consents` as an immutable ledger, and make US-8.x/US-10.x enforcement read from it live, never from a cached flag.
 
@@ -1203,7 +1203,7 @@ Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, (+ high-tier B-roll a
 
 Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.
 
-Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. **US-1.3** is CLOSED (`plan/stories/US-1.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; no fix loop). Builds FE `6f55df4` / BE `4b5de0c`. **US-2.1** is CLOSED (`plan/stories/US-2.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Low non-blocking; no fix loop). Builds FE `76e84c3` / BE `10da494`. **US-2.2** is CLOSED (`plan/stories/US-2.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 2 Low non-blocking; no fix loop). Builds FE `6b99910` / BE `bd7ad08`. **US-2.3** is CLOSED (`plan/stories/US-2.3/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 0 Medium, 1 Low non-blocking; no fix loop). Build BE `bf19e95` (no FE). Sprint 1 Interview Builder complete. **US-3.1** is CLOSED (`plan/stories/US-3.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 5 Low; CLOSE yes). Builds FE `c0caaee` / BE `6e2121c`. Next recommended: **US-3.2** (Consentimiento de avatar; Depends on US-3.1; Sprint 2).
+Sprint 1 Interview Builder: **US-1.1** is CLOSED (`plan/stories/US-1.1/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 1 Low test-gap, no fix loop). **US-1.2** is CLOSED (`plan/stories/US-1.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Low non-blocking, no fix loop). Builds FE `37f1f81` / BE `9abfb90`. **US-1.3** is CLOSED (`plan/stories/US-1.3/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; no fix loop). Builds FE `6f55df4` / BE `4b5de0c`. **US-2.1** is CLOSED (`plan/stories/US-2.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Low non-blocking; no fix loop). Builds FE `76e84c3` / BE `10da494`. **US-2.2** is CLOSED (`plan/stories/US-2.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 2 Low non-blocking; no fix loop). Builds FE `6b99910` / BE `bd7ad08`. **US-2.3** is CLOSED (`plan/stories/US-2.3/`). VALIDATE PASS WITH NOTES; QA APPROVE (0 Critical, 0 High, 0 Medium, 1 Low non-blocking; no fix loop). Build BE `bf19e95` (no FE). Sprint 1 Interview Builder complete. **US-3.1** is CLOSED (`plan/stories/US-3.1/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 5 Low; CLOSE yes). Builds FE `c0caaee` / BE `6e2121c`. **US-3.2** is CLOSED (`plan/stories/US-3.2/`). VALIDATE PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; CLOSE yes). Builds FE `7a11571` / BE `ff280ed`. Next recommended: **US-3.3** (Upload avatar reference assets; Depends on US-3.2; Sprint 2).
 
 ---
 
