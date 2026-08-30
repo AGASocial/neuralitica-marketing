@@ -246,12 +246,30 @@ export type OperatorQaReportSummaryDto = z.infer<
   typeof operatorQaReportSummaryDtoSchema
 >;
 
+/**
+ * Override audit row (US-10.2). Defined here so detail DTO stays one import path;
+ * full override mutation schemas live in lib/contracts/qa-override.ts.
+ */
+export const operatorQaOverrideDtoSchema = z
+  .object({
+    overrideId: z.string().uuid(),
+    checkKey: qaCheckKeySchema,
+    reason: z.string().min(1).max(500),
+    createdAt: z.string().datetime({ offset: true }),
+    operatorDisplayName: z.string().min(1).max(200).optional(),
+  })
+  .strict();
+
+export type OperatorQaOverrideDto = z.infer<typeof operatorQaOverrideDtoSchema>;
+
 export const operatorQaReportDetailDtoSchema = z
   .object({
     qaReportId: z.string().uuid(),
     assembledReelId: z.string().uuid(),
     status: qaReportStatusSchema,
     checks: z.array(qaCheckResultSchema),
+    /** Chronological ASC; [] when none. Required from US-10.2 onward. */
+    overrides: z.array(operatorQaOverrideDtoSchema).default([]),
     createdAt: z.string().datetime({ offset: true }),
     updatedAt: z.string().datetime({ offset: true }),
   })
@@ -278,6 +296,10 @@ export const qaGateStatusSchema = z
     hasBlockingFailures: z.boolean(),
     hasOverridableFailures: z.boolean(),
     qaReportId: z.string().uuid().nullable(),
+    /** Distinct overridden check keys for this report (US-10.2). */
+    overriddenCheckKeys: z.array(z.string()).default([]),
+    /** Failed overridable keys lacking ≥1 override row (US-10.2). */
+    uncoveredFailedCheckKeys: z.array(z.string()).default([]),
   })
   .strict();
 

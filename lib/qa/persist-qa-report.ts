@@ -79,6 +79,8 @@ export function toOperatorQaReportDetailDto(
     assembledReelId: row.assembledReelId,
     status: row.status,
     checks: row.checks,
+    // US-10.2 BUILD batch-loads ledger; empty until override attach ships.
+    overrides: [],
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

@@ -1,6 +1,6 @@
 # US-10.2 — Operator override with reason
 
-**Status:** PREP (2026-08-30) — story folder + PO freezes. Do **not** check off AC. CONTRACT / SECURITY / code out of PREP.
+**Status:** CONTRACT frozen (2026-08-30) — Reviewed by FE: **pending**. Do **not** check off AC. BUILD after FE signoff.
 
 **As a** Operator, **I want** to override a failed QA check with documented reason, **so that** edge cases do not stall delivery.
 
@@ -8,7 +8,7 @@ Ship **per-check Operator override** for failed **overridable** Veredicto QA che
 
 **Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-10.2 (do **not** check off in PREP).
 
-**This folder:** [`plan/stories/US-10.2/`](./) — `README.md` · `TASKS.md` (PREP). Next gates: SPEC-REVIEW → SECURITY → CONTRACT → BUILD.
+**This folder:** [`plan/stories/US-10.2/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md`. Next: FE Reviewed by → BUILD.
 
 **Branch:** `feature/US-10.2-qa-override`
 
@@ -110,15 +110,15 @@ _Evitar:_ “QA verdict” as product noun; admin/staff; exposing override as Cl
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend) + FE signoff
+- [x] SPEC-REVIEW.md (spec-guardian) — ALIGNED `6ccf44f`
+- [x] SECURITY.md (security-architect) — APPROVE WITH CONDITIONS `66b824f`
+- [x] CONTRACT.md (nextjs-backend) — Frozen 2026-08-30 · Reviewed by FE: **pending**
 - [ ] BUILD (nextjs-backend + nextjs-frontend)
 - [ ] VALIDATION.md
 - [ ] QA.md
 - [ ] CLOSE — check AC in USER_STORIES only after validator
 
-**Next after PREP:** SPEC-REVIEW → SECURITY → CONTRACT.
+**Next:** FE CONTRACT signoff → BUILD.
 
 ---
 

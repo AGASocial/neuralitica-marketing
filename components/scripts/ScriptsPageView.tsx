@@ -1163,6 +1163,7 @@ export function ScriptsPageView({
       assembledReelId: result.assembledReelId,
       status: result.status,
       checks: result.checks,
+      overrides: existing?.overrides ?? [],
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     };

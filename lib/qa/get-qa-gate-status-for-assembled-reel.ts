@@ -21,6 +21,8 @@ function notReady(partial?: Partial<QaGateStatus>): QaGateStatus {
     hasBlockingFailures: false,
     hasOverridableFailures: false,
     qaReportId: null,
+    overriddenCheckKeys: [],
+    uncoveredFailedCheckKeys: [],
     ...partial,
   };
 }
@@ -61,11 +63,15 @@ export async function getQaGateStatusForAssembledReel(
   }
 
   const flags = qaFailureFlags(report.checks);
+  // Phase A readiness until US-10.2 BUILD wires ledger coverage.
+  // Schema already exposes US-10.2 key-list fields (empty until override BUILD).
   return {
     ready: isQaReportReadyPhaseA(report.status),
     status: report.status,
     hasBlockingFailures: flags.hasBlockingFailures,
     hasOverridableFailures: flags.hasOverridableFailures,
     qaReportId: report.id,
+    overriddenCheckKeys: [],
+    uncoveredFailedCheckKeys: [],
   };
 }
