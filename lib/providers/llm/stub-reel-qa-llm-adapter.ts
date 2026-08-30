@@ -136,6 +136,7 @@ export function defaultStubReelQaJson(input: LlmCompletionInput): string {
         haystack.includes("voz generada");
       const mustDisclose =
         /Trusted mustDiscloseNotOwner:\s*true/.test(input.systemPrompt) ||
+        /Trusted usedTts:\s*true/.test(input.systemPrompt) ||
         /Trusted usesSyntheticVoice:\s*true/.test(input.systemPrompt) ||
         /Trusted modalidad:\s*generic_avatar/.test(input.systemPrompt);
 
