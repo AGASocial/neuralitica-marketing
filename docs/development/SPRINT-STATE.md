@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-10.1
-story_status: PREP
+story_status: SPEC
 feature_branch: feature/US-10.1-automated-qa
 last_completed_story: US-9.2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T19:45:00Z
+updated_at: 2026-08-30T19:50:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -36,7 +36,7 @@ updated_at: 2026-08-30T19:45:00Z
 | US-9.3 Text-to-speech for voiceover | done | Phase A `dfdd08b` · adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813` · VALIDATION `1715048` · QA `e9c1833` · CLOSE 5/6 AC (ElevenLabs Phase B defer) |
 | US-9.1 Assemble final 9:16 Reel | done | Phase A `4853871` · worker `f74570f`/`153b73a` · BE `7189f4b` · FE `9e7142c` · VALIDATION `03dff73` · QA `5c0ec7e` · CLOSE 5/5 AC (faceless B-roll Phase B defer) |
 | US-9.2 Add subtitles, logo, and cover | done | worker `7518bc5` · BE `36e9dd3`+fix `757da6a` · FE `a15921b` · VALIDATION `4378c65` · QA `c0d6f66` · CLOSE `92b196a` |
-| US-10.1 Run automated QA | PREP | branch `feature/US-10.1-automated-qa` |
+| US-10.1 Run automated QA | SPEC | PREP `d3d2985` · SPEC+SECURITY next |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -48,6 +48,7 @@ updated_at: 2026-08-30T19:45:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-10.1 PREP `d3d2985`; story_status SPEC → SPEC+SECURITY next.
 - 2026-08-30 · US-10.1 SELECT → PREP. Branch `feature/US-10.1-automated-qa` from main; deps US-9.2 ✅ · US-6.1 ✅ · US-3.4 ✅ · US-X.4 ✅.
 - 2026-08-30 · US-9.2 CLOSE Phase A: 5/5 AC checked; QA APPROVE WITH CONDITIONS `c0d6f66`; FF-merge `92b196a` to main; Phase 3 → SELECT US-10.1 (recommended) or US-8.5.
 - 2026-08-30 · US-9.2 SELECT → PREP. Branch `feature/US-9.2-subtitles-logo-cover` from main; deps US-9.1 ✅ · US-2.2 ✅.
