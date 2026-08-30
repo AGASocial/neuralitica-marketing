@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-9.3
-story_status: PREP
+story_status: CONTRACT
 feature_branch: feature/US-9.3-tts-voiceover
 last_completed_story: US-8.3
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T17:35:00Z
+updated_at: 2026-08-30T18:00:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -33,7 +33,7 @@ updated_at: 2026-08-30T17:35:00Z
 | US-8.4 Job status and failure UI | done | BE `689d8c6`/`77142b9` · FE `25737db` · VALIDATION `4e36fbc` · QA `9b24c48` · CLOSE `35a433d` |
 | US-8.6 MuseTalk adapter | done | Phase A `dbc9ce2` · Phase B `bdfaaf2` · VALIDATION `798635e` · QA `82bde3d` · CLOSE `2fb7573` (4/5 AC; P1 override defer) |
 | US-8.3 Manual video upload fallback | done | FE `fc6deca` · BE `eaa974a` · fixes `f3f78af`/`b2fb1cc` · VALIDATION `2f5edc0` · QA `a58faeb` · CLOSE `d8baafb` |
-| US-9.3 Text-to-speech for voiceover | PREP | branch `feature/US-9.3-tts-voiceover` · SPEC+SECURITY next |
+| US-9.3 Text-to-speech for voiceover | CONTRACT | branch `feature/US-9.3-tts-voiceover` · SPEC GAPS · SECURITY APPROVE WITH CONDITIONS `63db660` |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -45,6 +45,7 @@ updated_at: 2026-08-30T17:35:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-9.3 SECURITY: APPROVE WITH CONDITIONS `63db660`; SPEC GAPS committed; story_status CONTRACT → nextjs-backend CONTRACT.md.
 - 2026-08-30 · US-8.3 CLOSE: 7/7 AC; QA APPROVE WITH CONDITIONS `a58faeb`; FF-merge `d8baafb` to main; Phase 3 → SELECT US-9.3.
 - 2026-08-30 · US-8.6 CLOSE: 4/5 AC V1; QA APPROVE WITH CONDITIONS `82bde3d`; FF-merge `2fb7573` to main; Phase 3 → SELECT US-8.3.
 - 2026-08-30 · US-8.4 CLOSE: 8/8 AC + US-8.2 Phase B 9/9 AC; QA APPROVE WITH CONDITIONS `9b24c48`; FF-merge `35a433d` to main; Phase 3 → SELECT US-8.6.
