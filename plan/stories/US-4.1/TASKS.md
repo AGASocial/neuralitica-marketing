@@ -101,15 +101,16 @@ Concrete FE consumers: Operator Strategy page; future US-4.2/US-5.1 via strategy
 
 All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
-- [ ] Create **`neuramark_content_strategies`** per CONTRACT.
-- [ ] FK `client_id` → `neuramark_clients(id)`.
-- [ ] **UNIQUE** `(client_id, week_start, version)`.
-- [ ] Index on `(client_id, week_start, version DESC)` or equivalent for latest-draft query.
-- [ ] `status` enum or text check — values include `draft`, `approved` (only `draft` written in 4.1).
-- [ ] `brief` jsonb NOT NULL.
-- [ ] RLS: zero policies / deny-by-default (match Fase 1 pattern).
-- [ ] **Do not** create `neuramark_reel_scripts` (US-5.1).
-- [ ] **Do not** add approval columns beyond what US-4.2 needs unless CONTRACT bundles nullable placeholders.
+- [x] Create **`neuramark_content_strategies`** per CONTRACT.
+- [x] FK `client_id` → `neuramark_clients(id)`.
+- [x] **UNIQUE** `(client_id, week_start, version)`.
+- [x] Index on `(client_id, week_start, version DESC)` or equivalent for latest-draft query.
+- [x] `status` enum or text check — values include `draft`, `approved` (only `draft` written in 4.1).
+- [x] `brief` jsonb NOT NULL.
+- [x] RLS: zero policies / deny-by-default (match Fase 1 pattern).
+- [x] **`neuramark_agent_rate_limits`** table for per-client generate rate + in-flight guard.
+- [x] **Do not** create `neuramark_reel_scripts` (US-5.1).
+- [x] **Do not** add approval columns beyond what US-4.2 needs unless CONTRACT bundles nullable placeholders.
 
 ---
 

@@ -6,7 +6,7 @@
 current_phase: 3
 current_story: US-4.1
 feature_branch: feature/US-4.1-content-strategy
-story_status: CONTRACT
+story_status: BUILD
 last_completed_story: US-X.4
 phase_status: in_progress
 blocked_reason: null
@@ -18,7 +18,7 @@ updated_at: 2026-08-30T01:00:00Z
 | Story | Status | Notes |
 |-------|--------|-------|
 | US-X.4 Provider catalog + resolveProvider | done | BE `5ba9876` · CLOSE `291313b` |
-| US-4.1 Content Strategy agent | CONTRACT | `plan/stories/US-4.1/CONTRACT.md` frozen; FE signoff pending |
+| US-4.1 Content Strategy agent | BUILD | BE/DB slice on `feature/US-4.1-content-strategy`; FE pending |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
