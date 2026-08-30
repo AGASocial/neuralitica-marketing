@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: US-8.6
-story_status: QA
-feature_branch: feature/US-8.6-musetalk-adapter
-last_completed_story: US-8.4
+current_story: US-8.3
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-8.6
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T16:10:00Z
+updated_at: 2026-08-30T16:20:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -31,7 +31,8 @@ updated_at: 2026-08-30T16:10:00Z
 | US-8.1 Provider adapter interface | done | BE `a11d4ae` · fix `4193a1e` · VALIDATION `7367929` · QA `7f34bdb` · CLOSE `3ac3304` |
 | US-8.2 SadTalker adapter | done | Phase A `258fcef` · Phase B closed via US-8.4 `35a433d` |
 | US-8.4 Job status and failure UI | done | BE `689d8c6`/`77142b9` · FE `25737db` · VALIDATION `4e36fbc` · QA `9b24c48` · CLOSE `35a433d` |
-| US-8.6 MuseTalk adapter | QA | VALIDATION PASS WITH NOTES `798635e` |
+| US-8.6 MuseTalk adapter | done | Phase A `dbc9ce2` · Phase B `bdfaaf2` · VALIDATION `798635e` · QA `82bde3d` · CLOSE `2fb7573` (4/5 AC; P1 override defer) |
+| US-8.3 Manual video upload fallback | SELECT | Next story — Sprint 4 |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -43,6 +44,7 @@ updated_at: 2026-08-30T16:10:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-8.6 CLOSE: 4/5 AC V1; QA APPROVE WITH CONDITIONS `82bde3d`; FF-merge `2fb7573` to main; Phase 3 → SELECT US-8.3.
 - 2026-08-30 · US-8.4 CLOSE: 8/8 AC + US-8.2 Phase B 9/9 AC; QA APPROVE WITH CONDITIONS `9b24c48`; FF-merge `35a433d` to main; Phase 3 → SELECT US-8.6.
 - 2026-08-30 · US-8.4 CONTRACT: frozen `af68149`; FE signoff; PREP docs; branch `feature/US-8.4-video-jobs`; story_status CONTRACT → BUILD next (closes US-8.2 Phase B).
 - 2026-08-30 · US-8.4 PREP: README + TASKS + SPEC-REVIEW (GAPS) + SECURITY APPROVE WITH CONDITIONS.
