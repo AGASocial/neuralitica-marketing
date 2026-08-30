@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-9.1
-story_status: SPEC
+story_status: CONTRACT
 feature_branch: feature/US-9.1-assemble-reel
 last_completed_story: US-9.3
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T17:45:00Z
+updated_at: 2026-08-30T17:50:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -34,7 +34,7 @@ updated_at: 2026-08-30T17:45:00Z
 | US-8.6 MuseTalk adapter | done | Phase A `dbc9ce2` · Phase B `bdfaaf2` · VALIDATION `798635e` · QA `82bde3d` · CLOSE `2fb7573` (4/5 AC; P1 override defer) |
 | US-8.3 Manual video upload fallback | done | FE `fc6deca` · BE `eaa974a` · fixes `f3f78af`/`b2fb1cc` · VALIDATION `2f5edc0` · QA `a58faeb` · CLOSE `d8baafb` |
 | US-9.3 Text-to-speech for voiceover | done | Phase A `dfdd08b` · adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813` · VALIDATION `1715048` · QA `e9c1833` · CLOSE 5/6 AC (ElevenLabs Phase B defer) |
-| US-9.1 Assemble final 9:16 Reel | SPEC | PREP `70a312d` · SPEC+SECURITY next |
+| US-9.1 Assemble final 9:16 Reel | CONTRACT | SPEC GAPS `8728973` · SECURITY APPROVE WITH CONDITIONS `3b13b66` |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
