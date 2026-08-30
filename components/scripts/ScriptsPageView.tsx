@@ -35,6 +35,10 @@ import {
   type OperatorAssemblyCopy,
 } from "@/components/scripts/OperatorAssemblyPanel";
 import {
+  OperatorQaPanel,
+  type OperatorQaCopy,
+} from "@/components/scripts/OperatorQaPanel";
+import {
   ManualVideoUploadControl,
   type ManualVideoUploadCopy,
 } from "@/components/scripts/ManualVideoUploadDialog";
@@ -82,6 +86,11 @@ import type {
 } from "@/lib/contracts/assembly-job";
 import { ASSEMBLY_TEMPLATE_REEL_V1_BASIC } from "@/lib/contracts/assembly-job";
 import type { ApplyBrandingForAssemblySuccess } from "@/lib/contracts/branding-job";
+import type {
+  OperatorQaReportDetailDto,
+  OperatorQaReportsByAssembledReelMap,
+  RunQaForAssembledReelSuccess,
+} from "@/lib/contracts/qa-report";
 import type {
   SynthesizeVoiceoverForReelScriptSuccess,
   VoiceoverSummaryByReelMap,
@@ -216,6 +225,7 @@ type ScriptsPageCopy = {
     reassembleConfirm: AssemblyReassembleConfirmCopy;
     rebrandConfirm: BrandingRebrandConfirmCopy;
   };
+  qa: OperatorQaCopy;
   caption: {
     tabs: {
       script: string;
@@ -528,6 +538,9 @@ export function ScriptsPageView({
   const [rebrandAssemblyJobId, setRebrandAssemblyJobId] = useState<string | null>(null);
   const [rebrandSubtitlesEnabled, setRebrandSubtitlesEnabled] = useState(true);
   const [rebrandLogoEnabled, setRebrandLogoEnabled] = useState(true);
+  const [qaOverrides, setQaOverrides] = useState<OperatorQaReportsByAssembledReelMap>(
+    {},
+  );
 
   useEffect(() => {
     setVideoJobOverrides({});
@@ -540,6 +553,10 @@ export function ScriptsPageView({
   useEffect(() => {
     setAssemblyOverrides({});
   }, [data.assemblyByReelScriptId]);
+
+  useEffect(() => {
+    setQaOverrides({});
+  }, [data.qaByAssembledReelId]);
 
   const videoJobsByReelScriptId = useMemo(
     () => ({
@@ -563,6 +580,14 @@ export function ScriptsPageView({
       ...assemblyOverrides,
     }),
     [data.assemblyByReelScriptId, assemblyOverrides],
+  );
+
+  const qaByAssembledReelId = useMemo(
+    () => ({
+      ...data.qaByAssembledReelId,
+      ...qaOverrides,
+    }),
+    [data.qaByAssembledReelId, qaOverrides],
   );
 
   const weekDate = weekStartToDate(weekStart);
@@ -1128,6 +1153,46 @@ export function ScriptsPageView({
     });
   }
 
+  function buildQaOverrideFromSuccess(
+    result: RunQaForAssembledReelSuccess,
+    existing: OperatorQaReportDetailDto | null | undefined,
+  ): OperatorQaReportDetailDto {
+    const now = new Date().toISOString();
+    return {
+      qaReportId: result.qaReportId,
+      assembledReelId: result.assembledReelId,
+      status: result.status,
+      checks: result.checks,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+    };
+  }
+
+  function handleQaSuccess(result: RunQaForAssembledReelSuccess) {
+    const existing = qaByAssembledReelId[result.assembledReelId];
+    setQaOverrides((prev) => ({
+      ...prev,
+      [result.assembledReelId]: buildQaOverrideFromSuccess(result, existing),
+    }));
+    router.refresh();
+  }
+
+  function handleQaToastSuccess(summary: string) {
+    toastRef.current?.show({
+      severity: "success",
+      summary,
+      life: 4000,
+    });
+  }
+
+  function handleQaError(message: string) {
+    toastRef.current?.show({
+      severity: "error",
+      summary: message,
+      life: 6000,
+    });
+  }
+
   function handleVideoJobMutationError(message: string) {
     setBanner(message);
   }
@@ -1375,6 +1440,7 @@ export function ScriptsPageView({
                 videoJobsByReelScriptId={videoJobsByReelScriptId}
                 voiceoverByReelScriptId={voiceoverByReelScriptId}
                 assemblyByReelScriptId={assemblyByReelScriptId}
+                qaByAssembledReelId={qaByAssembledReelId}
                 showCostRollup={showCostSummary}
                 onCopy={copyToClipboard}
                 onRegenerateCaption={(slotIndex) => void handleRegenerateCaption(slotIndex)}
@@ -1407,6 +1473,9 @@ export function ScriptsPageView({
                 }}
                 onAssemblyToastSuccess={handleAssemblyToastSuccess}
                 onAssemblyError={handleAssemblyError}
+                onQaSuccess={handleQaSuccess}
+                onQaToastSuccess={handleQaToastSuccess}
+                onQaError={handleQaError}
                 onRequestBrandingRebrand={openRebrandDialog}
                 onBrandingSuccess={(result) => {
                   if (row.scriptId) {
@@ -1557,6 +1626,7 @@ type ReelDetailPanelProps = {
   videoJobsByReelScriptId: OperatorVideoJobsByReelMap;
   voiceoverByReelScriptId: VoiceoverSummaryByReelMap;
   assemblyByReelScriptId: OperatorAssemblyJobsByReelMap;
+  qaByAssembledReelId: OperatorQaReportsByAssembledReelMap;
   showCostRollup: boolean;
   onCopy: (text: string) => void;
   onRegenerateCaption: (slotIndex: number) => void;
@@ -1577,6 +1647,9 @@ type ReelDetailPanelProps = {
   onBrandingSuccess: (result: ApplyBrandingForAssemblySuccess) => void;
   onAssemblyToastSuccess: (summary: string) => void;
   onAssemblyError: (message: string) => void;
+  onQaSuccess: (result: RunQaForAssembledReelSuccess) => void;
+  onQaToastSuccess: (summary: string) => void;
+  onQaError: (message: string) => void;
   captionRegeneratingSlot: number | null;
   captionSelectingSlot: number | null;
   isBusy: boolean;
@@ -1592,6 +1665,7 @@ function ReelDetailPanel({
   videoJobsByReelScriptId,
   voiceoverByReelScriptId,
   assemblyByReelScriptId,
+  qaByAssembledReelId,
   showCostRollup,
   onCopy,
   onRegenerateCaption,
@@ -1608,6 +1682,9 @@ function ReelDetailPanel({
   onBrandingSuccess,
   onAssemblyToastSuccess,
   onAssemblyError,
+  onQaSuccess,
+  onQaToastSuccess,
+  onQaError,
   captionRegeneratingSlot,
   captionSelectingSlot,
   isBusy,
@@ -1620,6 +1697,10 @@ function ReelDetailPanel({
     row.scriptId !== null ? voiceoverByReelScriptId[row.scriptId] : null;
   const assemblyJob =
     row.scriptId !== null ? assemblyByReelScriptId[row.scriptId] : null;
+  const qaReport =
+    assemblyJob?.jobId != null
+      ? qaByAssembledReelId[assemblyJob.jobId]
+      : null;
 
   return (
     <div>
@@ -1678,6 +1759,19 @@ function ReelDetailPanel({
           onBrandingSuccess={onBrandingSuccess}
           onError={onAssemblyError}
           onToastSuccess={onAssemblyToastSuccess}
+        />
+      ) : null}
+      {assemblyJob?.jobId ? (
+        <OperatorQaPanel
+          assembledReelId={assemblyJob.jobId}
+          assemblyStatus={assemblyJob.status}
+          brandingStatus={assemblyJob.brandingStatus}
+          report={qaReport}
+          copy={copy.qa}
+          disabled={isBusy}
+          onSuccess={onQaSuccess}
+          onError={onQaError}
+          onToastSuccess={onQaToastSuccess}
         />
       ) : null}
       <TabView>

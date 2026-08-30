@@ -22,6 +22,7 @@ import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved
 import { getAssemblyJobsForReelScripts } from "@/lib/assembly/get-assembly-jobs-for-reel-scripts";
 import { getVideoJobsForReelScripts } from "@/lib/video-jobs/get-video-jobs-for-reel-scripts";
 import { getVoiceoverSummariesForReelScripts } from "@/lib/tts/get-voiceover-summaries-for-reel-scripts";
+import { getQaReportsForAssembledReels } from "@/lib/qa/get-qa-reports-for-assembled-reels";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
 
 function authGuardEnvelope(error: {
@@ -78,6 +79,7 @@ export async function getReelScriptsForWeek(
         videoJobsByReelScriptId: {},
         voiceoverByReelScriptId: {},
         assemblyByReelScriptId: {},
+        qaByAssembledReelId: {},
       };
     }
 
@@ -152,6 +154,19 @@ export async function getReelScriptsForWeek(
       modalidadByReelScriptId,
     });
 
+    const assembledReelIds = [
+      ...new Set(
+        Object.values(assemblyByReelScriptId)
+          .map((job) => job?.jobId)
+          .filter((id): id is string => typeof id === "string"),
+      ),
+    ];
+
+    const qaByAssembledReelId = await getQaReportsForAssembledReels({
+      clientId,
+      assembledReelIds,
+    });
+
     return {
       ok: true,
       weekStart,
@@ -167,6 +182,7 @@ export async function getReelScriptsForWeek(
       videoJobsByReelScriptId,
       voiceoverByReelScriptId,
       assemblyByReelScriptId,
+      qaByAssembledReelId,
     };
   } catch (error) {
     if (isAuthGuardError(error)) {

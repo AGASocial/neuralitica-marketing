@@ -107,15 +107,15 @@ type QaCheckResult = {
 
 ## FE checklist
 
-- [ ] QA panel on `/operator/scripts` expand/detail (Tab or section — match Caption/Production patterns)
-- [ ] Overall Veredicto QA badge (`passed` / `failed` / `blocked` / pending / running)
-- [ ] Per-check rows: pass/fail + severity badges (blocking vs overridable)
-- [ ] Evidence copy from message keys (EN/ES) — no raw LLM dump as primary UI
-- [ ] **Run QA** / **Re-run QA** button (Operator); pending/disabled when branding incomplete
-- [ ] Empty / loading / error states
-- [ ] i18n: `scripts.qa.*` (+ reuse `qa.checks.*` / `legal.*` where present)
-- [ ] No override modal; no client-writable pass control
-- [ ] Plain text / PrimeReact only — no `dangerouslySetInnerHTML`
+- [x] QA panel on `/operator/scripts` expand/detail (Tab or section — match Caption/Production patterns)
+- [x] Overall Veredicto QA badge (`passed` / `failed` / `blocked` / pending / running)
+- [x] Per-check rows: pass/fail + severity badges (blocking vs overridable)
+- [x] Evidence copy from message keys (EN/ES) — no raw LLM dump as primary UI
+- [x] **Run QA** / **Re-run QA** button (Operator); pending/disabled when branding incomplete
+- [x] Empty / loading / error states
+- [x] i18n: `scripts.qa.*` (+ reuse `qa.checks.*` / `legal.*` where present)
+- [x] No override modal; no client-writable pass control
+- [x] Plain text / PrimeReact only — no `dangerouslySetInnerHTML`
 
 ## BE checklist
 

@@ -1294,6 +1294,69 @@
         }
       }
     },
+    "qa": {
+      "title": "QA verdict",
+      "empty": {
+        "noReport": "No QA report yet. Run QA after branding is complete.",
+        "prerequisites": "Complete assembly and branding before running QA."
+      },
+      "loading": "QA is running…",
+      "gateNotReady": "Not ready for approval — QA must pass.",
+      "status": {
+        "pending": "Pending",
+        "running": "Running",
+        "passed": "Passed",
+        "failed": "Failed",
+        "blocked": "Blocked"
+      },
+      "checkStatus": {
+        "pass": "Pass",
+        "fail": "Fail",
+        "skipped": "Skipped"
+      },
+      "severity": {
+        "blocking": "Blocking",
+        "overridable": "Overridable"
+      },
+      "checks": {
+        "own_avatar_consent": "Own avatar consent",
+        "generic_avatar_not_owner": "Generic avatar disclosure",
+        "cta_presence": "CTA presence",
+        "dangerous_claims": "Dangerous claims",
+        "tone": "Tone",
+        "clarity": "Clarity",
+        "ai_disclosure": "AI disclosure"
+      },
+      "evidence": {
+        "ownAvatarConsent.failMissing": "Active own-avatar consent is missing or revoked.",
+        "genericAvatarNotOwner.failMissing": "Generic avatar content requires a clear not-owner disclosure.",
+        "ctaPresence.failMissing": "No CTA was found on the caption or script package."
+      },
+      "actions": {
+        "run": "Run QA",
+        "rerun": "Re-run QA",
+        "running": "Running QA…"
+      },
+      "toastSuccess": "QA report updated.",
+      "errors": {
+        "unauthenticated": "Please log in to continue.",
+        "forbidden": "You do not have access to QA for that Reel.",
+        "validation": "Please check the request and try again.",
+        "notFound": "That assembled Reel was not found.",
+        "forbiddenFields": "Invalid QA request.",
+        "assemblyNotReady": "Assembly must be completed before QA.",
+        "brandingRequired": "Branding must be completed before QA.",
+        "captionRequired": "Generate a caption before running QA.",
+        "scriptNotFound": "The linked Reel script was not found.",
+        "rateLimited": "QA rate limit reached. Try again later.",
+        "inFlight": "QA is already running for this Reel.",
+        "budgetExceeded": "QA blocked — would exceed Reel budget.",
+        "costPolicyUnavailable": "Cost policy is unavailable. Try again later.",
+        "providerUnavailable": "QA provider is temporarily unavailable.",
+        "qaOutputInvalid": "QA output was invalid. Deterministic checks were saved; re-run when ready.",
+        "internal": "Something went wrong. Please try again later."
+      }
+    },
     "providerRecommendation": {
       "title": "Provider recommendation",
       "loading": "Loading recommendations…",

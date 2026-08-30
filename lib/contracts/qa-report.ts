@@ -169,12 +169,16 @@ export type RunQaForAssembledReelInput = z.infer<
   typeof runQaForAssembledReelInputSchema
 >;
 
+/**
+ * Terminal statuses for a completed run. When `idempotent: true` (in-flight
+ * short-circuit), status may also be `running` | `pending` (FE soft ask).
+ */
 export const runQaForAssembledReelSuccessSchema = z
   .object({
     ok: z.literal(true),
     assembledReelId: z.string().uuid(),
     qaReportId: z.string().uuid(),
-    status: z.enum(["passed", "failed", "blocked"]),
+    status: z.enum(["passed", "failed", "blocked", "running", "pending"]),
     checks: z.array(qaCheckResultSchema),
     idempotent: z.boolean().optional(),
   })
@@ -255,6 +259,16 @@ export const operatorQaReportDetailDtoSchema = z
 
 export type OperatorQaReportDetailDto = z.infer<
   typeof operatorQaReportDetailDtoSchema
+>;
+
+/** Week-load map keyed by assembledReelId (= assembly jobId). Detail includes checks[]. */
+export const operatorQaReportsByAssembledReelMapSchema = z.record(
+  z.string().uuid(),
+  operatorQaReportDetailDtoSchema.nullable(),
+);
+
+export type OperatorQaReportsByAssembledReelMap = z.infer<
+  typeof operatorQaReportsByAssembledReelMapSchema
 >;
 
 export const qaGateStatusSchema = z

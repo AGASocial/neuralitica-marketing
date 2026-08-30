@@ -1294,6 +1294,69 @@
         }
       }
     },
+    "qa": {
+      "title": "Veredicto QA",
+      "empty": {
+        "noReport": "Aún no hay informe QA. Ejecuta QA cuando la marca esté completa.",
+        "prerequisites": "Completa el ensamblado y la marca antes de ejecutar QA."
+      },
+      "loading": "QA en ejecución…",
+      "gateNotReady": "No listo para aprobación — el QA debe pasar.",
+      "status": {
+        "pending": "Pendiente",
+        "running": "En ejecución",
+        "passed": "Aprobado",
+        "failed": "Fallido",
+        "blocked": "Bloqueado"
+      },
+      "checkStatus": {
+        "pass": "Pasa",
+        "fail": "Falla",
+        "skipped": "Omitido"
+      },
+      "severity": {
+        "blocking": "Bloqueante",
+        "overridable": "Anulable"
+      },
+      "checks": {
+        "own_avatar_consent": "Consentimiento de avatar propio",
+        "generic_avatar_not_owner": "Divulgación de avatar genérico",
+        "cta_presence": "Presencia de CTA",
+        "dangerous_claims": "Afirmaciones peligrosas",
+        "tone": "Tono",
+        "clarity": "Claridad",
+        "ai_disclosure": "Divulgación de IA"
+      },
+      "evidence": {
+        "ownAvatarConsent.failMissing": "Falta o está revocado el consentimiento activo de avatar propio.",
+        "genericAvatarNotOwner.failMissing": "El contenido con avatar genérico requiere una divulgación clara de no propietario.",
+        "ctaPresence.failMissing": "No se encontró CTA en el caption ni en el paquete de guion."
+      },
+      "actions": {
+        "run": "Ejecutar QA",
+        "rerun": "Re-ejecutar QA",
+        "running": "Ejecutando QA…"
+      },
+      "toastSuccess": "Informe QA actualizado.",
+      "errors": {
+        "unauthenticated": "Inicia sesión para continuar.",
+        "forbidden": "No tienes acceso al QA de ese Reel.",
+        "validation": "Revisa la solicitud e inténtalo de nuevo.",
+        "notFound": "No se encontró ese Reel ensamblado.",
+        "forbiddenFields": "Solicitud de QA no válida.",
+        "assemblyNotReady": "El ensamblado debe estar completado antes del QA.",
+        "brandingRequired": "La marca debe estar completada antes del QA.",
+        "captionRequired": "Genera un caption antes de ejecutar QA.",
+        "scriptNotFound": "No se encontró el guion de Reel vinculado.",
+        "rateLimited": "Límite de tasa de QA alcanzado. Inténtalo más tarde.",
+        "inFlight": "Ya hay un QA en ejecución para este Reel.",
+        "budgetExceeded": "QA bloqueado — excedería el presupuesto del Reel.",
+        "costPolicyUnavailable": "La política de costos no está disponible. Inténtalo más tarde.",
+        "providerUnavailable": "El proveedor de QA no está disponible temporalmente.",
+        "qaOutputInvalid": "La salida de QA no fue válida. Se guardaron los checks deterministas; re-ejecuta cuando esté listo.",
+        "internal": "Algo salió mal. Inténtalo más tarde."
+      }
+    },
     "providerRecommendation": {
       "title": "Recomendación de proveedor",
       "loading": "Cargando recomendaciones…",
