@@ -32,7 +32,7 @@ export const SADTALKER_ALLOWED_OUTPUT_HOSTS: readonly string[] = [
 
 /** fetchAsset download hardening (US-8.2 SECURITY). */
 export const SADTALKER_FETCH_TIMEOUT_MS = 120_000 as const;
-export const SADTALKER_FETCH_MAX_BYTES = 100 * 1024 * 1024 as const;
+export const SADTALKER_FETCH_MAX_BYTES = 104_857_600 as const;
 export const SADTALKER_FETCH_MAX_REDIRECTS = 3 as const;
 
 /** Short-lived provider-readable asset URL TTL at createJob (seconds). */
