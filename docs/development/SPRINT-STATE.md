@@ -4,7 +4,7 @@
 
 ```yaml
 current_phase: 3
-current_story: null
+current_story: US-8.2
 story_status: SELECT
 feature_branch: null
 last_completed_story: US-8.1
