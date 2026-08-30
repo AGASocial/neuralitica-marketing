@@ -49,7 +49,8 @@
     "nav": {
       "dashboard": "Dashboard",
       "playbook": "Format catalog",
-      "trends": "Trend snapshots"
+      "trends": "Trend snapshots",
+      "strategy": "Weekly strategy"
     }
   },
   "auth": {
@@ -711,6 +712,67 @@
       "duplicateSlug": "That slug is already used in this week.",
       "weekStartMismatch": "The week for this táctica does not match the snapshot.",
       "invalidPlaybookSlug": "One or more Playbook format slugs are invalid or archived.",
+      "notMonday": "Week start must be an ISO Monday.",
+      "internal": "Something went wrong. Please try again later."
+    }
+  },
+  "strategy": {
+    "loading": {
+      "page": "Loading weekly strategy…"
+    },
+    "page": {
+      "title": "Weekly content strategy",
+      "subtitle": "Generate Instagram Reel planning drafts from the living profile, Playbook, and trend snapshot.",
+      "generate": "Generate strategy",
+      "regenerate": "Regenerate strategy",
+      "generating": "Strategy agent running…",
+      "clientLabel": "Cliente",
+      "clientSessionHint": "V1 generates for your signed-in session. Multi-client selection arrives in a later story.",
+      "weekLabel": "Week",
+      "empty": "Generate strategy to create a draft for this week.",
+      "loadError": "We could not load the strategy for this week. Refresh the page to try again.",
+      "backDashboard": "Back to dashboard",
+      "versionLabel": "Draft v{version} — regenerated",
+      "toastGenerateSuccess": "Strategy draft generated.",
+      "sections": {
+        "pillars": "Content pillars",
+        "themes": "Weekly themes",
+        "slots": "Reel slots"
+      },
+      "slot": {
+        "tema": "Topic",
+        "formato": "Reel format",
+        "modalidad": "Production modality",
+        "tactica": "Trend tactic",
+        "goal": "Goal",
+        "day": "Suggested day",
+        "slotNumber": "Slot"
+      },
+      "goals": {
+        "trust": "Trust",
+        "education": "Education",
+        "local_sale": "Local sale",
+        "inbound_dm": "Inbound DM"
+      },
+      "days": {
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
+      }
+    },
+    "errors": {
+      "validation": "Please check the highlighted fields and try again.",
+      "forbiddenFields": "Something went wrong. Please try again.",
+      "notFound": "That strategy was not found.",
+      "rateLimited": "Too many strategy generations. Wait up to an hour and try again.",
+      "inFlight": "A strategy is already generating for this week. Wait for it to finish.",
+      "profileIncomplete": "Complete the living profile and visual preferences before generating a strategy.",
+      "agentOutputInvalid": "The strategy agent returned an invalid brief. Try again or contact support.",
+      "providerUnavailable": "The strategy service is temporarily unavailable. Try again later.",
       "notMonday": "Week start must be an ISO Monday.",
       "internal": "Something went wrong. Please try again later."
     }

@@ -49,7 +49,8 @@
     "nav": {
       "dashboard": "Panel",
       "playbook": "Playbook de formatos",
-      "trends": "Snapshots de tendencias"
+      "trends": "Snapshots de tendencias",
+      "strategy": "Estrategia semanal"
     }
   },
   "auth": {
@@ -711,6 +712,67 @@
       "duplicateSlug": "Ese slug ya se usa en esta semana.",
       "weekStartMismatch": "La semana de esta táctica no coincide con el snapshot.",
       "invalidPlaybookSlug": "Uno o más slugs de formato de Playbook no son válidos o están archivados.",
+      "notMonday": "El inicio de semana debe ser un lunes ISO.",
+      "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
+    }
+  },
+  "strategy": {
+    "loading": {
+      "page": "Cargando estrategia semanal…"
+    },
+    "page": {
+      "title": "Estrategia semanal",
+      "subtitle": "Genera borradores de planificación de Reels de Instagram a partir de la ficha viva, el Playbook y el snapshot de tendencias.",
+      "generate": "Generar estrategia",
+      "regenerate": "Regenerar estrategia",
+      "generating": "El agente de estrategia está trabajando…",
+      "clientLabel": "Cliente",
+      "clientSessionHint": "En V1 la generación usa tu sesión actual. La selección multi-cliente llegará en una historia posterior.",
+      "weekLabel": "Semana",
+      "empty": "Genera la estrategia para crear un borrador de esta semana.",
+      "loadError": "No pudimos cargar la estrategia de esta semana. Actualiza la página e inténtalo de nuevo.",
+      "backDashboard": "Volver al panel",
+      "versionLabel": "Borrador v{version} — regenerado",
+      "toastGenerateSuccess": "Borrador de estrategia generado.",
+      "sections": {
+        "pillars": "Pilares de contenido",
+        "themes": "Temas semanales",
+        "slots": "Slots de Reel"
+      },
+      "slot": {
+        "tema": "Tema",
+        "formato": "Formato de Reel",
+        "modalidad": "Modalidad de producción",
+        "tactica": "Táctica de tendencia",
+        "goal": "Objetivo",
+        "day": "Día sugerido",
+        "slotNumber": "Slot"
+      },
+      "goals": {
+        "trust": "Confianza",
+        "education": "Educación",
+        "local_sale": "Venta local",
+        "inbound_dm": "Mensaje entrante (DM)"
+      },
+      "days": {
+        "monday": "Lunes",
+        "tuesday": "Martes",
+        "wednesday": "Miércoles",
+        "thursday": "Jueves",
+        "friday": "Viernes",
+        "saturday": "Sábado",
+        "sunday": "Domingo"
+      }
+    },
+    "errors": {
+      "validation": "Revisa los campos marcados e inténtalo de nuevo.",
+      "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+      "notFound": "No se encontró esa estrategia.",
+      "rateLimited": "Demasiadas generaciones de estrategia. Espera hasta una hora e inténtalo de nuevo.",
+      "inFlight": "Ya hay una estrategia generándose para esta semana. Espera a que termine.",
+      "profileIncomplete": "Completa la ficha viva y las preferencias visuales antes de generar una estrategia.",
+      "agentOutputInvalid": "El agente de estrategia devolvió un brief inválido. Inténtalo de nuevo o contacta soporte.",
+      "providerUnavailable": "El servicio de estrategia no está disponible temporalmente. Inténtalo más tarde.",
       "notMonday": "El inicio de semana debe ser un lunes ISO.",
       "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
     }

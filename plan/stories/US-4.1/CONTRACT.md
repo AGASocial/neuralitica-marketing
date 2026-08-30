@@ -1,4 +1,4 @@
-**Reviewed by FE:** pending
+**Reviewed by FE:** 2026-08-30 — `/operator/strategy` page, week picker, generate action wiring, read-only brief view, EN/ES strings; V1 client selector display-only (session `clientId`).
 
 # API Contract — US-4.1 Generate weekly Instagram content strategy
 
@@ -804,12 +804,12 @@ Page loaders use `requireOperator("page")` redirects — not this JSON envelope.
 
 ## FE signoff checklist
 
-- [ ] `/operator/strategy` + `weekStart` query documented
-- [ ] `generateContentStrategy({ weekStart })` — no `clientId` in form payload
-- [ ] `getLatestContentStrategy({ weekStart })` read envelope + empty state
-- [ ] Error codes + `messageKey` wired in `messages/en.json` / `es.json`
-- [ ] Brief slot cards: `tema`, formato label, modalidad, optional táctica, goal tag
-- [ ] Version indicator when `version > 1`
-- [ ] No Approve button; no edit fields; no Cliente route
+- [x] `/operator/strategy` + `weekStart` query documented
+- [x] `generateContentStrategy({ weekStart })` — no `clientId` in form payload
+- [x] `getLatestContentStrategy({ weekStart })` read envelope + empty state
+- [x] Error codes + `messageKey` wired in `messages/en.json` / `es.json`
+- [x] Brief slot cards: `tema`, formato label, modalidad, optional táctica, goal tag
+- [x] Version indicator when `version > 1`
+- [x] No Approve button; no edit fields; no Cliente route
 
-**Reviewed by FE:** _pending_
+**Reviewed by FE:** 2026-08-30 — `/operator/strategy` page, week picker, generate action wiring, read-only brief view, EN/ES strings; V1 client selector display-only (session `clientId`).

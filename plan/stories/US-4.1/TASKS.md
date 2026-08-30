@@ -66,16 +66,16 @@
 
 Concrete BE consumers: generate Server Action; RSC loader for latest draft brief per `(clientId, weekStart)`.
 
-- [ ] **Operator Strategy page** (CONTRACT path): client selector + `week_start` picker (ISO Monday).
-- [ ] **Generate strategy** primary button; disabled while pending; shows rate-limit error from server.
-- [ ] **Loading / generating** state (skeleton + "Strategy agent running…" or i18n equivalent).
-- [ ] **Read-only draft brief view** when latest row exists: pillars (chips), themes list, ≥3 Reel slot cards/rows (tema, formato label resolved from slug if CONTRACT provides lookup, modalidad, optional táctica, goal tag).
-- [ ] **Version indicator** when `version > 1` (e.g. "Draft v2 — regenerated").
-- [ ] **Empty state** when no strategy for week ("Generate strategy to create a draft").
-- [ ] **Error state** for agent failure / validation rejection (recoverable message).
-- [ ] **EN + ES strings** in `messages/en.json` / `es.json`.
-- [ ] **No Supabase in Client Components**; no edit fields; no Approve button (US-4.2).
-- [ ] **No Cliente** strategy route in this story.
+- [x] **Operator Strategy page** (CONTRACT path): client selector + `week_start` picker (ISO Monday).
+- [x] **Generate strategy** primary button; disabled while pending; shows rate-limit error from server.
+- [x] **Loading / generating** state (skeleton + "Strategy agent running…" or i18n equivalent).
+- [x] **Read-only draft brief view** when latest row exists: pillars (chips), themes list, ≥3 Reel slot cards/rows (tema, formato label resolved from slug if CONTRACT provides lookup, modalidad, optional táctica, goal tag).
+- [x] **Version indicator** when `version > 1` (e.g. "Draft v2 — regenerated").
+- [x] **Empty state** when no strategy for week ("Generate strategy to create a draft").
+- [x] **Error state** for agent failure / validation rejection (recoverable message).
+- [x] **EN + ES strings** in `messages/en.json` / `es.json`.
+- [x] **No Supabase in Client Components**; no edit fields; no Approve button (US-4.2).
+- [x] **No Cliente** strategy route in this story.
 
 ---
 
@@ -117,14 +117,14 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
 Coordinates with BE on CONTRACT; owns agent logic and brief schema.
 
-- [ ] **`lib/contracts/content-strategy.ts`** — brief + slot schemas shared with BE/FE types.
-- [ ] **Strategy agent module** under `lib/agents/content/` — prompt template with delimited untrusted data blocks.
-- [ ] Wire **`getBusinessProfileForAgents(clientId)`** — abort with typed error if `exists: false`.
-- [ ] Wire **`getPlaybookForAgents()`**, **`getTrendSnapshotForWeek(weekStart)`** — tolerate empty trend.
-- [ ] Wire **`getProviderCatalog()`** + **`getDefaultCostPolicy()`** + **`resolveProvider`** for `llm` / `default`.
-- [ ] Post-LLM: Zod parse; enforce ≥3 slots; map goals to trust/education/local_sale/inbound_dm coverage per AC.
-- [ ] **[SEC] Prompt-injection containment** per `plan/SECURITY_BASELINE.md` — no store on validation failure.
-- [ ] Unit tests: schema rejects bad slug/modalidad; mock LLM returns valid brief; regenerate does not mutate prior version (integration with BE).
+- [x] **`lib/contracts/content-strategy.ts`** — brief + slot schemas shared with BE/FE types.
+- [x] **Strategy agent module** under `lib/agents/content/` — prompt template with delimited untrusted data blocks.
+- [x] Wire **`getBusinessProfileForAgents(clientId)`** — abort with typed error if `exists: false` (orchestrator; agent documents mandatory helper inputs).
+- [x] Wire **`getPlaybookForAgents()`**, **`getTrendSnapshotForWeek(weekStart)`** — tolerate empty trend.
+- [x] Wire **`getProviderCatalog()`** + **`getDefaultCostPolicy()`** + **`resolveProvider`** for `llm` / `default` (orchestrator resolves provider; agent uses `resolveLlmAdapter`).
+- [x] Post-LLM: Zod parse; enforce ≥3 slots; map goals to trust/education/local_sale/inbound_dm coverage per AC.
+- [x] **[SEC] Prompt-injection containment** per `plan/SECURITY_BASELINE.md` — no store on validation failure.
+- [x] Unit tests: schema rejects bad slug/modalidad; mock LLM returns valid brief; regenerate does not mutate prior version (integration with BE).
 
 ---
 

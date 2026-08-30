@@ -51,6 +51,12 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
               >
                 {t.header.nav.trends}
               </Link>
+              <Link
+                href="/operator/strategy"
+                style={{ color: "#374151", textDecoration: "none" }}
+              >
+                {t.header.nav.strategy}
+              </Link>
             </>
           ) : null}
         </nav>
