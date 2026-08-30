@@ -1,12 +1,12 @@
 # US-4.1 — Generate weekly Instagram content strategy
 
-**Status:** CONTRACT — `CONTRACT.md` frozen 2026-08-30; FE signoff pending; BUILD not started.
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 3 Low; CLOSE yes). Build BE `af998d9` · FE `dcbd15a` · agents `bbd159d`.
 
 **As a** Operator, **I want** the system to propose weekly pillars, themes, and sequence, **so that** we deliver 3 Reels with coherent messaging.
 
 Ship **Content Strategy Agent V1 (generate + read draft only)**: Operator triggers **Generate strategy** for a selected client + ISO week; server job composes inputs from `getBusinessProfileForAgents`, `getPlaybookForAgents`, `getTrendSnapshotForWeek`, and `getProviderCatalog` + `resolveProvider({ assetRole: 'llm', llmVariant: 'default' })`; LLM output is schema-validated and persisted as a new **`draft`** row in `neuramark_content_strategies` with monotonic **`version`** per `(client_id, week_start)`. Operator views the latest draft brief (pillars, themes, ≥3 Reel slots). **Edit, approve, Cliente read, and weekly cycle automation** stay **out** (US-4.2 / integrations).
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-4.1 (do **not** check off until VALIDATION CLOSE).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-4.1 (checked on CLOSE).
 
 **This folder:** [`plan/stories/US-4.1/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
 
@@ -15,6 +15,21 @@ Ship **Content Strategy Agent V1 (generate + read draft only)**: Operator trigge
 **Depends on:** [US-2.3](../US-2.3/) ✅ `getBusinessProfileForAgents()` · [US-3.1](../US-3.1/) ✅ visual mode / Preferencias (allowlist via US-3.4) · [US-16.1](../US-16.1/) ✅ `getPlaybookForAgents()` · [US-16.2](../US-16.2/) ✅ `getTrendSnapshotForWeek()` · [US-X.4](../US-X.4/) ✅ `getProviderCatalog()` + `resolveProvider()` · [US-14.5](../US-14.5/) ✅ `requireOperator()` gate.
 
 **Unblocks:** [US-4.2](../../USER_STORIES.md) (edit/approve brief) · [US-5.1](../../USER_STORIES.md) (Video Script consumes approved strategy — gated on US-4.2).
+
+---
+
+## Close verdicts
+
+| Gate | Verdict |
+|------|---------|
+| SPEC-REVIEW | ALIGNED (gaps closed in CONTRACT) |
+| SECURITY | APPROVE WITH CONDITIONS |
+| CONTRACT | Frozen 2026-08-30; Reviewed by FE (BUILD `dcbd15a`) |
+| BUILD | BE `af998d9` · FE `dcbd15a` · content-agents-engineer `bbd159d` |
+| VALIDATION | PASS WITH NOTES (`239e598`) |
+| QA | APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 3 Low; CLOSE yes) |
+
+**QA handoff (non-blocking, post-CLOSE):** M1 — rate-limit fail-closed on DB errors; M2 — atomic in-flight acquire; L1 — logger mock test; L2 — EN `clientLabel` typo; L3 — export `maxDuration` on generate action. **Next:** **US-4.2** review and approve strategy before scripting.
 
 ---
 

@@ -558,15 +558,15 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | `content_strategies` (client_id, week_start, brief JSON, status) |
 
 **Acceptance criteria**
-- [ ] Brief includes at least 3 Reel slots aligned to trust, education, local sale, and inbound-message (DM) goals
-- [ ] Uses `getBusinessProfileForAgents` only, not raw interview
-- [ ] Regenerate creates new version without deleting approved history
-- [ ] Strategy targets Instagram Reels only in V1 — no multichannel output (roadmap hard rule: Instagram first)
-- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403)
-- [ ] [SEC] Agent job runs server-side only; LLM provider keys are read from server env and never reach the client or the DB
-- [ ] LLM calls use the catalog row for asset role `llm` at the resolved `provider_tier` (low default: DeepSeek V4 Flash / Qwen via SiliconFlow per US-X.4)
-- [ ] [SEC] Client-authored profile text is passed to the LLM as clearly delimited data, and agent output is validated against a typed brief schema before storage (prompt-injection containment: malformed or out-of-schema output is rejected, not stored)
-- [ ] [SEC] "Generate strategy" is rate-limited/debounced server-side per client to prevent runaway LLM spend from repeated clicks or scripted calls
+- [x] Brief includes at least 3 Reel slots aligned to trust, education, local sale, and inbound-message (DM) goals
+- [x] Uses `getBusinessProfileForAgents` only, not raw interview
+- [x] Regenerate creates new version without deleting approved history
+- [x] Strategy targets Instagram Reels only in V1 — no multichannel output (roadmap hard rule: Instagram first)
+- [x] Operator-only: endpoint/action rejects non-operator sessions server-side (403)
+- [x] [SEC] Agent job runs server-side only; LLM provider keys are read from server env and never reach the client or the DB
+- [x] LLM calls use the catalog row for asset role `llm` at the resolved `provider_tier` (low default: DeepSeek V4 Flash / Qwen via SiliconFlow per US-X.4)
+- [x] [SEC] Client-authored profile text is passed to the LLM as clearly delimited data, and agent output is validated against a typed brief schema before storage (prompt-injection containment: malformed or out-of-schema output is rejected, not stored)
+- [x] [SEC] "Generate strategy" is rate-limited/debounced server-side per client to prevent runaway LLM spend from repeated clicks or scripted calls
 
 **Depends on:** US-2.3, US-3.1, US-16.1, US-16.2, US-X.4
 

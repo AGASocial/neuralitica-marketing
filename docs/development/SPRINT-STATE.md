@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: US-4.1
-feature_branch: feature/US-4.1-content-strategy
-story_status: VALIDATION
-last_completed_story: US-X.4
+current_story: US-4.2
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-4.1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T19:30:00Z
+updated_at: 2026-08-30T21:00:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -18,7 +18,8 @@ updated_at: 2026-08-30T19:30:00Z
 | Story | Status | Notes |
 |-------|--------|-------|
 | US-X.4 Provider catalog + resolveProvider | done | BE `5ba9876` · CLOSE `291313b` |
-| US-4.1 Content Strategy agent | VALIDATION | PASS WITH NOTES (0 blockers, 51/51 tests) on `feature/US-4.1-content-strategy`; next: QA |
+| US-4.1 Content Strategy agent | done | BE `af998d9` · FE `dcbd15a` · agents `bbd159d` · CLOSE |
+| US-4.2 Review and approve strategy | SELECT | Next sprint pick |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -30,6 +31,8 @@ updated_at: 2026-08-30T19:30:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-4.1 CLOSE: 9/9 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 3 Low); BE `af998d9` · FE `dcbd15a` · agents `bbd159d`; Phase 3 → SELECT US-4.2.
+- 2026-08-30 · US-4.1 QA: APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 3 Low); `plan/stories/US-4.1/QA.md`; story_status QA; CLOSE recommended yes.
 - 2026-08-30 · US-4.1 VALIDATION: PASS WITH NOTES (0 blockers, 51/51 tests); `plan/stories/US-4.1/VALIDATION.md`; story_status VALIDATION.
 - 2026-08-30 · US-4.1 CONTRACT: `plan/stories/US-4.1/CONTRACT.md` frozen; SPEC-REVIEW gaps closed; story_status CONTRACT; branch `feature/US-4.1-content-strategy`.
 - 2026-08-30 · US-4.1 PREP: `plan/stories/US-4.1/README.md` + `TASKS.md`; PO decisions frozen; story_status PREP.

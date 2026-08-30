@@ -133,12 +133,12 @@ Coordinates with BE on CONTRACT; owns agent logic and brief schema.
 
 - [x] SPEC-REVIEW.md (spec-guardian — Strategy vs SPEC §3 Content Strategy Agent; Instagram-only; no US-4.2 scope creep) — 2026-08-30 GAPS; closed in CONTRACT
 - [x] SECURITY.md (security-architect — Operator gate; rate limit; prompt containment; server-only agent; no Cliente generate) — 2026-08-29 APPROVE WITH CONDITIONS
-- [x] CONTRACT.md authored (nextjs-backend) — 2026-08-30 frozen; **Reviewed by FE:** pending
-- [ ] BUILD (FE + BE + DB + content-agents-engineer)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] CONTRACT.md authored (nextjs-backend) — 2026-08-30 frozen; **Reviewed by FE:** BUILD `dcbd15a`
+- [x] BUILD (FE `dcbd15a` · BE `af998d9` · content-agents-engineer `bbd159d`)
+- [x] VALIDATION.md — PASS WITH NOTES (`239e598`)
+- [x] QA.md — APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 3 Low; CLOSE yes)
 
-**Status:** CONTRACT (2026-08-30). **Next gate:** FE signoff → BUILD.
+**Status:** CLOSED (2026-08-30). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** **US-4.2** review and approve strategy.
 
 ---
 
