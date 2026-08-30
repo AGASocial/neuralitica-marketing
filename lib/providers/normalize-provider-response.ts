@@ -25,6 +25,7 @@ const STATUS_ALIASES: Readonly<Record<string, VideoJobStatus>> = {
   pending: "queued",
   submitted: "queued",
   waiting: "queued",
+  starting: "queued",
   processing: "processing",
   running: "processing",
   in_progress: "processing",

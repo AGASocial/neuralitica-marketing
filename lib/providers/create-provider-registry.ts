@@ -11,7 +11,7 @@ import {
   type ProviderRegistry,
 } from "@/lib/providers/provider-adapters";
 import { createHeygenHighStubAdapter } from "@/lib/providers/video/heygen-high-stub-adapter";
-import { createSadtalkerLowStubAdapter } from "@/lib/providers/video/sadtalker-low-stub-adapter";
+import { createSadtalkerLowAdapter } from "@/lib/providers/video/sadtalker-low-adapter";
 import { createSiliconflowWan21TurboStubAdapter } from "@/lib/providers/video/siliconflow-wan21-turbo-stub-adapter";
 
 const STUB_VIDEO_KEYS = [
@@ -53,7 +53,7 @@ function createStubAdapterForKey(
 ) {
   switch (providerKey) {
     case DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead:
-      return createSadtalkerLowStubAdapter(defaultEstimateCents);
+      return createSadtalkerLowAdapter({ defaultEstimateCents });
     case DEFAULT_LOW_TIER_PROVIDER_KEYS.broll:
       return createSiliconflowWan21TurboStubAdapter(defaultEstimateCents);
     case "heygen_high":

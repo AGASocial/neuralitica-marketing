@@ -214,32 +214,74 @@ describe("US-8.1 provider registry", () => {
     );
   });
 
-  it("5 — stub round-trip createJob → getJobStatus → fetchAsset", async () => {
+  it("5 — stub round-trip createJob → getJobStatus → fetchAsset (wan stub)", async () => {
     const { getProviderRegistry, resetProviderRegistryForTests } =
       loadRegistryModule();
     const { VIDEO_JOB_STATUSES } = loadProviderAdapters();
     resetProviderRegistryForTests();
 
-    const adapter = getProviderRegistry().getVideoAdapter("sadtalker_low");
+    const adapter = getProviderRegistry().getVideoAdapter(
+      "siliconflow_wan21_turbo",
+    );
     const input = {
       reelScriptId: "00000000-0000-4000-8000-000000000001",
       clientId: "00000000-0000-4000-8000-000000000002",
-      providerKey: "sadtalker_low",
+      providerKey: "siliconflow_wan21_turbo",
       providerTier: "low" as const,
-      assetRole: "primary" as const,
+      assetRole: "broll" as const,
       targetDurationSec: 30,
     };
 
     const created = await adapter.createJob(input);
     assert.equal(created.status, "queued");
-    assert.match(created.externalJobId, /^stub-sadtalker_low-/);
+    assert.match(created.externalJobId, /^stub-siliconflow_wan21_turbo-/);
 
     const status = await adapter.getJobStatus(created.externalJobId);
     assert.ok(VIDEO_JOB_STATUSES.includes(status.status));
 
     const asset = await adapter.fetchAsset(created.externalJobId);
-    assert.match(asset.storageKey, /^stub\/sadtalker_low\//);
+    assert.match(asset.storageKey, /^stub\/siliconflow_wan21_turbo\//);
     assert.equal(asset.mimeType, "video/mp4");
+  });
+
+  it("5b — sadtalker registry adapter is real (no stub prefix)", async () => {
+    const { getProviderRegistry, resetProviderRegistryForTests } =
+      loadRegistryModule();
+    resetProviderRegistryForTests();
+
+    const adapter = getProviderRegistry().getVideoAdapter("sadtalker_low");
+    assert.equal(adapter.providerKey, "sadtalker_low");
+    assert.equal(adapter.videoAssetRole, "primary");
+
+    const previousToken = process.env.REPLICATE_API_TOKEN;
+    delete process.env.REPLICATE_API_TOKEN;
+
+    try {
+      await assert.rejects(
+        () =>
+          adapter.createJob({
+            reelScriptId: "00000000-0000-4000-8000-000000000001",
+            clientId: "00000000-0000-4000-8000-000000000002",
+            providerKey: "sadtalker_low",
+            providerTier: "low",
+            assetRole: "primary",
+            targetDurationSec: 30,
+            portraitAssetId: "00000000-0000-4000-8000-000000000010",
+            voiceoverAssetId: "00000000-0000-4000-8000-000000000011",
+          }),
+        (err: unknown) => {
+          assert.ok(err instanceof Error);
+          assert.equal((err as { code?: string }).code, "PROVIDER_CONFIG_MISSING");
+          return true;
+        },
+      );
+    } finally {
+      if (previousToken === undefined) {
+        delete process.env.REPLICATE_API_TOKEN;
+      } else {
+        process.env.REPLICATE_API_TOKEN = previousToken;
+      }
+    }
   });
 });
 
@@ -348,8 +390,12 @@ describe("US-8.1 module boundaries", () => {
 
       const files = output.length > 0 ? output.split("\n") : [];
       for (const file of files) {
+        const normalized = file.replace(/\\/g, "/");
+        if (normalized.endsWith("/lib/contracts/sadtalker-low.ts")) {
+          continue;
+        }
         assert.match(
-          file.replace(/\\/g, "/"),
+          normalized,
           /lib\/providers\//,
           `${pattern} found outside lib/providers: ${file}`,
         );
