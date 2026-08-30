@@ -2,14 +2,14 @@
 
 **Story:** US-9.2 — Add subtitles, logo, and cover  
 **Branch:** `feature/US-9.2-subtitles-logo-cover`  
-**Build refs:** worker `7518bc5` · BE `36e9dd3` · FE `a15921b`  
+**Build refs:** worker `7518bc5` · BE `36e9dd3` + fix `757da6a` · FE `a15921b`  
 **Validator:** requirements-validator  
-**Date:** 2026-08-30  
+**Date:** 2026-08-30 (re-run after fix `757da6a`)  
 **Scope:** Phase A only (ASS burn-in + logo overlay + cover @ 1s; equal beat split; auto-chain; Operator panel; Ficha logo/defaults)
 
-### Verdict: FAIL
+### Verdict: PASS WITH NOTES
 
-Phase A delivers the branding worker pipeline, DDL, Ficha logo/defaults UI, Operator panel, auto-chain hook, subtitle sanitizer, and most SECURITY/CONTRACT surfaces. **Manual Operator branding is blocked:** `applyBrandingForAssembly` Server Action is still a stub returning `INTERNAL_ERROR` and does not delegate to the implemented `applyBrandingForAssemblyInner` orchestrator. Auto-chain after assembly `completed` can still enqueue jobs, but **Apply branding** / **Re-brand** in `/operator/scripts` cannot succeed until the action is wired.
+Phase A delivers the branding worker pipeline, DDL, Ficha logo/defaults UI, Operator panel, auto-chain hook, subtitle sanitizer, and all CONTRACT/SECURITY surfaces. Fix commit **`757da6a`** wires `applyBrandingForAssembly` → `applyBrandingForAssemblyInner`, unblocking Operator **Apply branding** / **Re-brand** in `/operator/scripts`. Remaining notes are non-blocking: partial SECURITY test matrix, no live FFmpeg/mobile visual QA in CI.
 
 ---
 
@@ -27,11 +27,22 @@ npx tsx --test \
 |--------|--------|
 | Suites | 25 |
 | Tests | **49 pass / 0 fail** |
-| Duration | ~279 ms |
+| Duration | ~289 ms |
 
 **Coverage highlights:** golden FFmpeg branding args (subtitles+logo, subtitles-only, logo-only, cover-only copy path); ASS equal-split timings + typography constants; subtitle sanitizer injection fail-closed; forbidden branding keys; Cliente `FORBIDDEN` on inner orchestrator; cross-tenant worker fail-without-spawn; mocked full `runBrandingJob` pipeline; fingerprint stability; assembly grep guards (no `neuramark_assembled_reels` UPDATE outside `lib/assembly` + `lib/branding`).
 
 **Not run (explicit out of scope):** live FFmpeg on Fly, manual Operator E2E (Assemble → Apply branding → preview → Download cover), logo upload MIME integration tests.
+
+---
+
+## Fix verification — `757da6a`
+
+| Check | Status | Evidence |
+|-------|--------|----------|
+| Server Action delegates to orchestrator | **PASS** | `applyBrandingForAssembly` returns `applyBrandingForAssemblyInner(input)` (`lib/assembly/actions/apply-branding-for-assembly.ts:13–16`) |
+| Forbidden-field validation preserved | **PASS** | Inner scans `findForbiddenBrandingKeys` + Zod parse before `createBrandingJobForAssembly({ source: "operator_manual" })` (`lib/assembly/create-branding-job-for-assembly.ts:233–252`) |
+| FE imports wired action | **PASS** | `OperatorAssemblyPanel.tsx:25,492` · `BrandingRebrandConfirmDialog.tsx:12,102` import `@/lib/assembly/actions/apply-branding-for-assembly` |
+| Stub `INTERNAL_ERROR` removed | **PASS** | Action file contains no stub return; only delegation to inner |
 
 ---
 
@@ -54,7 +65,7 @@ npx tsx --test \
 | Migration DDL + storage_key CHECK | **PASS** | `supabase/migrations/20260830900000_neuramark_branding_us_9_2.sql` matches CONTRACT (profile columns, assembly branding columns, `client_logo`/`cover_frame` enums, idempotency index, regex extensions). |
 | `lib/contracts/branding-job.ts` | **PASS** | Schemas, forbidden keys, env defaults, DTO fields frozen. |
 | `createBrandingJobForAssembly` orchestrator | **PASS** | Operator gate on `operator_manual`; tenancy; sanitize; fingerprint; idempotency; enqueue (`lib/assembly/create-branding-job-for-assembly.ts:96–231`). |
-| **`applyBrandingForAssembly` Server Action** | **FAIL** | Stub returns `{ ok: false, error: { code: "INTERNAL_ERROR" } }` always (`lib/assembly/actions/apply-branding-for-assembly.ts:12–18`). Real logic exists as `applyBrandingForAssemblyInner` in `create-branding-job-for-assembly.ts:233–253` but is **not** exported through the `"use server"` action consumed by FE. |
+| **`applyBrandingForAssembly` Server Action** | **PASS** | Delegates to `applyBrandingForAssemblyInner` (`lib/assembly/actions/apply-branding-for-assembly.ts:13–16`); inner validates forbidden keys + Zod + `source: "operator_manual"` (`create-branding-job-for-assembly.ts:233–252`). |
 | `onAssemblyJobCompleted` auto-chain | **PASS** | Hook in `applyAssemblyJobUpdate` → `onAssemblyJobCompleted` → `createBrandingJobForAssembly({ source: "auto_chain" })` (`lib/assembly/apply-assembly-job-update.ts:117–118`, `lib/assembly/on-assembly-job-completed.ts:9–15`). |
 | `uploadClientLogo` / `removeClientLogo` / `updateAssemblyConfigDefaults` | **PASS** | Dedicated Server Actions with `requireActive`; replace-on-upload; strict Zod on defaults (`lib/profile/actions/*.ts`). |
 | Subtitle resolver + sanitizer | **PASS** | `resolve-subtitle-beats.ts`, `sanitize-subtitle-beats.ts` + unit tests. |
@@ -63,7 +74,7 @@ npx tsx --test \
 | Media serve (`client_logo`, `cover_frame`, branded `assembled_reel`) | **PASS** | Auth + ownership per type (`app/api/media/assets/[assetId]/route.ts:129–240`). Branded reel remains Operator-only. |
 | Operator batch DTO branding fields | **PASS** | `mapOperatorAssemblyJobDto` (`lib/assembly/map-operator-assembly-job-dto.ts:51–78`). |
 | Cliente `/profile` Brand section | **PASS** | `ProfileBrandingSection` in `LivingProfileView` (`components/profile/LivingProfileView.tsx:162`). EN/ES `profile.branding.*` + `scripts.branding.*` (`messages/en.json`, `messages/es.json`). |
-| Operator `/operator/scripts` branding panel | **PASS (UI)** / **FAIL (trigger)** | Panel, toggles, preview, download cover, poll (`components/scripts/OperatorAssemblyPanel.tsx`). Apply/Re-brand call broken stub action. |
+| Operator `/operator/scripts` branding panel | **PASS** | Panel, toggles, preview, download cover, poll, Apply/Re-brand via wired action (`components/scripts/OperatorAssemblyPanel.tsx`, `BrandingRebrandConfirmDialog.tsx`). |
 
 ---
 
@@ -72,7 +83,7 @@ npx tsx --test \
 | Floor | Status | Evidence |
 |-------|--------|----------|
 | Pointer-only trigger `{ assemblyJobId, subtitlesEnabled?, logoEnabled? }` | **PASS** | `applyBrandingForAssemblyRequestSchema` + `findForbiddenBrandingKeys` (`lib/contracts/branding-job.ts`, `lib/assembly/find-forbidden-branding-keys.ts`). Test: forbidden keys → `FORBIDDEN_FIELDS`. |
-| `requireOperator("handler")` on manual apply | **PASS (inner)** / **FAIL (action)** | Enforced in `createBrandingJobForAssembly` when `source: "operator_manual"` (L105–116). **Not reachable** from browser until Server Action wired. |
+| `requireOperator("handler")` on manual apply | **PASS** | Enforced in `createBrandingJobForAssembly` when `source: "operator_manual"` (L105–116); reachable via wired Server Action. |
 | `requireActive` on logo/defaults mutations | **PASS** | `upload-client-logo.ts:76`, `update-assembly-config-defaults.ts:34`. |
 | Shared `client_logo` upload validator (2 MiB, magic bytes, server key) | **PASS** | `validateClientLogoUpload` (`lib/media/upload-validation.ts:174–231`). |
 | Subtitle sanitizer fail-closed | **PASS** | Injection residue → job `failed` / orchestrator error (`sanitize-subtitle-beats.ts:65–70`). |
@@ -97,7 +108,7 @@ npx tsx --test \
 | PrimeReact-first UI | **PASS** | `Button`, `InputSwitch`, `ConfirmDialog`, `Message`, `ProgressBar`, `Toast`. |
 | Loading / empty / error / pending states | **PASS** | Profile: upload/removing progress, empty logo, error toasts (`ProfileBrandingSection.tsx`). Operator: assembly + branding pending, poll, preview error, failure banners (`OperatorAssemblyPanel.tsx`). |
 | Supabase only on server | **PASS** | No client Supabase imports in branding surfaces. |
-| `getCurrentUser()` / `requireActive` / `requireOperator` | **PASS** | Per CONTRACT gates on implemented paths. |
+| `getCurrentUser()` / `requireActive` / `requireOperator` | **PASS** | Per CONTRACT gates on all paths including wired manual apply. |
 
 ---
 
@@ -115,9 +126,12 @@ npx tsx --test \
 
 ---
 
-## Gaps (what blocks PASS)
+## Gaps (non-blocking notes)
 
-1. **BLOCKER — `applyBrandingForAssembly` Server Action stub** (`lib/assembly/actions/apply-branding-for-assembly.ts`): Operator **Apply branding** / **Re-brand** always fail with `INTERNAL_ERROR`. Wire to `applyBrandingForAssemblyInner` (or inline orchestrator call) with `"use server"` boundary preserved.
+1. **SECURITY test matrix incomplete** — CONTRACT lists logo SVG/oversize rejection, foreign `assemblyJobId` 404, serve IDOR 404, Ficha `logo_asset_id` smuggle test; not all automated yet.
+2. **grep guard scope** — `fetch(` scan covers `lib/assembly/**` only; extend to `lib/branding/**` for parity.
+3. **Visual QA** — subtitle safe-zone readability and branded output quality require manual/staging check (constants verified in unit tests only).
+4. **Operator E2E** — Apply branding flow now wired in code; manual Assemble → Apply → preview → Download cover not exercised in CI.
 
 ---
 
@@ -131,17 +145,16 @@ None identified. Implementation stays within US-9.2 Phase A + frozen CONTRACT su
 
 | Priority | Action | Agent |
 |----------|--------|-------|
-| P0 | Wire `applyBrandingForAssembly` → `applyBrandingForAssemblyInner`; verify Operator apply/re-brand E2E | **nextjs-backend** |
 | P1 | Add SECURITY matrix tests: logo SVG/oversize rejection; foreign `assemblyJobId` 404; serve IDOR 404; explicit Ficha `logo_asset_id` smuggle test | **nextjs-backend** |
 | P1 | Extend grep guard: `fetch(` scan includes `lib/branding/**` | **nextjs-backend** |
-| P2 | QA manual: Assemble → auto-chain branding → preview → Download cover; Ficha logo upload/remove/toggles | **qa-engineer** |
+| P2 | QA manual: Assemble → auto-chain branding → Apply/Re-brand → preview → Download cover; Ficha logo upload/remove/toggles | **qa-engineer** |
 | After VALIDATION + QA CLOSE | PO checks AC in `plan/USER_STORIES.md` | **product-owner** |
 
 ---
 
-## QA blockers (for qa-engineer)
+## QA notes (for qa-engineer)
 
-1. **Cannot test Operator manual Apply branding / Re-brand** until Server Action stub is fixed.
+1. Operator manual **Apply branding** / **Re-brand** is unblocked — exercise in staging.
 2. No automated logo upload rejection tests — manual SVG/oversize checks advised.
 3. No live FFmpeg / Fly worker E2E — validate branded output and cover JPEG in staging with real assembly job.
 4. Subtitle safe-zone readability requires visual check on device (constants only in unit tests).
