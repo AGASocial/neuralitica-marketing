@@ -37,6 +37,9 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
           <Link href="/dashboard" style={{ color: "#374151", textDecoration: "none" }}>
             {t.header.nav.dashboard}
           </Link>
+          <Link href="/approvals" style={{ color: "#374151", textDecoration: "none" }}>
+            {t.header.nav.approvals}
+          </Link>
           {user.role === "operator" ? (
             <>
               <Link

@@ -48,6 +48,7 @@
     "confirmReject": "Cancelar",
     "nav": {
       "dashboard": "Panel",
+      "approvals": "Aprobaciones",
       "playbook": "Playbook de formatos",
       "trends": "Snapshots de tendencias",
       "strategy": "Estrategia semanal",
@@ -333,6 +334,68 @@
         "forbidden": "No tienes acceso a eso.",
         "internal": "Algo salió mal. Inténtalo más tarde."
       }
+    }
+  },
+  "approvals": {
+    "list": {
+      "title": "Aprobaciones pendientes",
+      "subtitle": "Revisa los paquetes que esperan tu decisión antes de publicar.",
+      "empty": "No hay paquetes esperando tu revisión en este momento.",
+      "loadError": "No pudimos cargar las aprobaciones pendientes. Actualiza la página para intentarlo de nuevo.",
+      "loading": "Cargando aprobaciones…",
+      "backDashboard": "Volver al panel",
+      "reviewCta": "Revisar",
+      "createdAt": "Recibido {date}",
+      "disclosureChip": "Disclosure",
+      "overridesChip": "{count} notas de QA"
+    },
+    "detail": {
+      "title": "Revisar paquete",
+      "backList": "Volver a aprobaciones",
+      "loading": "Cargando paquete…",
+      "loadError": "No pudimos cargar este paquete. Actualiza la página para intentarlo de nuevo.",
+      "caption": "Caption de Instagram",
+      "selectedCta": "Llamado a la acción",
+      "hashtags": "Hashtags",
+      "disclosureTitle": "Disclosure",
+      "overridesTitle": "Notas de QA",
+      "overridesEmpty": "No se registraron notas de QA para este paquete.",
+      "overrideReason": "{reason}",
+      "videoLabel": "Video del paquete",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "confirmReject": "Confirmar rechazo",
+      "cancelReject": "Cancelar",
+      "approving": "Aprobando…",
+      "rejecting": "Rechazando…",
+      "feedbackLabel": "Comentarios (opcional)",
+      "feedbackHint": "Cuéntanos por qué rechazas este paquete.",
+      "feedbackTooLong": "Los comentarios deben tener 500 caracteres o menos.",
+      "decidedAt": "Decidido {date}",
+      "gateNotReadyHint": "Este paquete aún no está listo para aprobación. Inténtalo más tarde.",
+      "toastApproved": "Paquete aprobado.",
+      "toastRejected": "Paquete rechazado.",
+      "status": {
+        "pending_client": "Pendiente",
+        "approved": "Aprobado",
+        "rejected": "Rechazado",
+        "changes_requested": "Cambios solicitados"
+      }
+    },
+    "errors": {
+      "unauthenticated": "Inicia sesión para continuar.",
+      "forbidden": "No tienes acceso a eso.",
+      "validation": "Revisa tu entrada e inténtalo de nuevo.",
+      "notFound": "No se encontró ese paquete de aprobación.",
+      "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+      "qaGateNotReady": "Este paquete aún no está listo para aprobación.",
+      "assemblyNotReady": "El Ensamblado aún no está listo.",
+      "brandingRequired": "El branding debe completarse antes de la aprobación.",
+      "captionRequired": "Se requiere un caption antes de la aprobación.",
+      "captionCtaNotSelected": "Debe seleccionarse un llamado a la acción antes de la aprobación.",
+      "invalidTransition": "Este paquete ya fue decidido.",
+      "rateLimited": "Demasiados intentos. Espera e inténtalo de nuevo más tarde.",
+      "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
     }
   },
   "legal": {

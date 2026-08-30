@@ -143,15 +143,15 @@
 
 ## FE checklist
 
-- [ ] Add App Router pages: `app/(app)/approvals/page.tsx` (list) + `app/(app)/approvals/[approvalId]/page.tsx` (detail).
-- [ ] List: pending cards; **empty** state; loading; error mapping.
-- [ ] Detail: `<video>` via authenticated `previewUrl`; caption + selected CTA; hashtags; disclosure when `required`; read-only QA overrides audit (plain text).
-- [ ] CTAs: **Approve** + **Reject** (optional feedback textarea); **no** request-changes control Phase A.
-- [ ] Mobile-friendly layout (AC); PrimeReact where appropriate; no hero/marketing clutter.
-- [ ] Wire dashboard `approvalsCard` CTA → `/approvals`; add header nav Approvals (EN/ES).
-- [ ] i18n `approvals.*` in `messages/en.json` + `messages/es.json`.
-- [ ] Pending/disabled states on decide; toast/error for `QA_GATE_NOT_READY`, `CAPTION_CTA_NOT_SELECTED`, IDOR 404.
-- [ ] Types from `lib/contracts/*` only — no client-supplied gate flags.
+- [x] Add App Router pages: `app/(app)/approvals/page.tsx` (list) + `app/(app)/approvals/[approvalId]/page.tsx` (detail).
+- [x] List: pending cards; **empty** state; loading; error mapping.
+- [x] Detail: `<video>` via authenticated `previewUrl`; caption + selected CTA; hashtags; disclosure when `required`; read-only QA overrides audit (plain text).
+- [x] CTAs: **Approve** + **Reject** (optional feedback textarea); **no** request-changes control Phase A.
+- [x] Mobile-friendly layout (AC); PrimeReact where appropriate; no hero/marketing clutter.
+- [x] Wire dashboard `approvalsCard` CTA → `/approvals`; add header nav Approvals (EN/ES).
+- [x] i18n `approvals.*` in `messages/en.json` + `messages/es.json`.
+- [x] Pending/disabled states on decide; toast/error for `QA_GATE_NOT_READY`, `CAPTION_CTA_NOT_SELECTED`, IDOR 404.
+- [x] Types from `lib/contracts/*` only — no client-supplied gate flags.
 
 ## BE checklist
 

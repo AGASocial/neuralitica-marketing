@@ -48,6 +48,7 @@
     "confirmReject": "Cancel",
     "nav": {
       "dashboard": "Dashboard",
+      "approvals": "Approvals",
       "playbook": "Format catalog",
       "trends": "Trend snapshots",
       "strategy": "Weekly strategy",
@@ -333,6 +334,68 @@
         "forbidden": "You do not have access to that.",
         "internal": "Something went wrong. Please try again later."
       }
+    }
+  },
+  "approvals": {
+    "list": {
+      "title": "Pending approvals",
+      "subtitle": "Review packages waiting for your decision before publishing.",
+      "empty": "No packages waiting for your review right now.",
+      "loadError": "We could not load pending approvals. Refresh the page to try again.",
+      "loading": "Loading approvals…",
+      "backDashboard": "Back to dashboard",
+      "reviewCta": "Review",
+      "createdAt": "Received {date}",
+      "disclosureChip": "Disclosure",
+      "overridesChip": "{count} QA notes"
+    },
+    "detail": {
+      "title": "Review package",
+      "backList": "Back to approvals",
+      "loading": "Loading package…",
+      "loadError": "We could not load this package. Refresh the page to try again.",
+      "caption": "Caption",
+      "selectedCta": "Call to action",
+      "hashtags": "Hashtags",
+      "disclosureTitle": "Disclosure",
+      "overridesTitle": "QA notes",
+      "overridesEmpty": "No QA notes were recorded for this package.",
+      "overrideReason": "{reason}",
+      "videoLabel": "Package video",
+      "approve": "Approve",
+      "reject": "Reject",
+      "confirmReject": "Confirm reject",
+      "cancelReject": "Cancel",
+      "approving": "Approving…",
+      "rejecting": "Rejecting…",
+      "feedbackLabel": "Feedback (optional)",
+      "feedbackHint": "Tell us why you are rejecting this package.",
+      "feedbackTooLong": "Feedback must be 500 characters or fewer.",
+      "decidedAt": "Decided {date}",
+      "gateNotReadyHint": "This package is not ready for approval yet. Try again later.",
+      "toastApproved": "Package approved.",
+      "toastRejected": "Package rejected.",
+      "status": {
+        "pending_client": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "changes_requested": "Changes requested"
+      }
+    },
+    "errors": {
+      "unauthenticated": "Please log in to continue.",
+      "forbidden": "You do not have access to that.",
+      "validation": "Please check your input and try again.",
+      "notFound": "That approval package was not found.",
+      "forbiddenFields": "Something went wrong. Please try again.",
+      "qaGateNotReady": "This package is not ready for approval yet.",
+      "assemblyNotReady": "The assembled Reel is not ready yet.",
+      "brandingRequired": "Branding must be completed before approval.",
+      "captionRequired": "A caption is required before approval.",
+      "captionCtaNotSelected": "A call to action must be selected before approval.",
+      "invalidTransition": "This package was already decided.",
+      "rateLimited": "Too many attempts. Please wait and try again later.",
+      "internal": "Something went wrong. Please try again later."
     }
   },
   "legal": {
