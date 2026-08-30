@@ -996,13 +996,13 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | Agent/rules: dangerous claims, tone, clarity, AI disclosure, avatar misuse, CTA presence |
 | **DB** | `qa_reports` (assembled_reel_id, checks JSON, status, created_at) |
 
-**Acceptance criteria**
-- [ ] Checks include generic-avatar-not-owner rule (US-3.4)
-- [ ] AI disclosure required when avatar or synthetic voice used
-- [ ] LLM QA pass uses catalog row for asset role `llm` at resolved `provider_tier` (US-X.4)
-- [ ] Failed critical checks block approval until resolved or overridden by operator
-- [ ] [SEC] QA verdicts are computed and stored server-side; no endpoint accepts a client-supplied "passed" flag, and the approval gate (US-11.1) reads QA status from the DB, not from the request
-- [ ] [SEC] Checks are classified in the schema as `overridable` vs `blocking` (legal class: missing consent, generic-avatar impersonation); this classification is code/config, not data editable via any endpoint
+**Acceptance criteria** *(Phase A CLOSED 2026-08-30 — operator override path owned by US-10.2; gate ready iff `passed` until then)*
+- [x] Checks include generic-avatar-not-owner rule (US-3.4)
+- [x] AI disclosure required when avatar or synthetic voice used
+- [x] LLM QA pass uses catalog row for asset role `llm` at resolved `provider_tier` (US-X.4)
+- [x] Failed critical checks block approval until resolved or overridden by operator *(Phase A: block until resolved/re-run pass; “or overridden” = US-10.2)*
+- [x] [SEC] QA verdicts are computed and stored server-side; no endpoint accepts a client-supplied "passed" flag, and the approval gate (US-11.1) reads QA status from the DB, not from the request
+- [x] [SEC] Checks are classified in the schema as `overridable` vs `blocking` (legal class: missing consent, generic-avatar impersonation); this classification is code/config, not data editable via any endpoint
 
 **Depends on:** US-9.2, US-6.1, US-3.4, US-X.4
 

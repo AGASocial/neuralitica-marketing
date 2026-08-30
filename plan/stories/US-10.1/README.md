@@ -1,6 +1,6 @@
 # US-10.1 — Run automated QA on script, caption, and video
 
-**Status:** CONTRACT frozen (2026-08-30) — awaiting FE signoff; BUILD not started. Do **not** check off AC in `plan/USER_STORIES.md`.
+**Status:** CLOSED Phase A (2026-08-30) — VALIDATION PASS WITH NOTES `d95555d` (42/42) · QA APPROVE WITH CONDITIONS `a6ba923` · 6/6 AC. Operator override path owned by US-10.2.
 
 **As a** System, **I want** compliance checks before client review, **so that** risky content is flagged early.
 
@@ -118,12 +118,13 @@ _Evitar:_ “QA verdict” as product noun (use Veredicto QA); impersonation in 
 
 - [x] SPEC-REVIEW.md (spec-guardian) — **GAPS** (intent aligned; SECURITY clear; CONTRACT freezes listed)
 - [x] SECURITY.md (security-architect) — **APPROVE WITH CONDITIONS**
-- [x] CONTRACT.md (nextjs-backend — frozen; Zod `lib/contracts/qa-report.ts`; **Reviewed by FE: pending**)
-- [ ] BUILD (content-agents-engineer + nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] CONTRACT.md (nextjs-backend — frozen; Zod `lib/contracts/qa-report.ts`; **Reviewed by FE: yes**)
+- [x] BUILD (content-agents-engineer `0b56c9e`/`75802d6` + nextjs-backend `5e50115` + nextjs-frontend `b5e0941`)
+- [x] VALIDATION.md — **PASS WITH NOTES** `d95555d` (42/42)
+- [x] QA.md — **APPROVE WITH CONDITIONS** `a6ba923` · CLOSE yes
+- [x] CLOSE Phase A — 6/6 AC checked; override = US-10.2
 
-**Next gate:** FE reviews CONTRACT → “Reviewed by FE: yes” → BUILD.
+**Next:** SELECT US-10.2 (recommended) or US-8.5 / US-11.1 (deps allow).
 
 ---
 

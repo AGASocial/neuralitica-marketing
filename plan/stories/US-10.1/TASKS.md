@@ -167,7 +167,8 @@ type QaCheckResult = {
 
 ## Done when
 
-- All USER_STORIES § US-10.1 AC satisfied (validator confirms — do not self-check)  
-- Gate helper proven to ignore client-supplied pass  
-- Operator can run QA on branded reel and see per-check Veredicto QA  
-- US-10.2 / US-11.1 can consume report status without schema churn  
+- [x] All USER_STORIES § US-10.1 AC satisfied — VALIDATION PASS WITH NOTES `d95555d` · QA APPROVE WITH CONDITIONS `a6ba923` · PO CLOSE 6/6 AC (override clause → US-10.2)
+- [x] Gate helper proven to ignore client-supplied pass  
+- [x] Operator can run QA on branded reel and see per-check Veredicto QA  
+- [x] US-10.2 / US-11.1 can consume report status without schema churn  
+
