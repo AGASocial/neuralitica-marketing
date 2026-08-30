@@ -196,11 +196,11 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 - [x] SPEC-REVIEW.md (spec-guardian)
 - [x] SECURITY.md (security-architect)
 - [x] CONTRACT.md authored (nextjs-backend — frozen; **Reviewed by FE** required before BUILD)
-- [ ] BUILD (nextjs-backend + nextjs-frontend + media-pipeline-engineer)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] BUILD (nextjs-backend + nextjs-frontend + media-pipeline-engineer)
+- [x] VALIDATION.md (batch gate FAIL remediated `69d274f`)
+- [x] QA.md — APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 2 Low; CLOSE yes)
 
-**Status:** PREP (2026-08-29). **Next:** spec-guardian SPEC-REVIEW → security-architect SECURITY → nextjs-backend CONTRACT.
+**Status:** CLOSED (2026-08-30). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** Sprint 4 — **US-7.2** Select provider by economics and quality floor.
 
 ---
 

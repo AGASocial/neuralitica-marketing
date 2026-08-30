@@ -1,20 +1,35 @@
 # US-7.1 — Configure max budget per Reel
 
-**Status:** PREP — `README.md` + `TASKS.md` (2026-08-29). Gates not started.
+**Status:** CLOSED — QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 2 Low; CLOSE yes). Build BE `3bdc709` · FE `bb19e4d` · batch fix `69d274f`.
 
 **As an** Operator, **I want** a maximum cost per Reel before generation, **so that** margin is protected.
 
 Ship **Operator cost-policy settings + server-side Reel budget gate for LLM generation (scripts/captions V1)**: Operator edits **`max_cost_cents`** and **`provider_tier`** on a dedicated **`/operator/settings/cost-policy`** route (global default + optional per-client override); server resolves policy via **`getCostPolicyForClient(clientId)`** (per-client row wins, else global seed); **`checkReelBudget`** runs inside script/caption job-creation paths with **cumulative spend per `reel_script_id`**; Operator sees **estimate before confirm** on Generate/Regenerate on `/operator/scripts`; generation **blocked** when cumulative + estimate exceeds cap unless Operator records an **audited override**. **Full video/TTS/B-roll job budget wiring** and **US-7.2 policy-engine ranking** stay **out** of BUILD (ledger + gate designed so US-8.x/US-7.2 plug in).
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-7.1 (unchecked until VALIDATION CLOSE).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-7.1 (checked on CLOSE).
 
-**This folder:** [`plan/stories/US-7.1/`](./) — `README.md` · `TASKS.md` · (pending) `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
+**This folder:** [`plan/stories/US-7.1/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
 
 **Branch:** `feature/US-7.1-cost-policy`
 
 **Depends on:** [US-3.1](../US-3.1/) ✅ `visual_mode` on profile (`own_avatar` \| `generic_avatar` \| `faceless`) · [US-5.1](../US-5.1/) ✅ `neuramark_reel_scripts` · generate/regenerate on `/operator/scripts` · [US-X.4](../US-X.4/) ✅ `neuramark_cost_policies` seed · `getProviderCatalog()` · `getDefaultCostPolicy()` · `resolveProvider()` · `lib/contracts/providers.ts`.
 
 **Unblocks:** [US-7.2](../../USER_STORIES.md) (policy engine ranking + multi-asset estimates) · [US-8.x](../../USER_STORIES.md) (video job budget gate reuse) · [US-8.4](../../USER_STORIES.md) (retry cumulative check) · [US-9.3](../../USER_STORIES.md) (TTS spend in cumulative).
+
+---
+
+## Close verdicts
+
+| Gate | Verdict |
+|------|---------|
+| SPEC-REVIEW | GAPS resolved in CONTRACT |
+| SECURITY | APPROVE WITH CONDITIONS |
+| CONTRACT | Frozen 2026-08-30; Reviewed by FE (BUILD `bb19e4d`) |
+| BUILD | BE `3bdc709` · FE `bb19e4d` · batch fix `69d274f` |
+| VALIDATION | FAIL on batch gate ordering — remediated in `69d274f` (97/97 tests pass) |
+| QA | APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 2 Low; CLOSE yes) |
+
+**QA handoff (non-blocking, post-CLOSE):** M1 — batch pre-flight gate (addressed `69d274f`); M2 — fail closed on audit/spend INSERT errors; L1 — expand CONTRACT security test matrix; L2 — client dollar-to-cents edge cases. **Next:** Sprint 4 — **US-7.2** Select provider by economics and quality floor.
 
 ---
 
@@ -79,11 +94,11 @@ _Evitar:_ client-picked vendor; exposing raw API unit costs to Cliente; "cheap m
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend — frozen; **Reviewed by FE** before BUILD)
-- [ ] BUILD (nextjs-backend + nextjs-frontend + media-pipeline-engineer)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] SPEC-REVIEW.md (spec-guardian)
+- [x] SECURITY.md (security-architect)
+- [x] CONTRACT.md (nextjs-backend — frozen; **Reviewed by FE** before BUILD)
+- [x] BUILD (nextjs-backend + nextjs-frontend + media-pipeline-engineer)
+- [x] VALIDATION.md (batch gate FAIL remediated `69d274f`)
+- [x] QA.md — APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 2 Low; CLOSE yes)
 
-**Status:** PREP. **Next gate:** spec-guardian SPEC-REVIEW → security-architect SECURITY → nextjs-backend CONTRACT.
+**Status:** CLOSED (2026-08-30). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** Sprint 4 — **US-7.2** Select provider by economics and quality floor.
