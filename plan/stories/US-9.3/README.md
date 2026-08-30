@@ -1,12 +1,12 @@
 # US-9.3 — Text-to-speech for voiceover
 
-**Status:** PREP — story folder + frozen PO decisions (2026-08-30). Gates pending: `SECURITY.md` · `CONTRACT.md` · BUILD · `VALIDATION.md` · `QA.md`.
+**Status:** CLOSED Phase A (2026-08-30) — VALIDATION PASS WITH NOTES `1715048` · QA APPROVE WITH CONDITIONS `e9c1833` · PO AC check-off 5/6 on `feature/US-9.3-tts-voiceover`. Builds adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813`. ElevenLabs high-tier AC deferred Phase B.
 
 **As a** System, **I want** AI voice from voiceover script, **so that** clients never record audio.
 
 Ship **CosyVoice2 TTS (low tier)** end-to-end: server-only **`TtsProviderAdapter`** for catalog key **`siliconflow_cosyvoice2`**; Operator-triggered synthesis from **`neuramark_reel_scripts.voiceover_text`**; persist output as **`neuramark_media_assets`** (`asset_type = voiceover`); Cliente **voice picker** on Preferencias with playable samples; **`voice_id`** on **`neuramark_visual_preferences`** validated against a closed server catalog; **budget gate** on TTS spend via **`neuramark_reel_spend_events`**. Video jobs and assembly consume **`voiceoverAssetId`** — no FFmpeg in this story.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-9.3 (**intentionally unchecked** until VALIDATION + QA CLOSE).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-9.3 (5/6 AC checked Phase A — ElevenLabs high tier deferred Phase B).
 
 **This folder:** [`plan/stories/US-9.3/`](./) — `README.md` · `TASKS.md` (gates: `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` — create when story enters sprint).
 
@@ -86,15 +86,15 @@ _Evitar:_ client-supplied `provider_key`; arbitrary vendor `voice_id`; human aud
 ## Gates (orchestrator)
 
 - [x] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend — frozen; **Reviewed by FE** line required)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
+- [x] CONTRACT.md (nextjs-backend — frozen; **Reviewed by FE** yes)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES `1715048`)
+- [x] QA.md (qa-engineer — APPROVE WITH CONDITIONS `e9c1833`)
 
-**Status:** PREP complete — awaiting SECURITY + CONTRACT freeze before BUILD.
+**Status:** CLOSED Phase A. **PO close:** pending FF-merge to main. **QA baseline:** `e9c1833` on `feature/US-9.3-tts-voiceover`.
 
-**Next after CLOSE:** Wire default **Generate voiceover → Start video** happy path on `/operator/scripts`; US-9.1 assembly consumes stored audio.
+**Next after CLOSE:** **SELECT US-9.1** (assemble final 9:16 Reel — voiceover asset now available); Phase B ElevenLabs when `elevenlabs_tts_high` activates.
 
 ---
 

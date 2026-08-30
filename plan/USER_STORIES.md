@@ -970,13 +970,14 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | TTS provider integration via catalog (`asset_role = tts`); low tier default CosyVoice2 (SiliconFlow); store audio asset; link to assembly job |
 | **DB** | `media_assets` type `voiceover`; `visual_preferences.voice_id` |
 
-**Acceptance criteria**
-- [ ] Low tier (`provider_tier = low`): CosyVoice2 or equivalent catalog row; high tier may use ElevenLabs when active
-- [ ] Voice matches profile tone hint when possible
-- [ ] Spanish and English voices supported
-- [ ] TTS cost included in job estimate
-- [ ] [SEC] `voice_id` is validated server-side against the offered catalog (no arbitrary provider voice IDs from the client — guards against voice-cloning misuse and unexpected billing)
-- [ ] [SEC] TTS provider key is server-only, and TTS spend is counted in the Reel's cumulative budget check (US-7.1)
+**Acceptance criteria** *(Phase A CLOSED 2026-08-30 — ElevenLabs high tier deferred Phase B)*
+- [x] Low tier (`provider_tier = low`): CosyVoice2 or equivalent catalog row
+- [ ] High tier may use ElevenLabs when active *(Phase B defer — `elevenlabs_tts_high` inactive in V1)*
+- [x] Voice matches profile tone hint when possible
+- [x] Spanish and English voices supported
+- [x] TTS cost included in job estimate
+- [x] [SEC] `voice_id` is validated server-side against the offered catalog (no arbitrary provider voice IDs from the client — guards against voice-cloning misuse and unexpected billing)
+- [x] [SEC] TTS provider key is server-only, and TTS spend is counted in the Reel's cumulative budget check (US-7.1)
 
 **Depends on:** US-5.1, US-X.4
 
