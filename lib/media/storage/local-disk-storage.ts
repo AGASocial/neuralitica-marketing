@@ -4,8 +4,20 @@ import { createReadStream, promises as fs } from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
 
-import { STORAGE_KEY_REGEX } from "@/lib/contracts/media-assets";
+import {
+  ASSEMBLED_REEL_STORAGE_KEY_REGEX,
+  STORAGE_KEY_REGEX,
+  VOICEOVER_STORAGE_KEY_REGEX,
+} from "@/lib/contracts/media-assets";
 import type { MediaStorage } from "@/lib/media/storage/media-storage";
+
+function isAllowedStorageKey(key: string): boolean {
+  return (
+    STORAGE_KEY_REGEX.test(key) ||
+    VOICEOVER_STORAGE_KEY_REGEX.test(key) ||
+    ASSEMBLED_REEL_STORAGE_KEY_REGEX.test(key)
+  );
+}
 
 export class UnsafeStorageKeyError extends Error {
   constructor(key: string) {
@@ -34,15 +46,10 @@ export class LocalDiskStorage implements MediaStorage {
   }
 
   assertSafeKey(key: string): void {
-    if (typeof key !== "string" || !STORAGE_KEY_REGEX.test(key)) {
+    if (typeof key !== "string" || !isAllowedStorageKey(key)) {
       throw new UnsafeStorageKeyError(String(key ?? ""));
     }
-    if (
-      key.includes("..") ||
-      key.includes("/") ||
-      key.includes("\\") ||
-      key.startsWith("/")
-    ) {
+    if (key.includes("..") || key.startsWith("/") || key.includes("\\")) {
       throw new UnsafeStorageKeyError(key);
     }
   }
@@ -62,7 +69,7 @@ export class LocalDiskStorage implements MediaStorage {
     _meta: { contentType: string; sizeBytes: number },
   ): Promise<void> {
     const dest = this.absolutePath(key);
-    await fs.mkdir(this.root, { recursive: true });
+    await fs.mkdir(path.dirname(dest), { recursive: true });
     const buffer =
       Buffer.isBuffer(data) ? data : Buffer.from(await new Response(data).arrayBuffer());
     await fs.writeFile(dest, buffer, { flag: "wx" });

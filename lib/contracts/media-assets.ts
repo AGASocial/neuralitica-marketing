@@ -17,6 +17,13 @@ export const MEDIA_ASSET_TYPE_GENERATED_VIDEO = "generated_video" as const;
 /** TTS voiceover asset type (US-9.3 enum). */
 export const MEDIA_ASSET_TYPE_VOICEOVER = "voiceover" as const;
 
+/** FFmpeg assembled Reel output (US-9.1 enum). */
+export const MEDIA_ASSET_TYPE_ASSEMBLED_REEL = "assembled_reel" as const;
+
+/** US-9.1 assembled output keys */
+export const ASSEMBLED_REEL_STORAGE_KEY_REGEX =
+  /^neuramark\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/assembled-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.mp4$/;
+
 /** Shared upload validator asset type union (US-3.3 + US-8.3). */
 export const mediaUploadAssetTypeSchema = z.enum([
   "avatar_reference",
@@ -111,6 +118,24 @@ export const voiceoverAssetMetadataSchema = z
 
 export type VoiceoverAssetMetadata = z.infer<
   typeof voiceoverAssetMetadataSchema
+>;
+
+/** Metadata persisted on assembled_reel rows (US-9.1 FFmpeg output). */
+export const assembledReelAssetMetadataSchema = z
+  .object({
+    detectedMime: z.literal("video/mp4"),
+    sizeBytes: z.number().int().positive(),
+    durationSec: z.number().positive(),
+    width: z.literal(1080),
+    height: z.literal(1920),
+    source: z.literal("assembly_ffmpeg"),
+    templateId: z.literal("reel_v1_basic"),
+    assemblyJobId: z.string().uuid(),
+  })
+  .strict();
+
+export type AssembledReelAssetMetadata = z.infer<
+  typeof assembledReelAssetMetadataSchema
 >;
 
 export const avatarReferenceAssetItemSchema = z
