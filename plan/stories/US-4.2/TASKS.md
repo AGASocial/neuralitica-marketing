@@ -119,11 +119,11 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 - [x] SPEC-REVIEW.md (spec-guardian — edit/approve vs SPEC §3; no US-5.1 scope creep; Cliente read still deferred)
 - [x] SECURITY.md (security-architect — state machine; no client status; approved immutability; lock deferral documented)
 - [x] CONTRACT.md authored (nextjs-backend) — **Reviewed by FE** line required before BUILD
-- [ ] BUILD (nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] BUILD (nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md
+- [x] QA.md — APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 3 Low; CLOSE yes)
 
-**Status:** CONTRACT (2026-08-30). SPEC-REVIEW + SECURITY + CONTRACT frozen. **Next gate:** FE signoff on CONTRACT → BUILD.
+**Status:** CLOSED (2026-08-30). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** **US-5.1** generate Reel script package per slot.
 
 ---
 

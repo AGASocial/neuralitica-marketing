@@ -1,20 +1,35 @@
 # US-4.2 — Review and adjust strategy before scripting
 
-**Status:** CONTRACT — SPEC-REVIEW, SECURITY, and CONTRACT frozen; awaiting FE signoff before BUILD.
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 3 Low; CLOSE yes). Build BE `ba57bac` · FE `4367287`.
 
 **As a** Operator, **I want** to edit the weekly brief, **so that** human judgment can correct AI planning.
 
 Ship **Operator review workflow on top of US-4.1**: on `/operator/strategy`, Operator edits human-judgment fields on the **latest draft row** (themes, slot angles, CTA hints), **saves in place** (UPDATE same `version` — no new version on edit), then **Approves strategy** (`draft` → `approved` with `approved_by` / `approved_at`). Saves re-run Zod + playbook/trend/modalidad allowlist validation. **Generate / Regenerate** remains INSERT-only versioning per US-4.1. **Lock-after-scripts** deferred until `neuramark_reel_scripts` exists (US-5.1). **Cliente read** remains out of this sprint slice.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-4.2 (do **not** check off in PREP).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-4.2 (checked on CLOSE).
 
-**This folder:** [`plan/stories/US-4.2/`](./) — `README.md` · `TASKS.md` · *(gates: SPEC-REVIEW · SECURITY · CONTRACT · VALIDATION · QA)*.
+**This folder:** [`plan/stories/US-4.2/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
 
 **Branch:** `feature/US-4.2-strategy-approve` *(orchestrator sets on BUILD)*
 
 **Depends on:** [US-4.1](../US-4.1/) ✅ generate + read draft · `neuramark_content_strategies` · `lib/contracts/content-strategy.ts` · `validateBriefAgainstAllowlists` · `/operator/strategy` · [US-14.5](../US-14.5/) ✅ `requireOperator()`.
 
 **Unblocks:** [US-5.1](../../USER_STORIES.md) (Video Script Agent requires `approved` strategy row).
+
+---
+
+## Close verdicts
+
+| Gate | Verdict |
+|------|---------|
+| SPEC-REVIEW | ALIGNED (gaps closed in CONTRACT) |
+| SECURITY | APPROVE WITH CONDITIONS |
+| CONTRACT | Frozen 2026-08-30; Reviewed by FE (BUILD `4367287`) |
+| BUILD | BE `ba57bac` · FE `4367287` |
+| VALIDATION | PASS WITH NOTES (`dd7eff5`) |
+| QA | APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 3 Low; CLOSE yes) |
+
+**QA handoff (non-blocking, post-CLOSE):** L1 — logger mock tests on update/approve; L2 — approve IDOR / week-mismatch tests; L3 — optional DB CHECK for audit columns when `approved`. **Next:** **US-5.1** generate Reel script package per slot.
 
 ---
 
