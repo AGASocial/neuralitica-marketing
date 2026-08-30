@@ -176,6 +176,8 @@ export const costEstimateSchema = z.object({
   breakdown: z.record(z.string(), z.number()).optional(),
 });
 
+export type CostEstimate = z.infer<typeof costEstimateSchema>;
+
 export const createVideoJobResultSchema = z.object({
   externalJobId: externalJobIdSchema,
   status: videoJobStatusSchema,
@@ -186,13 +188,21 @@ export const videoJobStatusResultSchema = z.object({
   status: videoJobStatusSchema,
   progressPercent: z.number().min(0).max(100).optional(),
   sanitizedErrorMessage: z.string().max(2000).optional(),
-  rawOutputUrl: z.string().url().optional(),
+  rawOutputUrl: z
+    .string()
+    .url()
+    .refine((url) => url.startsWith("https:"), {
+      message: "rawOutputUrl must use https",
+    })
+    .optional(),
 });
 
 /** DB / API shape — rawOutputUrl is server-transient only (US-8.1). */
-export const persistedVideoJobStatusSchema = videoJobStatusResultSchema.omit({
-  rawOutputUrl: true,
-});
+export const persistedVideoJobStatusSchema = videoJobStatusResultSchema
+  .omit({
+    rawOutputUrl: true,
+  })
+  .strict();
 
 export const storedMediaAssetSchema = z.object({
   storageKey: z.string().min(1),

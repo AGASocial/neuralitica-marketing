@@ -13,6 +13,7 @@ import type {
   AssetRole,
   CreateVideoJobInput,
   CreateVideoJobResult,
+  ExternalJobId,
   LlmVariant,
   ProviderCatalogRow,
   ProviderTier,
@@ -23,6 +24,7 @@ import type {
 } from "../contracts/providers";
 import {
   DEFAULT_LOW_TIER_PROVIDER_KEYS,
+  PROVIDER_ADAPTER_NOT_FOUND,
   PROVIDER_NOT_FOUND,
 } from "../contracts/providers";
 import { rankCatalogCandidatesByCost } from "./rank-catalog-candidates-by-cost";
@@ -31,6 +33,7 @@ export type {
   AssetRole,
   CreateVideoJobInput,
   CreateVideoJobResult,
+  ExternalJobId,
   LlmVariant,
   ProviderCatalogRow,
   ProviderTier,
@@ -42,6 +45,7 @@ export type {
 
 export {
   DEFAULT_LOW_TIER_PROVIDER_KEYS,
+  PROVIDER_ADAPTER_NOT_FOUND,
   PROVIDER_NOT_FOUND,
   assetRoleSchema,
   costBillingUnitSchema,
@@ -106,6 +110,29 @@ export class ProviderResolveError extends Error {
     this.name = "ProviderResolveError";
   }
 }
+
+export class ProviderAdapterNotFoundError extends Error {
+  readonly code = PROVIDER_ADAPTER_NOT_FOUND;
+
+  constructor(public readonly providerKey: string) {
+    super(`Video adapter not registered: ${providerKey}`);
+    this.name = "ProviderAdapterNotFoundError";
+  }
+}
+
+export class RegistryFrozenError extends Error {
+  readonly code = "REGISTRY_FROZEN" as const;
+
+  constructor() {
+    super("Provider registry is frozen");
+    this.name = "RegistryFrozenError";
+  }
+}
+
+export {
+  INVALID_PROVIDER_OUTPUT_URL,
+  ProviderAdapterError,
+} from "./normalize-provider-response";
 
 /**
  * Lookup a catalog row by key (explicit selection / policy override).
@@ -203,14 +230,14 @@ export interface VideoProviderAdapter {
 
   createJob(input: CreateVideoJobInput): Promise<CreateVideoJobResult>;
 
-  getJobStatus(externalJobId: string): Promise<VideoJobStatusResult>;
+  getJobStatus(externalJobId: ExternalJobId): Promise<VideoJobStatusResult>;
 
   /**
    * Download provider output and persist under our storage layer.
    * `rawOutputUrl` comes from getJobStatus when the vendor returns a URL.
    */
   fetchAsset(
-    externalJobId: string,
+    externalJobId: ExternalJobId,
     rawOutputUrl?: string,
   ): Promise<StoredMediaAsset>;
 }
@@ -283,23 +310,41 @@ export class InMemoryProviderRegistry implements ProviderRegistry {
   private readonly video = new Map<string, VideoProviderAdapter>();
   private readonly tts = new Map<string, TtsProviderAdapter>();
   private readonly llm = new Map<string, LlmProviderAdapter>();
+  private frozen = false;
+
+  freeze(): void {
+    this.frozen = true;
+  }
+
+  isFrozen(): boolean {
+    return this.frozen;
+  }
+
+  private assertMutable(): void {
+    if (this.frozen) {
+      throw new RegistryFrozenError();
+    }
+  }
 
   registerVideo(adapter: VideoProviderAdapter): void {
+    this.assertMutable();
     this.video.set(adapter.providerKey, adapter);
   }
 
   registerTts(adapter: TtsProviderAdapter): void {
+    this.assertMutable();
     this.tts.set(adapter.providerKey, adapter);
   }
 
   registerLlm(adapter: LlmProviderAdapter): void {
+    this.assertMutable();
     this.llm.set(adapter.providerKey, adapter);
   }
 
   getVideoAdapter(providerKey: string): VideoProviderAdapter {
     const adapter = this.video.get(providerKey);
     if (!adapter) {
-      throw new Error(`Video adapter not registered: ${providerKey}`);
+      throw new ProviderAdapterNotFoundError(providerKey);
     }
     return adapter;
   }
@@ -307,7 +352,7 @@ export class InMemoryProviderRegistry implements ProviderRegistry {
   getTtsAdapter(providerKey: string): TtsProviderAdapter {
     const adapter = this.tts.get(providerKey);
     if (!adapter) {
-      throw new Error(`TTS adapter not registered: ${providerKey}`);
+      throw new ProviderAdapterNotFoundError(providerKey);
     }
     return adapter;
   }
@@ -315,7 +360,7 @@ export class InMemoryProviderRegistry implements ProviderRegistry {
   getLlmAdapter(providerKey: string): LlmProviderAdapter {
     const adapter = this.llm.get(providerKey);
     if (!adapter) {
-      throw new Error(`LLM adapter not registered: ${providerKey}`);
+      throw new ProviderAdapterNotFoundError(providerKey);
     }
     return adapter;
   }
@@ -327,20 +372,24 @@ export class InMemoryProviderRegistry implements ProviderRegistry {
  */
 export async function estimateVideoJobCost(
   catalog: readonly ProviderCatalogRow[],
-  registry: ProviderRegistry,
+  registry: ProviderRegistry | undefined,
   context: ResolveProviderContext,
   jobInput: Omit<CreateVideoJobInput, "providerKey" | "providerTier" | "assetRole"> & {
     assetRole: VideoAssetRole;
   },
 ): Promise<CostEstimate> {
+  const resolvedRegistry =
+    registry ??
+    (require("./create-provider-registry") as typeof import("./create-provider-registry")).getProviderRegistry();
   const row = resolveProvider(catalog, {
     ...context,
     assetRole: jobInput.assetRole === "broll" ? "broll" : "talking_head",
   });
-  const adapter = registry.getVideoAdapter(row.key);
+  const adapter = resolvedRegistry.getVideoAdapter(row.key);
   return adapter.estimateCost({
     ...jobInput,
     providerKey: row.key,
     providerTier: row.tier,
+    assetRole: jobInput.assetRole,
   });
 }
