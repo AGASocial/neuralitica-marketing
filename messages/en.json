@@ -869,6 +869,49 @@
       "slotNotFound": "That Reel slot was not found on the approved strategy.",
       "strategyVersionChanged": "Scripts may be from a prior approved strategy version.",
       "internal": "Something went wrong. Please try again later."
+    },
+    "caption": {
+      "tabs": {
+        "script": "Script",
+        "caption": "Caption"
+      },
+      "generate": "Generate captions",
+      "generating": "Caption agent running…",
+      "regenerate": "Regenerate caption",
+      "regenerating": "Regenerating caption…",
+      "emptyPending": "Generate captions to create Instagram copy for each Reel with a script package.",
+      "emptyNoScript": "Generate the script package for this Reel before creating a caption.",
+      "charCount": "{count} / {max}",
+      "hashtagCount": "{count} / {max}",
+      "hashtagsOverMax": "More than {max} hashtags — Instagram allows up to 30.",
+      "hashtagsLabel": "Hashtags",
+      "keywordsLabel": "Local keywords",
+      "ctaVariantsLabel": "CTA variants",
+      "ctaVariantLine": "{index}. {text}",
+      "staleBadge": "Caption may be outdated",
+      "copyCaption": "Copy caption",
+      "copyHashtags": "Copy hashtags",
+      "toastGenerateSuccess": "Instagram captions generated.",
+      "toastRegenerateSuccess": "Caption regenerated.",
+      "status": {
+        "pending": "Caption pending",
+        "generated": "Caption ready"
+      },
+      "errors": {
+        "validation": "Please check the highlighted fields and try again.",
+        "forbiddenFields": "Something went wrong. Please try again.",
+        "notFound": "That caption was not found.",
+        "rateLimited": "Too many caption generations. Wait up to an hour and try again.",
+        "inFlight": "A caption is already generating. Wait for it to finish.",
+        "profileIncomplete": "Complete the living profile before generating captions.",
+        "captionOutputInvalid": "The caption agent returned invalid output. Try again or contact support.",
+        "providerUnavailable": "The caption service is temporarily unavailable. Try again later.",
+        "strategyNotApproved": "Approve the weekly strategy for this week before generating captions.",
+        "slotNotFound": "That Reel slot was not found on the approved strategy.",
+        "scriptNotFound": "Generate the script package for this Reel before creating a caption.",
+        "scriptPending": "Script package is still pending for this Reel.",
+        "internal": "Something went wrong. Please try again later."
+      }
     }
   }
 }

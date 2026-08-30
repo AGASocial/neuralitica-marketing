@@ -869,6 +869,49 @@
       "slotNotFound": "Ese slot de Reel no está en la estrategia aprobada.",
       "strategyVersionChanged": "Los guiones pueden ser de una versión aprobada anterior.",
       "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
+    },
+    "caption": {
+      "tabs": {
+        "script": "Guion",
+        "caption": "Caption"
+      },
+      "generate": "Generar captions",
+      "generating": "Agente de caption en ejecución…",
+      "regenerate": "Regenerar caption",
+      "regenerating": "Regenerando caption…",
+      "emptyPending": "Genera captions para crear el texto de Instagram de cada Reel con paquete de guion.",
+      "emptyNoScript": "Genera el paquete de guion de este Reel antes de crear el caption.",
+      "charCount": "{count} / {max}",
+      "hashtagCount": "{count} / {max}",
+      "hashtagsOverMax": "Más de {max} hashtags — Instagram permite hasta 30.",
+      "hashtagsLabel": "Hashtags",
+      "keywordsLabel": "Keywords locales",
+      "ctaVariantsLabel": "Variantes de CTA",
+      "ctaVariantLine": "{index}. {text}",
+      "staleBadge": "El caption puede estar desactualizado",
+      "copyCaption": "Copiar caption",
+      "copyHashtags": "Copiar hashtags",
+      "toastGenerateSuccess": "Captions de Instagram generados.",
+      "toastRegenerateSuccess": "Caption regenerado.",
+      "status": {
+        "pending": "Caption pendiente",
+        "generated": "Caption listo"
+      },
+      "errors": {
+        "validation": "Revisa los campos marcados e inténtalo de nuevo.",
+        "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+        "notFound": "No se encontró ese caption.",
+        "rateLimited": "Demasiadas generaciones de captions. Espera hasta una hora e inténtalo de nuevo.",
+        "inFlight": "Ya hay un caption generándose. Espera a que termine.",
+        "profileIncomplete": "Completa la ficha viva antes de generar captions.",
+        "captionOutputInvalid": "El agente de caption devolvió una salida inválida. Inténtalo de nuevo o contacta soporte.",
+        "providerUnavailable": "El servicio de captions no está disponible temporalmente. Inténtalo más tarde.",
+        "strategyNotApproved": "Aprueba la estrategia semanal de esta semana antes de generar captions.",
+        "slotNotFound": "Ese slot de Reel no está en la estrategia aprobada.",
+        "scriptNotFound": "Genera el paquete de guion de este Reel antes de crear el caption.",
+        "scriptPending": "El paquete de guion de este Reel sigue pendiente.",
+        "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
+      }
     }
   }
 }

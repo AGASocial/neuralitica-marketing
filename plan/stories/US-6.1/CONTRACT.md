@@ -895,6 +895,6 @@ export type ReelCaptionMutationError = {
 
 ## FE signoff
 
-- [ ] **Reviewed by FE** — Caption tab on `/operator/scripts` TabView; `generateReelCaptions` / `regenerateReelCaption`; extended list DTO; `scripts.caption.*` i18n; char/hashtag counters from shared constants.
+- [x] **Reviewed by FE** — Caption tab on `/operator/scripts` TabView; `generateReelCaptions` / `regenerateReelCaption`; extended list DTO; `scripts.caption.*` i18n; char/hashtag counters from shared constants.
 
-**Reviewed by FE:** _(pending)_
+**Reviewed by FE:** nextjs-frontend — 2026-08-30. TabView Script/Caption in expand panel; batch + per-slot caption actions wired; char/hashtag counters use `IG_CAPTION_MAX_CHARS` / `IG_HASHTAG_WARN_MAX`; read-only CTA variant lines; stale badge; EN/ES `scripts.caption.*`. Pending caption summary on list until BE joins `neuramark_reel_captions`.

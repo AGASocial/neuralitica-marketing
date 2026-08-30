@@ -97,20 +97,20 @@ type ReelCaptionSummary = {
 
 Concrete BE consumers: `generateReelCaptions` · `regenerateReelCaption` · extended `getReelScriptsForWeek` → `items[].caption`.
 
-- [ ] **TabView** in scripts detail panel: **Script** (existing) · **Caption** (new).
-- [ ] **Caption tab — pending:** show empty state + hint to generate scripts/captions first; disable regen when no script.
-- [ ] **Caption tab — generated:** plain-text caption with **char counter** (`charCount / 2200`); warn styling when over limit (should not happen post-validation).
-- [ ] **Hashtag chips** (`Tag` or chip list) within configured max; show count `hashtagCount / maxHashtags`.
-- [ ] **Keyword chips** for local/geo keywords when present.
-- [ ] **CTA variants** as read-only numbered lines or chips — **no radio/select** (US-6.2).
-- [ ] **Generate captions** primary button (batch) when approved strategy + scripts exist; disabled while pending/in-flight.
-- [ ] **Regenerate caption** secondary per row / in Caption tab for selected Reel.
-- [ ] **List row status** — optional badge: caption pending vs generated (CONTRACT shape).
-- [ ] **Copy-to-clipboard** for caption text (and optional "copy hashtags block").
-- [ ] **Error states** for `CAPTION_OUTPUT_INVALID`, rate limit, missing script.
-- [ ] **EN + ES strings** in `messages/en.json` / `es.json` (`scripts.caption.*`).
-- [ ] **No Supabase in Client Components**; render server DTO only; **plain text** — no `dangerouslySetInnerHTML`.
-- [ ] **No Cliente** caption route in this story.
+- [x] **TabView** in scripts detail panel: **Script** (existing) · **Caption** (new).
+- [x] **Caption tab — pending:** show empty state + hint to generate scripts/captions first; disable regen when no script.
+- [x] **Caption tab — generated:** plain-text caption with **char counter** (`charCount / 2200`); warn styling when over limit (should not happen post-validation).
+- [x] **Hashtag chips** (`Tag` or chip list) within configured max; show count `hashtagCount / maxHashtags`.
+- [x] **Keyword chips** for local/geo keywords when present.
+- [x] **CTA variants** as read-only numbered lines or chips — **no radio/select** (US-6.2).
+- [x] **Generate captions** primary button (batch) when approved strategy + scripts exist; disabled while pending/in-flight.
+- [x] **Regenerate caption** secondary per row / in Caption tab for selected Reel.
+- [x] **List row status** — optional badge: caption pending vs generated (CONTRACT shape).
+- [x] **Copy-to-clipboard** for caption text (and optional "copy hashtags block").
+- [x] **Error states** for `CAPTION_OUTPUT_INVALID`, rate limit, missing script.
+- [x] **EN + ES strings** in `messages/en.json` / `es.json` (`scripts.caption.*`).
+- [x] **No Supabase in Client Components**; render server DTO only; **plain text** — no `dangerouslySetInnerHTML`.
+- [x] **No Cliente** caption route in this story.
 
 ---
 

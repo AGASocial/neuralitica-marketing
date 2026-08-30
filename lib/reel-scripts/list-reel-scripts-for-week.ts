@@ -1,8 +1,10 @@
 import "server-only";
 
 import type { ContentStrategyBrief } from "@/lib/contracts/content-strategy";
+import { PENDING_REEL_CAPTION_SUMMARY } from "@/lib/contracts/reel-caption";
 import type { ReelScriptListItem } from "@/lib/contracts/reel-script";
 import { computeScriptReadabilityMetrics } from "@/lib/reel-scripts/compute-script-readability";
+import { listReelCaptionsForStrategy } from "@/lib/reel-captions/persist-reel-caption";
 import {
   hasOrphanedScriptsForWeek,
   listReelScriptsForStrategy,
@@ -19,6 +21,15 @@ export async function buildReelScriptListForStrategy(params: {
     clientId: params.clientId,
     strategyId: params.strategyId,
   });
+
+  const captions = await listReelCaptionsForStrategy({
+    clientId: params.clientId,
+    strategyId: params.strategyId,
+  });
+
+  const captionByScriptId = new Map(
+    captions.map((caption) => [caption.reelScriptId, caption]),
+  );
 
   const scriptBySlot = new Map(scripts.map((s) => [s.slotIndex, s]));
 
@@ -38,8 +49,21 @@ export async function buildReelScriptListForStrategy(params: {
         package: null,
         mustDiscloseNotOwner: null,
         readability: null,
+        caption: PENDING_REEL_CAPTION_SUMMARY,
       };
     }
+
+    const captionRow = captionByScriptId.get(script.id);
+    const caption =
+      captionRow === undefined
+        ? PENDING_REEL_CAPTION_SUMMARY
+        : {
+            status: "generated" as const,
+            captionId: captionRow.id,
+            record: captionRow.record,
+            updatedAt: captionRow.updatedAt,
+            stale: script.updatedAt > captionRow.updatedAt,
+          };
 
     return {
       scriptId: script.id,
@@ -54,6 +78,7 @@ export async function buildReelScriptListForStrategy(params: {
       package: script.package,
       mustDiscloseNotOwner: script.mustDiscloseNotOwner,
       readability: computeScriptReadabilityMetrics(script.package),
+      caption,
     };
   });
 

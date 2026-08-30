@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 
+import { reelCaptionSummarySchema } from "@/lib/contracts/reel-caption";
 import { reelScriptReadabilitySchema } from "@/lib/contracts/reel-script-readability";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
 import { visualModalitySchema } from "@/lib/contracts/visual-preferences";
@@ -67,6 +68,8 @@ export const reelScriptListItemSchema = z
     mustDiscloseNotOwner: z.boolean().nullable(),
     /** US-5.2: null when pending; server-computed when package present. */
     readability: reelScriptReadabilitySchema.nullable(),
+    /** US-6.1: caption summary for Caption tab. */
+    caption: reelCaptionSummarySchema,
   })
   .strict();
 

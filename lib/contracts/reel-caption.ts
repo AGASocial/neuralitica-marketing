@@ -16,6 +16,11 @@ export const CTA_VARIANT_MIN = 2 as const;
 export const CTA_VARIANT_MAX = 4 as const;
 export const CTA_VARIANT_ENTRY_MAX_CHARS = 200 as const;
 
+export const CAPTION_GENERATE_AGENT_KEY = "caption_generate" as const;
+export const CAPTION_RATE_WINDOW_MS = 60 * 60 * 1000;
+export const CAPTION_MAX_JOBS_PER_WINDOW = 5;
+export const CAPTION_IN_FLIGHT_TIMEOUT_MS = 5 * 60 * 1000;
+
 function plainTextNoHtmlRefine(value: string): boolean {
   return !/[<>&]/.test(value) && !value.toLowerCase().includes("javascript:");
 }

@@ -82,6 +82,7 @@ export type ReelScriptRow = {
   modalidad: VisualModality;
   package: ReelScriptPackage;
   mustDiscloseNotOwner: boolean;
+  updatedAt: string;
 };
 
 function mapReelScriptRow(raw: Record<string, unknown>): ReelScriptRow | null {
@@ -123,6 +124,9 @@ function mapReelScriptRow(raw: Record<string, unknown>): ReelScriptRow | null {
   if (typeof raw.must_disclose_not_owner !== "boolean") {
     return null;
   }
+  if (typeof raw.updated_at !== "string") {
+    return null;
+  }
 
   return {
     id: raw.id,
@@ -132,6 +136,7 @@ function mapReelScriptRow(raw: Record<string, unknown>): ReelScriptRow | null {
     modalidad,
     package: packageParsed.data,
     mustDiscloseNotOwner: raw.must_disclose_not_owner,
+    updatedAt: raw.updated_at,
   };
 }
 

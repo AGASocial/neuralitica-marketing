@@ -9,6 +9,7 @@ import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Message } from "primereact/message";
 import { Skeleton } from "primereact/skeleton";
+import { TabPanel, TabView } from "primereact/tabview";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
 
@@ -16,11 +17,18 @@ import type {
   ContentStrategyDayOfWeek,
   ContentStrategySlotGoal,
 } from "@/lib/contracts/content-strategy";
+import {
+  IG_CAPTION_MAX_CHARS,
+  IG_HASHTAG_WARN_MAX,
+  type ReelCaptionErrorCode,
+} from "@/lib/contracts/reel-caption";
 import type {
   GetReelScriptsForWeekSuccess,
   ReelScriptErrorCode,
   ReelScriptListItem,
 } from "@/lib/contracts/reel-script";
+import { generateReelCaptions } from "@/lib/reel-captions/actions/generate-reel-captions";
+import { regenerateReelCaption } from "@/lib/reel-captions/actions/regenerate-reel-caption";
 import type {
   ReelScriptReadability,
   ReelScriptReadabilityBeatLine,
@@ -102,6 +110,49 @@ type ScriptsPageCopy = {
     maxCharsPerBeatLine: number;
     maxBeatLinesTotal: number;
   };
+  caption: {
+    tabs: {
+      script: string;
+      caption: string;
+    };
+    generate: string;
+    generating: string;
+    regenerate: string;
+    regenerating: string;
+    emptyPending: string;
+    emptyNoScript: string;
+    charCount: string;
+    hashtagCount: string;
+    hashtagsOverMax: string;
+    hashtagsLabel: string;
+    keywordsLabel: string;
+    ctaVariantsLabel: string;
+    ctaVariantLine: string;
+    staleBadge: string;
+    copyCaption: string;
+    copyHashtags: string;
+    toastGenerateSuccess: string;
+    toastRegenerateSuccess: string;
+    status: {
+      pending: string;
+      generated: string;
+    };
+    errors: {
+      validation: string;
+      forbiddenFields: string;
+      notFound: string;
+      rateLimited: string;
+      inFlight: string;
+      profileIncomplete: string;
+      captionOutputInvalid: string;
+      providerUnavailable: string;
+      strategyNotApproved: string;
+      slotNotFound: string;
+      scriptNotFound: string;
+      scriptPending: string;
+      internal: string;
+    };
+  };
 };
 
 type ScriptsPageViewProps = {
@@ -155,6 +206,44 @@ function messageForCode(
   }
 }
 
+function messageForCaptionCode(
+  code: ReelCaptionErrorCode,
+  copy: ScriptsPageCopy,
+): string {
+  switch (code) {
+    case "VALIDATION_ERROR":
+      return copy.caption.errors.validation;
+    case "FORBIDDEN_FIELDS":
+      return copy.caption.errors.forbiddenFields;
+    case "NOT_FOUND":
+      return copy.caption.errors.notFound;
+    case "RATE_LIMITED":
+      return copy.caption.errors.rateLimited;
+    case "GENERATION_IN_FLIGHT":
+      return copy.caption.errors.inFlight;
+    case "PROFILE_INCOMPLETE":
+      return copy.caption.errors.profileIncomplete;
+    case "CAPTION_OUTPUT_INVALID":
+      return copy.caption.errors.captionOutputInvalid;
+    case "PROVIDER_UNAVAILABLE":
+      return copy.caption.errors.providerUnavailable;
+    case "STRATEGY_NOT_APPROVED":
+      return copy.caption.errors.strategyNotApproved;
+    case "SLOT_NOT_FOUND":
+      return copy.caption.errors.slotNotFound;
+    case "SCRIPT_NOT_FOUND":
+      return copy.caption.errors.scriptNotFound;
+    case "SCRIPT_PENDING":
+      return copy.caption.errors.scriptPending;
+    case "UNAUTHENTICATED":
+      return copy.errors.unauthenticated;
+    case "FORBIDDEN":
+      return copy.errors.forbidden;
+    default:
+      return copy.caption.errors.internal;
+  }
+}
+
 function formatDuration(
   seconds: number | null,
   template: string,
@@ -185,17 +274,30 @@ export function ScriptsPageView({
   const router = useRouter();
   const toastRef = useRef<Toast>(null);
   const [batchPending, setBatchPending] = useState(false);
+  const [captionBatchPending, setCaptionBatchPending] = useState(false);
   const [regeneratingSlot, setRegeneratingSlot] = useState<number | null>(null);
+  const [captionRegeneratingSlot, setCaptionRegeneratingSlot] = useState<number | null>(
+    null,
+  );
   const [banner, setBanner] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<ReelScriptListItem[]>([]);
 
   const weekDate = weekStartToDate(weekStart);
   const weekRangeLabel = formatWeekRange(weekStart, locale);
-  const isBusy = batchPending || regeneratingSlot !== null;
+  const isBusy =
+    batchPending ||
+    captionBatchPending ||
+    regeneratingSlot !== null ||
+    captionRegeneratingSlot !== null;
   const hasApprovedStrategy = data.approvedStrategy !== null;
   const hasAnyGenerated = data.items.some((item) => item.status === "generated");
+  const hasAnyCaptionGenerated = data.items.some(
+    (item) => item.caption.status === "generated",
+  );
   const allPending =
     hasApprovedStrategy && data.items.length > 0 && !hasAnyGenerated;
+  const allCaptionsPending =
+    hasApprovedStrategy && hasAnyGenerated && !hasAnyCaptionGenerated;
 
   function navigateWeek(nextWeekStart: string) {
     const params = new URLSearchParams();
@@ -259,6 +361,64 @@ export function ScriptsPageView({
       setBanner(copy.errors.internal);
     } finally {
       setRegeneratingSlot(null);
+    }
+  }
+
+  async function handleGenerateCaptions() {
+    if (isBusy) {
+      return;
+    }
+
+    setCaptionBatchPending(true);
+    setBanner(null);
+
+    try {
+      const result = await generateReelCaptions({ weekStart });
+
+      if (result.ok) {
+        toastRef.current?.show({
+          severity: "success",
+          summary: copy.caption.toastGenerateSuccess,
+          life: 4000,
+        });
+        router.refresh();
+        return;
+      }
+
+      setBanner(messageForCaptionCode(result.error.code, copy));
+    } catch {
+      setBanner(copy.caption.errors.internal);
+    } finally {
+      setCaptionBatchPending(false);
+    }
+  }
+
+  async function handleRegenerateCaption(slotIndex: number) {
+    if (isBusy) {
+      return;
+    }
+
+    setCaptionRegeneratingSlot(slotIndex);
+    setBanner(null);
+
+    try {
+      const result = await regenerateReelCaption({ weekStart, slotIndex });
+
+      if (result.ok) {
+        toastRef.current?.show({
+          severity: "success",
+          summary: copy.caption.toastRegenerateSuccess,
+          life: 4000,
+        });
+        router.refresh();
+        return;
+      }
+
+      setBanner(messageForCaptionCode(result.error.code, copy));
+    } catch {
+      setBanner(copy.caption.errors.internal);
+    } finally {
+      setCaptionRegeneratingSlot(null);
     }
   }
 
@@ -337,14 +497,26 @@ export function ScriptsPageView({
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
             {versionLabel ? <TagLine text={versionLabel} /> : null}
           </div>
-          <Button
-            type="button"
-            label={batchPending ? copy.generating : copy.generate}
-            icon="pi pi-sparkles"
-            loading={batchPending}
-            disabled={isBusy}
-            onClick={() => void handleGenerate()}
-          />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+            <Button
+              type="button"
+              label={batchPending ? copy.generating : copy.generate}
+              icon="pi pi-sparkles"
+              loading={batchPending}
+              disabled={isBusy}
+              onClick={() => void handleGenerate()}
+            />
+            {hasAnyGenerated ? (
+              <Button
+                type="button"
+                label={captionBatchPending ? copy.caption.generating : copy.caption.generate}
+                icon="pi pi-instagram"
+                loading={captionBatchPending}
+                disabled={isBusy}
+                onClick={() => void handleGenerateCaptions()}
+              />
+            ) : null}
+          </div>
         </div>
       ) : null}
 
@@ -360,8 +532,11 @@ export function ScriptsPageView({
         <Message severity="error" text={banner} style={{ width: "100%", marginBottom: "1rem" }} />
       ) : null}
 
-      {batchPending ? (
-        <GeneratingSkeleton copy={copy} />
+      {batchPending || captionBatchPending ? (
+        <GeneratingSkeleton
+          copy={copy}
+          message={captionBatchPending ? copy.caption.generating : copy.generating}
+        />
       ) : !hasApprovedStrategy ? (
         <div>
           <Message severity="info" text={copy.emptyNoStrategy} style={{ width: "100%" }} />
@@ -383,6 +558,13 @@ export function ScriptsPageView({
               style={{ width: "100%", marginBottom: "1rem" }}
             />
           ) : null}
+          {allCaptionsPending ? (
+            <Message
+              severity="info"
+              text={copy.caption.emptyPending}
+              style={{ width: "100%", marginBottom: "1rem" }}
+            />
+          ) : null}
           <DataTable
             value={data.items}
             dataKey="slotIndex"
@@ -390,10 +572,13 @@ export function ScriptsPageView({
             expandedRows={expandedRows}
             onRowToggle={(event) => setExpandedRows(event.data as ReelScriptListItem[])}
             rowExpansionTemplate={(row: ReelScriptListItem) => (
-              <ScriptDetailPanel
+              <ReelDetailPanel
                 row={row}
                 copy={copy}
                 onCopy={copyToClipboard}
+                onRegenerateCaption={(slotIndex) => void handleRegenerateCaption(slotIndex)}
+                captionRegeneratingSlot={captionRegeneratingSlot}
+                isBusy={isBusy}
               />
             )}
           >
@@ -429,14 +614,35 @@ export function ScriptsPageView({
             <Column
               header={copy.columns.status}
               body={(row: ReelScriptListItem) => (
-                <Tag
-                  value={
-                    row.status === "generated"
-                      ? copy.status.generated
-                      : copy.status.pending
-                  }
-                  severity={row.status === "generated" ? "success" : "warning"}
-                />
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                  <Tag
+                    value={
+                      row.status === "generated"
+                        ? copy.status.generated
+                        : copy.status.pending
+                    }
+                    severity={row.status === "generated" ? "success" : "warning"}
+                  />
+                  {row.status === "generated" ? (
+                    <Tag
+                      value={
+                        row.caption.status === "generated"
+                          ? copy.caption.status.generated
+                          : copy.caption.status.pending
+                      }
+                      severity={
+                        row.caption.status === "generated" ? "info" : "warning"
+                      }
+                    />
+                  ) : null}
+                  {row.caption.stale ? (
+                    <Tag
+                      value={copy.caption.staleBadge}
+                      severity="warning"
+                      icon="pi pi-exclamation-triangle"
+                    />
+                  ) : null}
+                </div>
               )}
             />
             <Column
@@ -461,6 +667,42 @@ export function ScriptsPageView({
         </>
       )}
     </div>
+  );
+}
+
+type ReelDetailPanelProps = {
+  row: ReelScriptListItem;
+  copy: ScriptsPageCopy;
+  onCopy: (text: string) => void;
+  onRegenerateCaption: (slotIndex: number) => void;
+  captionRegeneratingSlot: number | null;
+  isBusy: boolean;
+};
+
+function ReelDetailPanel({
+  row,
+  copy,
+  onCopy,
+  onRegenerateCaption,
+  captionRegeneratingSlot,
+  isBusy,
+}: ReelDetailPanelProps) {
+  return (
+    <TabView>
+      <TabPanel header={copy.caption.tabs.script}>
+        <ScriptDetailPanel row={row} copy={copy} onCopy={onCopy} />
+      </TabPanel>
+      <TabPanel header={copy.caption.tabs.caption}>
+        <CaptionDetailPanel
+          row={row}
+          copy={copy}
+          onCopy={onCopy}
+          onRegenerate={() => onRegenerateCaption(row.slotIndex)}
+          isRegenerating={captionRegeneratingSlot === row.slotIndex}
+          isBusy={isBusy}
+        />
+      </TabPanel>
+    </TabView>
   );
 }
 
@@ -552,6 +794,233 @@ function ScriptDetailPanel({ row, copy, onCopy }: ScriptDetailPanelProps) {
           onCopy={onCopy}
         />
       ) : null}
+    </div>
+  );
+}
+
+type CaptionDetailPanelProps = {
+  row: ReelScriptListItem;
+  copy: ScriptsPageCopy;
+  onCopy: (text: string) => void;
+  onRegenerate: () => void;
+  isRegenerating: boolean;
+  isBusy: boolean;
+};
+
+function CaptionDetailPanel({
+  row,
+  copy,
+  onCopy,
+  onRegenerate,
+  isRegenerating,
+  isBusy,
+}: CaptionDetailPanelProps) {
+  if (row.status !== "generated") {
+    return (
+      <Message severity="info" text={copy.caption.emptyNoScript} style={{ width: "100%" }} />
+    );
+  }
+
+  const caption = row.caption;
+  const record = caption.record;
+
+  if (caption.status !== "generated" || !record) {
+    return (
+      <div style={{ display: "grid", gap: "1rem" }}>
+        <Message severity="info" text={copy.caption.emptyPending} style={{ width: "100%" }} />
+        <Button
+          type="button"
+          label={isRegenerating ? copy.caption.regenerating : copy.caption.regenerate}
+          icon="pi pi-refresh"
+          severity="secondary"
+          loading={isRegenerating}
+          disabled={isBusy}
+          onClick={onRegenerate}
+        />
+      </div>
+    );
+  }
+
+  const charOverLimit = record.charCount > IG_CAPTION_MAX_CHARS;
+  const hashtagWarn =
+    record.hashtagsOverConfiguredMax || record.hashtagCount > IG_HASHTAG_WARN_MAX;
+  const hashtagBlock = record.hashtags.join(" ");
+
+  return (
+    <div style={{ display: "grid", gap: "1rem" }}>
+      {caption.stale ? (
+        <Message
+          severity="warn"
+          icon="pi pi-exclamation-triangle"
+          text={copy.caption.staleBadge}
+          style={{ width: "100%" }}
+        />
+      ) : null}
+
+      <div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "0.5rem",
+            marginBottom: "0.35rem",
+          }}
+        >
+          <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "#374151" }}>
+            {copy.caption.tabs.caption}
+          </span>
+          <Button
+            type="button"
+            icon="pi pi-copy"
+            label={copy.caption.copyCaption}
+            size="small"
+            text
+            onClick={() => onCopy(record.caption)}
+          />
+        </div>
+        <div
+          style={{
+            padding: "0.75rem 1rem",
+            borderRadius: "0.5rem",
+            background: "#f9fafb",
+            border: charOverLimit ? "1px solid #fcd34d" : "1px solid #e5e7eb",
+            fontSize: "0.95rem",
+            lineHeight: 1.5,
+            color: "#111827",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {record.caption}
+        </div>
+        <p
+          style={{
+            margin: "0.35rem 0 0",
+            fontSize: "0.8125rem",
+            color: charOverLimit ? "#b45309" : "#6b7280",
+            fontWeight: charOverLimit ? 600 : 400,
+          }}
+        >
+          {formatTemplate(copy.caption.charCount, {
+            count: record.charCount,
+            max: record.maxCaptionChars,
+          })}
+        </p>
+      </div>
+
+      <div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "0.5rem",
+            marginBottom: "0.5rem",
+          }}
+        >
+          <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "#374151" }}>
+            {copy.caption.hashtagsLabel}
+          </span>
+          <Button
+            type="button"
+            icon="pi pi-copy"
+            label={copy.caption.copyHashtags}
+            size="small"
+            text
+            onClick={() => onCopy(hashtagBlock)}
+          />
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+          {record.hashtags.map((tag) => (
+            <Tag key={tag} value={tag} severity={hashtagWarn ? "warning" : "info"} />
+          ))}
+        </div>
+        <p
+          style={{
+            margin: "0.35rem 0 0",
+            fontSize: "0.8125rem",
+            color: hashtagWarn ? "#b45309" : "#6b7280",
+            fontWeight: hashtagWarn ? 600 : 400,
+          }}
+        >
+          {formatTemplate(copy.caption.hashtagCount, {
+            count: record.hashtagCount,
+            max: record.maxHashtagsConfigured,
+          })}
+        </p>
+        {hashtagWarn ? (
+          <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "#b45309" }}>
+            {formatTemplate(copy.caption.hashtagsOverMax, {
+              max: record.maxHashtagsConfigured,
+            })}
+          </p>
+        ) : null}
+      </div>
+
+      {record.hasKeywords && record.keywords.length > 0 ? (
+        <div>
+          <span
+            style={{
+              display: "block",
+              fontWeight: 600,
+              fontSize: "0.875rem",
+              color: "#374151",
+              marginBottom: "0.5rem",
+            }}
+          >
+            {copy.caption.keywordsLabel}
+          </span>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+            {record.keywords.map((keyword) => (
+              <Tag key={keyword} value={keyword} severity="secondary" />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div>
+        <span
+          style={{
+            display: "block",
+            fontWeight: 600,
+            fontSize: "0.875rem",
+            color: "#374151",
+            marginBottom: "0.5rem",
+          }}
+        >
+          {copy.caption.ctaVariantsLabel}
+        </span>
+        <div style={{ display: "grid", gap: "0.5rem" }}>
+          {record.ctaVariants.map((variant, index) => (
+            <div
+              key={`${index}-${variant}`}
+              style={{
+                padding: "0.65rem 0.85rem",
+                borderRadius: "0.375rem",
+                border: "1px solid #e5e7eb",
+                background: "#f9fafb",
+                fontSize: "0.9rem",
+                color: "#111827",
+              }}
+            >
+              {formatTemplate(copy.caption.ctaVariantLine, {
+                index: index + 1,
+                text: variant,
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        label={isRegenerating ? copy.caption.regenerating : copy.caption.regenerate}
+        icon="pi pi-refresh"
+        severity="secondary"
+        loading={isRegenerating}
+        disabled={isBusy}
+        onClick={onRegenerate}
+      />
     </div>
   );
 }
@@ -800,12 +1269,18 @@ function TagLine({ text }: { text: string }) {
   );
 }
 
-function GeneratingSkeleton({ copy }: { copy: Pick<ScriptsPageCopy, "generating"> }) {
+function GeneratingSkeleton({
+  copy,
+  message,
+}: {
+  copy: Pick<ScriptsPageCopy, "generating">;
+  message: string;
+}) {
   return (
     <div aria-busy="true" aria-live="polite">
       <Message
         severity="info"
-        text={copy.generating}
+        text={message}
         style={{ width: "100%", marginBottom: "1rem" }}
       />
       <Skeleton height="2.5rem" style={{ marginBottom: "0.75rem" }} />
