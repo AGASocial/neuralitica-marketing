@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: SELECT
-story_status: DONE
-feature_branch: null
+current_story: US-9.1
+story_status: PREP
+feature_branch: feature/US-9.1-assemble-reel
 last_completed_story: US-9.3
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T20:00:00Z
+updated_at: 2026-08-30T17:40:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -34,6 +34,7 @@ updated_at: 2026-08-30T20:00:00Z
 | US-8.6 MuseTalk adapter | done | Phase A `dbc9ce2` · Phase B `bdfaaf2` · VALIDATION `798635e` · QA `82bde3d` · CLOSE `2fb7573` (4/5 AC; P1 override defer) |
 | US-8.3 Manual video upload fallback | done | FE `fc6deca` · BE `eaa974a` · fixes `f3f78af`/`b2fb1cc` · VALIDATION `2f5edc0` · QA `a58faeb` · CLOSE `d8baafb` |
 | US-9.3 Text-to-speech for voiceover | done | Phase A `dfdd08b` · adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813` · VALIDATION `1715048` · QA `e9c1833` · CLOSE 5/6 AC (ElevenLabs Phase B defer) |
+| US-9.1 Assemble final 9:16 Reel | PREP | branch `feature/US-9.1-assemble-reel` |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -45,6 +46,7 @@ updated_at: 2026-08-30T20:00:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-9.1 SELECT → PREP. Branch `feature/US-9.1-assemble-reel` from main; deps US-8.4 ✅ · US-6.1 ✅ · US-9.3 ✅.
 - 2026-08-30 · US-9.3 CLOSE Phase A: 5/6 AC checked; QA APPROVE WITH CONDITIONS `e9c1833`; FF-merge `dfdd08b` to main; Phase 3 → SELECT US-9.1 (recommended).
 - 2026-08-30 · US-9.3 VALIDATION: PASS WITH NOTES `1715048` (79/79 tests); story_status QA.
 - 2026-08-30 · US-9.3 BUILD: adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813`.
