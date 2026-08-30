@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-11.1
-story_status: PREP
+story_status: SPEC
 feature_branch: feature/US-11.1-client-approval
 last_completed_story: US-10.2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T22:45:00Z
+updated_at: 2026-08-30T22:50:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -38,7 +38,7 @@ updated_at: 2026-08-30T22:45:00Z
 | US-9.2 Add subtitles, logo, and cover | done | worker `7518bc5` · BE `36e9dd3`+fix `757da6a` · FE `a15921b` · VALIDATION `4378c65` · QA `c0d6f66` · CLOSE `92b196a` |
 | US-10.1 Run automated QA | done | agents `0b56c9e`/`75802d6` · BE `5e50115` · FE `b5e0941` · VALIDATION `d95555d` · QA `a6ba923` · CLOSE `b7a3bb9` (6/6 AC; override → US-10.2) |
 | US-10.2 Operator override with reason | done | BE `a9cc533` · FE `0c6bfb0` · VALIDATION `d7e3cd5` · QA `3da5547` · CLOSE `c9b97e5` (7/7 AC; approval render → US-11.1) |
-| US-11.1 Present Reel package for client approval | PREP | branch `feature/US-11.1-client-approval` |
+| US-11.1 Present Reel package for client approval | SPEC | PREP `00e1d5a` · SPEC+SECURITY next |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
