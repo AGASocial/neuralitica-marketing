@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 
+import { assemblyConfigSchema } from "@/lib/contracts/branding-job";
 import { assembledReelAssetMetadataSchema } from "@/lib/contracts/media-assets";
 
 export const ASSEMBLY_TEMPLATE_REEL_V1_BASIC = "reel_v1_basic" as const;
@@ -124,6 +125,14 @@ export type AssembleReelForScriptResult =
   | AssembleReelForScriptSuccess
   | AssemblyJobMutationError;
 
+export const brandingJobStatusDtoSchema = z.enum([
+  "queued",
+  "processing",
+  "completed",
+  "failed",
+  "skipped",
+]);
+
 export const operatorAssemblyJobDtoSchema = z
   .object({
     jobId: z.string().uuid(),
@@ -134,6 +143,13 @@ export const operatorAssemblyJobDtoSchema = z
     actualDurationSec: z.number().positive().nullable(),
     outputMediaAssetId: z.string().uuid().nullable(),
     failureReason: z.string().nullable(),
+    brandingStatus: brandingJobStatusDtoSchema.nullable(),
+    brandingConfig: assemblyConfigSchema.nullable(),
+    coverMediaAssetId: z.string().uuid().nullable(),
+    preBrandingOutputMediaAssetId: z.string().uuid().nullable(),
+    canApplyBranding: z.boolean(),
+    canRebrand: z.boolean(),
+    brandingFailureReason: z.string().nullable(),
     canAssemble: z.boolean(),
     canReassemble: z.boolean(),
     createdAt: z.string().datetime({ offset: true }),

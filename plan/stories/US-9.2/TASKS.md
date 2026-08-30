@@ -123,20 +123,20 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 
 **Cliente surface:** `/profile` — extend Ficha viva with **Brand / Marca** section.
 
-- [ ] Logo upload control (PrimeReact `FileUpload` or hidden input + button): format/size hints (PNG/JPG/WebP, max 2 MiB); preview thumbnail when logo exists; **Remove logo** with confirm.
-- [ ] Default branding toggles: **Subtitles on Reels** / **Show logo on Reels** (`InputSwitch`); persisted via `updateAssemblyConfigDefaults`.
-- [ ] Loading, empty (no logo), error, success states; disabled while upload in flight.
-- [ ] EN/ES under **`profile.branding.*`** (logo label, upload, remove, toggles, errors).
+- [x] Logo upload control (PrimeReact `FileUpload` or hidden input + button): format/size hints (PNG/JPG/WebP, max 2 MiB); preview thumbnail when logo exists; **Remove logo** with confirm.
+- [x] Default branding toggles: **Subtitles on Reels** / **Show logo on Reels** (`InputSwitch`); persisted via `updateAssemblyConfigDefaults`.
+- [x] Loading, empty (no logo), error, success states; disabled while upload in flight.
+- [x] EN/ES under **`profile.branding.*`** (logo label, upload, remove, toggles, errors).
 
 **Operator surface:** `/operator/scripts` expand row — extend US-9.1 assembly panel.
 
-- [ ] Branding status badge (`queued` / `processing` / `completed` / `failed` / `skipped`).
-- [ ] Checkboxes: **Include subtitles** / **Include logo** — seed from last `branding_config` or client defaults; used on next **Apply branding** / **Re-brand**.
-- [ ] **Apply branding** button when assembly `completed` and branding not in-flight; **Re-brand** when branding `completed`/`failed` (confirm dialog — mirror Re-assemble pattern).
-- [ ] Preview `<video>` plays branded `output_media_asset_id` when branding `completed` (fallback to pre-branding with banner if branding pending — CONTRACT freezes).
-- [ ] **Download cover** link when `cover_media_asset_id` present — authenticated serve route.
-- [ ] Poll branding status (reuse assembly poll interval pattern or combined DTO field).
-- [ ] EN/ES under **`scripts.branding.*`**.
+- [x] Branding status badge (`queued` / `processing` / `completed` / `failed` / `skipped`).
+- [x] Checkboxes: **Include subtitles** / **Include logo** — seed from last `branding_config` or client defaults; used on next **Apply branding** / **Re-brand**.
+- [x] **Apply branding** button when assembly `completed` and branding not in-flight; **Re-brand** when branding `completed`/`failed` (confirm dialog — mirror Re-assemble pattern).
+- [x] Preview `<video>` plays branded `output_media_asset_id` when branding `completed` (fallback to pre-branding with banner if branding pending — CONTRACT freezes).
+- [x] **Download cover** link when `cover_media_asset_id` present — authenticated serve route.
+- [x] Poll branding status (reuse assembly poll interval pattern or combined DTO field).
+- [x] EN/ES under **`scripts.branding.*`**.
 
 **Out of scope FE:** Cliente assemble/branding trigger; FFmpeg details; storage keys in UI.
 

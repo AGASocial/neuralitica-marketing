@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
+import { Checkbox } from "primereact/checkbox";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
 
@@ -16,8 +17,50 @@ import {
   ASSEMBLY_JOB_POLL_INTERVAL_MS_DEFAULT,
   ASSEMBLY_STALE_FAILURE_MESSAGE_KEY,
 } from "@/lib/contracts/assembly-job";
-import type { OperatorVideoJobSummaryDto } from "@/lib/contracts/video-job";
+import type {
+  ApplyBrandingForAssemblySuccess,
+  BrandingJobErrorCode,
+  BrandingJobStatus,
+} from "@/lib/contracts/branding-job";
+import { applyBrandingForAssembly } from "@/lib/assembly/actions/apply-branding-for-assembly";
 import { assembleReelForScript } from "@/lib/assembly/actions/assemble-reel-for-script";
+import type { OperatorVideoJobSummaryDto } from "@/lib/contracts/video-job";
+
+export type OperatorBrandingCopy = {
+  title: string;
+  status: Record<Exclude<BrandingJobStatus, never>, string> & {
+    pending: string;
+  };
+  failureReasonLabel: string;
+  previewPending: string;
+  previewProcessing: string;
+  preview: string;
+  previewError: string;
+  toggles: {
+    subtitles: string;
+    logo: string;
+  };
+  actions: {
+    apply: string;
+    rebrand: string;
+    applying: string;
+  };
+  downloadCover: string;
+  toastApplySuccess: string;
+  failure: {
+    staleTimeout: string;
+    subtitleSanitize: string;
+  };
+  errors: {
+    unauthenticated: string;
+    forbidden: string;
+    notFound: string;
+    validation: string;
+    forbiddenFields: string;
+    baseIncomplete: string;
+    internal: string;
+  };
+};
 
 export type OperatorAssemblyCopy = {
   title: string;
@@ -50,6 +93,7 @@ export type OperatorAssemblyCopy = {
     missingAudio: string;
     internal: string;
   };
+  branding: OperatorBrandingCopy;
 };
 
 type OperatorAssemblyPanelProps = {
@@ -59,7 +103,9 @@ type OperatorAssemblyPanelProps = {
   copy: OperatorAssemblyCopy;
   disabled: boolean;
   onRequestReassemble: (reelScriptId: string) => void;
+  onRequestRebrand: (assemblyJobId: string, subtitlesEnabled: boolean, logoEnabled: boolean) => void;
   onAssembleSuccess: (result: AssembleReelForScriptSuccess) => void;
+  onBrandingSuccess: (result: ApplyBrandingForAssemblySuccess) => void;
   onError: (message: string) => void;
   onToastSuccess: (summary: string) => void;
 };
@@ -91,11 +137,44 @@ function assemblyStatusSeverity(
   }
 }
 
-function isInFlightStatus(status: AssemblyJobStatus): boolean {
+function brandingStatusSeverity(
+  status: BrandingJobStatus,
+): "success" | "info" | "warning" | "danger" | "secondary" | "contrast" {
+  switch (status) {
+    case "completed":
+      return "success";
+    case "processing":
+      return "info";
+    case "queued":
+      return "secondary";
+    case "failed":
+      return "danger";
+    case "skipped":
+      return "warning";
+    default:
+      return "secondary";
+  }
+}
+
+function isAssemblyInFlight(status: AssemblyJobStatus): boolean {
   return status === "queued" || status === "processing";
 }
 
-function resolveFailureReasonText(
+function isBrandingInFlight(status: BrandingJobStatus | null): boolean {
+  return status === "queued" || status === "processing";
+}
+
+function defaultBrandingToggles(
+  job: OperatorAssemblyJobDto | null,
+): { subtitlesEnabled: boolean; logoEnabled: boolean } {
+  const config = job?.brandingConfig;
+  return {
+    subtitlesEnabled: config?.subtitlesEnabled ?? true,
+    logoEnabled: config?.logoEnabled ?? true,
+  };
+}
+
+function resolveAssemblyFailureReasonText(
   failureReason: string | null,
   copy: OperatorAssemblyCopy,
 ): string | null {
@@ -108,6 +187,31 @@ function resolveFailureReasonText(
     failureReason === "scripts.assembly.failure.staleTimeout"
   ) {
     return copy.failure.staleTimeout;
+  }
+
+  return failureReason;
+}
+
+function resolveBrandingFailureReasonText(
+  failureReason: string | null,
+  copy: OperatorBrandingCopy,
+): string | null {
+  if (!failureReason) {
+    return null;
+  }
+
+  if (
+    failureReason === "scripts.branding.failure.staleTimeout" ||
+    failureReason.includes("branding.failure.staleTimeout")
+  ) {
+    return copy.failure.staleTimeout;
+  }
+
+  if (
+    failureReason === "scripts.branding.failure.subtitleSanitize" ||
+    failureReason.includes("subtitleSanitize")
+  ) {
+    return copy.failure.subtitleSanitize;
   }
 
   return failureReason;
@@ -146,6 +250,35 @@ function messageForAssemblyError(
   }
 }
 
+function messageForBrandingError(
+  code: BrandingJobErrorCode,
+  messageKey: string | undefined,
+  copy: OperatorBrandingCopy,
+): string {
+  if (messageKey === "scripts.branding.failure.subtitleSanitize") {
+    return copy.failure.subtitleSanitize;
+  }
+
+  switch (code) {
+    case "UNAUTHENTICATED":
+      return copy.errors.unauthenticated;
+    case "FORBIDDEN":
+      return copy.errors.forbidden;
+    case "NOT_FOUND":
+      return copy.errors.notFound;
+    case "VALIDATION_ERROR":
+      return copy.errors.validation;
+    case "FORBIDDEN_FIELDS":
+      return copy.errors.forbiddenFields;
+    case "BRANDING_BASE_INCOMPLETE":
+      return copy.errors.baseIncomplete;
+    case "SUBTITLE_SANITIZE_FAILED":
+      return copy.failure.subtitleSanitize;
+    default:
+      return copy.errors.internal;
+  }
+}
+
 function mergePolledStatus(
   current: OperatorAssemblyJobDto,
   polled: OperatorAssemblyJobStatusDto,
@@ -156,9 +289,42 @@ function mergePolledStatus(
     actualDurationSec: polled.actualDurationSec,
     outputMediaAssetId: polled.outputMediaAssetId,
     failureReason: polled.failureReason,
+    brandingStatus: polled.brandingStatus,
+    brandingConfig: polled.brandingConfig,
+    coverMediaAssetId: polled.coverMediaAssetId,
+    preBrandingOutputMediaAssetId: polled.preBrandingOutputMediaAssetId,
+    brandingFailureReason: polled.brandingFailureReason,
+    canApplyBranding: polled.canApplyBranding,
+    canRebrand: polled.canRebrand,
     canReassemble: polled.canReassemble,
     updatedAt: polled.updatedAt,
   };
+}
+
+function mergeBrandingSuccess(
+  current: OperatorAssemblyJobDto,
+  result: ApplyBrandingForAssemblySuccess,
+): OperatorAssemblyJobDto {
+  return {
+    ...current,
+    brandingStatus: result.brandingStatus,
+    outputMediaAssetId:
+      result.outputMediaAssetId ?? current.outputMediaAssetId,
+    coverMediaAssetId:
+      result.coverMediaAssetId ?? current.coverMediaAssetId,
+    canApplyBranding: result.brandingStatus !== "queued" && result.brandingStatus !== "processing",
+    canRebrand:
+      result.brandingStatus === "completed" || result.brandingStatus === "failed",
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function showBrandingPendingBanner(job: OperatorAssemblyJobDto): boolean {
+  return (
+    job.status === "completed" &&
+    (job.brandingStatus === null || job.brandingStatus === "queued") &&
+    job.outputMediaAssetId !== null
+  );
 }
 
 function primaryVideoCompleted(
@@ -168,8 +334,7 @@ function primaryVideoCompleted(
 }
 
 /**
- * Operator assembly panel (US-9.1).
- * Calls assembleReelForScript({ reelScriptId }) only.
+ * Operator assembly + branding panel (US-9.1 + US-9.2).
  */
 export function OperatorAssemblyPanel({
   reelScriptId,
@@ -178,23 +343,40 @@ export function OperatorAssemblyPanel({
   copy,
   disabled,
   onRequestReassemble,
+  onRequestRebrand,
   onAssembleSuccess,
+  onBrandingSuccess,
   onError,
   onToastSuccess,
 }: OperatorAssemblyPanelProps) {
+  const brandingCopy = copy.branding;
   const [job, setJob] = useState<OperatorAssemblyJobDto | null>(initialJob ?? null);
   const [pending, setPending] = useState(false);
+  const [brandingPending, setBrandingPending] = useState(false);
   const [polling, setPolling] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState(false);
+  const [subtitlesEnabled, setSubtitlesEnabled] = useState(() =>
+    defaultBrandingToggles(initialJob ?? null).subtitlesEnabled,
+  );
+  const [logoEnabled, setLogoEnabled] = useState(() =>
+    defaultBrandingToggles(initialJob ?? null).logoEnabled,
+  );
 
   useEffect(() => {
     setJob(initialJob ?? null);
     setPreviewError(false);
+    const toggles = defaultBrandingToggles(initialJob ?? null);
+    setSubtitlesEnabled(toggles.subtitlesEnabled);
+    setLogoEnabled(toggles.logoEnabled);
   }, [initialJob]);
 
+  const shouldPoll =
+    job !== null &&
+    (isAssemblyInFlight(job.status) || isBrandingInFlight(job.brandingStatus));
+
   useEffect(() => {
-    if (!job || !isInFlightStatus(job.status)) {
+    if (!job || !shouldPoll) {
       setPolling(false);
       return;
     }
@@ -247,16 +429,23 @@ export function OperatorAssemblyPanel({
         clearInterval(timer);
       }
     };
-  }, [job?.jobId, job?.status]);
+  }, [job?.jobId, job?.status, job?.brandingStatus, shouldPoll]);
 
   const hasPrimaryVideo = primaryVideoCompleted(primaryVideoJob);
-  const inFlight = job !== null && isInFlightStatus(job.status);
+  const assemblyInFlight = job !== null && isAssemblyInFlight(job.status);
+  const brandingInFlight =
+    job !== null && isBrandingInFlight(job.brandingStatus);
   const canAssembleInitial =
-    job === null && hasPrimaryVideo && !inFlight && !pending;
-  const canAssembleFromDto = job?.canAssemble === true && !pending && !inFlight;
+    job === null && hasPrimaryVideo && !assemblyInFlight && !pending;
+  const canAssembleFromDto = job?.canAssemble === true && !pending && !assemblyInFlight;
   const showAssemble = canAssembleInitial || canAssembleFromDto;
   const showReassemble =
-    job?.canReassemble === true && !pending && !inFlight;
+    job?.canReassemble === true && !pending && !assemblyInFlight;
+  const showApplyBranding =
+    job?.canApplyBranding === true && !brandingPending && !brandingInFlight;
+  const showRebrand =
+    job?.canRebrand === true && !brandingPending && !brandingInFlight;
+  const panelBusy = disabled || pending || brandingPending;
 
   async function handleAssemble() {
     if (pending || disabled || !showAssemble) {
@@ -291,9 +480,63 @@ export function OperatorAssemblyPanel({
     }
   }
 
-  const failureText = job ? resolveFailureReasonText(job.failureReason, copy) : null;
+  async function handleApplyBranding() {
+    if (!job || brandingPending || !showApplyBranding) {
+      return;
+    }
+
+    setBrandingPending(true);
+    setBanner(null);
+
+    try {
+      const result = await applyBrandingForAssembly({
+        assemblyJobId: job.jobId,
+        subtitlesEnabled,
+        logoEnabled,
+      });
+
+      if (result.ok) {
+        setJob((current) =>
+          current ? mergeBrandingSuccess(current, result) : current,
+        );
+        onBrandingSuccess(result);
+        onToastSuccess(brandingCopy.toastApplySuccess);
+        return;
+      }
+
+      const message = messageForBrandingError(
+        result.error.code,
+        result.error.messageKey,
+        brandingCopy,
+      );
+      setBanner(message);
+      onError(message);
+    } catch {
+      const message = brandingCopy.errors.internal;
+      setBanner(message);
+      onError(message);
+    } finally {
+      setBrandingPending(false);
+    }
+  }
+
+  const assemblyFailureText = job
+    ? resolveAssemblyFailureReasonText(job.failureReason, copy)
+    : null;
+  const brandingFailureText = job
+    ? resolveBrandingFailureReasonText(job.brandingFailureReason, brandingCopy)
+    : null;
+
   const previewAssetId =
     job?.status === "completed" ? job.outputMediaAssetId : null;
+  const showPendingBanner = job ? showBrandingPendingBanner(job) : false;
+  const showProcessingBadge =
+    job?.brandingStatus === "processing" && previewAssetId !== null;
+
+  const brandingStatusLabel =
+    job?.brandingStatus != null
+      ? brandingCopy.status[job.brandingStatus]
+      : brandingCopy.status.pending;
 
   return (
     <section
@@ -381,7 +624,7 @@ export function OperatorAssemblyPanel({
         </dl>
       ) : null}
 
-      {failureText ? (
+      {assemblyFailureText ? (
         <Message
           severity="error"
           style={{ width: "100%", marginBottom: "0.75rem" }}
@@ -390,7 +633,7 @@ export function OperatorAssemblyPanel({
               <span style={{ fontWeight: 600, marginRight: "0.35rem" }}>
                 {copy.failureReasonLabel}
               </span>
-              <span>{failureText}</span>
+              <span>{assemblyFailureText}</span>
             </div>
           }
         />
@@ -399,10 +642,24 @@ export function OperatorAssemblyPanel({
       {previewAssetId ? (
         <div style={{ marginBottom: "0.75rem" }}>
           <p style={{ margin: "0 0 0.35rem", fontSize: "0.875rem", fontWeight: 600, color: "#374151" }}>
-            {copy.preview}
+            {brandingCopy.preview}
           </p>
+          {showPendingBanner ? (
+            <Message
+              severity="info"
+              text={brandingCopy.previewPending}
+              style={{ width: "100%", marginBottom: "0.5rem" }}
+            />
+          ) : null}
+          {showProcessingBadge ? (
+            <Message
+              severity="info"
+              text={brandingCopy.previewProcessing}
+              style={{ width: "100%", marginBottom: "0.5rem" }}
+            />
+          ) : null}
           {previewError ? (
-            <Message severity="warn" text={copy.previewError} style={{ width: "100%" }} />
+            <Message severity="warn" text={brandingCopy.previewError} style={{ width: "100%" }} />
           ) : (
             <video
               controls
@@ -429,7 +686,7 @@ export function OperatorAssemblyPanel({
             icon="pi pi-video"
             size="small"
             loading={pending}
-            disabled={disabled || pending || !hasPrimaryVideo}
+            disabled={panelBusy || !hasPrimaryVideo}
             onClick={() => void handleAssemble()}
           />
         ) : null}
@@ -441,11 +698,150 @@ export function OperatorAssemblyPanel({
             size="small"
             severity="secondary"
             outlined
-            disabled={disabled || pending}
+            disabled={panelBusy}
             onClick={() => onRequestReassemble(reelScriptId)}
           />
         ) : null}
       </div>
+
+      {job?.status === "completed" ? (
+        <section
+          style={{
+            marginTop: "1rem",
+            paddingTop: "0.85rem",
+            borderTop: "1px solid #e5e7eb",
+          }}
+          aria-label={brandingCopy.title}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "0.5rem",
+              marginBottom: "0.75rem",
+            }}
+          >
+            <h4 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 600 }}>
+              {brandingCopy.title}
+            </h4>
+            <Tag
+              value={brandingStatusLabel}
+              severity={
+                job.brandingStatus != null
+                  ? brandingStatusSeverity(job.brandingStatus)
+                  : "secondary"
+              }
+              icon={
+                job.brandingStatus === "processing"
+                  ? "pi pi-spin pi-spinner"
+                  : job.brandingStatus === "failed"
+                    ? "pi pi-times-circle"
+                    : job.brandingStatus === "completed"
+                      ? "pi pi-check"
+                      : undefined
+              }
+            />
+          </div>
+
+          {brandingFailureText ? (
+            <Message
+              severity="error"
+              style={{ width: "100%", marginBottom: "0.75rem" }}
+              content={
+                <div style={{ fontSize: "0.875rem" }}>
+                  <span style={{ fontWeight: 600, marginRight: "0.35rem" }}>
+                    {brandingCopy.failureReasonLabel}
+                  </span>
+                  <span>{brandingFailureText}</span>
+                </div>
+              }
+            />
+          ) : null}
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.65rem",
+              marginBottom: "0.75rem",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Checkbox
+                inputId={`branding-subtitles-${job.jobId}`}
+                checked={subtitlesEnabled}
+                disabled={panelBusy || brandingInFlight}
+                onChange={(event) => setSubtitlesEnabled(event.checked === true)}
+              />
+              <label htmlFor={`branding-subtitles-${job.jobId}`} style={{ fontSize: "0.875rem" }}>
+                {brandingCopy.toggles.subtitles}
+              </label>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Checkbox
+                inputId={`branding-logo-${job.jobId}`}
+                checked={logoEnabled}
+                disabled={panelBusy || brandingInFlight}
+                onChange={(event) => setLogoEnabled(event.checked === true)}
+              />
+              <label htmlFor={`branding-logo-${job.jobId}`} style={{ fontSize: "0.875rem" }}>
+                {brandingCopy.toggles.logo}
+              </label>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
+            {showApplyBranding ? (
+              <Button
+                type="button"
+                label={
+                  brandingPending
+                    ? brandingCopy.actions.applying
+                    : brandingCopy.actions.apply
+                }
+                icon="pi pi-palette"
+                size="small"
+                loading={brandingPending}
+                disabled={panelBusy}
+                onClick={() => void handleApplyBranding()}
+              />
+            ) : null}
+            {showRebrand ? (
+              <Button
+                type="button"
+                label={brandingCopy.actions.rebrand}
+                icon="pi pi-refresh"
+                size="small"
+                severity="secondary"
+                outlined
+                disabled={panelBusy}
+                onClick={() =>
+                  onRequestRebrand(job.jobId, subtitlesEnabled, logoEnabled)
+                }
+              />
+            ) : null}
+            {job.coverMediaAssetId ? (
+              <a
+                href={`/api/media/assets/${job.coverMediaAssetId}`}
+                download
+                style={{ textDecoration: "none" }}
+              >
+                <Button
+                  type="button"
+                  label={brandingCopy.downloadCover}
+                  icon="pi pi-download"
+                  size="small"
+                  severity="help"
+                  outlined
+                  disabled={panelBusy}
+                />
+              </a>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
     </section>
   );
 }

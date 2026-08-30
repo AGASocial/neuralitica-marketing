@@ -72,6 +72,7 @@ export default async function ProfilePage() {
     <LivingProfileView
       result={result}
       locale={locale}
+      brandingCopy={t.profile.branding}
       copy={{
         title: t.profile.title,
         updatedAt: t.profile.updatedAt,

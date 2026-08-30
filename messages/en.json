@@ -300,6 +300,39 @@
       "tooBigText": "Text is too long.",
       "invalidType": "Please check this section and try again.",
       "unrecognizedKey": "Please check this section and try again."
+    },
+    "branding": {
+      "title": "Brand",
+      "subtitle": "Logo and default Reel branding options for assembled videos.",
+      "logoLabel": "Business logo",
+      "hints": "PNG, JPG, or WebP — max {maxMiB} MiB.",
+      "emptyLogo": "No logo uploaded yet.",
+      "upload": "Upload logo",
+      "uploading": "Uploading…",
+      "remove": "Remove logo",
+      "removing": "Removing…",
+      "previewAlt": "Business logo preview",
+      "toggleSubtitles": "Subtitles on Reels",
+      "toggleLogo": "Show logo on Reels",
+      "toastUploadSuccess": "Logo uploaded.",
+      "toastRemoveSuccess": "Logo removed.",
+      "toastDefaultsSuccess": "Branding defaults saved.",
+      "confirmRemove": {
+        "header": "Remove logo?",
+        "message": "This removes your uploaded logo from future Reel branding runs.",
+        "accept": "Remove",
+        "reject": "Cancel"
+      },
+      "errors": {
+        "validation": "Please check the file and try again.",
+        "forbiddenFields": "Something went wrong. Please try again.",
+        "missingFile": "Choose an image file to upload.",
+        "invalidFileType": "Use PNG, JPG, or WebP only.",
+        "fileTooLarge": "Logo file is too large.",
+        "unauthenticated": "Please log in to continue.",
+        "forbidden": "You do not have access to that.",
+        "internal": "Something went wrong. Please try again later."
+      }
     }
   },
   "legal": {
@@ -1201,6 +1234,62 @@
           "notFound": "That Reel script was not found.",
           "validation": "Please check the request and try again.",
           "forbiddenFields": "Invalid assembly request.",
+          "internal": "Something went wrong. Please try again later."
+        }
+      }
+    },
+    "branding": {
+      "title": "Reel branding",
+      "status": {
+        "pending": "Not started",
+        "queued": "Queued",
+        "processing": "Processing",
+        "completed": "Completed",
+        "failed": "Failed",
+        "skipped": "Skipped"
+      },
+      "failureReasonLabel": "Failure reason",
+      "previewPending": "Branding is queued — preview shows the assembled base video.",
+      "previewProcessing": "Branding in progress…",
+      "preview": "Branded Reel preview",
+      "previewError": "We could not load the branded Reel preview.",
+      "toggles": {
+        "subtitles": "Include subtitles",
+        "logo": "Include logo"
+      },
+      "actions": {
+        "apply": "Apply branding",
+        "rebrand": "Re-brand",
+        "applying": "Applying…"
+      },
+      "downloadCover": "Download cover",
+      "toastApplySuccess": "Branding job queued.",
+      "failure": {
+        "staleTimeout": "Branding timed out while processing.",
+        "subtitleSanitize": "On-screen text could not be prepared for subtitles."
+      },
+      "errors": {
+        "unauthenticated": "Please log in to continue.",
+        "forbidden": "You do not have access to that.",
+        "notFound": "That assembly job was not found.",
+        "validation": "Please check the request and try again.",
+        "forbiddenFields": "Invalid branding request.",
+        "baseIncomplete": "Assembly must be completed before branding.",
+        "internal": "Something went wrong. Please try again later."
+      },
+      "rebrandConfirm": {
+        "title": "Confirm re-brand",
+        "body": "This starts a new branding run on the assembled Reel using the selected subtitle and logo options. Continue?",
+        "confirm": "Re-brand",
+        "cancel": "Cancel",
+        "errors": {
+          "unauthenticated": "Please log in to continue.",
+          "forbidden": "You do not have access to that.",
+          "notFound": "That assembly job was not found.",
+          "validation": "Please check the request and try again.",
+          "forbiddenFields": "Invalid branding request.",
+          "baseIncomplete": "Assembly must be completed before branding.",
+          "subtitleSanitize": "On-screen text could not be prepared for subtitles.",
           "internal": "Something went wrong. Please try again later."
         }
       }

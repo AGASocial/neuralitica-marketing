@@ -4,11 +4,14 @@ import type {
   BusinessProfileForClientResult,
 } from "@/lib/contracts/profile";
 import type { VisualModeSummary } from "@/lib/contracts/visual-preferences";
+import { mapBusinessProfileBranding } from "@/lib/profile/map-business-profile-branding";
 
 export type ProfileSelectRow = {
   fields: unknown;
   version: unknown;
   updated_at: unknown;
+  logo_asset_id?: unknown;
+  assembly_config?: unknown;
 };
 
 function toOptionalIsoUpdatedAt(value: unknown): string | undefined {
@@ -64,9 +67,18 @@ export function mapBusinessProfileRow(params: {
   const updatedAt = toOptionalIsoUpdatedAt(params.data.updated_at);
   const version = toOptionalVersion(params.data.version);
 
+  const logoAssetId =
+    typeof params.data.logo_asset_id === "string"
+      ? params.data.logo_asset_id
+      : null;
+
   return {
     exists: true,
     fields: fieldsParsed.data,
+    branding: mapBusinessProfileBranding({
+      logoAssetId,
+      assemblyConfig: params.data.assembly_config,
+    }),
     ...(updatedAt !== undefined ? { updatedAt } : {}),
     ...(version !== undefined ? { version } : {}),
   };

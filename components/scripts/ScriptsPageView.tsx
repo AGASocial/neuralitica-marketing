@@ -27,6 +27,10 @@ import {
   type AssemblyReassembleConfirmCopy,
 } from "@/components/scripts/AssemblyReassembleConfirmDialog";
 import {
+  BrandingRebrandConfirmDialog,
+  type BrandingRebrandConfirmCopy,
+} from "@/components/scripts/BrandingRebrandConfirmDialog";
+import {
   OperatorAssemblyPanel,
   type OperatorAssemblyCopy,
 } from "@/components/scripts/OperatorAssemblyPanel";
@@ -77,6 +81,7 @@ import type {
   OperatorAssemblyJobsByReelMap,
 } from "@/lib/contracts/assembly-job";
 import { ASSEMBLY_TEMPLATE_REEL_V1_BASIC } from "@/lib/contracts/assembly-job";
+import type { ApplyBrandingForAssemblySuccess } from "@/lib/contracts/branding-job";
 import type {
   SynthesizeVoiceoverForReelScriptSuccess,
   VoiceoverSummaryByReelMap,
@@ -209,6 +214,7 @@ type ScriptsPageCopy = {
   voiceover: OperatorVoiceoverCopy;
   assembly: OperatorAssemblyCopy & {
     reassembleConfirm: AssemblyReassembleConfirmCopy;
+    rebrandConfirm: BrandingRebrandConfirmCopy;
   };
   caption: {
     tabs: {
@@ -518,6 +524,10 @@ export function ScriptsPageView({
   const [assemblyOverrides, setAssemblyOverrides] = useState<OperatorAssemblyJobsByReelMap>(
     {},
   );
+  const [rebrandDialogVisible, setRebrandDialogVisible] = useState(false);
+  const [rebrandAssemblyJobId, setRebrandAssemblyJobId] = useState<string | null>(null);
+  const [rebrandSubtitlesEnabled, setRebrandSubtitlesEnabled] = useState(true);
+  const [rebrandLogoEnabled, setRebrandLogoEnabled] = useState(true);
 
   useEffect(() => {
     setVideoJobOverrides({});
@@ -987,6 +997,34 @@ export function ScriptsPageView({
     setReassembleReelScriptId(null);
   }
 
+  function openRebrandDialog(
+    assemblyJobId: string,
+    subtitlesEnabled: boolean,
+    logoEnabled: boolean,
+  ) {
+    setRebrandAssemblyJobId(assemblyJobId);
+    setRebrandSubtitlesEnabled(subtitlesEnabled);
+    setRebrandLogoEnabled(logoEnabled);
+    setRebrandDialogVisible(true);
+  }
+
+  function closeRebrandDialog() {
+    if (assemblyMutationPending) {
+      return;
+    }
+    setRebrandDialogVisible(false);
+    setRebrandAssemblyJobId(null);
+  }
+
+  function findReelScriptIdForAssemblyJob(jobId: string): string | null {
+    for (const [reelScriptId, job] of Object.entries(assemblyByReelScriptId)) {
+      if (job?.jobId === jobId) {
+        return reelScriptId;
+      }
+    }
+    return null;
+  }
+
   function buildAssemblyOverrideFromSuccess(
     reelScriptId: string,
     result: AssembleReelForScriptSuccess,
@@ -1003,6 +1041,13 @@ export function ScriptsPageView({
       actualDurationSec: existing?.actualDurationSec ?? null,
       outputMediaAssetId: result.outputMediaAssetId ?? existing?.outputMediaAssetId ?? null,
       failureReason: null,
+      brandingStatus: existing?.brandingStatus ?? null,
+      brandingConfig: existing?.brandingConfig ?? null,
+      coverMediaAssetId: existing?.coverMediaAssetId ?? null,
+      preBrandingOutputMediaAssetId: existing?.preBrandingOutputMediaAssetId ?? null,
+      brandingFailureReason: null,
+      canApplyBranding: false,
+      canRebrand: false,
       canAssemble: false,
       canReassemble: result.status === "completed" || result.status === "failed",
       createdAt: existing?.createdAt ?? new Date().toISOString(),
@@ -1022,6 +1067,47 @@ export function ScriptsPageView({
         result,
         targetDurationSec,
       ),
+    }));
+    router.refresh();
+  }
+
+  function buildBrandingOverrideFromSuccess(
+    reelScriptId: string,
+    result: ApplyBrandingForAssemblySuccess,
+  ): OperatorAssemblyJobDto | null {
+    const existing = assemblyByReelScriptId[reelScriptId];
+    if (!existing) {
+      return null;
+    }
+
+    return {
+      ...existing,
+      brandingStatus: result.brandingStatus,
+      outputMediaAssetId:
+        result.outputMediaAssetId ?? existing.outputMediaAssetId,
+      coverMediaAssetId:
+        result.coverMediaAssetId ?? existing.coverMediaAssetId,
+      brandingFailureReason: null,
+      canApplyBranding:
+        result.brandingStatus !== "queued" && result.brandingStatus !== "processing",
+      canRebrand:
+        result.brandingStatus === "completed" || result.brandingStatus === "failed",
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  function handleBrandingSuccess(
+    reelScriptId: string,
+    result: ApplyBrandingForAssemblySuccess,
+  ) {
+    const override = buildBrandingOverrideFromSuccess(reelScriptId, result);
+    if (!override) {
+      return;
+    }
+
+    setAssemblyOverrides((prev) => ({
+      ...prev,
+      [reelScriptId]: override,
     }));
     router.refresh();
   }
@@ -1117,6 +1203,26 @@ export function ScriptsPageView({
               row?.targetDurationSec ?? null,
             );
             handleAssemblyToastSuccess(copy.assembly.toastAssembleSuccess);
+          }
+        }}
+        onError={handleAssemblyError}
+      />
+      <BrandingRebrandConfirmDialog
+        visible={rebrandDialogVisible}
+        assemblyJobId={rebrandAssemblyJobId}
+        subtitlesEnabled={rebrandSubtitlesEnabled}
+        logoEnabled={rebrandLogoEnabled}
+        copy={copy.assembly.rebrandConfirm}
+        pending={assemblyMutationPending}
+        onHide={closeRebrandDialog}
+        onPendingChange={setAssemblyMutationPending}
+        onSuccess={(result) => {
+          const reelScriptId = rebrandAssemblyJobId
+            ? findReelScriptIdForAssemblyJob(rebrandAssemblyJobId)
+            : null;
+          if (reelScriptId) {
+            handleBrandingSuccess(reelScriptId, result);
+            handleAssemblyToastSuccess(copy.assembly.branding.toastApplySuccess);
           }
         }}
         onError={handleAssemblyError}
@@ -1301,6 +1407,12 @@ export function ScriptsPageView({
                 }}
                 onAssemblyToastSuccess={handleAssemblyToastSuccess}
                 onAssemblyError={handleAssemblyError}
+                onRequestBrandingRebrand={openRebrandDialog}
+                onBrandingSuccess={(result) => {
+                  if (row.scriptId) {
+                    handleBrandingSuccess(row.scriptId, result);
+                  }
+                }}
                 captionRegeneratingSlot={captionRegeneratingSlot}
                 captionSelectingSlot={captionSelectingSlot}
                 isBusy={isBusy}
@@ -1456,7 +1568,13 @@ type ReelDetailPanelProps = {
   onVoiceoverToastSuccess: (summary: string) => void;
   onVoiceoverError: (message: string) => void;
   onRequestAssemblyReassemble: (reelScriptId: string) => void;
+  onRequestBrandingRebrand: (
+    assemblyJobId: string,
+    subtitlesEnabled: boolean,
+    logoEnabled: boolean,
+  ) => void;
   onAssemblySuccess: (result: AssembleReelForScriptSuccess) => void;
+  onBrandingSuccess: (result: ApplyBrandingForAssemblySuccess) => void;
   onAssemblyToastSuccess: (summary: string) => void;
   onAssemblyError: (message: string) => void;
   captionRegeneratingSlot: number | null;
@@ -1485,7 +1603,9 @@ function ReelDetailPanel({
   onVoiceoverToastSuccess,
   onVoiceoverError,
   onRequestAssemblyReassemble,
+  onRequestBrandingRebrand,
   onAssemblySuccess,
+  onBrandingSuccess,
   onAssemblyToastSuccess,
   onAssemblyError,
   captionRegeneratingSlot,
@@ -1553,7 +1673,9 @@ function ReelDetailPanel({
           copy={copy.assembly}
           disabled={isBusy}
           onRequestReassemble={onRequestAssemblyReassemble}
+          onRequestRebrand={onRequestBrandingRebrand}
           onAssembleSuccess={onAssemblySuccess}
+          onBrandingSuccess={onBrandingSuccess}
           onError={onAssemblyError}
           onToastSuccess={onAssemblyToastSuccess}
         />

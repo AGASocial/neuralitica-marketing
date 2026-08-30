@@ -6,6 +6,10 @@ import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 
 import { LivingProfileEditor } from "@/components/profile/LivingProfileEditor";
+import {
+  ProfileBrandingSection,
+  type ProfileBrandingCopy,
+} from "@/components/profile/ProfileBrandingSection";
 import type { InterviewStepKey } from "@/lib/contracts/interview";
 import type { BusinessProfileForClientResult } from "@/lib/contracts/profile";
 
@@ -63,6 +67,7 @@ type LivingProfileViewProps = {
   result: BusinessProfileForClientResult;
   locale: string;
   copy: LivingProfileCopy;
+  brandingCopy: ProfileBrandingCopy;
 };
 
 /**
@@ -74,6 +79,7 @@ export function LivingProfileView({
   result,
   locale,
   copy,
+  brandingCopy,
 }: LivingProfileViewProps) {
   if (result.exists === false && "loadFailed" in result && result.loadFailed) {
     return (
@@ -122,28 +128,39 @@ export function LivingProfileView({
   }
 
   return (
-    <LivingProfileEditor
-      initial={result}
-      locale={locale}
-      title={copy.title}
-      copy={{
-        updatedAt: copy.updatedAt,
-        emptySection: copy.emptySection,
-        sections: copy.sections,
-        edit: copy.edit,
-        save: copy.save,
-        cancel: copy.cancel,
-        saving: copy.saving,
-        toastSuccess: copy.toastSuccess,
-        addItem: copy.addItem,
-        removeItem: copy.removeItem,
-        itemPlaceholder: copy.itemPlaceholder,
-        chipsHintRequired: copy.chipsHintRequired,
-        chipsHintOptional: copy.chipsHintOptional,
-        steps: copy.steps,
-        errors: copy.errors,
+    <div
+      style={{
+        maxWidth: 760,
+        margin: "0 auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: "1.25rem",
       }}
-    />
+    >
+      <LivingProfileEditor
+        initial={result}
+        locale={locale}
+        title={copy.title}
+        copy={{
+          updatedAt: copy.updatedAt,
+          emptySection: copy.emptySection,
+          sections: copy.sections,
+          edit: copy.edit,
+          save: copy.save,
+          cancel: copy.cancel,
+          saving: copy.saving,
+          toastSuccess: copy.toastSuccess,
+          addItem: copy.addItem,
+          removeItem: copy.removeItem,
+          itemPlaceholder: copy.itemPlaceholder,
+          chipsHintRequired: copy.chipsHintRequired,
+          chipsHintOptional: copy.chipsHintOptional,
+          steps: copy.steps,
+          errors: copy.errors,
+        }}
+      />
+      <ProfileBrandingSection initial={result.branding} copy={brandingCopy} />
+    </div>
   );
 }
 

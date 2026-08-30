@@ -169,7 +169,9 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
         voiceover: t.scripts.voiceover,
         assembly: {
           ...t.scripts.assembly,
+          branding: t.scripts.branding,
           reassembleConfirm: t.scripts.assembly.reassembleConfirm,
+          rebrandConfirm: t.scripts.branding.rebrandConfirm,
         },
         cost: {
           actual: t.scripts.cost.actual,

@@ -300,6 +300,39 @@
       "tooBigText": "El texto es demasiado largo.",
       "invalidType": "Revisa esta sección e inténtalo de nuevo.",
       "unrecognizedKey": "Revisa esta sección e inténtalo de nuevo."
+    },
+    "branding": {
+      "title": "Marca",
+      "subtitle": "Logo y opciones de marca predeterminadas para Reels ensamblados.",
+      "logoLabel": "Logo del negocio",
+      "hints": "PNG, JPG o WebP — máx. {maxMiB} MiB.",
+      "emptyLogo": "Aún no hay logo subido.",
+      "upload": "Subir logo",
+      "uploading": "Subiendo…",
+      "remove": "Quitar logo",
+      "removing": "Quitando…",
+      "previewAlt": "Vista previa del logo",
+      "toggleSubtitles": "Subtítulos en Reels",
+      "toggleLogo": "Mostrar logo en Reels",
+      "toastUploadSuccess": "Logo subido.",
+      "toastRemoveSuccess": "Logo eliminado.",
+      "toastDefaultsSuccess": "Valores predeterminados de marca guardados.",
+      "confirmRemove": {
+        "header": "¿Quitar logo?",
+        "message": "Esto quita tu logo subido de futuras ejecuciones de marca en Reels.",
+        "accept": "Quitar",
+        "reject": "Cancelar"
+      },
+      "errors": {
+        "validation": "Revisa el archivo e inténtalo de nuevo.",
+        "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+        "missingFile": "Elige una imagen para subir.",
+        "invalidFileType": "Usa solo PNG, JPG o WebP.",
+        "fileTooLarge": "El archivo del logo es demasiado grande.",
+        "unauthenticated": "Inicia sesión para continuar.",
+        "forbidden": "No tienes acceso a eso.",
+        "internal": "Algo salió mal. Inténtalo más tarde."
+      }
     }
   },
   "legal": {
@@ -1201,6 +1234,62 @@
           "notFound": "No se encontró ese guion de Reel.",
           "validation": "Revisa la solicitud e inténtalo de nuevo.",
           "forbiddenFields": "Solicitud de ensamblado no válida.",
+          "internal": "Algo salió mal. Inténtalo más tarde."
+        }
+      }
+    },
+    "branding": {
+      "title": "Marca del Reel",
+      "status": {
+        "pending": "Sin iniciar",
+        "queued": "En cola",
+        "processing": "Procesando",
+        "completed": "Completado",
+        "failed": "Fallido",
+        "skipped": "Omitido"
+      },
+      "failureReasonLabel": "Motivo del fallo",
+      "previewPending": "La marca está en cola — la vista previa muestra el video ensamblado base.",
+      "previewProcessing": "Marca en progreso…",
+      "preview": "Vista previa del Reel con marca",
+      "previewError": "No pudimos cargar la vista previa del Reel con marca.",
+      "toggles": {
+        "subtitles": "Incluir subtítulos",
+        "logo": "Incluir logo"
+      },
+      "actions": {
+        "apply": "Aplicar marca",
+        "rebrand": "Re-aplicar marca",
+        "applying": "Aplicando…"
+      },
+      "downloadCover": "Descargar portada",
+      "toastApplySuccess": "Job de marca en cola.",
+      "failure": {
+        "staleTimeout": "La marca expiró mientras se procesaba.",
+        "subtitleSanitize": "No se pudo preparar el texto en pantalla para subtítulos."
+      },
+      "errors": {
+        "unauthenticated": "Inicia sesión para continuar.",
+        "forbidden": "No tienes acceso a eso.",
+        "notFound": "No se encontró ese job de ensamblado.",
+        "validation": "Revisa la solicitud e inténtalo de nuevo.",
+        "forbiddenFields": "Solicitud de marca no válida.",
+        "baseIncomplete": "El ensamblado debe estar completado antes de aplicar marca.",
+        "internal": "Algo salió mal. Inténtalo más tarde."
+      },
+      "rebrandConfirm": {
+        "title": "Confirmar re-aplicación de marca",
+        "body": "Esto inicia una nueva ejecución de marca en el Reel ensamblado con las opciones de subtítulos y logo seleccionadas. ¿Continuar?",
+        "confirm": "Re-aplicar marca",
+        "cancel": "Cancelar",
+        "errors": {
+          "unauthenticated": "Inicia sesión para continuar.",
+          "forbidden": "No tienes acceso a eso.",
+          "notFound": "No se encontró ese job de ensamblado.",
+          "validation": "Revisa la solicitud e inténtalo de nuevo.",
+          "forbiddenFields": "Solicitud de marca no válida.",
+          "baseIncomplete": "El ensamblado debe estar completado antes de aplicar marca.",
+          "subtitleSanitize": "No se pudo preparar el texto en pantalla para subtítulos.",
           "internal": "Algo salió mal. Inténtalo más tarde."
         }
       }
