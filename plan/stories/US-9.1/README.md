@@ -114,7 +114,7 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; long-lived third-par
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 S3.M10; expect **GAPS** for US-9.2 split + Phase B editing_hints)
+- [x] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 S3.M10; **GAPS** — US-9.2 split + Phase B editing_hints documented)
 - [ ] SECURITY.md (security-architect — FFmpeg injection, path traversal, IDOR, worker tenancy)
 - [ ] CONTRACT.md (nextjs-backend — DDL, orchestrator, worker seam, DTOs; **Reviewed by FE** before BUILD)
 - [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
