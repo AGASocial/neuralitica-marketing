@@ -84,6 +84,24 @@ export const FORBIDDEN_BUDGET_SPEND_KEYS = [
   "override_budget",
   "confirmGeneration",
   "confirm_generation",
+  // US-7.3 — actual cost authority is server-only via finalizeGenerationCost
+  "actualCostCents",
+  "actual_cost_cents",
+  "costCents",
+  "cost_cents",
+  "durationSec",
+  "duration_sec",
+  "billingUsage",
+  "usage",
+  "providerCost",
+  "provider_cost",
+  "actualCostUnavailableReason",
+  "actual_cost_unavailable_reason",
+  "failureReason",
+  "failure_reason",
+  "spendEventId",
+  "spend_event_id",
+  "manualActualCostCents",
 ] as const;
 
 export const updateGlobalCostPolicyInputSchema = z

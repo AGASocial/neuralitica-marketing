@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 
+import { reelWeekCostSummarySchema } from "@/lib/contracts/actual-cost";
 import { reelCaptionSummarySchema } from "@/lib/contracts/reel-caption";
 import { reelScriptReadabilitySchema } from "@/lib/contracts/reel-script-readability";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
@@ -89,6 +90,11 @@ export const getReelScriptsForWeekSuccessSchema = z
       .nullable(),
     strategyVersionChanged: z.boolean(),
     items: z.array(reelScriptListItemSchema),
+    /**
+     * US-7.3 — Operator-only cost block for /operator/scripts.
+     * Required on success after BE BUILD; optional in contract stub until wired.
+     */
+    costSummary: reelWeekCostSummarySchema.optional(),
   })
   .strict();
 
