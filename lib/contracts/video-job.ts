@@ -58,7 +58,7 @@ export const videoJobMutationErrorSchema = z
 
 export type VideoJobMutationError = z.infer<typeof videoJobMutationErrorSchema>;
 
-/** Keys rejected on create/retry paths (US-8.4 SECURITY). */
+/** Keys rejected on create/retry paths (US-8.4 SECURITY; US-8.6 extends loop id). */
 export const FORBIDDEN_VIDEO_JOB_AUTHORITY_KEYS = [
   "status",
   "outputUrl",
@@ -71,6 +71,9 @@ export const FORBIDDEN_VIDEO_JOB_AUTHORITY_KEYS = [
   "failure_reason",
   "outputMediaAssetId",
   "output_media_asset_id",
+  /** Server-resolved only — never client authority (US-8.6 SECURITY). */
+  "referenceVideoAssetId",
+  "reference_video_asset_id",
   "skipBudgetCheck",
   "skip_budget_check",
   "skipRetryLimit",

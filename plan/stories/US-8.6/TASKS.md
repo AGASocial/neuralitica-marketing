@@ -208,12 +208,12 @@ All objects keep `neuramark_` prefix. **No migration in US-8.6 BUILD** (PO freez
 
 - [ ] SPEC-REVIEW.md (spec-guardian)
 - [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md authored (nextjs-backend — frozen; **Reviewed by FE: N/A**)
+- [x] CONTRACT.md authored (nextjs-backend — frozen; **Reviewed by FE: N/A**)
 - [ ] BUILD (media-pipeline-engineer + nextjs-backend — Phase A + Phase B)
 - [ ] VALIDATION.md (requirements-validator)
 - [ ] QA.md (qa-engineer)
 
-**Status:** PREP — gates not started. **Next:** SPEC-REVIEW → SECURITY → CONTRACT.
+**Status:** CONTRACT frozen — **Next:** BUILD (Phase A adapter + Phase B orchestrator).
 
 ---
 
