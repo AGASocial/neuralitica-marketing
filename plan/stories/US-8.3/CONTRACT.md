@@ -1,7 +1,7 @@
 # API Contract — US-8.3 Manual video upload fallback
 
 **Story:** US-8.3  
-**Status:** Frozen — 2026-08-30 (pending **Reviewed by FE** before BUILD)  
+**Status:** Frozen — 2026-08-30 (**Reviewed by FE** ✅ — ready for BUILD)  
 **Security:** `plan/stories/US-8.3/SECURITY.md` (APPROVE WITH CONDITIONS — reconciled below)  
 **Spec review:** `plan/stories/US-8.3/SPEC-REVIEW.md` (GAPS — resolved by this contract)  
 **Extends:** `plan/stories/US-8.4/CONTRACT.md` (job row shape, status UI, spend hooks) · `plan/stories/US-3.3/CONTRACT.md` (shared upload validation stack, serve route) · `plan/stories/US-7.3/CONTRACT.md` (`manualActualCostCents: 0`)  
@@ -528,7 +528,15 @@ Given cumulative API spend = `max_cost_cents`, manual upload with parent failed 
 
 ## Reviewed by FE
 
-*(Pending — nextjs-frontend signoff required before BUILD.)*
+**Yes** — 2026-08-30 (nextjs-frontend)
+
+- Placement above `OperatorVideoJobSummaryPanel` in expand row matches existing US-8.4 layout.
+- Visibility derived from `videoJobsByReelScriptId[scriptId]?.status` aligns with slot guards (`null` / `failed` / `cancelled` show; `queued` / `processing` / `completed` hide).
+- Success path merges returned `OperatorVideoJobSummaryDto` into local batch map + `router.refresh()` mirrors US-8.4 retry pattern.
+- Error codes map cleanly to `scripts.videoJob.manualUpload.errors.*` via `MANUAL_UPLOAD_ERROR_MESSAGE_KEYS`.
+- Reuses `OperatorVideoJobSummaryPanel` for completed manual job display — no forked badge component.
+- `clientId` sourced from `data.costSummary.clientId` (server-derived operator context); FormData fields match action schema.
+- Hint copy uses contract display constants (`MANUAL_UPLOAD_HINT_MAX_VIDEO_MIB`, `MANUAL_UPLOAD_HINT_MAX_DURATION_SEC`) — not hardcoded bytes in UI logic.
 
 ---
 

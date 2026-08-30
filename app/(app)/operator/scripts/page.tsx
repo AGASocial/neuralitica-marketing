@@ -156,6 +156,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
         providerRecommendation: t.scripts.providerRecommendation,
         videoJob: {
           ...t.scripts.videoJob,
+          manualUpload: t.scripts.videoJob.manualUpload,
           retryConfirm: t.scripts.videoJob.retryConfirm,
           retryOverride: t.scripts.videoJob.retryOverride,
           toastRetrySuccess: t.scripts.videoJob.toastRetrySuccess,

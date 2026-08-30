@@ -1069,6 +1069,29 @@
           "validation": "Revisa los campos resaltados e inténtalo de nuevo.",
           "internal": "Algo salió mal. Inténtalo más tarde."
         }
+      },
+      "manualUpload": {
+        "button": "Subida manual",
+        "title": "Subida manual de video",
+        "hint": "Solo MP4 o MOV. Máx. {videoMax} MiB y {durationMax} segundos.",
+        "submit": "Subir video",
+        "cancel": "Cancelar",
+        "success": "Video subido manualmente con éxito.",
+        "errors": {
+          "unauthenticated": "Inicia sesión para continuar.",
+          "forbidden": "No tienes acceso a la subida manual.",
+          "notFound": "No se encontró ese guion de Reel.",
+          "validation": "Revisa el archivo e inténtalo de nuevo.",
+          "forbiddenFields": "Solicitud de subida no válida.",
+          "missingFile": "Elige un archivo de video para subir.",
+          "invalidFileType": "Solo se permiten archivos MP4 o MOV.",
+          "fileTooLarge": "El archivo supera el tamaño máximo ({videoMax} MiB).",
+          "durationExceeded": "El video supera la duración máxima ({durationMax} segundos).",
+          "consentRevoked": "Se requiere consentimiento activo de avatar propio para Reels con avatar propio.",
+          "slotJobInFlight": "Espera a que termine el job de video actual antes de subir.",
+          "slotCompletedJobExists": "Ya existe un job de video completado para este Reel.",
+          "internal": "Algo salió mal. Inténtalo más tarde."
+        }
       }
     },
     "providerRecommendation": {

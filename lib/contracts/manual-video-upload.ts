@@ -22,6 +22,10 @@ export const MANUAL_UPLOAD_DURATION_PROBE_LIBRARY = "mp4box" as const;
 /** Default next.config serverActions.bodySizeLimit BUILD target (≥ getMaxVideoBytes()). */
 export const MANUAL_UPLOAD_SERVER_ACTION_BODY_LIMIT = "52mb" as const;
 
+/** Display hints only — server enforces via env + validator (CONTRACT). */
+export const MANUAL_UPLOAD_HINT_MAX_VIDEO_MIB = 50 as const;
+export const MANUAL_UPLOAD_HINT_MAX_DURATION_SEC = 30 as const;
+
 /** Keys rejected on manual upload FormData / JSON (US-8.3 SECURITY). */
 export const FORBIDDEN_MANUAL_UPLOAD_AUTHORITY_KEYS = [
   "status",

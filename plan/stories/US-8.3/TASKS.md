@@ -128,16 +128,16 @@ export function createManualUploadAdapter(): VideoProviderAdapter {
 
 Concrete consumers: **`/operator/scripts`** expand-row **`ReelDetailPanel`** · **`OperatorVideoJobSummaryPanel`** (reuse) · manual upload dialog.
 
-- [ ] **Manual upload button** — visible when slot has no in-flight job (`queued`/`processing` absent); primary emphasis when current job is **`failed`** or retry budget-blocked.
-- [ ] **Upload dialog** — PrimeReact **`Dialog`** + file input / dropzone; accept **`.mp4,.mov`**; show max size + max duration from config copy (not hardcoded bytes in UI).
-- [ ] **Validation feedback** — surface server error codes (`FILE_TOO_LARGE`, `INVALID_FILE_TYPE`, `DURATION_EXCEEDED`, `OWN_AVATAR_CONSENT_REQUIRED`, etc.) via i18n keys.
-- [ ] **Submit** — call **`uploadManualVideoJob`** Server Action with `reelScriptId`, `clientId`, file; optional `parentJobId` when replacing failed API path (CONTRACT).
-- [ ] **Success** — close dialog; refresh expand-row job state (revalidate batch map or optimistic merge **`completed`** job into **`videoJobsByReelScriptId`**).
-- [ ] **Reuse status UI** — **`OperatorVideoJobSummaryPanel`** shows **`completed`** manual job with provider label **Manual upload** and **`$0.00`** cost — no forked badge component.
-- [ ] **Loading / pending** — disable submit while upload in flight; show progress if CONTRACT specifies chunked upload (lean: single POST).
-- [ ] **Operator-only** — no Cliente routes; no upload on shared serializers.
-- [ ] **i18n** — EN + ES under **`scripts.videoJob.manualUpload.*`** (title, hint, submit, cancel, success toast, errors).
-- [ ] **No** `external_job_id`, storage keys, or raw paths in UI.
+- [x] **Manual upload button** — visible when slot has no in-flight job (`queued`/`processing` absent); primary emphasis when current job is **`failed`** or retry budget-blocked.
+- [x] **Upload dialog** — PrimeReact **`Dialog`** + file input / dropzone; accept **`.mp4,.mov`**; show max size + max duration from config copy (not hardcoded bytes in UI).
+- [x] **Validation feedback** — surface server error codes (`FILE_TOO_LARGE`, `INVALID_FILE_TYPE`, `DURATION_EXCEEDED`, `OWN_AVATAR_CONSENT_REQUIRED`, etc.) via i18n keys.
+- [x] **Submit** — call **`uploadManualVideoJob`** Server Action with `reelScriptId`, `clientId`, file; optional `parentJobId` when replacing failed API path (CONTRACT).
+- [x] **Success** — close dialog; refresh expand-row job state (revalidate batch map or optimistic merge **`completed`** job into **`videoJobsByReelScriptId`**).
+- [x] **Reuse status UI** — **`OperatorVideoJobSummaryPanel`** shows **`completed`** manual job with provider label **Manual upload** and **`$0.00`** cost — no forked badge component.
+- [x] **Loading / pending** — disable submit while upload in flight; show progress if CONTRACT specifies chunked upload (lean: single POST).
+- [x] **Operator-only** — no Cliente routes; no upload on shared serializers.
+- [x] **i18n** — EN + ES under **`scripts.videoJob.manualUpload.*`** (title, hint, submit, cancel, success toast, errors).
+- [x] **No** `external_job_id`, storage keys, or raw paths in UI.
 
 ---
 

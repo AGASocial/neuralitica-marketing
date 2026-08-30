@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RadioButton } from "primereact/radiobutton";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
@@ -22,6 +22,10 @@ import {
   ProviderRecommendationPanel,
   type ProviderRecommendationCopy,
 } from "@/components/scripts/ProviderRecommendationPanel";
+import {
+  ManualVideoUploadControl,
+  type ManualVideoUploadCopy,
+} from "@/components/scripts/ManualVideoUploadDialog";
 import {
   OperatorVideoJobSummaryPanel,
   VideoJobStatusTag,
@@ -60,7 +64,10 @@ import type {
   ReelScriptErrorCode,
   ReelScriptListItem,
 } from "@/lib/contracts/reel-script";
-import type { OperatorVideoJobsByReelMap } from "@/lib/contracts/video-job";
+import type {
+  OperatorVideoJobSummaryDto,
+  OperatorVideoJobsByReelMap,
+} from "@/lib/contracts/video-job";
 import { getReelBudgetPreview } from "@/lib/cost-policy/actions/get-reel-budget-preview";
 import { formatCentsForDisplay } from "@/lib/cost-policy/format-cents-for-display";
 import { generateReelCaptions } from "@/lib/reel-captions/actions/generate-reel-captions";
@@ -170,6 +177,7 @@ type ScriptsPageCopy = {
     rollup: ReelCostRollupCopy;
   };
   videoJob: OperatorVideoJobCopy & {
+    manualUpload: ManualVideoUploadCopy;
     retryConfirm: VideoJobRetryConfirmCopy;
     retryOverride: VideoJobRetryLimitOverrideCopy;
     toastRetrySuccess: string;
@@ -470,9 +478,25 @@ export function ScriptsPageView({
   const [overrideDialogVisible, setOverrideDialogVisible] = useState(false);
   const [overrideFailedJobId, setOverrideFailedJobId] = useState<string | null>(null);
   const [videoJobMutationPending, setVideoJobMutationPending] = useState(false);
+  const [videoJobOverrides, setVideoJobOverrides] = useState<OperatorVideoJobsByReelMap>(
+    {},
+  );
+
+  useEffect(() => {
+    setVideoJobOverrides({});
+  }, [data.videoJobsByReelScriptId]);
+
+  const videoJobsByReelScriptId = useMemo(
+    () => ({
+      ...data.videoJobsByReelScriptId,
+      ...videoJobOverrides,
+    }),
+    [data.videoJobsByReelScriptId, videoJobOverrides],
+  );
 
   const weekDate = weekStartToDate(weekStart);
   const weekRangeLabel = formatWeekRange(weekStart, locale);
+  const clientId = data.costSummary.clientId;
   const isBusy =
     batchPending ||
     captionBatchPending ||
@@ -493,7 +517,6 @@ export function ScriptsPageView({
     hasApprovedStrategy && hasAnyGenerated && !hasAnyCaptionGenerated;
   const costSummary = data.costSummary;
   const reelCostRollups = data.reelCostRollups;
-  const videoJobsByReelScriptId = data.videoJobsByReelScriptId;
   const showCostSummary = costSummary !== undefined;
 
   function navigateWeek(nextWeekStart: string) {
@@ -836,6 +859,22 @@ export function ScriptsPageView({
     router.refresh();
   }
 
+  function handleManualUploadSuccess(
+    reelScriptId: string,
+    job: OperatorVideoJobSummaryDto,
+  ) {
+    setVideoJobOverrides((prev) => ({
+      ...prev,
+      [reelScriptId]: job,
+    }));
+    toastRef.current?.show({
+      severity: "success",
+      summary: copy.videoJob.manualUpload.success,
+      life: 4000,
+    });
+    router.refresh();
+  }
+
   function handleVideoJobMutationError(message: string) {
     setBanner(message);
   }
@@ -1037,6 +1076,7 @@ export function ScriptsPageView({
                 row={row}
                 weekStart={weekStart}
                 locale={locale}
+                clientId={clientId}
                 copy={copy}
                 reelCostRollups={reelCostRollups}
                 videoJobsByReelScriptId={videoJobsByReelScriptId}
@@ -1048,6 +1088,11 @@ export function ScriptsPageView({
                 }
                 onRequestVideoJobRetry={openRetryDialog}
                 onRequestVideoJobOverride={openOverrideDialog}
+                onManualUploadSuccess={(job) => {
+                  if (row.scriptId) {
+                    handleManualUploadSuccess(row.scriptId, job);
+                  }
+                }}
                 captionRegeneratingSlot={captionRegeneratingSlot}
                 captionSelectingSlot={captionSelectingSlot}
                 isBusy={isBusy}
@@ -1186,6 +1231,7 @@ type ReelDetailPanelProps = {
   row: ReelScriptListItem;
   weekStart: string;
   locale: string;
+  clientId: string;
   copy: ScriptsPageCopy;
   reelCostRollups: ReelCostRollupsMap;
   videoJobsByReelScriptId: OperatorVideoJobsByReelMap;
@@ -1195,6 +1241,7 @@ type ReelDetailPanelProps = {
   onSelectCaptionCta: (slotIndex: number, selectedCtaIndex: number) => void;
   onRequestVideoJobRetry: (failedJobId: string) => void;
   onRequestVideoJobOverride: (failedJobId: string) => void;
+  onManualUploadSuccess: (job: OperatorVideoJobSummaryDto) => void;
   captionRegeneratingSlot: number | null;
   captionSelectingSlot: number | null;
   isBusy: boolean;
@@ -1204,6 +1251,7 @@ function ReelDetailPanel({
   row,
   weekStart,
   locale,
+  clientId,
   copy,
   reelCostRollups,
   videoJobsByReelScriptId,
@@ -1213,6 +1261,7 @@ function ReelDetailPanel({
   onSelectCaptionCta,
   onRequestVideoJobRetry,
   onRequestVideoJobOverride,
+  onManualUploadSuccess,
   captionRegeneratingSlot,
   captionSelectingSlot,
   isBusy,
@@ -1235,6 +1284,16 @@ function ReelDetailPanel({
           rollup={rollup}
           locale={locale}
           copy={copy.cost.rollup}
+        />
+      ) : null}
+      {row.scriptId ? (
+        <ManualVideoUploadControl
+          reelScriptId={row.scriptId}
+          clientId={clientId}
+          videoJob={videoJob}
+          copy={copy.videoJob.manualUpload}
+          disabled={isBusy}
+          onSuccess={onManualUploadSuccess}
         />
       ) : null}
       <OperatorVideoJobSummaryPanel

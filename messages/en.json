@@ -1069,6 +1069,29 @@
           "validation": "Please check the highlighted fields and try again.",
           "internal": "Something went wrong. Please try again later."
         }
+      },
+      "manualUpload": {
+        "button": "Manual upload",
+        "title": "Manual video upload",
+        "hint": "MP4 or MOV only. Max {videoMax} MiB and {durationMax} seconds.",
+        "submit": "Upload video",
+        "cancel": "Cancel",
+        "success": "Manual video uploaded successfully.",
+        "errors": {
+          "unauthenticated": "Please log in to continue.",
+          "forbidden": "You do not have access to manual upload.",
+          "notFound": "That Reel script was not found.",
+          "validation": "Please check the file and try again.",
+          "forbiddenFields": "Invalid upload request.",
+          "missingFile": "Choose a video file to upload.",
+          "invalidFileType": "Only MP4 or MOV files are allowed.",
+          "fileTooLarge": "File exceeds the maximum size ({videoMax} MiB).",
+          "durationExceeded": "Video exceeds the maximum duration ({durationMax} seconds).",
+          "consentRevoked": "Active avatar consent is required for own-avatar Reels.",
+          "slotJobInFlight": "Wait for the current video job to finish before uploading.",
+          "slotCompletedJobExists": "A completed video job already exists for this Reel.",
+          "internal": "Something went wrong. Please try again later."
+        }
       }
     },
     "providerRecommendation": {
