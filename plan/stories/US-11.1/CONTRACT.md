@@ -1,7 +1,7 @@
 # API Contract — US-11.1 Present Reel package for client approval
 
 **Story:** US-11.1  
-**Status:** Frozen — 2026-08-30 · Reviewed by FE: pending  
+**Status:** Frozen — 2026-08-30 · Reviewed by FE: yes — 2026-08-30 — nextjs-frontend.  
 **Security:** `plan/stories/US-11.1/SECURITY.md` (APPROVE WITH CONDITIONS — reconciled below)  
 **Spec review:** `plan/stories/US-11.1/SPEC-REVIEW.md` (ALIGNED — soft gaps closed below)  
 **Pattern:** `plan/stories/US-10.2/CONTRACT.md` · `plan/stories/US-10.1/CONTRACT.md` · `plan/stories/US-9.2/CONTRACT.md` (media serve matrix widen)  
@@ -974,13 +974,13 @@ Gate readiness remains owned by US-10.1/10.2 modules (read-only import).
 
 ## Disputes / FE review notes
 
-**Open for FE signoff (no PO product disputes after SECURITY APPROVE WITH CONDITIONS):**
+**Resolved by FE signoff (2026-08-30)** — see § Reviewed by FE. Summary:
 
-1. **List card density** — Minimal teaser (`captionPreview`, `overrideCount`, `hasDisclosure`) vs ids-only; BUILD may start ids + captionPreview.  
-2. **Ensure timing** — Batch-ensure on list load vs ensure only when opening detail; both allowed; prefer list batch for empty→pending UX.  
-3. **Reject feedback UX** — Optional textarea; show primarily when Reject chosen.  
-4. **Post-decide navigation** — Stay on detail (read-only) vs redirect to list; FE choice — `revalidatePath` both.  
-5. **Decide success `summary.status`** — Reflects post-decide status (`approved` \| `rejected`); list Phase A remains pending-only.
+1. **List card density** — Cards: `captionPreview` + `createdAt` (+ optional `overrideCount` / `hasDisclosure` when present).  
+2. **Ensure timing** — Prefer server batch-ensure inside `listPendingApprovals`.  
+3. **Reject feedback UX** — Optional textarea shown when Reject is chosen.  
+4. **Post-decide navigation** — Stay on detail read-only; link back to list.  
+5. **Decide success `summary.status`** — Confirmed `approved` \| `rejected`; list stays pending-only.
 
 **No open disputes that reopen DDL, gate purity, media matrix, or Phase A decision enum.**
 
@@ -988,14 +988,36 @@ Gate readiness remains owned by US-10.1/10.2 modules (read-only import).
 
 ## Reviewed by FE
 
-**Verdict:** pending  
+**Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend.
 
-**Reviewed by FE:** pending  
+**Verdict:** Accept — Cliente `/approvals` list + `/approvals/[approvalId]` package preview, Approve/Reject, media `previewUrl`, and i18n are implementable against existing App Router shell (`AppHeader` + dashboard cards). No forbidden client authority fields in the FE write path. Types/fixtures in `lib/contracts/approval.ts` match the UI flow.
 
-Shapes ready for `/approvals` + Server Actions `ensureApprovalPackageForAssembledReel` / `listPendingApprovals` / `getApprovalPackage` / `decideApproval`. Types from `lib/contracts/approval.ts`. Fixtures cover package preview, gate fail, CTA fail, IDOR, forbidden fields, and double-decide.
+**FE resolutions (UX disputes — frozen for BUILD):**
+
+| # | Topic | FE choice |
+|---|-------|-----------|
+| 1 | List card density | **`captionPreview` + `createdAt`** as primary card copy. Render `overrideCount` / `hasDisclosure` as secondary chips when BE includes them. Do **not** ship ids-only cards. |
+| 2 | Ensure timing | **Prefer list batch-ensure** inside `listPendingApprovals` (failures skip reel). Detail uses `getApprovalPackage` (optional ensure only if product later needs hydrate-by-assembly). |
+| 3 | Reject feedback UX | **Optional** `InputTextarea`; show primarily when user selects **Reject**. Omit/empty → server NULL. Not required to submit reject. |
+| 4 | Post-decide navigation | **Stay on detail** in read-only mode (status Tag + decidedAt; decide CTAs hidden). Provide back-link to `/approvals`. Rely on `revalidatePath` for list + detail. |
+| 5 | Decide `summary.status` | **Confirmed** — toast / local merge use `approved` \| `rejected` from decide success; Phase A list remains pending-only (item disappears after revalidate). |
+
+**BUILD notes (FE):**
+
+- **Routes:** `app/(app)/approvals/page.tsx` (RSC list) + `app/(app)/approvals/[approvalId]/page.tsx` (RSC detail). Small Client islands for video controls + Approve/Reject form only.
+- **Shell / nav:** Wire dashboard `approvalsCard` → `href: "/approvals"` (same pattern as profile/preferences cards). Add `header.nav.approvals` link in `AppHeader` next to Dashboard for **Cliente** (and Operator if useful — not Operator-gated). EN/ES.
+- **Server Actions:** `listPendingApprovals` · `getApprovalPackage` · `decideApproval({ approvalId, decision, clientFeedback? })`. Never send `qaPassed` / `ready` / `status` / `clientId` / override keys. Optional explicit `ensureApprovalPackageForAssembledReel` not required for V1 list UX if batch-ensure runs in list.
+- **List:** Pending cards → detail; empty / loading / error states. Map error codes via `approvals.errors.*`.
+- **Detail:** `<video src={previewUrl}>` (+ optional cover poster); caption body + selected CTA + hashtags; `GenericAvatarDisclosurePreview` `variant: "approval"` when `disclosure.required`; read-only `qaOverrides` (i18n `checkKey`, plain `reason`). Informational `gate` may disable Approve copy-only — **server remains authority**.
+- **Decide:** Approve + Reject only; disable while pending; toast `QA_GATE_NOT_READY` / `INVALID_TRANSITION` / `NOT_FOUND` / `RATE_LIMITED`. No request-changes control.
+- **Types:** Import from `lib/contracts/approval.ts` only. Reuse `legal.genericAvatarDisclosure` + QA check label keys where present.
+- **i18n:** Add `approvals.*` (list/detail titles, CTAs, empty, feedback label, status tags, errors for all `ApprovalErrorCode`s) EN + ES; `header.nav.approvals`.
+- **Out of scope:** Request-changes (US-11.2); download/ready queue (US-11.3); Cliente CTA picker; Cliente QA override; HTML sinks.
+
+**Disputes:** None blocking BUILD. Soft BE preference: always populate `captionPreview` on list items for card UX.
 
 ---
 
-**Reviewed by FE:** pending  
+**Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend.  
 **Frozen by:** nextjs-backend — 2026-08-30  
 **Zod mirror:** `lib/contracts/approval.ts`
