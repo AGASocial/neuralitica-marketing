@@ -1,20 +1,35 @@
 # US-6.1 — Generate Instagram caption per Reel
 
-**Status:** CONTRACT — frozen `CONTRACT.md` (2026-08-30). Next: FE signoff → BUILD.
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 1 Low; CLOSE yes). Build agents `c385372` · BE `1f45244` · FE `d075781`.
 
 **As a** System, **I want** captions, hashtags, and local keywords for each script, **so that** posts are ready for review alongside video.
 
 Ship **Caption Agent V1 (Operator-triggered)**: Operator triggers **Generate captions** for an **approved** Estrategia semanal (batch all generated scripts) or **Regenerate caption** for a single Reel script; server job composes inputs from approved strategy slot context, persisted **`neuramark_reel_scripts`** package, and **`getBusinessProfileForAgents`** (zone/tone/services); LLM via **`resolveProvider({ assetRole: 'llm', llmVariant: 'default' })`** → DeepSeek (US-X.4 catalog); output is schema-validated (caption, hashtags, keywords, **`cta_variants`**) and persisted in **`neuramark_reel_captions`**. Operator views captions on **`/operator/scripts`** via **Script · Caption** tabs in the expand/detail panel — char counter, hashtag chips, keyword chips; **CTA variant selection** stays **US-6.2**. **Weekly cycle automation, Cliente approval preview, and cost policy pre-check** stay **out**.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-6.1 (do **not** check off until VALIDATION/CLOSE).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-6.1 (checked on CLOSE).
 
-**This folder:** [`plan/stories/US-6.1/`](./) — `README.md` · `TASKS.md` · *(SPEC-REVIEW, SECURITY, CONTRACT, VALIDATION, QA — orchestrator gates)*.
+**This folder:** [`plan/stories/US-6.1/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
 
 **Branch:** `feature/US-6.1-reel-captions`
 
 **Depends on:** [US-5.1](../US-5.1/) ✅ `neuramark_reel_scripts` · `/operator/scripts` · `getReelScriptsForWeek` · [US-5.2](../US-5.2/) ✅ readability on script tab · [US-4.2](../US-4.2/) ✅ approved strategy gate · [US-X.4](../US-X.4/) ✅ `resolveProvider` + `llmVariant: 'default'` → DeepSeek · [US-14.5](../US-14.5/) ✅ `requireOperator()`.
 
 **Unblocks:** [US-6.2](../../USER_STORIES.md) (CTA variant selection + `selected_cta_index`) · [US-10.1](../../USER_STORIES.md) (QA reads caption) · [US-11.1](../../USER_STORIES.md) (Cliente approval package).
+
+---
+
+## Close verdicts
+
+| Gate | Verdict |
+|------|---------|
+| SPEC-REVIEW | GAPS resolved in CONTRACT |
+| SECURITY | APPROVE WITH CONDITIONS |
+| CONTRACT | Frozen 2026-08-30; Reviewed by FE (BUILD `d075781`) |
+| BUILD | agents `c385372` · BE `1f45244` · FE `d075781` |
+| VALIDATION | PASS WITH NOTES (`2cebd89`) |
+| QA | APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 1 Low; CLOSE yes) |
+
+**QA handoff (non-blocking, post-CLOSE):** M1 — rate limit fail-open on DB query errors (inherited US-4.1/US-5.1 pattern); M2 — non-atomic in-flight guard TOCTOU (inherited pattern); L1 — add `RATE_LIMITED` / `provider_key` smuggle tests. **Next:** **US-6.2** CTA variants for caption testing.
 
 ---
 
@@ -93,8 +108,8 @@ _Evitar:_ generic "post copy", "social caption linter", multichannel post text.
 - [x] SPEC-REVIEW.md (spec-guardian — 2026-08-30)
 - [x] SECURITY.md (security-architect — 2026-08-29)
 - [x] CONTRACT.md (nextjs-backend — 2026-08-30 frozen; **Reviewed by FE** before BUILD)
-- [ ] BUILD (content-agents-engineer + nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] BUILD (content-agents-engineer + nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md
+- [x] QA.md — APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 1 Low; CLOSE yes)
 
-**Status:** CONTRACT (2026-08-30). **Next:** FE signoff → BUILD on `feature/US-6.1-reel-captions`.
+**Status:** CLOSED (2026-08-30). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** **US-6.2** CTA variants for caption testing.

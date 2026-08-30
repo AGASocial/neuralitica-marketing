@@ -173,11 +173,11 @@ Coordinates with BE on CONTRACT; owns agent logic and caption schema.
 - [x] SPEC-REVIEW.md (spec-guardian — 2026-08-30 GAPS resolved in CONTRACT)
 - [x] SECURITY.md (security-architect — 2026-08-29 APPROVE WITH CONDITIONS; reconciled in CONTRACT)
 - [x] CONTRACT.md authored (nextjs-backend — 2026-08-30 frozen; **Reviewed by FE** required before BUILD)
-- [ ] BUILD (content-agents-engineer + nextjs-backend + nextjs-frontend) — BE/agents slice complete; FE pending
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] BUILD (content-agents-engineer + nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md
+- [x] QA.md — APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 1 Low; CLOSE yes)
 
-**Status:** BUILD in progress (2026-08-30). BE + agents complete on `feature/US-6.1-reel-captions`; FE Caption tab pending.
+**Status:** CLOSED (2026-08-30). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** **US-6.2** CTA variants for caption testing.
 
 ---
 

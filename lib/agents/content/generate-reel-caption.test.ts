@@ -328,7 +328,10 @@ describe("generate-reel-caption agent module", () => {
     );
 
     assert.match(systemPrompt, /Instagram Reels caption/);
-    assert.match(systemPrompt, new RegExp(`${CTA_VARIANT_MIN}..${CTA_VARIANT_MAX}`));
+    assert.match(
+      systemPrompt,
+      new RegExp(`${CTA_VARIANT_MIN}[–-]${CTA_VARIANT_MAX}`),
+    );
     assert.match(systemPrompt, /español/);
   });
 
@@ -348,7 +351,7 @@ describe("generate-reel-caption agent module", () => {
 
     assert.match(userPrompt, /Denver CO/);
     assert.match(systemPrompt, /Denver CO/);
-    assert.match(systemPrompt, /keywords locales/i);
+    assert.match(systemPrompt, /include local keywords referencing/i);
   });
 
   it("prompt allows empty keywords when no zone present", async () => {
@@ -365,7 +368,7 @@ describe("generate-reel-caption agent module", () => {
       locale: "es",
     });
 
-    assert.match(systemPrompt, /puede estar vacío/i);
+    assert.match(systemPrompt, /keywords array may be empty/i);
   });
 
   it("parseAndValidateReelCaptionAgentOutput rejects invalid JSON and schema", async () => {
