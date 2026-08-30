@@ -127,3 +127,38 @@ export type ReelScriptMutationError = {
     fields?: Record<string, string[]>;
   };
 };
+
+export type ReelScriptErrorCode = z.infer<typeof reelScriptErrorCodeSchema>;
+export type ReelScriptListItem = z.infer<typeof reelScriptListItemSchema>;
+export type GetReelScriptsForWeekInput = z.infer<
+  typeof getReelScriptsForWeekInputSchema
+>;
+export type GetReelScriptsForWeekSuccess = z.infer<
+  typeof getReelScriptsForWeekSuccessSchema
+>;
+export type GetReelScriptsForWeekResult =
+  | GetReelScriptsForWeekSuccess
+  | ReelScriptMutationError;
+export type GenerateReelScriptsInput = z.infer<
+  typeof generateReelScriptsInputSchema
+>;
+export type GenerateReelScriptsSuccess = z.infer<
+  typeof generateReelScriptsSuccessSchema
+>;
+export type GenerateReelScriptsResult =
+  | GenerateReelScriptsSuccess
+  | ReelScriptMutationError;
+export type RegenerateReelScriptSlotInput = z.infer<
+  typeof regenerateReelScriptSlotInputSchema
+>;
+export type RegenerateReelScriptSlotSuccess = z.infer<
+  typeof regenerateReelScriptSlotSuccessSchema
+>;
+export type RegenerateReelScriptSlotResult =
+  | RegenerateReelScriptSlotSuccess
+  | ReelScriptMutationError;
+
+export const VIDEO_SCRIPT_GENERATE_AGENT_KEY = "video_script_generate" as const;
+export const VIDEO_SCRIPT_RATE_WINDOW_MS = 60 * 60 * 1000;
+export const VIDEO_SCRIPT_MAX_JOBS_PER_WINDOW = 5;
+export const VIDEO_SCRIPT_IN_FLIGHT_TIMEOUT_MS = 5 * 60 * 1000;

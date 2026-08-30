@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-5.1
-story_status: CONTRACT
+story_status: BUILD
 feature_branch: feature/US-5.1-reel-scripts
 last_completed_story: US-4.2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T12:00:00Z
+updated_at: 2026-08-30T18:00:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -20,7 +20,7 @@ updated_at: 2026-08-30T12:00:00Z
 | US-X.4 Provider catalog + resolveProvider | done | BE `5ba9876` · CLOSE `291313b` |
 | US-4.1 Content Strategy agent | done | BE `af998d9` · FE `dcbd15a` · agents `bbd159d` · CLOSE |
 | US-4.2 Review and approve strategy | done | BE `ba57bac` · FE `4367287` · CLOSE 5/5 AC |
-| US-5.1 Reel script package per slot | CONTRACT | `plan/stories/US-5.1/CONTRACT.md` frozen; awaiting FE signoff; branch `feature/US-5.1-reel-scripts` |
+| US-5.1 Reel script package per slot | BUILD | BE migration + actions + agent + 32/32 tests; FE `/operator/scripts` pending; branch `feature/US-5.1-reel-scripts` |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 

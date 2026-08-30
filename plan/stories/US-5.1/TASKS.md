@@ -81,20 +81,20 @@
 
 Concrete BE consumers: `generateReelScripts` Server Action; `regenerateReelScriptSlot` Server Action; `getReelScriptsForWeek` loader/action.
 
-- [ ] **Operator Scripts page** at `/operator/scripts`: `week_start` picker (ISO Monday).
-- [ ] **Script list** for week: one row per slot (tema title, day, `target_duration_sec`, status badge generated/pending).
-- [ ] **Expand row / detail panel**: hook (highlighted), body, CTA, on-screen text, voiceover text.
-- [ ] **Copy-to-clipboard** per field (PrimeReact or native button + toast).
-- [ ] **Generate scripts** primary button when approved strategy exists; disabled while pending; surfaces `STRATEGY_NOT_APPROVED` / rate-limit errors.
-- [ ] **Regenerate this Reel** secondary action per row (single slot).
-- [ ] **Empty state** when no approved strategy ("Approve strategy first" + link to `/operator/strategy`).
-- [ ] **Empty state** when approved but no scripts yet ("Generate scripts to create packages").
-- [ ] **Loading / generating** state (skeleton + i18n pending copy).
-- [ ] **Error state** for agent failure / validation rejection (recoverable message).
-- [ ] **Link from Strategy page** when `status = approved` → navigate to scripts for same `weekStart`.
-- [ ] **EN + ES strings** in `messages/en.json` / `es.json`.
-- [ ] **No Supabase in Client Components**; no inline script editing; no char-count warnings (US-5.2).
-- [ ] **No Cliente** scripts route in this story.
+- [x] **Operator Scripts page** at `/operator/scripts`: `week_start` picker (ISO Monday).
+- [x] **Script list** for week: one row per slot (tema title, day, `target_duration_sec`, status badge generated/pending).
+- [x] **Expand row / detail panel**: hook (highlighted), body, CTA, on-screen text, voiceover text.
+- [x] **Copy-to-clipboard** per field (PrimeReact or native button + toast).
+- [x] **Generate scripts** primary button when approved strategy exists; disabled while pending; surfaces `STRATEGY_NOT_APPROVED` / rate-limit errors.
+- [x] **Regenerate this Reel** secondary action per row (single slot).
+- [x] **Empty state** when no approved strategy ("Approve strategy first" + link to `/operator/strategy`).
+- [x] **Empty state** when approved but no scripts yet ("Generate scripts to create packages").
+- [x] **Loading / generating** state (skeleton + i18n pending copy).
+- [x] **Error state** for agent failure / validation rejection (recoverable message).
+- [x] **Link from Strategy page** when `status = approved` → navigate to scripts for same `weekStart`.
+- [x] **EN + ES strings** in `messages/en.json` / `es.json`.
+- [x] **No Supabase in Client Components**; no inline script editing; no char-count warnings (US-5.2).
+- [x] **No Cliente** scripts route in this story.
 
 ---
 
@@ -102,22 +102,22 @@ Concrete BE consumers: `generateReelScripts` Server Action; `regenerateReelScrip
 
 Concrete FE consumers: Operator Scripts page; US-4.2 `strategyHasScripts` lock; future US-6.1 via `reel_script_id`.
 
-- [ ] **Migration** `neuramark_reel_scripts` per PO table (CONTRACT freezes indexes, FK, CHECK on duration).
-- [ ] **Zod schemas** in `lib/contracts/reel-script.ts`: script package, agent output, generate/regenerate inputs, list view DTOs.
-- [ ] **`generateReelScripts({ weekStart })`** Server Action — `requireOperator("handler")`; approval gate; rate limit; delegates to orchestrator.
-- [ ] **`regenerateReelScriptSlot({ weekStart, slotIndex })`** Server Action — same gates; single slot.
-- [ ] **Orchestrator** `generate-reel-scripts-for-client.ts`: load approved strategy; five-helper pipeline; per-slot agent calls; atomic batch UPSERT.
-- [ ] **`loadApprovedStrategyForScriptJob({ strategyId, clientId })`** — approved + tenancy guard before LLM/UPSERT.
-- [ ] **Agent job** `generateReelScriptForSlot` (`lib/agents/content/`): slot context + hints; LLM `fallback` variant; parse + validate; tone/disclosure rules in prompt.
-- [ ] **`getReelScriptsForWeek({ weekStart })`** — list scripts for approved strategy; `requireOperator` at boundary.
-- [ ] **[SEC] Verify strategy `approved` + tenancy** before any LLM call or UPSERT.
-- [ ] **[SEC] `mustDiscloseNotOwner` from profile only** — never request body or LLM output.
-- [ ] **[SEC] Zod validate agent output** before persistence; duration 15–45; reject unknown keys.
-- [ ] **[SEC] Rate limit** on batch generate (CONTRACT window).
-- [ ] **[SEC] LLM keys** server env only; never log prompts with secrets.
-- [ ] **Implement `strategyHasScripts`** query — replace stub `return false`.
-- [ ] `revalidatePath` for `/operator/scripts` (and strategy if linked).
-- [ ] **Automated tests**: `lib/reel-scripts/reel-scripts.test.ts` — approval gate; single-slot regenerate; UPSERT idempotency; `strategyHasScripts`; disclosure not from client; mock LLM.
+- [x] **Migration** `neuramark_reel_scripts` per PO table (CONTRACT freezes indexes, FK, CHECK on duration).
+- [x] **Zod schemas** in `lib/contracts/reel-script.ts`: script package, agent output, generate/regenerate inputs, list view DTOs.
+- [x] **`generateReelScripts({ weekStart })`** Server Action — `requireOperator("handler")`; approval gate; rate limit; delegates to orchestrator.
+- [x] **`regenerateReelScriptSlot({ weekStart, slotIndex })`** Server Action — same gates; single slot.
+- [x] **Orchestrator** `generate-reel-scripts-for-client.ts`: load approved strategy; five-helper pipeline; per-slot agent calls; atomic batch UPSERT.
+- [x] **`loadApprovedStrategyForScriptJob({ strategyId, clientId })`** — approved + tenancy guard before LLM/UPSERT.
+- [x] **Agent job** `generateReelScriptForSlot` (`lib/agents/content/`): slot context + hints; LLM `fallback` variant; parse + validate; tone/disclosure rules in prompt.
+- [x] **`getReelScriptsForWeek({ weekStart })`** — list scripts for approved strategy; `requireOperator` at boundary.
+- [x] **[SEC] Verify strategy `approved` + tenancy** before any LLM call or UPSERT.
+- [x] **[SEC] `mustDiscloseNotOwner` from profile only** — never request body or LLM output.
+- [x] **[SEC] Zod validate agent output** before persistence; duration 15–45; reject unknown keys.
+- [x] **[SEC] Rate limit** on batch generate (CONTRACT window).
+- [x] **[SEC] LLM keys** server env only; never log prompts with secrets.
+- [x] **Implement `strategyHasScripts`** query — replace stub `return false`.
+- [x] `revalidatePath` for `/operator/scripts` (and strategy if linked).
+- [x] **Automated tests**: `lib/reel-scripts/reel-scripts.test.ts` — approval gate; single-slot regenerate; UPSERT idempotency; `strategyHasScripts`; disclosure not from client; mock LLM.
 
 ---
 
@@ -125,14 +125,14 @@ Concrete FE consumers: Operator Scripts page; US-4.2 `strategyHasScripts` lock; 
 
 All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
-- [ ] Create **`neuramark_reel_scripts`** per CONTRACT.
-- [ ] FK `strategy_id` → `neuramark_content_strategies(id)` ON DELETE RESTRICT.
-- [ ] FK `client_id` → `neuramark_clients(id)`.
-- [ ] **UNIQUE** `(strategy_id, slot_index)`.
-- [ ] Index on `(client_id, strategy_id)` and/or `(strategy_id)` for `strategyHasScripts`.
-- [ ] CHECK `target_duration_sec BETWEEN 15 AND 45` (if CONTRACT adopts).
-- [ ] Text columns NOT NULL for script fields.
-- [ ] RLS: zero policies / deny-by-default (match Fase 1 pattern).
+- [x] Create **`neuramark_reel_scripts`** per CONTRACT.
+- [x] FK `strategy_id` → `neuramark_content_strategies(id)` ON DELETE RESTRICT.
+- [x] FK `client_id` → `neuramark_clients(id)`.
+- [x] **UNIQUE** `(strategy_id, slot_index)`.
+- [x] Index on `(client_id, strategy_id)` and/or `(strategy_id)` for `strategyHasScripts`.
+- [x] CHECK `target_duration_sec BETWEEN 15 AND 45` (if CONTRACT adopts).
+- [x] Text columns NOT NULL for script fields.
+- [x] RLS: zero policies / deny-by-default (match Fase 1 pattern).
 - [ ] **Do not** create `neuramark_reel_captions` (US-6.1).
 - [ ] **Do not** add video/TTS job tables.
 
@@ -160,11 +160,11 @@ Coordinates with BE on CONTRACT; owns agent logic and script schema.
 - [x] SPEC-REVIEW.md (spec-guardian — Video Script vs SPEC §3; Instagram-only; no US-5.2/6.x scope creep)
 - [x] SECURITY.md (security-architect — approved gate; disclosure injection; schema validation; Operator-only)
 - [x] CONTRACT.md authored (nextjs-backend) — frozen 2026-08-30; **Reviewed by FE** line required before BUILD
-- [ ] BUILD (content-agents-engineer + nextjs-backend + nextjs-frontend)
+- [x] BUILD (content-agents-engineer + nextjs-backend + nextjs-frontend) — BE slice on `feature/US-5.1-reel-scripts`
 - [ ] VALIDATION.md
 - [ ] QA.md
 
-**Status:** CONTRACT (2026-08-30). CONTRACT frozen; awaiting FE signoff → BUILD on `feature/US-5.1-reel-scripts`.
+**Status:** BUILD (2026-08-30). BE/DB + agent module + 32/32 tests on `feature/US-5.1-reel-scripts`; FE `/operator/scripts` pending.
 
 ---
 
