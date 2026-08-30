@@ -34,7 +34,7 @@ export async function computeLlmActualCost(
   }
 
   const catalog = await getProviderCatalog();
-  if (catalog.loadFailed) {
+  if ("loadFailed" in catalog && catalog.loadFailed) {
     return { ok: false, reason: "catalog_cost_model_unsupported" };
   }
 

@@ -5,7 +5,10 @@ import {
   REEL_SCRIPT_MAX_CHARS_PER_BEAT_LINE,
 } from "@/lib/contracts/reel-script-readability";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
-import { getReelScriptsForWeek } from "@/lib/reel-scripts/actions/get-reel-scripts-for-week";
+import { emptyWeekCostSummary } from "@/lib/cost-policy/empty-week-cost-summary";
+import {
+  getReelScriptsForWeek,
+} from "@/lib/reel-scripts/actions/get-reel-scripts-for-week";
 import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
 import { normalizeToIsoMonday } from "@/lib/trend/normalize-week-start";
 
@@ -44,6 +47,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
   const t = getTranslations(locale);
   const { weekStart: rawWeekStart } = await searchParams;
   const weekStart = resolveWeekStart(rawWeekStart);
+  const clientId = user?.id ?? "00000000-0000-4000-8000-000000000001";
 
   let scriptsResult: Awaited<ReturnType<typeof getReelScriptsForWeek>>;
   let loadFailed = false;
@@ -61,6 +65,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
       approvedStrategy: null,
       strategyVersionChanged: false,
       items: [],
+      costSummary: emptyWeekCostSummary(weekStart, clientId),
     };
   }
 
@@ -76,6 +81,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
         approvedStrategy: null,
         strategyVersionChanged: false,
         items: [],
+        costSummary: emptyWeekCostSummary(weekStart, clientId),
       };
 
   return (
