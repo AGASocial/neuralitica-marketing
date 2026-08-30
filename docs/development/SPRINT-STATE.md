@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-6.1
-story_status: SELECT
-feature_branch: null
+story_status: CONTRACT
+feature_branch: feature/US-6.1-reel-captions
 last_completed_story: US-5.2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T10:00:00Z
+updated_at: 2026-08-30T20:15:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -22,7 +22,7 @@ updated_at: 2026-08-30T10:00:00Z
 | US-4.2 Review and approve strategy | done | BE `ba57bac` · FE `4367287` · CLOSE 5/5 AC |
 | US-5.1 Reel script package per slot | done | agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e` · CLOSE 6/6 AC |
 | US-5.2 Preview script readability | done | BE `b503241` · FE `b68d2ee` · VALIDATION `8ba616e` · CLOSE 2/2 AC |
-| US-6.1 Generate Instagram caption per Reel | SELECT | Next story — depends on US-5.1 ✅ · US-4.2 ✅ · US-X.4 ✅ |
+| US-6.1 Generate Instagram caption per Reel | CONTRACT | `plan/stories/US-6.1/CONTRACT.md` frozen 2026-08-30; branch `feature/US-6.1-reel-captions`; next FE signoff → BUILD |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -34,6 +34,8 @@ updated_at: 2026-08-30T10:00:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-6.1 CONTRACT: `plan/stories/US-6.1/CONTRACT.md` frozen; SPEC gaps closed (cta_variants 2–4, IG limits, five-helper pipeline, dual invoke, `neuramark_reel_captions`); story_status CONTRACT; branch `feature/US-6.1-reel-captions`.
+- 2026-08-30 · US-6.1 PREP: `plan/stories/US-6.1/README.md` + `TASKS.md`; PO decisions frozen; story_status PREP.
 - 2026-08-30 · US-5.2 CLOSE: 2/2 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 3 Low); BE `b503241` · FE `b68d2ee` · VALIDATION `8ba616e`; Phase 3 → SELECT US-6.1.
 - 2026-08-30 · US-5.2 QA: APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 3 Low); `plan/stories/US-5.2/QA.md`; 18/18 tests; CLOSE recommended yes; BE `b503241` · FE `b68d2ee` · VALIDATION `8ba616e`; story_status QA.
 - 2026-08-30 · US-5.2 VALIDATION: PASS WITH NOTES (0 blockers, 18/18 tests); `plan/stories/US-5.2/VALIDATION.md`; BE `b503241` · FE `b68d2ee`; story_status VALIDATION.
