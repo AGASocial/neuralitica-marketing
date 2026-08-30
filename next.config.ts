@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { MANUAL_UPLOAD_SERVER_ACTION_BODY_LIMIT } from "@/lib/contracts/manual-video-upload";
+import { MANUAL_UPLOAD_SERVER_ACTION_BODY_LIMIT } from "./lib/contracts/manual-video-upload-constants";
 
 const nextConfig: NextConfig = {
   eslint: {
