@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: US-9.2
-story_status: QA
-feature_branch: feature/US-9.2-subtitles-logo-cover
-last_completed_story: US-9.1
+current_story: SELECT
+story_status: DONE
+feature_branch: null
+last_completed_story: US-9.2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T18:35:00Z
+updated_at: 2026-08-30T19:30:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -35,7 +35,7 @@ updated_at: 2026-08-30T18:35:00Z
 | US-8.3 Manual video upload fallback | done | FE `fc6deca` · BE `eaa974a` · fixes `f3f78af`/`b2fb1cc` · VALIDATION `2f5edc0` · QA `a58faeb` · CLOSE `d8baafb` |
 | US-9.3 Text-to-speech for voiceover | done | Phase A `dfdd08b` · adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813` · VALIDATION `1715048` · QA `e9c1833` · CLOSE 5/6 AC (ElevenLabs Phase B defer) |
 | US-9.1 Assemble final 9:16 Reel | done | Phase A `4853871` · worker `f74570f`/`153b73a` · BE `7189f4b` · FE `9e7142c` · VALIDATION `03dff73` · QA `5c0ec7e` · CLOSE 5/5 AC (faceless B-roll Phase B defer) |
-| US-9.2 Add subtitles, logo, and cover | BUILD | CONTRACT `150262c` · FE signoff `710d307` · media+BE+FE in flight |
+| US-9.2 Add subtitles, logo, and cover | done | worker `7518bc5` · BE `36e9dd3`+fix `757da6a` · FE `a15921b` · VALIDATION `4378c65` · QA `c0d6f66` · CLOSE `92b196a` |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -47,6 +47,7 @@ updated_at: 2026-08-30T18:35:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-9.2 CLOSE Phase A: 5/5 AC checked; QA APPROVE WITH CONDITIONS `c0d6f66`; FF-merge `92b196a` to main; Phase 3 → SELECT US-10.1 (recommended) or US-8.5.
 - 2026-08-30 · US-9.2 SELECT → PREP. Branch `feature/US-9.2-subtitles-logo-cover` from main; deps US-9.1 ✅ · US-2.2 ✅.
 - 2026-08-30 · US-9.1 CLOSE Phase A: 5/5 AC checked; QA APPROVE WITH CONDITIONS `5c0ec7e`; FF-merge `4853871` to main; Phase 3 → SELECT US-9.2 (recommended) or US-8.5.
 - 2026-08-30 · US-9.1 BUILD: worker `f74570f` · BE `7189f4b` · FE `9e7142c`; story_status VALIDATE.
