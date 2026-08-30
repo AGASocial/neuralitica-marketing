@@ -998,6 +998,79 @@
         "providerUnavailable": "No hay proveedor LLM disponible para el nivel seleccionado."
       }
     },
+    "videoJob": {
+      "title": "Job de generación de video",
+      "empty": "Aún no hay job de video para este Reel.",
+      "status": {
+        "queued": "En cola",
+        "processing": "Procesando",
+        "completed": "Completado",
+        "failed": "Fallido",
+        "cancelled": "Cancelado"
+      },
+      "attempt": "Intento {attempt}",
+      "regenerationCount": "Regeneraciones: {count}",
+      "failureReasonLabel": "Motivo del fallo",
+      "costEstimated": "Estimado",
+      "costActual": "Real",
+      "costPending": "Pendiente",
+      "costUnavailable": {
+        "usage_missing": "Faltan datos de uso",
+        "catalog_cost_model_unsupported": "Modelo de facturación no compatible",
+        "provider_no_billing": "Facturación del proveedor no disponible"
+      },
+      "retryButton": "Reintentar generación",
+      "retryBlocked": "Reintento no disponible",
+      "polling": "Actualizando estado…",
+      "toastRetrySuccess": "Job de video en cola para reintento.",
+      "toastOverrideSuccess": "Override registrado. Puedes reintentar una vez.",
+      "failure": {
+        "staleTimeout": "El job expiró mientras esperaba al proveedor."
+      },
+      "retry": {
+        "notRetryable": "Este job no se puede reintentar.",
+        "limitExceeded": "Se alcanzó el máximo de reintentos.",
+        "budgetExceeded": "Reintento bloqueado — superaría el presupuesto del Reel.",
+        "providerUnavailable": "Proveedor de video no disponible.",
+        "overrideButton": "Solicitar un intento más"
+      },
+      "retryConfirm": {
+        "title": "Confirmar reintento de video",
+        "confirm": "Reintentar",
+        "cancel": "Cancelar",
+        "loading": "Cargando estimación de reintento…",
+        "loadError": "No pudimos cargar la estimación de reintento. Inténtalo más tarde.",
+        "estimated": "Costo estimado del reintento",
+        "blocked": "Reintento no disponible",
+        "notRetryable": "Este job no se puede reintentar.",
+        "limitExceeded": "Se alcanzó el máximo de reintentos.",
+        "budgetExceeded": "Reintento bloqueado — superaría el presupuesto del Reel.",
+        "providerUnavailable": "Proveedor de video no disponible.",
+        "overrideButton": "Solicitar un intento más",
+        "errors": {
+          "unauthenticated": "Inicia sesión para continuar.",
+          "forbidden": "No tienes acceso a eso.",
+          "notFound": "No se encontró ese job de video.",
+          "validation": "Revisa los campos resaltados e inténtalo de nuevo.",
+          "internal": "Algo salió mal. Inténtalo más tarde."
+        }
+      },
+      "retryOverride": {
+        "title": "Override del límite de reintentos",
+        "confirm": "Conceder override",
+        "cancel": "Cancelar",
+        "reasonLabel": "Motivo del override (obligatorio)",
+        "reasonRequired": "Ingresa un motivo breve (1–500 caracteres).",
+        "limitMessage": "Se alcanzó el máximo de reintentos. Concede un override único para reintentar si presupuesto y consentimiento aún aplican.",
+        "errors": {
+          "unauthenticated": "Inicia sesión para continuar.",
+          "forbidden": "No tienes acceso a eso.",
+          "notFound": "No se encontró ese job de video.",
+          "validation": "Revisa los campos resaltados e inténtalo de nuevo.",
+          "internal": "Algo salió mal. Inténtalo más tarde."
+        }
+      }
+    },
     "providerRecommendation": {
       "title": "Recomendación de proveedor",
       "loading": "Cargando recomendaciones…",

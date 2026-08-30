@@ -113,15 +113,15 @@ export async function createTalkingHeadVideoJob(
 
 Concrete consumers: **`/operator/scripts`** · retry confirm dialog · optional poll of `GET /api/video-jobs/[jobId]`.
 
-- [ ] **Status badge** on each Reel slot row — maps `videoJobStatus` → PrimeReact `Tag` severity / icon (`queued`, `processing`, `completed`, `failed`, `cancelled`).
-- [ ] **Expand-row panel** — current job status, **failure reason** (truncated, sanitized), **regeneration count** (`attempt` + count of primary jobs for script).
-- [ ] **Retry button** — visible when `failed` and server allows; hidden/disabled when over budget (soft UX).
-- [ ] **Retry confirm dialog** — shows **new estimate** (`estimatedCostCents`) before submit; EN/ES (`scripts.videoJob.retry.*`).
-- [ ] **Max attempts exceeded** — show override affordance with **reason** field when server returns retry-limit error.
-- [ ] **Loading / empty** — no job yet · in-flight poll · terminal states.
-- [ ] **i18n** — EN + ES under **`scripts.videoJob.*`** (status labels, failure, retry, stale, override).
-- [ ] **No cost fields** in shared Cliente serializers — operator-only DTOs only.
-- [ ] **No** `external_job_id` or raw provider URLs in UI.
+- [x] **Status badge** on each Reel slot row — maps `videoJobStatus` → PrimeReact `Tag` severity / icon (`queued`, `processing`, `completed`, `failed`, `cancelled`).
+- [x] **Expand-row panel** — current job status, **failure reason** (truncated, sanitized), **regeneration count** (`attempt` + count of primary jobs for script).
+- [x] **Retry button** — visible when `failed` and server allows; hidden/disabled when over budget (soft UX).
+- [x] **Retry confirm dialog** — shows **new estimate** (`estimatedCostCents`) before submit; EN/ES (`scripts.videoJob.retry.*`).
+- [x] **Max attempts exceeded** — show override affordance with **reason** field when server returns retry-limit error.
+- [x] **Loading / empty** — no job yet · in-flight poll · terminal states.
+- [x] **i18n** — EN + ES under **`scripts.videoJob.*`** (status labels, failure, retry, stale, override).
+- [x] **No cost fields** in shared Cliente serializers — operator-only DTOs only.
+- [x] **No** `external_job_id` or raw provider URLs in UI.
 
 ---
 

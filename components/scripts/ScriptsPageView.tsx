@@ -23,9 +23,22 @@ import {
   type ProviderRecommendationCopy,
 } from "@/components/scripts/ProviderRecommendationPanel";
 import {
+  OperatorVideoJobSummaryPanel,
+  VideoJobStatusTag,
+  type OperatorVideoJobCopy,
+} from "@/components/scripts/OperatorVideoJobSummaryPanel";
+import {
   ReelCostRollupPanel,
   type ReelCostRollupCopy,
 } from "@/components/scripts/ReelCostRollupPanel";
+import {
+  VideoJobRetryConfirmDialog,
+  type VideoJobRetryConfirmCopy,
+} from "@/components/scripts/VideoJobRetryConfirmDialog";
+import {
+  VideoJobRetryLimitOverrideDialog,
+  type VideoJobRetryLimitOverrideCopy,
+} from "@/components/scripts/VideoJobRetryLimitOverrideDialog";
 import type {
   ActualCostUnavailableReason,
   ReelCostRollupsMap,
@@ -47,6 +60,7 @@ import type {
   ReelScriptErrorCode,
   ReelScriptListItem,
 } from "@/lib/contracts/reel-script";
+import type { OperatorVideoJobsByReelMap } from "@/lib/contracts/video-job";
 import { getReelBudgetPreview } from "@/lib/cost-policy/actions/get-reel-budget-preview";
 import { formatCentsForDisplay } from "@/lib/cost-policy/format-cents-for-display";
 import { generateReelCaptions } from "@/lib/reel-captions/actions/generate-reel-captions";
@@ -154,6 +168,12 @@ type ScriptsPageCopy = {
       unavailable: Record<ActualCostUnavailableReason, string>;
     };
     rollup: ReelCostRollupCopy;
+  };
+  videoJob: OperatorVideoJobCopy & {
+    retryConfirm: VideoJobRetryConfirmCopy;
+    retryOverride: VideoJobRetryLimitOverrideCopy;
+    toastRetrySuccess: string;
+    toastOverrideSuccess: string;
   };
   caption: {
     tabs: {
@@ -445,6 +465,11 @@ export function ScriptsPageView({
   );
   const [budgetOverrideReason, setBudgetOverrideReason] = useState("");
   const [budgetConfirmPending, setBudgetConfirmPending] = useState(false);
+  const [retryDialogVisible, setRetryDialogVisible] = useState(false);
+  const [retryFailedJobId, setRetryFailedJobId] = useState<string | null>(null);
+  const [overrideDialogVisible, setOverrideDialogVisible] = useState(false);
+  const [overrideFailedJobId, setOverrideFailedJobId] = useState<string | null>(null);
+  const [videoJobMutationPending, setVideoJobMutationPending] = useState(false);
 
   const weekDate = weekStartToDate(weekStart);
   const weekRangeLabel = formatWeekRange(weekStart, locale);
@@ -455,7 +480,8 @@ export function ScriptsPageView({
     captionRegeneratingSlot !== null ||
     captionSelectingSlot !== null ||
     budgetPreviewLoading ||
-    budgetConfirmPending;
+    budgetConfirmPending ||
+    videoJobMutationPending;
   const hasApprovedStrategy = data.approvedStrategy !== null;
   const hasAnyGenerated = data.items.some((item) => item.status === "generated");
   const hasAnyCaptionGenerated = data.items.some(
@@ -467,6 +493,7 @@ export function ScriptsPageView({
     hasApprovedStrategy && hasAnyGenerated && !hasAnyCaptionGenerated;
   const costSummary = data.costSummary;
   const reelCostRollups = data.reelCostRollups;
+  const videoJobsByReelScriptId = data.videoJobsByReelScriptId;
   const showCostSummary = costSummary !== undefined;
 
   function navigateWeek(nextWeekStart: string) {
@@ -759,6 +786,60 @@ export function ScriptsPageView({
     }
   }
 
+  function openRetryDialog(failedJobId: string) {
+    if (isBusy) {
+      return;
+    }
+    setRetryFailedJobId(failedJobId);
+    setRetryDialogVisible(true);
+  }
+
+  function closeRetryDialog() {
+    if (videoJobMutationPending) {
+      return;
+    }
+    setRetryDialogVisible(false);
+    setRetryFailedJobId(null);
+  }
+
+  function openOverrideDialog(failedJobId: string) {
+    if (isBusy) {
+      return;
+    }
+    setOverrideFailedJobId(failedJobId);
+    setOverrideDialogVisible(true);
+  }
+
+  function closeOverrideDialog() {
+    if (videoJobMutationPending) {
+      return;
+    }
+    setOverrideDialogVisible(false);
+    setOverrideFailedJobId(null);
+  }
+
+  function handleVideoJobRetrySuccess() {
+    toastRef.current?.show({
+      severity: "success",
+      summary: copy.videoJob.toastRetrySuccess,
+      life: 4000,
+    });
+    router.refresh();
+  }
+
+  function handleVideoJobOverrideSuccess() {
+    toastRef.current?.show({
+      severity: "success",
+      summary: copy.videoJob.toastOverrideSuccess,
+      life: 4000,
+    });
+    router.refresh();
+  }
+
+  function handleVideoJobMutationError(message: string) {
+    setBanner(message);
+  }
+
   function copyToClipboard(text: string) {
     void navigator.clipboard.writeText(text).then(() => {
       toastRef.current?.show({
@@ -792,6 +873,28 @@ export function ScriptsPageView({
   return (
     <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
       <Toast ref={toastRef} />
+      <VideoJobRetryConfirmDialog
+        visible={retryDialogVisible}
+        failedJobId={retryFailedJobId}
+        locale={locale}
+        copy={copy.videoJob.retryConfirm}
+        pending={videoJobMutationPending}
+        onHide={closeRetryDialog}
+        onPendingChange={setVideoJobMutationPending}
+        onSuccess={handleVideoJobRetrySuccess}
+        onRetryLimitExceeded={openOverrideDialog}
+        onError={handleVideoJobMutationError}
+      />
+      <VideoJobRetryLimitOverrideDialog
+        visible={overrideDialogVisible}
+        failedJobId={overrideFailedJobId}
+        copy={copy.videoJob.retryOverride}
+        pending={videoJobMutationPending}
+        onHide={closeOverrideDialog}
+        onPendingChange={setVideoJobMutationPending}
+        onSuccess={handleVideoJobOverrideSuccess}
+        onError={handleVideoJobMutationError}
+      />
       <ReelBudgetConfirmDialog
         visible={budgetDialogVisible}
         loading={budgetPreviewLoading}
@@ -936,12 +1039,15 @@ export function ScriptsPageView({
                 locale={locale}
                 copy={copy}
                 reelCostRollups={reelCostRollups}
+                videoJobsByReelScriptId={videoJobsByReelScriptId}
                 showCostRollup={showCostSummary}
                 onCopy={copyToClipboard}
                 onRegenerateCaption={(slotIndex) => void handleRegenerateCaption(slotIndex)}
                 onSelectCaptionCta={(slotIndex, selectedCtaIndex) =>
                   void handleSelectCaptionCta(slotIndex, selectedCtaIndex)
                 }
+                onRequestVideoJobRetry={openRetryDialog}
+                onRequestVideoJobOverride={openOverrideDialog}
                 captionRegeneratingSlot={captionRegeneratingSlot}
                 captionSelectingSlot={captionSelectingSlot}
                 isBusy={isBusy}
@@ -1006,6 +1112,13 @@ export function ScriptsPageView({
                       value={copy.caption.staleBadge}
                       severity="warning"
                       icon="pi pi-exclamation-triangle"
+                    />
+                  ) : null}
+                  {row.scriptId &&
+                  videoJobsByReelScriptId[row.scriptId] ? (
+                    <VideoJobStatusTag
+                      status={videoJobsByReelScriptId[row.scriptId]!.status}
+                      copy={copy.videoJob}
                     />
                   ) : null}
                 </div>
@@ -1075,10 +1188,13 @@ type ReelDetailPanelProps = {
   locale: string;
   copy: ScriptsPageCopy;
   reelCostRollups: ReelCostRollupsMap;
+  videoJobsByReelScriptId: OperatorVideoJobsByReelMap;
   showCostRollup: boolean;
   onCopy: (text: string) => void;
   onRegenerateCaption: (slotIndex: number) => void;
   onSelectCaptionCta: (slotIndex: number, selectedCtaIndex: number) => void;
+  onRequestVideoJobRetry: (failedJobId: string) => void;
+  onRequestVideoJobOverride: (failedJobId: string) => void;
   captionRegeneratingSlot: number | null;
   captionSelectingSlot: number | null;
   isBusy: boolean;
@@ -1090,16 +1206,21 @@ function ReelDetailPanel({
   locale,
   copy,
   reelCostRollups,
+  videoJobsByReelScriptId,
   showCostRollup,
   onCopy,
   onRegenerateCaption,
   onSelectCaptionCta,
+  onRequestVideoJobRetry,
+  onRequestVideoJobOverride,
   captionRegeneratingSlot,
   captionSelectingSlot,
   isBusy,
 }: ReelDetailPanelProps) {
   const rollup =
     row.scriptId !== null ? reelCostRollups[row.scriptId] : undefined;
+  const videoJob =
+    row.scriptId !== null ? videoJobsByReelScriptId[row.scriptId] : null;
 
   return (
     <div>
@@ -1116,6 +1237,14 @@ function ReelDetailPanel({
           copy={copy.cost.rollup}
         />
       ) : null}
+      <OperatorVideoJobSummaryPanel
+        initialJob={videoJob}
+        locale={locale}
+        copy={copy.videoJob}
+        isBusy={isBusy}
+        onRequestRetry={onRequestVideoJobRetry}
+        onRequestOverride={onRequestVideoJobOverride}
+      />
       <TabView>
       <TabPanel header={copy.caption.tabs.script}>
         <ScriptDetailPanel row={row} copy={copy} onCopy={onCopy} />

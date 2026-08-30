@@ -998,6 +998,79 @@
         "providerUnavailable": "No LLM provider is available for the selected tier."
       }
     },
+    "videoJob": {
+      "title": "Video generation job",
+      "empty": "No video job yet for this Reel.",
+      "status": {
+        "queued": "Queued",
+        "processing": "Processing",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "attempt": "Attempt {attempt}",
+      "regenerationCount": "Regenerations: {count}",
+      "failureReasonLabel": "Failure reason",
+      "costEstimated": "Estimated",
+      "costActual": "Actual",
+      "costPending": "Pending",
+      "costUnavailable": {
+        "usage_missing": "Usage data missing",
+        "catalog_cost_model_unsupported": "Billing model unsupported",
+        "provider_no_billing": "Provider billing unavailable"
+      },
+      "retryButton": "Retry generation",
+      "retryBlocked": "Retry unavailable",
+      "polling": "Refreshing status…",
+      "toastRetrySuccess": "Video job queued for retry.",
+      "toastOverrideSuccess": "Override recorded. You may retry once.",
+      "failure": {
+        "staleTimeout": "Job timed out while waiting for the provider."
+      },
+      "retry": {
+        "notRetryable": "This job cannot be retried.",
+        "limitExceeded": "Maximum retry attempts reached.",
+        "budgetExceeded": "Retry blocked — would exceed Reel budget.",
+        "providerUnavailable": "Video provider unavailable.",
+        "overrideButton": "Request one more attempt"
+      },
+      "retryConfirm": {
+        "title": "Confirm video retry",
+        "confirm": "Retry",
+        "cancel": "Cancel",
+        "loading": "Loading retry estimate…",
+        "loadError": "We could not load the retry estimate. Try again later.",
+        "estimated": "Estimated cost for retry",
+        "blocked": "Retry unavailable",
+        "notRetryable": "This job cannot be retried.",
+        "limitExceeded": "Maximum retry attempts reached.",
+        "budgetExceeded": "Retry blocked — would exceed Reel budget.",
+        "providerUnavailable": "Video provider unavailable.",
+        "overrideButton": "Request one more attempt",
+        "errors": {
+          "unauthenticated": "Please log in to continue.",
+          "forbidden": "You do not have access to that.",
+          "notFound": "That video job was not found.",
+          "validation": "Please check the highlighted fields and try again.",
+          "internal": "Something went wrong. Please try again later."
+        }
+      },
+      "retryOverride": {
+        "title": "Override retry limit",
+        "confirm": "Grant override",
+        "cancel": "Cancel",
+        "reasonLabel": "Override reason (required)",
+        "reasonRequired": "Enter a brief reason (1–500 characters).",
+        "limitMessage": "Maximum retry attempts reached. Grant a one-time override to retry when budget and consent still pass.",
+        "errors": {
+          "unauthenticated": "Please log in to continue.",
+          "forbidden": "You do not have access to that.",
+          "notFound": "That video job was not found.",
+          "validation": "Please check the highlighted fields and try again.",
+          "internal": "Something went wrong. Please try again later."
+        }
+      }
+    },
     "providerRecommendation": {
       "title": "Provider recommendation",
       "loading": "Loading recommendations…",

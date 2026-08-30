@@ -154,6 +154,13 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
           errors: t.scripts.budget.errors,
         },
         providerRecommendation: t.scripts.providerRecommendation,
+        videoJob: {
+          ...t.scripts.videoJob,
+          retryConfirm: t.scripts.videoJob.retryConfirm,
+          retryOverride: t.scripts.videoJob.retryOverride,
+          toastRetrySuccess: t.scripts.videoJob.toastRetrySuccess,
+          toastOverrideSuccess: t.scripts.videoJob.toastOverrideSuccess,
+        },
         cost: {
           actual: t.scripts.cost.actual,
           rollup: {
