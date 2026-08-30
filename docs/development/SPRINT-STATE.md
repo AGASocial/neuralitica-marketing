@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-10.2
-story_status: VALIDATE
+story_status: QA
 feature_branch: feature/US-10.2-qa-override
 last_completed_story: US-10.1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T22:35:00Z
+updated_at: 2026-08-30T22:40:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -37,7 +37,7 @@ updated_at: 2026-08-30T22:35:00Z
 | US-9.1 Assemble final 9:16 Reel | done | Phase A `4853871` · worker `f74570f`/`153b73a` · BE `7189f4b` · FE `9e7142c` · VALIDATION `03dff73` · QA `5c0ec7e` · CLOSE 5/5 AC (faceless B-roll Phase B defer) |
 | US-9.2 Add subtitles, logo, and cover | done | worker `7518bc5` · BE `36e9dd3`+fix `757da6a` · FE `a15921b` · VALIDATION `4378c65` · QA `c0d6f66` · CLOSE `92b196a` |
 | US-10.1 Run automated QA | done | agents `0b56c9e`/`75802d6` · BE `5e50115` · FE `b5e0941` · VALIDATION `d95555d` · QA `a6ba923` · CLOSE `b7a3bb9` (6/6 AC; override → US-10.2) |
-| US-10.2 Operator override with reason | VALIDATE | BE `a9cc533` · FE `0c6bfb0` |
+| US-10.2 Operator override with reason | QA | VALIDATION PASS WITH NOTES `d7e3cd5` (22/22) |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
