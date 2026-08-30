@@ -33,7 +33,7 @@ updated_at: 2026-08-30T17:30:00Z
 | US-8.4 Job status and failure UI | done | BE `689d8c6`/`77142b9` · FE `25737db` · VALIDATION `4e36fbc` · QA `9b24c48` · CLOSE `35a433d` |
 | US-8.6 MuseTalk adapter | done | Phase A `dbc9ce2` · Phase B `bdfaaf2` · VALIDATION `798635e` · QA `82bde3d` · CLOSE `2fb7573` (4/5 AC; P1 override defer) |
 | US-8.3 Manual video upload fallback | done | FE `fc6deca` · BE `eaa974a` · fixes `f3f78af`/`b2fb1cc` · VALIDATION `2f5edc0` · QA `a58faeb` · CLOSE `d8baafb` |
-| US-9.3 Text-to-speech for voiceover | SELECT | Next story — Sprint 4 |
+| US-9.3 Text-to-speech for voiceover | PREP | branch `feature/US-9.3-tts-voiceover` · SPEC+SECURITY next |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
