@@ -961,6 +961,46 @@
         "policyUnavailable": "Cost policy is unavailable. Check settings or try again later.",
         "providerUnavailable": "No LLM provider is available for the selected tier."
       }
+    },
+    "providerRecommendation": {
+      "title": "Provider recommendation",
+      "loading": "Loading recommendations…",
+      "loadError": "We could not load provider recommendations. Try again later.",
+      "projectedTotal": "Projected total (read-only): {amount}",
+      "manualFallbackNote": "Manual upload is available — no API cost.",
+      "providerLabel": "Provider",
+      "costLabel": "Est. cost",
+      "rationaleLabel": "Rationale",
+      "tierBadge": "{tier} tier",
+      "providerTierOptions": {
+        "low": "Low",
+        "high": "High"
+      },
+      "assetRoles": {
+        "llm": "LLM",
+        "tts": "Voice (TTS)",
+        "talking_head": "Talking head",
+        "broll": "B-roll"
+      },
+      "rationale": {
+        "cheapest_active_low_tier": "Cheapest active provider at low tier",
+        "cheapest_active_high_tier": "Cheapest active provider at high tier",
+        "llm_variant_default": "Default LLM path (caption / strategy)",
+        "llm_variant_fallback": "Fallback LLM path (script generate / regenerate)",
+        "reference_loop_prefers_musetalk": "Reference loop — MuseTalk preferred",
+        "own_avatar_talking_head": "Own avatar — talking-head video",
+        "generic_avatar_talking_head": "Generic avatar — talking-head video",
+        "faceless_broll_wan": "Faceless — B-roll (Wan)",
+        "tts_voiceover_required": "Voiceover required (TTS)",
+        "high_tier_inactive": "High tier selected but no active provider for this role",
+        "manual_fallback_operator": "Manual upload (operator path)"
+      },
+      "errors": {
+        "providerUnavailable": "No provider is available for the selected tier and role.",
+        "strategyNotApproved": "Approve the weekly strategy before viewing recommendations.",
+        "slotNotFound": "That Reel slot was not found on the approved strategy.",
+        "forbidden": "You do not have permission to view provider recommendations."
+      }
     }
   },
   "settings": {

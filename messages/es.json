@@ -961,6 +961,46 @@
         "policyUnavailable": "La política de costo no está disponible. Revisa la configuración o inténtalo más tarde.",
         "providerUnavailable": "No hay proveedor LLM disponible para el nivel seleccionado."
       }
+    },
+    "providerRecommendation": {
+      "title": "Recomendación de proveedor",
+      "loading": "Cargando recomendaciones…",
+      "loadError": "No pudimos cargar las recomendaciones de proveedor. Inténtalo más tarde.",
+      "projectedTotal": "Total proyectado (solo lectura): {amount}",
+      "manualFallbackNote": "Subida manual disponible — sin costo de API.",
+      "providerLabel": "Proveedor",
+      "costLabel": "Costo est.",
+      "rationaleLabel": "Motivo",
+      "tierBadge": "Nivel {tier}",
+      "providerTierOptions": {
+        "low": "Bajo",
+        "high": "Alto"
+      },
+      "assetRoles": {
+        "llm": "LLM",
+        "tts": "Voz (TTS)",
+        "talking_head": "Talking head",
+        "broll": "B-roll"
+      },
+      "rationale": {
+        "cheapest_active_low_tier": "Proveedor activo más barato en nivel bajo",
+        "cheapest_active_high_tier": "Proveedor activo más barato en nivel alto",
+        "llm_variant_default": "Ruta LLM por defecto (caption / estrategia)",
+        "llm_variant_fallback": "Ruta LLM alternativa (generar / regenerar guion)",
+        "reference_loop_prefers_musetalk": "Bucle de referencia — preferencia MuseTalk",
+        "own_avatar_talking_head": "Avatar propio — video talking head",
+        "generic_avatar_talking_head": "Avatar genérico — video talking head",
+        "faceless_broll_wan": "Faceless — B-roll (Wan)",
+        "tts_voiceover_required": "Voz en off requerida (TTS)",
+        "high_tier_inactive": "Nivel alto seleccionado pero sin proveedor activo para este rol",
+        "manual_fallback_operator": "Subida manual (ruta operador)"
+      },
+      "errors": {
+        "providerUnavailable": "No hay proveedor disponible para el nivel y rol seleccionados.",
+        "strategyNotApproved": "Aprueba la estrategia semanal antes de ver recomendaciones.",
+        "slotNotFound": "Ese slot de Reel no está en la estrategia aprobada.",
+        "forbidden": "No tienes permiso para ver recomendaciones de proveedor."
+      }
     }
   },
   "settings": {

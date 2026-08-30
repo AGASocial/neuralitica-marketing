@@ -7,6 +7,7 @@ import { Message } from "primereact/message";
 import { ProgressSpinner } from "primereact/progressspinner";
 
 import type {
+  LlmRecommendation,
   ProjectionHintKey,
   ReelBudgetBatchPreview,
   ReelBudgetPreview,
@@ -14,6 +15,7 @@ import type {
 import { OVERRIDE_REASON_MAX_LENGTH } from "@/lib/contracts/cost-policy";
 import { formatCentsForDisplay } from "@/lib/cost-policy/format-cents-for-display";
 import type { ProviderTier } from "@/lib/contracts/providers";
+import type { ProviderRecommendationCopy } from "@/components/scripts/ProviderRecommendationPanel";
 
 export type ReelBudgetConfirmCopy = {
   title: string;
@@ -51,6 +53,7 @@ type ReelBudgetConfirmDialogProps = {
   isBatch: boolean;
   locale: string;
   copy: ReelBudgetConfirmCopy;
+  recommendationCopy: ProviderRecommendationCopy;
   overrideReason: string;
   onOverrideReasonChange: (value: string) => void;
   pending: boolean;
@@ -69,10 +72,12 @@ function PreviewRow({
   item,
   locale,
   copy,
+  recommendationCopy,
 }: {
   item: ReelBudgetPreview;
   locale: string;
   copy: ReelBudgetConfirmCopy;
+  recommendationCopy: ProviderRecommendationCopy;
 }) {
   return (
     <div
@@ -87,7 +92,63 @@ function PreviewRow({
       <p style={{ margin: "0 0 0.5rem", fontWeight: 600 }}>
         {copy.slotLabel.replace("{index}", String(item.slotIndex + 1))}
       </p>
-      <BudgetMetrics item={item} locale={locale} copy={copy} />
+      <BudgetMetrics
+        item={item}
+        locale={locale}
+        copy={copy}
+        recommendationCopy={recommendationCopy}
+      />
+    </div>
+  );
+}
+
+function LlmRecommendationBlock({
+  recommendation,
+  locale,
+  recommendationCopy,
+}: {
+  recommendation: LlmRecommendation;
+  locale: string;
+  recommendationCopy: ProviderRecommendationCopy;
+}) {
+  return (
+    <div
+      style={{
+        marginBottom: "0.75rem",
+        padding: "0.65rem 0.75rem",
+        border: "1px solid #dbeafe",
+        borderRadius: "6px",
+        background: "#eff6ff",
+        fontSize: "0.875rem",
+      }}
+    >
+      <p style={{ margin: "0 0 0.35rem", fontWeight: 600 }}>
+        {recommendationCopy.title}
+      </p>
+      <dl style={{ margin: 0, display: "grid", gap: "0.25rem" }}>
+        <div>
+          <dt style={{ display: "inline", color: "#6b7280" }}>
+            {recommendationCopy.providerLabel}:{" "}
+          </dt>
+          <dd style={{ display: "inline", margin: 0 }}>{recommendation.displayLabel}</dd>
+        </div>
+        <div>
+          <dt style={{ display: "inline", color: "#6b7280" }}>
+            {recommendationCopy.costLabel}:{" "}
+          </dt>
+          <dd style={{ display: "inline", margin: 0 }}>
+            {formatCentsForDisplay(recommendation.estimatedCostCents, locale)}
+          </dd>
+        </div>
+        <div>
+          <dt style={{ display: "inline", color: "#6b7280" }}>
+            {recommendationCopy.rationaleLabel}:{" "}
+          </dt>
+          <dd style={{ display: "inline", margin: 0 }}>
+            {recommendationCopy.rationale[recommendation.rationaleKey]}
+          </dd>
+        </div>
+      </dl>
     </div>
   );
 }
@@ -96,13 +157,23 @@ function BudgetMetrics({
   item,
   locale,
   copy,
+  recommendationCopy,
 }: {
   item: ReelBudgetPreview;
   locale: string;
   copy: ReelBudgetConfirmCopy;
+  recommendationCopy: ProviderRecommendationCopy;
 }) {
   return (
-    <dl style={{ margin: 0, display: "grid", gap: "0.35rem", fontSize: "0.9rem" }}>
+    <>
+      {item.llmRecommendation ? (
+        <LlmRecommendationBlock
+          recommendation={item.llmRecommendation}
+          locale={locale}
+          recommendationCopy={recommendationCopy}
+        />
+      ) : null}
+      <dl style={{ margin: 0, display: "grid", gap: "0.35rem", fontSize: "0.9rem" }}>
       <div>
         <dt style={{ display: "inline", color: "#6b7280" }}>{copy.estimated}: </dt>
         <dd style={{ display: "inline", margin: 0 }}>
@@ -143,6 +214,7 @@ function BudgetMetrics({
         </div>
       ) : null}
     </dl>
+    </>
   );
 }
 
@@ -154,6 +226,7 @@ export function ReelBudgetConfirmDialog({
   isBatch,
   locale,
   copy,
+  recommendationCopy,
   overrideReason,
   onOverrideReasonChange,
   pending,
@@ -229,7 +302,12 @@ export function ReelBudgetConfirmDialog({
               style={{ width: "100%", marginBottom: "1rem" }}
             />
           ) : null}
-          <BudgetMetrics item={preview} locale={locale} copy={copy} />
+          <BudgetMetrics
+            item={preview}
+            locale={locale}
+            copy={copy}
+            recommendationCopy={recommendationCopy}
+          />
         </>
       ) : null}
 
@@ -257,7 +335,13 @@ export function ReelBudgetConfirmDialog({
             </p>
           ) : null}
           {preview.items.map((item) => (
-            <PreviewRow key={item.slotIndex} item={item} locale={locale} copy={copy} />
+            <PreviewRow
+              key={item.slotIndex}
+              item={item}
+              locale={locale}
+              copy={copy}
+              recommendationCopy={recommendationCopy}
+            />
           ))}
         </>
       ) : null}

@@ -181,16 +181,16 @@ export async function estimateLlmJobCost(input: EstimateLlmJobCostInput) {
 
 Concrete BE consumers: **`getReelProviderRecommendations`** · extended **`getReelBudgetPreview`** (optional inline recommendations) · existing generate/regenerate actions (unchanged inputs).
 
-- [ ] **Recommendation panel** on `/operator/scripts` — per-slot expand or detail section (CONTRACT freezes layout): list **asset roles** with **display label**, **tier badge**, **estimated cost**, **rationale** (i18n from `rationaleKey`).
-- [ ] **Projected total** footnote — sum of component estimates; label as **projected** (not yet blocking budget for video/TTS in V1).
-- [ ] **Manual fallback note** — static copy from `manualFallbackNoteKey` ("Manual upload — no API cost").
-- [ ] **Loading / empty / error** states — `PROVIDER_UNAVAILABLE`, `STRATEGY_NOT_APPROVED`, slot not found.
-- [ ] **Enrich `ReelBudgetConfirmDialog`** — show LLM recommendation line (label + estimate + rationale) above existing budget numbers.
-- [ ] **High tier inactive** — when recommendations fail, show Operator-friendly error (mirror budget dialog provider error).
-- [ ] **EN + ES** `scripts.providerRecommendation.*` (role labels, rationale keys, manual note, projected total).
-- [ ] **No Supabase in Client Components**; no client-side provider selection or cost math.
-- [ ] **No Cliente** provider/cost fields on any shared route.
-- [ ] **Read-only** — no buttons to override provider in V1 (HeyGen explicit fallback is US-8.7).
+- [x] **Recommendation panel** on `/operator/scripts` — per-slot expand or detail section (CONTRACT freezes layout): list **asset roles** with **display label**, **tier badge**, **estimated cost**, **rationale** (i18n from `rationaleKey`).
+- [x] **Projected total** footnote — sum of component estimates; label as **projected** (not yet blocking budget for video/TTS in V1).
+- [x] **Manual fallback note** — static copy from `manualFallbackNoteKey` ("Manual upload — no API cost").
+- [x] **Loading / empty / error** states — `PROVIDER_UNAVAILABLE`, `STRATEGY_NOT_APPROVED`, slot not found.
+- [x] **Enrich `ReelBudgetConfirmDialog`** — show LLM recommendation line (label + estimate + rationale) above existing budget numbers.
+- [x] **High tier inactive** — when recommendations fail, show Operator-friendly error (mirror budget dialog provider error).
+- [x] **EN + ES** `scripts.providerRecommendation.*` (role labels, rationale keys, manual note, projected total).
+- [x] **No Supabase in Client Components**; no client-side provider selection or cost math.
+- [x] **No Cliente** provider/cost fields on any shared route.
+- [x] **Read-only** — no buttons to override provider in V1 (HeyGen explicit fallback is US-8.7).
 
 ---
 

@@ -143,6 +143,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
           ...t.scripts.budget.confirm,
           errors: t.scripts.budget.errors,
         },
+        providerRecommendation: t.scripts.providerRecommendation,
         caption: {
           tabs: t.scripts.caption.tabs,
           generate: t.scripts.caption.generate,

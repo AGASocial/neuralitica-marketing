@@ -18,6 +18,10 @@ import {
   ReelBudgetConfirmDialog,
   type ReelBudgetConfirmCopy,
 } from "@/components/cost-policy/ReelBudgetConfirmDialog";
+import {
+  ProviderRecommendationPanel,
+  type ProviderRecommendationCopy,
+} from "@/components/scripts/ProviderRecommendationPanel";
 import type {
   ReelBudgetBatchPreview,
   ReelBudgetPreview,
@@ -125,6 +129,7 @@ type ScriptsPageCopy = {
     maxBeatLinesTotal: number;
   };
   budget: ReelBudgetConfirmCopy;
+  providerRecommendation: ProviderRecommendationCopy;
   caption: {
     tabs: {
       script: string;
@@ -710,6 +715,7 @@ export function ScriptsPageView({
         isBatch={budgetPreviewIsBatch}
         locale={locale}
         copy={copy.budget}
+        recommendationCopy={copy.providerRecommendation}
         overrideReason={budgetOverrideReason}
         onOverrideReasonChange={setBudgetOverrideReason}
         pending={budgetConfirmPending}
@@ -841,6 +847,8 @@ export function ScriptsPageView({
             rowExpansionTemplate={(row: ReelScriptListItem) => (
               <ReelDetailPanel
                 row={row}
+                weekStart={weekStart}
+                locale={locale}
                 copy={copy}
                 onCopy={copyToClipboard}
                 onRegenerateCaption={(slotIndex) => void handleRegenerateCaption(slotIndex)}
@@ -943,6 +951,8 @@ export function ScriptsPageView({
 
 type ReelDetailPanelProps = {
   row: ReelScriptListItem;
+  weekStart: string;
+  locale: string;
   copy: ScriptsPageCopy;
   onCopy: (text: string) => void;
   onRegenerateCaption: (slotIndex: number) => void;
@@ -954,6 +964,8 @@ type ReelDetailPanelProps = {
 
 function ReelDetailPanel({
   row,
+  weekStart,
+  locale,
   copy,
   onCopy,
   onRegenerateCaption,
@@ -963,7 +975,14 @@ function ReelDetailPanel({
   isBusy,
 }: ReelDetailPanelProps) {
   return (
-    <TabView>
+    <div>
+      <ProviderRecommendationPanel
+        weekStart={weekStart}
+        slotIndex={row.slotIndex}
+        locale={locale}
+        copy={copy.providerRecommendation}
+      />
+      <TabView>
       <TabPanel header={copy.caption.tabs.script}>
         <ScriptDetailPanel row={row} copy={copy} onCopy={onCopy} />
       </TabPanel>
@@ -982,6 +1001,7 @@ function ReelDetailPanel({
         />
       </TabPanel>
     </TabView>
+    </div>
   );
 }
 

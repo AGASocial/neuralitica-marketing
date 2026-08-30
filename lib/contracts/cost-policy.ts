@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 
+import { providerRationaleKeySchema } from "@/lib/contracts/providers";
 import { providerTierSchema, visualModeSchema } from "@/lib/contracts/providers";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
 import { visualModalitySchema } from "@/lib/contracts/visual-preferences";
@@ -33,6 +34,17 @@ export const projectionHintKeySchema = z.enum([
 ]);
 
 export type ProjectionHintKey = z.infer<typeof projectionHintKeySchema>;
+
+export const llmRecommendationSchema = z
+  .object({
+    displayLabel: z.string().min(1),
+    providerTier: providerTierSchema,
+    estimatedCostCents: z.number().int().nonnegative(),
+    rationaleKey: providerRationaleKeySchema,
+  })
+  .strict();
+
+export type LlmRecommendation = z.infer<typeof llmRecommendationSchema>;
 
 export const budgetAuditEventTypeSchema = z.enum([
   "blocked",
@@ -120,6 +132,7 @@ export const reelBudgetPreviewSchema = z
     visualMode: visualModeSchema,
     modalidad: visualModalitySchema,
     projectionHintKey: projectionHintKeySchema.nullable(),
+    llmRecommendation: llmRecommendationSchema.optional(),
     wouldExceed: z.boolean(),
   })
   .strict();
