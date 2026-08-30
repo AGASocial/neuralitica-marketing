@@ -1,34 +1,37 @@
 ## QA Report — US-8.3 Manual video upload fallback
 
 **Branch:** `feature/US-8.3-manual-upload`  
-**Reviewed at:** `2f5edc0` (VALIDATION PASS WITH NOTES) · HEAD includes docs-only commits after validation  
+**Reviewed at:** `b2fb1cc` (post BLOCK remediation — config constants + mp4box types)  
+**Prior review:** `0980dbe` — BLOCK (next.config import chain)  
 **Sources:** `VALIDATION.md` · `CONTRACT.md` · `SECURITY.md` · implementation on feature branch
 
-### Verdict: BLOCK
+### Verdict: APPROVE WITH CONDITIONS
 
-US-8.3 implements the frozen CONTRACT end-to-end with sound Operator gates, shared validation, zero-cost spend, attribution, and FE wiring. Automated US-8.3 tests pass. **Production build is broken** by `next.config.ts` importing a Zod-heavy contract module — this blocks Vercel deploy and must be fixed before CLOSE.
+Both prior **High** build blockers are **resolved**: `f3f78af` extracts config-safe constants for `next.config.ts`; `b2fb1cc` adds `types/mp4box.d.ts` and fixes `requireOperator("handler")` GuardMode typing. US-8.3 implements the frozen CONTRACT end-to-end with sound Operator gates, shared validation, zero-cost spend, attribution, and FE wiring. Automated US-8.3 tests pass. **`AUTH_DEV_FALLBACK= npm run build` succeeds** (production-safe env; local `.env` dev flag failure is pre-existing US-14.5 intended behavior, not a US-8.3 defect).
+
+**Conditions:** Address Finding 3 (spend finalize rollback) and Finding 4 (consent gate test) before or immediately after merge — recommended pre-merge hardening, not deploy blockers.
 
 ---
 
 ### Findings
 
-#### 1. High — `next.config.ts` import breaks production build
+#### 1. RESOLVED — `next.config.ts` import broke build (prior High)
 
-**File:** `next.config.ts:2`, `lib/contracts/manual-video-upload.ts:7`
+**Files:** `next.config.ts:2`, `lib/contracts/manual-video-upload-constants.ts`
 
-**What is wrong:** `next.config.ts` imports `MANUAL_UPLOAD_SERVER_ACTION_BODY_LIMIT` from `lib/contracts/manual-video-upload.ts`. That module transitively imports `@/lib/contracts/video-job` (Zod schemas). Next.js compiles `next.config.ts` without full `@/` alias resolution for nested imports, causing:
-
-```
-Error: Cannot find module './lib/contracts/video-job'
-```
-
-**Why it matters:** `npm run build` and `npm run lint` both fail. Vercel deploy cannot succeed. CONTRACT § Transport requires the 52mb body limit, but the constant must live in a config-safe module (no Zod / `@/` graph).
-
-**Recommended fix:** Extract `MANUAL_UPLOAD_SERVER_ACTION_BODY_LIMIT` (and optionally other display constants) to a leaf file such as `lib/contracts/manual-video-upload-constants.ts` with zero imports, and import that from both `next.config.ts` and the full contract module. Alternatively inline `"52mb"` in `next.config.ts` and document parity with the contract constant in a comment.
+**Status:** **Fixed** at `f3f78af`. `next.config.ts` imports `MANUAL_UPLOAD_SERVER_ACTION_BODY_LIMIT` from the leaf constants module (zero imports, no `@/` aliases, no Zod). Next.js compile step succeeds.
 
 ---
 
-#### 2. Medium — Spend finalize failure leaves orphaned completed job
+#### 2. RESOLVED — `mp4box` missing TypeScript declarations (prior High)
+
+**Files:** `types/mp4box.d.ts`, `lib/media/probe-video-duration.ts:9`, `lib/video-jobs/actions/upload-manual-video-job.ts`
+
+**Status:** **Fixed** at `b2fb1cc`. Minimal `declare module "mp4box"` shim committed; upload action uses `requireOperator("handler")` for GuardMode compatibility. Type-check phase in `npm run build` succeeds.
+
+---
+
+#### 3. Medium — Spend finalize failure leaves orphaned completed job
 
 **File:** `lib/video-jobs/upload-manual-video-job.ts:255–272`
 
@@ -40,7 +43,7 @@ Error: Cannot find module './lib/contracts/video-job'
 
 ---
 
-#### 3. Medium — Missing automated test for consent gate on manual upload
+#### 4. Medium — Missing automated test for consent gate on manual upload
 
 **File:** `lib/video-jobs/upload-manual-video-job.test.ts` (gap); orchestrator gate at `upload-manual-video-job.ts:114–118`
 
@@ -52,7 +55,7 @@ Error: Cannot find module './lib/contracts/video-job'
 
 ---
 
-#### 4. Low — Serve route ownership tied to operator session id, not reel owner
+#### 5. Low — Serve route ownership tied to operator session id, not reel owner
 
 **File:** `app/api/media/assets/[assetId]/route.ts:132–134`
 
@@ -64,7 +67,7 @@ Error: Cannot find module './lib/contracts/video-job'
 
 ---
 
-#### 5. Low — Concurrent upload TOCTOU on slot guard
+#### 6. Low — Concurrent upload TOCTOU on slot guard
 
 **File:** `lib/video-jobs/upload-manual-video-job.ts:100–112`, `213–231`
 
@@ -76,7 +79,7 @@ Error: Cannot find module './lib/contracts/video-job'
 
 ---
 
-#### 6. Low — Pre-existing US-3.3 delete test failure in combined media suite
+#### 7. Low — Pre-existing US-3.3 delete test failure in combined media suite
 
 **File:** `lib/media/media-assets.test.ts:644` (`deleteAvatarReferenceAsset`)
 
@@ -85,6 +88,12 @@ Error: Cannot find module './lib/contracts/video-job'
 **Why it matters:** Unrelated to US-8.3 deliverables; US-8.3 `generated_video` serve test passes. Combined suite reports 48/49.
 
 **Recommended fix:** Extend delete test mock per VALIDATION.md note (nextjs-backend).
+
+---
+
+#### Note — `AUTH_DEV_FALLBACK` vs `next build` (not a finding)
+
+`npm run build` with local `.env` containing `AUTH_DEV_FALLBACK=true` fails at page-data collection with `AUTH_DEV_FALLBACK must not be set when NODE_ENV=production` (US-14.5 intended fail-closed guard). **`AUTH_DEV_FALLBACK= npm run build` passes.** Vercel production/preview must omit the flag — same pattern documented in US-8.4/US-14.5 QA.
 
 ---
 
@@ -103,6 +112,8 @@ Error: Cannot find module './lib/contracts/video-job'
 | Client bundle leakage | **PASS** | No `@supabase/supabase-js` in Client Components; FE calls Server Action only |
 | Success DTO shape | **PASS** | `uploadManualVideoJobSuccessSchema` validation in tests; no `storage_key` in mapper |
 | `neuramark_` prefix | **PASS** | Migration `neuramark_video_jobs_operator_client_id` |
+| Config-safe body limit | **PASS** | `next.config.ts` → `manual-video-upload-constants.ts` (leaf, no Zod graph) |
+| Production build | **PASS** | `AUTH_DEV_FALLBACK= npm run build` — Next.js 15.5.20; `/operator/scripts` compiles |
 
 ---
 
@@ -111,8 +122,9 @@ Error: Cannot find module './lib/contracts/video-job'
 | Command | Result |
 |---------|--------|
 | `npx tsx --test lib/video-jobs/upload-manual-video-job.test.ts lib/providers/video/manual-upload-adapter.test.ts lib/media/media-assets.test.ts lib/video-jobs/video-jobs.test.ts` | **48/49 pass** — all US-8.3 suites pass; 1 pre-existing US-3.3 delete failure |
-| `npm run build` | **FAIL** — `next.config.ts` → `Cannot find module './lib/contracts/video-job'` |
-| `npm run lint` | **FAIL** — same `next.config.ts` import chain |
+| `AUTH_DEV_FALLBACK= npm run build` | **PASS** — compile + type-check + page data; `/operator/scripts` dynamic route present |
+| `npm run build` (local `.env` with `AUTH_DEV_FALLBACK=true`) | **FAIL** at page-data — pre-existing US-14.5 guard; **not a US-8.3 defect** |
+| `npm run lint` | **PASS** (exit 0) — pre-existing test-file `no-require-imports` violations remain project-wide |
 | `npx tsc --noEmit` | **Not clean** — pre-existing test-file errors project-wide; US-8.3 app modules not isolated |
 
 ---
@@ -127,12 +139,10 @@ Error: Cannot find module './lib/contracts/video-job'
 
 ---
 
-### CLOSE recommendation: **NO**
+### CLOSE recommendation: **YES**
 
-Fix **Finding 1 (build blocker)** before PO CLOSE. Findings 2–3 are recommended pre-merge hardening but do not alone justify indefinite hold once build is green. Finding 4 is a documented V1 limitation aligned with VALIDATION notes.
-
-After build fix + re-run `npm run build`, re-QA or spot-check config import only, then **CLOSE** is appropriate.
+Both build blockers are closed. PO may **CLOSE** US-8.3. Track Findings 3–4 as follow-up hardening (recommended before or immediately after merge). Findings 5–7 are documented V1 limitations aligned with VALIDATION notes.
 
 ---
 
-*QA review 2026-08-30 — qa-engineer.*
+*Re-QA 2026-08-30 — qa-engineer (post f3f78af + b2fb1cc remediation).*
