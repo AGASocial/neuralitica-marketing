@@ -1017,14 +1017,14 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | `qa_overrides` record; only operator role (hardcoded user OK locally) |
 | **DB** | `qa_overrides` (qa_report_id, check_key, reason, user_id, created_at) |
 
-**Acceptance criteria**
-- [ ] Override requires non-empty reason
-- [ ] Overrides visible on approval screen
-- [ ] Cannot override consent/legal blocks (own avatar without consent)
-- [ ] Operator-only: the override endpoint/action rejects non-operator sessions server-side (403) — makes the existing "only operator role" note explicit via `neuramark_clients.role`
-- [ ] [SEC] The non-overridable set (missing/revoked consent, generic-avatar impersonation) is enforced in the override handler server-side: an override request for a `blocking` check is rejected with 403 even from the Operator, regardless of UI state
-- [ ] [SEC] `qa_overrides` is append-only (no update/delete endpoint); each row records check key, reason, server-resolved user, and timestamp
-- [ ] [SEC] Override applies to one specific check on one specific QA report; there is no "override all" or report-level bypass parameter
+**Acceptance criteria** *(Phase A CLOSED 2026-08-30 — Cliente approval-screen render of overrides → US-11.1; DTO/gate handoff shipped here)*
+- [x] Override requires non-empty reason
+- [x] Overrides visible on approval screen *(Phase A: server `overrides[]` + gate key lists; Cliente Aprobación UI render → US-11.1)*
+- [x] Cannot override consent/legal blocks (own avatar without consent)
+- [x] Operator-only: the override endpoint/action rejects non-operator sessions server-side (403) — makes the existing "only operator role" note explicit via `neuramark_clients.role`
+- [x] [SEC] The non-overridable set (missing/revoked consent, generic-avatar impersonation) is enforced in the override handler server-side: an override request for a `blocking` check is rejected with 403 even from the Operator, regardless of UI state
+- [x] [SEC] `qa_overrides` is append-only (no update/delete endpoint); each row records check key, reason, server-resolved user, and timestamp
+- [x] [SEC] Override applies to one specific check on one specific QA report; there is no "override all" or report-level bypass parameter
 
 **Depends on:** US-10.1
 
@@ -1048,7 +1048,7 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 - [ ] [SEC] The gate "assembly complete + QA passed or validly overridden" is re-checked server-side when the approval package is created AND when a decision is submitted — a direct POST to the decision endpoint for an ungated Reel is rejected
 - [ ] [SEC] Approval package lookups are scoped to the current client; a Reel/approval ID belonging to another client returns 404 (IDOR guard)
 
-**Depends on:** US-10.1, US-9.2
+**Depends on:** US-10.1, US-10.2, US-9.2
 
 ---
 

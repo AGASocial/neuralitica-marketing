@@ -164,6 +164,13 @@
 | US-14.5 `requireOperator` | ✅ |
 | Soft → US-11.1 | Consumes gate + override visibility |
 
+## Done when
+
+- [x] All USER_STORIES § US-10.2 AC satisfied — VALIDATION PASS WITH NOTES `d7e3cd5` · QA APPROVE WITH CONDITIONS `3da5547` · PO CLOSE 7/7 AC (Cliente approval render → US-11.1)
+- [x] Operator can override failed overridable checks with reason; blocking keys 403
+- [x] Gate ready via `passed` **or** full overridable coverage on `failed`
+- [x] US-11.1 can consume `overrides[]` + gate key lists without schema churn
+
 ## Open questions
 
 See `README.md` § Open questions — none block PREP → SECURITY.

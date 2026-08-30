@@ -1,6 +1,6 @@
 # US-10.2 — Operator override with reason
 
-**Status:** CONTRACT frozen (2026-08-30) — Reviewed by FE: **pending**. Do **not** check off AC. BUILD after FE signoff.
+**Status:** CLOSED Phase A (2026-08-30) — VALIDATION PASS WITH NOTES `d7e3cd5` (22/22) · QA APPROVE WITH CONDITIONS `3da5547` · 7/7 AC. Cliente approval-screen render of overrides → US-11.1.
 
 **As a** Operator, **I want** to override a failed QA check with documented reason, **so that** edge cases do not stall delivery.
 
@@ -112,13 +112,13 @@ _Evitar:_ “QA verdict” as product noun; admin/staff; exposing override as Cl
 
 - [x] SPEC-REVIEW.md (spec-guardian) — ALIGNED `6ccf44f`
 - [x] SECURITY.md (security-architect) — APPROVE WITH CONDITIONS `66b824f`
-- [x] CONTRACT.md (nextjs-backend) — Frozen 2026-08-30 · Reviewed by FE: **pending**
-- [ ] BUILD (nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md
-- [ ] QA.md
-- [ ] CLOSE — check AC in USER_STORIES only after validator
+- [x] CONTRACT.md (nextjs-backend) — Frozen 2026-08-30 · Reviewed by FE: **yes** `658b5bd`
+- [x] BUILD (nextjs-backend `a9cc533` + nextjs-frontend `0c6bfb0`)
+- [x] VALIDATION.md — **PASS WITH NOTES** `d7e3cd5` (22/22)
+- [x] QA.md — **APPROVE WITH CONDITIONS** `3da5547` · CLOSE yes
+- [x] CLOSE Phase A — 7/7 AC checked; Cliente approval render → US-11.1
 
-**Next:** FE CONTRACT signoff → BUILD.
+**Next:** SELECT **US-11.1** (recommended) or US-8.5.
 
 ---
 
