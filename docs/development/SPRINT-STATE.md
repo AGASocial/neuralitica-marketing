@@ -4,10 +4,10 @@
 
 ```yaml
 current_phase: 3
-current_story: US-8.2
-story_status: CONTRACT
-feature_branch: feature/US-8.2-sadtalker-adapter
-last_completed_story: US-8.1
+current_story: US-8.4
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-8.2
 phase_status: in_progress
 blocked_reason: null
 updated_at: 2026-08-30T03:50:00Z
@@ -29,7 +29,8 @@ updated_at: 2026-08-30T03:50:00Z
 | US-7.3 Track actual cost per job | done | BE `030d85f` · FE `02b399b`/`ddca524` · fix `f60579d` · VALIDATION `09656e0` · QA `691f657` · CLOSE Phase A |
 | US-7.4 Report real total cost per Reel | done | BE `5c9abb4` · FE `8735be2` · fix `5b3e9d7` · VALIDATION `a678ac4` · QA `746a563` · CLOSE Phase A `f0ca5a0` |
 | US-8.1 Provider adapter interface | done | BE `a11d4ae` · fix `4193a1e` · VALIDATION `7367929` · QA `7f34bdb` · CLOSE `3ac3304` |
-| US-8.2 SadTalker adapter | CONTRACT | PREP + SPEC-REVIEW + SECURITY + CONTRACT `bb25b18`; Phase A adapter-only BUILD |
+| US-8.2 SadTalker adapter | done (Phase A) | BE `fba526c` · fix `8a781fd` · VALIDATION `52b2e98` · QA `0448f65` · CLOSE Phase A `258fcef`; Phase B → US-8.4 |
+| US-8.4 Job status and failure UI | SELECT | Next story — closes US-8.2 Phase B |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
