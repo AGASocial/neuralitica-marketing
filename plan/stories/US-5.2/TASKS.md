@@ -112,15 +112,15 @@ Concrete BE consumer: extended `getReelScriptsForWeek` → `items[].readability`
 
 Concrete FE consumer: `/operator/scripts` list + detail panel.
 
-- [ ] **`computeScriptReadabilityMetrics(package: ReelScriptPackage): ReelScriptReadability`** — pure function with frozen constants.
-- [ ] **Unit tests** `lib/reel-scripts/compute-script-readability.test.ts`: char exceed; many beats; VO over/under/ok; empty lines stripped; unicode length; pending package not called.
-- [ ] **Extend list mapper** in `getReelScriptsForWeek` pipeline — attach `readability` when `package !== null`.
-- [ ] **Extend Zod** `reelScriptListItemSchema` (+ success schema) with `readability` field — CONTRACT freezes.
-- [ ] **Export constants** `REEL_SCRIPT_MAX_CHARS_PER_BEAT_LINE`, `REEL_SCRIPT_WORDS_PER_SECOND_TARGET`, etc. for CONTRACT/docs.
-- [ ] **`assertScriptReadabilityForSave`** (or named equivalent) — exported, tested, **uncalled** in V1 (future edit story).
-- [ ] **No mutation changes** — `generateReelScripts` / `regenerateReelScriptSlot` unchanged; no save validation wired.
-- [ ] **No new DB migration**.
-- [ ] **No logging** of full script bodies beyond existing US-5.1 policy.
+- [x] **`computeScriptReadabilityMetrics(package: ReelScriptPackage): ReelScriptReadability`** — pure function with frozen constants.
+- [x] **Unit tests** `lib/reel-scripts/compute-script-readability.test.ts`: char exceed; many beats; VO over/under/ok; empty lines stripped; unicode length; pending package not called.
+- [x] **Extend list mapper** in `getReelScriptsForWeek` pipeline — attach `readability` when `package !== null`.
+- [x] **Extend Zod** `reelScriptListItemSchema` (+ success schema) with `readability` field — CONTRACT freezes.
+- [x] **Export constants** `REEL_SCRIPT_MAX_CHARS_PER_BEAT_LINE`, `REEL_SCRIPT_WORDS_PER_SECOND_TARGET`, etc. for CONTRACT/docs.
+- [x] **`assertScriptReadabilityForSave`** (or named equivalent) — exported, tested, **uncalled** in V1 (future edit story).
+- [x] **No mutation changes** — `generateReelScripts` / `regenerateReelScriptSlot` unchanged; no save validation wired.
+- [x] **No new DB migration**.
+- [x] **No logging** of full script bodies beyond existing US-5.1 policy.
 
 ---
 
@@ -140,7 +140,7 @@ Concrete FE consumer: `/operator/scripts` list + detail panel.
 - [ ] VALIDATION.md
 - [ ] QA.md
 
-**Status:** CONTRACT (2026-08-30). Frozen constants + DTO in `lib/contracts/reel-script-readability.ts`; `reelScriptListItemSchema` extended. **Next:** FE signoff on CONTRACT → BUILD.
+**Status:** BUILD (2026-08-30). BE slice: readability tests + mapper + forbidden-key guards. FE BUILD in progress.
 
 ---
 

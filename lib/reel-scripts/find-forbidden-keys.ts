@@ -29,6 +29,18 @@ const FORBIDDEN_REEL_SCRIPT_KEYS = new Set([
   "invokedBy",
   "role",
   "auth_user_id",
+  // US-5.2: threshold smuggle keys — readability limits are server-frozen
+  "maxCharsPerBeat",
+  "maxCharsPerBeatLine",
+  "wordsPerSecond",
+  "wordsPerSecondTarget",
+  "thresholds",
+  "readabilityConfig",
+  "readability",
+  "maxBeatLinesTotal",
+  "maxLinesPerBeat",
+  "voWarnOverRatio",
+  "voWarnUnderRatio",
 ]);
 
 export function findForbiddenReelScriptKeys(raw: unknown): string[] {
