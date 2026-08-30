@@ -52,7 +52,7 @@ export function createStubVideoAdapter(params: {
       });
     },
 
-    async fetchAsset(externalJobId) {
+    async fetchAsset(externalJobId, _rawOutputUrl, _jobContext) {
       parseExternalJobId(externalJobId);
 
       return storedMediaAssetSchema.parse({

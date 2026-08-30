@@ -23,6 +23,8 @@ export const reelSpendJobKindSchema = z.enum([
   "script_regenerate",
   "caption_generate",
   "caption_regenerate",
+  "talking_head_generate",
+  "talking_head_retry",
 ]);
 
 export type ReelSpendJobKind = z.infer<typeof reelSpendJobKindSchema>;

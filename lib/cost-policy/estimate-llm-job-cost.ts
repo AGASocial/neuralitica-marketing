@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { ReelSpendJobKind } from "@/lib/contracts/cost-policy";
 import type { LlmVariant, ProviderTier } from "@/lib/contracts/providers";
 import type { ProviderRationaleKey } from "@/lib/contracts/provider-decisions";
 import { resolveProviderForJob } from "@/lib/providers/resolve-provider-for-job";
@@ -43,12 +44,11 @@ export async function estimateLlmJobCost(
 }
 
 export function llmVariantForJobKind(
-  jobKind:
-    | "script_generate"
-    | "script_regenerate"
-    | "caption_generate"
-    | "caption_regenerate",
+  jobKind: ReelSpendJobKind,
 ): LlmVariant {
+  if (jobKind === "talking_head_generate" || jobKind === "talking_head_retry") {
+    return "default";
+  }
   return jobKind === "script_generate" || jobKind === "script_regenerate"
     ? "fallback"
     : "default";

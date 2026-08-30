@@ -60,6 +60,8 @@ export type CreateSadtalkerLowAdapterParams = {
     args: UploadGeneratedVideoArgs,
   ) => Promise<UploadGeneratedVideoResult>;
   fetchImpl?: typeof fetch;
+  /** Pre-seed job context for poller paths (US-8.4 L1 — job-row tenant context). */
+  initialJobContexts?: Map<ExternalJobId, JobContext>;
 };
 
 function getReplicateApiToken(): string {
@@ -280,6 +282,7 @@ export function createSadtalkerLowAdapter(
     resolveMediaAssetUrl,
     uploadGeneratedVideo = uploadGeneratedVideoBuffer,
     fetchImpl = fetch,
+    initialJobContexts,
   } = params;
 
   const resolveAssetUrl =
@@ -294,7 +297,9 @@ export function createSadtalkerLowAdapter(
             : SADTALKER_AUDIO_MIME_ALLOWLIST,
       }));
 
-  const jobContextByExternalId = new Map<ExternalJobId, JobContext>();
+  const jobContextByExternalId = new Map<ExternalJobId, JobContext>(
+    initialJobContexts ?? [],
+  );
 
   return {
     providerKey: "sadtalker_low",
@@ -396,10 +401,15 @@ export function createSadtalkerLowAdapter(
       );
     },
 
-    async fetchAsset(externalJobId: ExternalJobId, rawOutputUrl?: string) {
+    async fetchAsset(
+      externalJobId: ExternalJobId,
+      rawOutputUrl?: string,
+      jobContext?: JobContext,
+    ) {
       parseExternalJobId(externalJobId);
 
-      const context = jobContextByExternalId.get(externalJobId);
+      const context =
+        jobContext ?? jobContextByExternalId.get(externalJobId) ?? null;
       if (!context) {
         throw new ProviderAdapterError(
           "PROVIDER_JOB_CONTEXT_MISSING",

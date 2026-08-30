@@ -235,10 +235,12 @@ export interface VideoProviderAdapter {
   /**
    * Download provider output and persist under our storage layer.
    * `rawOutputUrl` comes from getJobStatus when the vendor returns a URL.
+   * `jobContext` is required for stateless poller paths (US-8.4 L1).
    */
   fetchAsset(
     externalJobId: ExternalJobId,
     rawOutputUrl?: string,
+    jobContext?: { clientId: string; reelScriptId: string },
   ): Promise<StoredMediaAsset>;
 }
 

@@ -8,6 +8,7 @@ import {
   reelCostRollupsMapSchema,
   reelWeekCostSummarySchema,
 } from "@/lib/contracts/actual-cost";
+import { operatorVideoJobsByReelMapSchema } from "@/lib/contracts/video-job";
 import { reelCaptionSummarySchema } from "@/lib/contracts/reel-caption";
 import { reelScriptReadabilitySchema } from "@/lib/contracts/reel-script-readability";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
@@ -97,6 +98,8 @@ export const getReelScriptsForWeekSuccessSchema = z
     costSummary: reelWeekCostSummarySchema,
     /** US-7.4 — Operator-only per-Reel roll-ups keyed by reelScriptId. */
     reelCostRollups: reelCostRollupsMapSchema,
+    /** US-8.4 — Operator-only latest primary video job per reelScriptId. */
+    videoJobsByReelScriptId: operatorVideoJobsByReelMapSchema,
   })
   .strict();
 

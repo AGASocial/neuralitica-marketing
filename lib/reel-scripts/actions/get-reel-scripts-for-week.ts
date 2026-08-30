@@ -19,6 +19,7 @@ import { getReelCostSummaryForWeek } from "@/lib/cost-policy/get-reel-cost-summa
 import type { ReelCostRollupsMap } from "@/lib/contracts/actual-cost";
 import { buildReelScriptListForStrategy } from "@/lib/reel-scripts/list-reel-scripts-for-week";
 import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved-strategy-for-week";
+import { getVideoJobsForReelScripts } from "@/lib/video-jobs/get-video-jobs-for-reel-scripts";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
 
 function authGuardEnvelope(error: {
@@ -72,6 +73,7 @@ export async function getReelScriptsForWeek(
         items: [],
         costSummary: emptyWeekCostSummary(weekStart, clientId),
         reelCostRollups: {},
+        videoJobsByReelScriptId: {},
       };
     }
 
@@ -117,6 +119,11 @@ export async function getReelScriptsForWeek(
       }),
     );
 
+    const videoJobsByReelScriptId = await getVideoJobsForReelScripts({
+      clientId,
+      reelScriptIds: rollupScriptIds,
+    });
+
     return {
       ok: true,
       weekStart,
@@ -129,6 +136,7 @@ export async function getReelScriptsForWeek(
       items,
       costSummary,
       reelCostRollups,
+      videoJobsByReelScriptId,
     };
   } catch (error) {
     if (isAuthGuardError(error)) {
