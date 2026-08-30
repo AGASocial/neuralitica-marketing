@@ -152,6 +152,7 @@ function clearReelScriptModuleCache() {
     const normalized = key.replace(/\\/g, "/");
     if (
       normalized.includes("/lib/reel-scripts/") ||
+      normalized.includes("/lib/reel-captions/") ||
       normalized.includes("/lib/agents/content/generate-reel-script") ||
       normalized.includes("/lib/content-strategy/load-approved-strategy-for-week") ||
       normalized.includes("/lib/content-strategy/strategy-has-scripts") ||
@@ -865,6 +866,17 @@ describe("reel script mutations (US-5.1)", () => {
             eq: () => chainableQuery({}),
             order: () => chainableQuery({}),
             neq: () => chainableQuery({}),
+            in: () => chainableQuery({}),
+          };
+        }
+        if (table === "neuramark_reel_captions") {
+          return {
+            select: () =>
+              chainableQuery({
+                then: (onFulfilled: (v: unknown) => unknown) =>
+                  Promise.resolve({ data: [], error: null }).then(onFulfilled),
+              }),
+            eq: () => chainableQuery({}),
             in: () => chainableQuery({}),
           };
         }

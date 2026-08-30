@@ -118,20 +118,20 @@ Concrete BE consumers: `generateReelCaptions` · `regenerateReelCaption` · exte
 
 Concrete FE consumers: `/operator/scripts` Caption tab; batch + single generate buttons.
 
-- [ ] **Migration** `neuramark_reel_captions` per PO table (CONTRACT freezes indexes, FK, CHECKs).
-- [ ] **Zod schemas** in `lib/contracts/reel-caption.ts`: agent output, caption record, generate/regenerate inputs, list extension.
-- [ ] **`generateReelCaptions({ weekStart })`** Server Action — `requireOperator("handler")`; approval gate; script-exists check; rate limit; orchestrator delegate.
-- [ ] **`regenerateReelCaption({ weekStart, slotIndex })`** Server Action — same gates; single script.
-- [ ] **Orchestrator** `generate-reel-captions-for-client.ts`: load approved strategy; resolve scripts; per-script agent calls; batch UPSERT.
-- [ ] **`loadReelScriptForCaptionJob({ reelScriptId, clientId })`** — script exists + tenancy + approved strategy linkage.
-- [ ] **Extend `getReelScriptsForWeek`** — join/load caption rows; attach `caption` summary on list items.
-- [ ] **[SEC] Verify strategy `approved` + tenancy** before any LLM call or UPSERT.
-- [ ] **[SEC] Zod validate agent output** before persistence; length bounds; plain text; reject unknown keys.
-- [ ] **[SEC] Rate limit** on batch generate (`caption_generate` key).
-- [ ] **[SEC] Forbidden fields** — no client-supplied caption/hashtag/keyword/variant text.
-- [ ] **[SEC] LLM keys** server env only; delimited untrusted prompt blocks for profile/script text.
-- [ ] `revalidatePath("/operator/scripts")` after success.
-- [ ] **Automated tests**: `lib/reel-captions/reel-captions.test.ts` — approval gate; script missing; UPSERT idempotency; hashtag max; zone keywords prompt fixture; mock LLM; rate limit.
+- [x] **Migration** `neuramark_reel_captions` per PO table (CONTRACT freezes indexes, FK, CHECKs).
+- [x] **Zod schemas** in `lib/contracts/reel-caption.ts`: agent output, caption record, generate/regenerate inputs, list extension.
+- [x] **`generateReelCaptions({ weekStart })`** Server Action — `requireOperator("handler")`; approval gate; script-exists check; rate limit; orchestrator delegate.
+- [x] **`regenerateReelCaption({ weekStart, slotIndex })`** Server Action — same gates; single script.
+- [x] **Orchestrator** `generate-reel-captions-for-client.ts`: load approved strategy; resolve scripts; per-script agent calls; batch UPSERT.
+- [x] **`loadReelScriptForCaptionJob({ reelScriptId, clientId })`** — script exists + tenancy + approved strategy linkage.
+- [x] **Extend `getReelScriptsForWeek`** — join/load caption rows; attach `caption` summary on list items.
+- [x] **[SEC] Verify strategy `approved` + tenancy** before any LLM call or UPSERT.
+- [x] **[SEC] Zod validate agent output** before persistence; length bounds; plain text; reject unknown keys.
+- [x] **[SEC] Rate limit** on batch generate (`caption_generate` key).
+- [x] **[SEC] Forbidden fields** — no client-supplied caption/hashtag/keyword/variant text.
+- [x] **[SEC] LLM keys** server env only; delimited untrusted prompt blocks for profile/script text.
+- [x] `revalidatePath("/operator/scripts")` after success.
+- [x] **Automated tests**: `lib/reel-captions/reel-captions.test.ts` — approval gate; script missing; UPSERT idempotency; hashtag max; zone keywords prompt fixture; mock LLM; rate limit.
 
 ---
 
@@ -139,14 +139,14 @@ Concrete FE consumers: `/operator/scripts` Caption tab; batch + single generate 
 
 All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
-- [ ] Create **`neuramark_reel_captions`** per CONTRACT.
-- [ ] FK **`reel_script_id`** → `neuramark_reel_scripts(id)` ON DELETE RESTRICT.
-- [ ] FK **`client_id`** → `neuramark_clients(id)`.
-- [ ] **UNIQUE** `(reel_script_id)`.
-- [ ] Index on `(client_id)` and/or `(reel_script_id)` for list joins.
-- [ ] JSONB columns: `hashtags`, `keywords`, `cta_variants` — arrays of strings.
-- [ ] `caption` text NOT NULL on generated rows.
-- [ ] RLS: zero policies / deny-by-default (match Fase 1 pattern).
+- [x] Create **`neuramark_reel_captions`** per CONTRACT.
+- [x] FK **`reel_script_id`** → `neuramark_reel_scripts(id)` ON DELETE RESTRICT.
+- [x] FK **`client_id`** → `neuramark_clients(id)`.
+- [x] **UNIQUE** `(reel_script_id)`.
+- [x] Index on `(client_id)` and/or `(reel_script_id)` for list joins.
+- [x] JSONB columns: `hashtags`, `keywords`, `cta_variants` — arrays of strings.
+- [x] `caption` text NOT NULL on generated rows.
+- [x] RLS: zero policies / deny-by-default (match Fase 1 pattern).
 - [ ] **Do not** add `selected_cta_index` (US-6.2).
 - [ ] **Do not** add video/publish job tables.
 
@@ -156,15 +156,15 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
 Coordinates with BE on CONTRACT; owns agent logic and caption schema.
 
-- [ ] **`lib/contracts/reel-caption.ts`** — agent output + persisted record schemas shared with BE/FE.
-- [ ] **Caption agent module** `lib/agents/content/generate-reel-caption.ts` — prompt with delimited untrusted blocks (profile zone/tone/services, script hook/body/cta/on-screen/VO, strategy slot tema/goal/angle/ctaHint).
-- [ ] Wire **`getBusinessProfileForAgents(clientId)`** — zone for local keywords; abort if profile incomplete.
-- [ ] Wire **`resolveProvider(..., llmVariant: 'default')`** + LLM adapter — **not** script fallback variant.
-- [ ] Agent output: `caption`, `hashtags[]`, `keywords[]`, `ctaVariants[]` (min 2) — Zod strict before return.
-- [ ] **Locale-aware** prompt (ES/EN) matching profile preference.
-- [ ] **Instagram constraints** in system prompt: plain text, no HTML, hashtag count, caption length.
-- [ ] **`generate-reel-caption.test.ts`** — schema reject; hashtag bounds; min 2 CTA variants; zone present → keywords non-empty expectation in prompt fixture.
-- [ ] `import "server-only"` on agent module.
+- [x] **`lib/contracts/reel-caption.ts`** — agent output + persisted record schemas shared with BE/FE.
+- [x] **Caption agent module** `lib/agents/content/generate-reel-caption.ts` — prompt with delimited untrusted blocks (profile zone/tone/services, script hook/body/cta/on-screen/VO, strategy slot tema/goal/angle/ctaHint).
+- [x] Wire **`getBusinessProfileForAgents(clientId)`** — zone for local keywords; abort if profile incomplete.
+- [x] Wire **`resolveProvider(..., llmVariant: 'default')`** + LLM adapter — **not** script fallback variant.
+- [x] Agent output: `caption`, `hashtags[]`, `keywords[]`, `ctaVariants[]` (min 2) — Zod strict before return.
+- [x] **Locale-aware** prompt (ES/EN) matching profile preference.
+- [x] **Instagram constraints** in system prompt: plain text, no HTML, hashtag count, caption length.
+- [x] **`generate-reel-caption.test.ts`** — schema reject; hashtag bounds; min 2 CTA variants; zone present → keywords non-empty expectation in prompt fixture.
+- [x] `import "server-only"` on agent module.
 
 ---
 
@@ -173,11 +173,11 @@ Coordinates with BE on CONTRACT; owns agent logic and caption schema.
 - [x] SPEC-REVIEW.md (spec-guardian — 2026-08-30 GAPS resolved in CONTRACT)
 - [x] SECURITY.md (security-architect — 2026-08-29 APPROVE WITH CONDITIONS; reconciled in CONTRACT)
 - [x] CONTRACT.md authored (nextjs-backend — 2026-08-30 frozen; **Reviewed by FE** required before BUILD)
-- [ ] BUILD (content-agents-engineer + nextjs-backend + nextjs-frontend)
+- [ ] BUILD (content-agents-engineer + nextjs-backend + nextjs-frontend) — BE/agents slice complete; FE pending
 - [ ] VALIDATION.md
 - [ ] QA.md
 
-**Status:** CONTRACT (2026-08-30). Branch `feature/US-6.1-reel-captions`. **Next:** FE signoff → BUILD.
+**Status:** BUILD in progress (2026-08-30). BE + agents complete on `feature/US-6.1-reel-captions`; FE Caption tab pending.
 
 ---
 

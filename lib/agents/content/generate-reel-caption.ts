@@ -196,6 +196,9 @@ export function parseAndValidateReelCaptionOutput(
   return result.data;
 }
 
+/** Alias for tests and stub adapter parity. */
+export const parseAndValidateReelCaptionAgentOutput = parseAndValidateReelCaptionOutput;
+
 /**
  * Runs the Caption LLM job for one script; returns raw JSON for orchestrator Zod parse.
  */

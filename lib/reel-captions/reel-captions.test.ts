@@ -1110,7 +1110,8 @@ describe("reel caption helpers (US-6.1)", () => {
       assert.equal(counts.profile, 1);
       assert.equal(counts.catalog, 1);
       assert.equal(counts.policy, 1);
-      assert.equal(counts.strategy, 1);
+      // Orchestrator + per-script loadReelScriptForCaptionJob verification
+      assert.equal(counts.strategy, 2);
     } finally {
       restore();
     }
