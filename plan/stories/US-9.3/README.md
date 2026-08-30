@@ -92,7 +92,7 @@ _Evitar:_ client-supplied `provider_key`; arbitrary vendor `voice_id`; human aud
 - [x] VALIDATION.md (requirements-validator — PASS WITH NOTES `1715048`)
 - [x] QA.md (qa-engineer — APPROVE WITH CONDITIONS `e9c1833`)
 
-**Status:** CLOSED Phase A. **PO close:** pending FF-merge to main. **QA baseline:** `e9c1833` on `feature/US-9.3-tts-voiceover`.
+**Status:** CLOSED Phase A. **PO close:** `dfdd08b` · **QA baseline:** `e9c1833` on `feature/US-9.3-tts-voiceover` (merged to main).
 
 **Next after CLOSE:** **SELECT US-9.1** (assemble final 9:16 Reel — voiceover asset now available); Phase B ElevenLabs when `elevenlabs_tts_high` activates.
 
