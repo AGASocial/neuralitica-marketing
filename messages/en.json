@@ -1338,6 +1338,33 @@
         "running": "Running QA…"
       },
       "toastSuccess": "QA report updated.",
+      "override": {
+        "action": "Override",
+        "blockingLocked": "Legal / consent block — cannot be overridden.",
+        "auditTitle": "Override audit",
+        "auditEmpty": "No overrides recorded for this report.",
+        "gateReady": "Ready for approval",
+        "toastSuccess": "Override recorded.",
+        "dialog": {
+          "title": "Override QA check",
+          "confirm": "Record override",
+          "cancel": "Cancel",
+          "reasonLabel": "Reason",
+          "reasonRequired": "Enter a reason between 1 and 500 characters.",
+          "confirmMessage": "Document why this failed check may proceed.",
+          "errors": {
+            "unauthenticated": "Please log in to continue.",
+            "forbidden": "You do not have permission to override QA checks.",
+            "validation": "Please check the reason and try again.",
+            "notFound": "That QA report was not found.",
+            "forbiddenFields": "Invalid override request.",
+            "checkBlocking": "This check is a legal / consent block and cannot be overridden.",
+            "checkNotFailed": "Only failed overridable checks can be overridden.",
+            "rateLimited": "Override rate limit reached. Try again later.",
+            "internal": "Something went wrong. Please try again later."
+          }
+        }
+      },
       "errors": {
         "unauthenticated": "Please log in to continue.",
         "forbidden": "You do not have access to QA for that Reel.",

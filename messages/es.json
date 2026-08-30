@@ -1338,6 +1338,33 @@
         "running": "Ejecutando QA…"
       },
       "toastSuccess": "Informe QA actualizado.",
+      "override": {
+        "action": "Anular",
+        "blockingLocked": "Bloqueo legal / de consentimiento — no se puede anular.",
+        "auditTitle": "Auditoría de anulaciones",
+        "auditEmpty": "No hay anulaciones registradas para este informe.",
+        "gateReady": "Listo para aprobación",
+        "toastSuccess": "Anulación registrada.",
+        "dialog": {
+          "title": "Anular check de QA",
+          "confirm": "Registrar anulación",
+          "cancel": "Cancelar",
+          "reasonLabel": "Motivo",
+          "reasonRequired": "Ingresa un motivo de entre 1 y 500 caracteres.",
+          "confirmMessage": "Documenta por qué este check fallido puede continuar.",
+          "errors": {
+            "unauthenticated": "Inicia sesión para continuar.",
+            "forbidden": "No tienes permiso para anular checks de QA.",
+            "validation": "Revisa el motivo e inténtalo de nuevo.",
+            "notFound": "No se encontró ese informe QA.",
+            "forbiddenFields": "Solicitud de anulación no válida.",
+            "checkBlocking": "Este check es un bloqueo legal / de consentimiento y no se puede anular.",
+            "checkNotFailed": "Solo se pueden anular checks fallidos anulables.",
+            "rateLimited": "Límite de tasa de anulaciones alcanzado. Inténtalo más tarde.",
+            "internal": "Algo salió mal. Inténtalo más tarde."
+          }
+        }
+      },
       "errors": {
         "unauthenticated": "Inicia sesión para continuar.",
         "forbidden": "No tienes acceso al QA de ese Reel.",

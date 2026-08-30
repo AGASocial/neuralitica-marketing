@@ -7,9 +7,14 @@ import { Tag } from "primereact/tag";
 
 import type { AssemblyJobStatus } from "@/lib/contracts/assembly-job";
 import type { BrandingJobStatus } from "@/lib/contracts/branding-job";
+import {
+  computeQaGateReady,
+  type OverrideQaCheckSuccess,
+  type QaCheckKey,
+} from "@/lib/contracts/qa-override";
 import type {
+  OperatorQaOverrideDto,
   OperatorQaReportDetailDto,
-  QaCheckKey,
   QaCheckOutcomeStatus,
   QaCheckSeverity,
   QaReportErrorCode,
@@ -17,6 +22,11 @@ import type {
   RunQaForAssembledReelSuccess,
 } from "@/lib/contracts/qa-report";
 import { runQaForAssembledReel } from "@/lib/qa/actions/run-qa-for-assembled-reel";
+
+import {
+  QaOverrideDialog,
+  type QaOverrideDialogCopy,
+} from "@/components/scripts/QaOverrideDialog";
 
 export type OperatorQaCopy = {
   title: string;
@@ -37,6 +47,15 @@ export type OperatorQaCopy = {
     running: string;
   };
   toastSuccess: string;
+  override: {
+    action: string;
+    blockingLocked: string;
+    auditTitle: string;
+    auditEmpty: string;
+    gateReady: string;
+    toastSuccess: string;
+    dialog: QaOverrideDialogCopy;
+  };
   errors: {
     unauthenticated: string;
     forbidden: string;
@@ -65,6 +84,7 @@ type OperatorQaPanelProps = {
   copy: OperatorQaCopy;
   disabled: boolean;
   onSuccess: (result: RunQaForAssembledReelSuccess) => void;
+  onOverrideSuccess: (result: OverrideQaCheckSuccess) => void;
   onError: (message: string) => void;
   onToastSuccess: (summary: string) => void;
 };
@@ -146,6 +166,46 @@ function resolveEvidenceText(
   return messageKey ?? null;
 }
 
+function isFailOverridable(
+  status: QaCheckOutcomeStatus,
+  severity: QaCheckSeverity,
+): boolean {
+  return status === "fail" && severity === "overridable";
+}
+
+function isFailBlocking(
+  status: QaCheckOutcomeStatus,
+  severity: QaCheckSeverity,
+): boolean {
+  return status === "fail" && severity === "blocking";
+}
+
+/** Client-side gate badge only — never call getQaGateStatusForAssembledReel from browser. */
+function deriveGateReadyFromReport(
+  report: OperatorQaReportDetailDto,
+): boolean {
+  const hasBlockingFailures = report.checks.some((check) =>
+    isFailBlocking(check.status, check.severity),
+  );
+  const overriddenCheckKeys = [
+    ...new Set(report.overrides.map((row) => row.checkKey)),
+  ];
+  return computeQaGateReady({
+    status: report.status,
+    checks: report.checks,
+    overriddenCheckKeys,
+    hasBlockingFailures,
+  });
+}
+
+function formatOverrideTimestamp(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return iso;
+  }
+  return date.toLocaleString();
+}
+
 export function messageForQaError(
   code: QaReportErrorCode,
   messageKey: string | undefined,
@@ -213,8 +273,9 @@ export function messageForQaError(
 }
 
 /**
- * Operator Veredicto QA panel (US-10.1 Phase A).
- * Calls runQaForAssembledReel({ assembledReelId }) only — no override UI.
+ * Operator Veredicto QA panel (US-10.1 + US-10.2 override).
+ * Run: runQaForAssembledReel({ assembledReelId }).
+ * Override: overrideQaCheck({ qaReportId, checkKey, reason }) via dialog.
  */
 export function OperatorQaPanel({
   assembledReelId,
@@ -224,11 +285,17 @@ export function OperatorQaPanel({
   copy,
   disabled,
   onSuccess,
+  onOverrideSuccess,
   onError,
   onToastSuccess,
 }: OperatorQaPanelProps) {
   const [pending, setPending] = useState(false);
+  const [overridePending, setOverridePending] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
+  const [overrideDialogVisible, setOverrideDialogVisible] = useState(false);
+  const [overrideCheckKey, setOverrideCheckKey] = useState<QaCheckKey | null>(
+    null,
+  );
 
   const readyForRun = prerequisitesMet(assemblyStatus, brandingStatus);
   const inFlight = isQaInFlight(report?.status) || pending;
@@ -236,6 +303,13 @@ export function OperatorQaPanel({
   const canRun = readyForRun && !inFlight && !disabled && !hasReport;
   const canRerun =
     readyForRun && !inFlight && !disabled && isTerminalQaStatus(report?.status);
+  const gateReady = report ? deriveGateReadyFromReport(report) : false;
+  const showGateNotReady =
+    report != null &&
+    report.status !== "passed" &&
+    isTerminalQaStatus(report.status) &&
+    !gateReady;
+  const overrides: OperatorQaOverrideDto[] = report?.overrides ?? [];
 
   async function handleRun() {
     if (pending || disabled || !readyForRun) {
@@ -278,6 +352,25 @@ export function OperatorQaPanel({
     }
   }
 
+  function openOverrideDialog(checkKey: QaCheckKey) {
+    if (disabled || overridePending || !report) {
+      return;
+    }
+    setBanner(null);
+    setOverrideCheckKey(checkKey);
+    setOverrideDialogVisible(true);
+  }
+
+  function handleOverrideSuccess(result: OverrideQaCheckSuccess) {
+    onOverrideSuccess(result);
+    onToastSuccess(copy.override.toastSuccess);
+  }
+
+  function handleOverrideError(message: string) {
+    setBanner(message);
+    onError(message);
+  }
+
   return (
     <section
       style={{
@@ -301,14 +394,26 @@ export function OperatorQaPanel({
         }}
       >
         <h3 style={{ margin: 0, fontSize: "1rem" }}>{copy.title}</h3>
-        {report ? (
-          <Tag
-            value={copy.status[report.status]}
-            severity={qaStatusSeverity(report.status)}
-          />
-        ) : (
-          <Tag value={copy.status.pending} severity="secondary" />
-        )}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "0.5rem",
+            alignItems: "center",
+          }}
+        >
+          {gateReady ? (
+            <Tag value={copy.override.gateReady} severity="success" />
+          ) : null}
+          {report ? (
+            <Tag
+              value={copy.status[report.status]}
+              severity={qaStatusSeverity(report.status)}
+            />
+          ) : (
+            <Tag value={copy.status.pending} severity="secondary" />
+          )}
+        </div>
       </div>
 
       {banner ? (
@@ -333,7 +438,7 @@ export function OperatorQaPanel({
         </p>
       ) : null}
 
-      {report && report.status !== "passed" && isTerminalQaStatus(report.status) ? (
+      {showGateNotReady ? (
         <Message
           severity="warn"
           text={copy.gateNotReady}
@@ -357,6 +462,9 @@ export function OperatorQaPanel({
               check.evidence?.detail,
               copy,
             );
+            const canOverride = isFailOverridable(check.status, check.severity);
+            const blockingLocked = isFailBlocking(check.status, check.severity);
+
             return (
               <li
                 key={check.checkKey}
@@ -388,6 +496,17 @@ export function OperatorQaPanel({
                     severity={severityTagSeverity(check.severity)}
                     rounded
                   />
+                  {canOverride ? (
+                    <Button
+                      type="button"
+                      label={copy.override.action}
+                      icon="pi pi-pencil"
+                      size="small"
+                      outlined
+                      disabled={disabled || overridePending || inFlight}
+                      onClick={() => openOverrideDialog(check.checkKey)}
+                    />
+                  ) : null}
                 </div>
                 {evidenceText ? (
                   <p
@@ -401,10 +520,81 @@ export function OperatorQaPanel({
                     {evidenceText}
                   </p>
                 ) : null}
+                {blockingLocked ? (
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#9a3412",
+                      fontSize: "0.8125rem",
+                    }}
+                  >
+                    {copy.override.blockingLocked}
+                  </p>
+                ) : null}
               </li>
             );
           })}
         </ul>
+      ) : null}
+
+      {report && isTerminalQaStatus(report.status) ? (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+            paddingTop: "0.25rem",
+          }}
+        >
+          <h4 style={{ margin: 0, fontSize: "0.875rem" }}>
+            {copy.override.auditTitle}
+          </h4>
+          {overrides.length === 0 ? (
+            <p style={{ margin: 0, color: "#6b7280", fontSize: "0.8125rem" }}>
+              {copy.override.auditEmpty}
+            </p>
+          ) : (
+            <ul
+              style={{
+                listStyle: "none",
+                margin: 0,
+                padding: 0,
+                display: "grid",
+                gap: "0.5rem",
+              }}
+            >
+              {overrides.map((row) => (
+                <li
+                  key={row.overrideId}
+                  style={{
+                    padding: "0.5rem 0",
+                    borderBottom: "1px solid #f3f4f6",
+                    fontSize: "0.8125rem",
+                  }}
+                >
+                  <div style={{ fontWeight: 600 }}>
+                    {copy.checks[row.checkKey] ?? row.checkKey}
+                  </div>
+                  <p
+                    style={{
+                      margin: "0.25rem 0",
+                      whiteSpace: "pre-wrap",
+                      color: "#374151",
+                    }}
+                  >
+                    {row.reason}
+                  </p>
+                  <p style={{ margin: 0, color: "#6b7280" }}>
+                    {formatOverrideTimestamp(row.createdAt)}
+                    {row.operatorDisplayName
+                      ? ` · ${row.operatorDisplayName}`
+                      : null}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       ) : null}
 
       {canRun || canRerun ? (
@@ -439,6 +629,26 @@ export function OperatorQaPanel({
           {copy.loading}
         </p>
       ) : null}
+
+      <QaOverrideDialog
+        visible={overrideDialogVisible}
+        qaReportId={report?.qaReportId ?? null}
+        checkKey={overrideCheckKey}
+        checkLabel={
+          overrideCheckKey
+            ? (copy.checks[overrideCheckKey] ?? overrideCheckKey)
+            : ""
+        }
+        copy={copy.override.dialog}
+        pending={overridePending}
+        onHide={() => {
+          setOverrideDialogVisible(false);
+          setOverrideCheckKey(null);
+        }}
+        onPendingChange={setOverridePending}
+        onSuccess={handleOverrideSuccess}
+        onError={handleOverrideError}
+      />
     </section>
   );
 }

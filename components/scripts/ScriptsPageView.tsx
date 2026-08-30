@@ -86,6 +86,7 @@ import type {
 } from "@/lib/contracts/assembly-job";
 import { ASSEMBLY_TEMPLATE_REEL_V1_BASIC } from "@/lib/contracts/assembly-job";
 import type { ApplyBrandingForAssemblySuccess } from "@/lib/contracts/branding-job";
+import type { OverrideQaCheckSuccess } from "@/lib/contracts/qa-override";
 import type {
   OperatorQaReportDetailDto,
   OperatorQaReportsByAssembledReelMap,
@@ -1178,6 +1179,14 @@ export function ScriptsPageView({
     router.refresh();
   }
 
+  function handleQaOverrideSuccess(result: OverrideQaCheckSuccess) {
+    setQaOverrides((prev) => ({
+      ...prev,
+      [result.assembledReelId]: result.report,
+    }));
+    router.refresh();
+  }
+
   function handleQaToastSuccess(summary: string) {
     toastRef.current?.show({
       severity: "success",
@@ -1475,6 +1484,7 @@ export function ScriptsPageView({
                 onAssemblyToastSuccess={handleAssemblyToastSuccess}
                 onAssemblyError={handleAssemblyError}
                 onQaSuccess={handleQaSuccess}
+                onQaOverrideSuccess={handleQaOverrideSuccess}
                 onQaToastSuccess={handleQaToastSuccess}
                 onQaError={handleQaError}
                 onRequestBrandingRebrand={openRebrandDialog}
@@ -1649,6 +1659,7 @@ type ReelDetailPanelProps = {
   onAssemblyToastSuccess: (summary: string) => void;
   onAssemblyError: (message: string) => void;
   onQaSuccess: (result: RunQaForAssembledReelSuccess) => void;
+  onQaOverrideSuccess: (result: OverrideQaCheckSuccess) => void;
   onQaToastSuccess: (summary: string) => void;
   onQaError: (message: string) => void;
   captionRegeneratingSlot: number | null;
@@ -1684,6 +1695,7 @@ function ReelDetailPanel({
   onAssemblyToastSuccess,
   onAssemblyError,
   onQaSuccess,
+  onQaOverrideSuccess,
   onQaToastSuccess,
   onQaError,
   captionRegeneratingSlot,
@@ -1771,6 +1783,7 @@ function ReelDetailPanel({
           copy={copy.qa}
           disabled={isBusy}
           onSuccess={onQaSuccess}
+          onOverrideSuccess={onQaOverrideSuccess}
           onError={onQaError}
           onToastSuccess={onQaToastSuccess}
         />

@@ -116,15 +116,15 @@
 
 ## FE checklist
 
-- [ ] On `OperatorQaPanel`, for each check with `status === fail` and `severity === overridable`: **Override** control opens Dialog (PrimeReact; mirror `VideoJobRetryLimitOverrideDialog`)
-- [ ] Dialog: reason `InputTextarea`; submit disabled unless trimmed length ∈ [1, 500]; cancel; pending state
-- [ ] Blocking failed checks: **no** override CTA; show legal/non-overridable copy (EN/ES)
-- [ ] After success: refresh panel (report status unchanged; audit list grows); toast
-- [ ] Audit list: chronological overrides for current report (`checkKey` label, reason, timestamp; optional operator display)
-- [ ] Empty / loading / error / forbidden states
-- [ ] i18n: `scripts.qa.override.*` (+ reuse check labels from `scripts.qa.checks.*`)
-- [ ] No Cliente surface; no override-all control
-- [ ] Plain text / PrimeReact only — no `dangerouslySetInnerHTML`
+- [x] On `OperatorQaPanel`, for each check with `status === fail` and `severity === overridable`: **Override** control opens Dialog (PrimeReact; mirror `VideoJobRetryLimitOverrideDialog`)
+- [x] Dialog: reason `InputTextarea`; submit disabled unless trimmed length ∈ [1, 500]; cancel; pending state
+- [x] Blocking failed checks: **no** override CTA; show legal/non-overridable copy (EN/ES)
+- [x] After success: refresh panel (report status unchanged; audit list grows); toast
+- [x] Audit list: chronological overrides for current report (`checkKey` label, reason, timestamp; optional operator display)
+- [x] Empty / loading / error / forbidden states
+- [x] i18n: `scripts.qa.override.*` (+ reuse check labels from `scripts.qa.checks.*`)
+- [x] No Cliente surface; no override-all control
+- [x] Plain text / PrimeReact only — no `dangerouslySetInnerHTML`
 
 ## BE checklist
 
