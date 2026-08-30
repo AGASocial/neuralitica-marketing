@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-5.2
-story_status: BUILD
+story_status: VALIDATION
 feature_branch: feature/US-5.2-script-readability
 last_completed_story: US-5.1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T05:00:00Z
+updated_at: 2026-08-30T06:00:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -21,7 +21,7 @@ updated_at: 2026-08-30T05:00:00Z
 | US-4.1 Content Strategy agent | done | BE `af998d9` · FE `dcbd15a` · agents `bbd159d` · CLOSE |
 | US-4.2 Review and approve strategy | done | BE `ba57bac` · FE `4367287` · CLOSE 5/5 AC |
 | US-5.1 Reel script package per slot | done | agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e` · CLOSE 6/6 AC |
-| US-5.2 Preview script readability | BUILD | BE: readability tests + mapper; FE BUILD in progress; branch `feature/US-5.2-script-readability` |
+| US-5.2 Preview script readability | VALIDATION | BE `b503241` · FE `b68d2ee` · 18/18 tests · PASS WITH NOTES (0 blockers); branch `feature/US-5.2-script-readability` |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -33,6 +33,7 @@ updated_at: 2026-08-30T05:00:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-5.2 VALIDATION: PASS WITH NOTES (0 blockers, 18/18 tests); `plan/stories/US-5.2/VALIDATION.md`; BE `b503241` · FE `b68d2ee`; story_status VALIDATION.
 - 2026-08-30 · US-5.2 BUILD (BE): `compute-script-readability.test.ts` (18 tests); `find-forbidden-keys` threshold guards; mapper attaches `readability`; story_status BUILD.
 - 2026-08-30 · US-5.2 CONTRACT: `plan/stories/US-5.2/CONTRACT.md` frozen; `lib/contracts/reel-script-readability.ts`; SPEC gaps closed (40 chars/beat, parse rules, read-only DTO); story_status CONTRACT; branch `feature/US-5.2-script-readability`.
 - 2026-08-30 · US-5.2 PREP: `plan/stories/US-5.2/README.md` + `TASKS.md`; PO decisions frozen; story_status PREP.
