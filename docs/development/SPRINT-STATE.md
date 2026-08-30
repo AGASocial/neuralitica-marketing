@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-9.3
-story_status: BUILD
+story_status: QA
 feature_branch: feature/US-9.3-tts-voiceover
 last_completed_story: US-8.3
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T18:30:00Z
+updated_at: 2026-08-30T19:00:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -33,7 +33,7 @@ updated_at: 2026-08-30T18:30:00Z
 | US-8.4 Job status and failure UI | done | BE `689d8c6`/`77142b9` · FE `25737db` · VALIDATION `4e36fbc` · QA `9b24c48` · CLOSE `35a433d` |
 | US-8.6 MuseTalk adapter | done | Phase A `dbc9ce2` · Phase B `bdfaaf2` · VALIDATION `798635e` · QA `82bde3d` · CLOSE `2fb7573` (4/5 AC; P1 override defer) |
 | US-8.3 Manual video upload fallback | done | FE `fc6deca` · BE `eaa974a` · fixes `f3f78af`/`b2fb1cc` · VALIDATION `2f5edc0` · QA `a58faeb` · CLOSE `d8baafb` |
-| US-9.3 Text-to-speech for voiceover | BUILD | CONTRACT `fb620ef` · FE signoff `dbb5103` · media+BE+FE in flight |
+| US-9.3 Text-to-speech for voiceover | QA | BUILD done · VALIDATION PASS WITH NOTES `1715048` |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -45,7 +45,8 @@ updated_at: 2026-08-30T18:30:00Z
 
 ## Historial reciente
 
-- 2026-08-30 · US-9.3 BUILD: adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813`; story_status VALIDATE next.
+- 2026-08-30 · US-9.3 VALIDATION: PASS WITH NOTES `1715048` (79/79 tests); story_status QA.
+- 2026-08-30 · US-9.3 BUILD: adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813`.
 - 2026-08-30 · US-9.3 CONTRACT: frozen `fb620ef`; story_status SIGNOFF.
 - 2026-08-30 · US-8.3 CLOSE: 7/7 AC; QA APPROVE WITH CONDITIONS `a58faeb`; FF-merge `d8baafb` to main; Phase 3 → SELECT US-9.3.
 - 2026-08-30 · US-8.6 CLOSE: 4/5 AC V1; QA APPROVE WITH CONDITIONS `82bde3d`; FF-merge `2fb7573` to main; Phase 3 → SELECT US-8.3.
