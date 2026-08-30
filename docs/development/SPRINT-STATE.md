@@ -31,7 +31,7 @@ updated_at: 2026-08-30T15:40:00Z
 | US-8.1 Provider adapter interface | done | BE `a11d4ae` · fix `4193a1e` · VALIDATION `7367929` · QA `7f34bdb` · CLOSE `3ac3304` |
 | US-8.2 SadTalker adapter | done | Phase A `258fcef` · Phase B closed via US-8.4 `35a433d` |
 | US-8.4 Job status and failure UI | done | BE `689d8c6`/`77142b9` · FE `25737db` · VALIDATION `4e36fbc` · QA `9b24c48` · CLOSE `35a433d` |
-| US-8.6 MuseTalk adapter | SPEC | SPEC-REVIEW GAPS `69039b3` · SECURITY in flight |
+| US-8.6 MuseTalk adapter | CONTRACT | SECURITY `f317826` · CONTRACT in flight |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
