@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-10.1
-story_status: SIGNOFF
+story_status: BUILD
 feature_branch: feature/US-10.1-automated-qa
 last_completed_story: US-9.2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T20:00:00Z
+updated_at: 2026-08-30T20:05:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -36,7 +36,7 @@ updated_at: 2026-08-30T20:00:00Z
 | US-9.3 Text-to-speech for voiceover | done | Phase A `dfdd08b` · adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813` · VALIDATION `1715048` · QA `e9c1833` · CLOSE 5/6 AC (ElevenLabs Phase B defer) |
 | US-9.1 Assemble final 9:16 Reel | done | Phase A `4853871` · worker `f74570f`/`153b73a` · BE `7189f4b` · FE `9e7142c` · VALIDATION `03dff73` · QA `5c0ec7e` · CLOSE 5/5 AC (faceless B-roll Phase B defer) |
 | US-9.2 Add subtitles, logo, and cover | done | worker `7518bc5` · BE `36e9dd3`+fix `757da6a` · FE `a15921b` · VALIDATION `4378c65` · QA `c0d6f66` · CLOSE `92b196a` |
-| US-10.1 Run automated QA | SIGNOFF | CONTRACT frozen `6538358` · FE signoff pending |
+| US-10.1 Run automated QA | BUILD | CONTRACT `6538358` · FE signoff `ba58031` · agents+BE+FE in flight |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
