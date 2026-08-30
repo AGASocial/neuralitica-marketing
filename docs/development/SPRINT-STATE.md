@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: US-9.1
-story_status: QA
-feature_branch: feature/US-9.1-assemble-reel
-last_completed_story: US-9.3
+current_story: SELECT
+story_status: DONE
+feature_branch: null
+last_completed_story: US-9.1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T18:15:00Z
+updated_at: 2026-08-30T21:00:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -34,7 +34,7 @@ updated_at: 2026-08-30T18:15:00Z
 | US-8.6 MuseTalk adapter | done | Phase A `dbc9ce2` · Phase B `bdfaaf2` · VALIDATION `798635e` · QA `82bde3d` · CLOSE `2fb7573` (4/5 AC; P1 override defer) |
 | US-8.3 Manual video upload fallback | done | FE `fc6deca` · BE `eaa974a` · fixes `f3f78af`/`b2fb1cc` · VALIDATION `2f5edc0` · QA `a58faeb` · CLOSE `d8baafb` |
 | US-9.3 Text-to-speech for voiceover | done | Phase A `dfdd08b` · adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813` · VALIDATION `1715048` · QA `e9c1833` · CLOSE 5/6 AC (ElevenLabs Phase B defer) |
-| US-9.1 Assemble final 9:16 Reel | BUILD | CONTRACT `6f4ea8c` · FE signoff `ef389fb` · media+BE+FE in flight |
+| US-9.1 Assemble final 9:16 Reel | done | Phase A `4853871` · worker `f74570f`/`153b73a` · BE `7189f4b` · FE `9e7142c` · VALIDATION `03dff73` · QA `5c0ec7e` · CLOSE 5/5 AC (faceless B-roll Phase B defer) |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -46,6 +46,7 @@ updated_at: 2026-08-30T18:15:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-9.1 CLOSE Phase A: 5/5 AC checked; QA APPROVE WITH CONDITIONS `5c0ec7e`; FF-merge `4853871` to main; Phase 3 → SELECT US-9.2 (recommended) or US-8.5.
 - 2026-08-30 · US-9.1 BUILD: worker `f74570f` · BE `7189f4b` · FE `9e7142c`; story_status VALIDATE.
 - 2026-08-30 · US-9.1 SPEC GAPS `8728973` · SECURITY APPROVE WITH CONDITIONS `3b13b66`; story_status CONTRACT.
 - 2026-08-30 · US-9.1 SELECT → PREP `70a312d`. Branch `feature/US-9.1-assemble-reel`.
