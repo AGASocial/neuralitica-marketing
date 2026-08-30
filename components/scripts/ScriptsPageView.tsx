@@ -23,9 +23,13 @@ import {
   type ProviderRecommendationCopy,
 } from "@/components/scripts/ProviderRecommendationPanel";
 import {
-  OperatorVoiceoverPanel,
-  type OperatorVoiceoverCopy,
-} from "@/components/scripts/OperatorVoiceoverPanel";
+  AssemblyReassembleConfirmDialog,
+  type AssemblyReassembleConfirmCopy,
+} from "@/components/scripts/AssemblyReassembleConfirmDialog";
+import {
+  OperatorAssemblyPanel,
+  type OperatorAssemblyCopy,
+} from "@/components/scripts/OperatorAssemblyPanel";
 import {
   ManualVideoUploadControl,
   type ManualVideoUploadCopy,
@@ -63,6 +67,16 @@ import {
   IG_HASHTAG_WARN_MAX,
   type ReelCaptionErrorCode,
 } from "@/lib/contracts/reel-caption";
+import {
+  OperatorVoiceoverPanel,
+  type OperatorVoiceoverCopy,
+} from "@/components/scripts/OperatorVoiceoverPanel";
+import type {
+  AssembleReelForScriptSuccess,
+  OperatorAssemblyJobDto,
+  OperatorAssemblyJobsByReelMap,
+} from "@/lib/contracts/assembly-job";
+import { ASSEMBLY_TEMPLATE_REEL_V1_BASIC } from "@/lib/contracts/assembly-job";
 import type {
   SynthesizeVoiceoverForReelScriptSuccess,
   VoiceoverSummaryByReelMap,
@@ -193,6 +207,9 @@ type ScriptsPageCopy = {
     toastOverrideSuccess: string;
   };
   voiceover: OperatorVoiceoverCopy;
+  assembly: OperatorAssemblyCopy & {
+    reassembleConfirm: AssemblyReassembleConfirmCopy;
+  };
   caption: {
     tabs: {
       script: string;
@@ -493,6 +510,14 @@ export function ScriptsPageView({
   );
   const [voiceoverOverrides, setVoiceoverOverrides] =
     useState<VoiceoverSummaryByReelMap>({});
+  const [reassembleDialogVisible, setReassembleDialogVisible] = useState(false);
+  const [reassembleReelScriptId, setReassembleReelScriptId] = useState<string | null>(
+    null,
+  );
+  const [assemblyMutationPending, setAssemblyMutationPending] = useState(false);
+  const [assemblyOverrides, setAssemblyOverrides] = useState<OperatorAssemblyJobsByReelMap>(
+    {},
+  );
 
   useEffect(() => {
     setVideoJobOverrides({});
@@ -501,6 +526,10 @@ export function ScriptsPageView({
   useEffect(() => {
     setVoiceoverOverrides({});
   }, [data.voiceoverByReelScriptId]);
+
+  useEffect(() => {
+    setAssemblyOverrides({});
+  }, [data.assemblyByReelScriptId]);
 
   const videoJobsByReelScriptId = useMemo(
     () => ({
@@ -518,6 +547,14 @@ export function ScriptsPageView({
     [data.voiceoverByReelScriptId, voiceoverOverrides],
   );
 
+  const assemblyByReelScriptId = useMemo(
+    () => ({
+      ...data.assemblyByReelScriptId,
+      ...assemblyOverrides,
+    }),
+    [data.assemblyByReelScriptId, assemblyOverrides],
+  );
+
   const weekDate = weekStartToDate(weekStart);
   const weekRangeLabel = formatWeekRange(weekStart, locale);
   const clientId = data.costSummary.clientId;
@@ -529,7 +566,8 @@ export function ScriptsPageView({
     captionSelectingSlot !== null ||
     budgetPreviewLoading ||
     budgetConfirmPending ||
-    videoJobMutationPending;
+    videoJobMutationPending ||
+    assemblyMutationPending;
   const hasApprovedStrategy = data.approvedStrategy !== null;
   const hasAnyGenerated = data.items.some((item) => item.status === "generated");
   const hasAnyCaptionGenerated = data.items.some(
@@ -933,6 +971,77 @@ export function ScriptsPageView({
     });
   }
 
+  function openReassembleDialog(reelScriptId: string) {
+    if (isBusy) {
+      return;
+    }
+    setReassembleReelScriptId(reelScriptId);
+    setReassembleDialogVisible(true);
+  }
+
+  function closeReassembleDialog() {
+    if (assemblyMutationPending) {
+      return;
+    }
+    setReassembleDialogVisible(false);
+    setReassembleReelScriptId(null);
+  }
+
+  function buildAssemblyOverrideFromSuccess(
+    reelScriptId: string,
+    result: AssembleReelForScriptSuccess,
+    targetDurationSec: number | null,
+  ): OperatorAssemblyJobDto {
+    const existing = assemblyByReelScriptId[reelScriptId];
+    return {
+      jobId: result.jobId,
+      reelScriptId,
+      status: result.status,
+      templateId: ASSEMBLY_TEMPLATE_REEL_V1_BASIC,
+      targetDurationSec:
+        existing?.targetDurationSec ?? targetDurationSec ?? 30,
+      actualDurationSec: existing?.actualDurationSec ?? null,
+      outputMediaAssetId: result.outputMediaAssetId ?? existing?.outputMediaAssetId ?? null,
+      failureReason: null,
+      canAssemble: false,
+      canReassemble: result.status === "completed" || result.status === "failed",
+      createdAt: existing?.createdAt ?? new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  function handleAssemblySuccess(
+    reelScriptId: string,
+    result: AssembleReelForScriptSuccess,
+    targetDurationSec: number | null,
+  ) {
+    setAssemblyOverrides((prev) => ({
+      ...prev,
+      [reelScriptId]: buildAssemblyOverrideFromSuccess(
+        reelScriptId,
+        result,
+        targetDurationSec,
+      ),
+    }));
+    router.refresh();
+  }
+
+  function handleAssemblyToastSuccess(summary: string) {
+    toastRef.current?.show({
+      severity: "success",
+      summary,
+      life: 4000,
+    });
+  }
+
+  function handleAssemblyError(message: string) {
+    toastRef.current?.show({
+      severity: "error",
+      summary: message,
+      life: 6000,
+    });
+  }
+
   function handleVideoJobMutationError(message: string) {
     setBanner(message);
   }
@@ -991,6 +1100,26 @@ export function ScriptsPageView({
         onPendingChange={setVideoJobMutationPending}
         onSuccess={handleVideoJobOverrideSuccess}
         onError={handleVideoJobMutationError}
+      />
+      <AssemblyReassembleConfirmDialog
+        visible={reassembleDialogVisible}
+        reelScriptId={reassembleReelScriptId}
+        copy={copy.assembly.reassembleConfirm}
+        pending={assemblyMutationPending}
+        onHide={closeReassembleDialog}
+        onPendingChange={setAssemblyMutationPending}
+        onSuccess={(result) => {
+          if (reassembleReelScriptId) {
+            const row = data.items.find((item) => item.scriptId === reassembleReelScriptId);
+            handleAssemblySuccess(
+              reassembleReelScriptId,
+              result,
+              row?.targetDurationSec ?? null,
+            );
+            handleAssemblyToastSuccess(copy.assembly.toastAssembleSuccess);
+          }
+        }}
+        onError={handleAssemblyError}
       />
       <ReelBudgetConfirmDialog
         visible={budgetDialogVisible}
@@ -1139,6 +1268,7 @@ export function ScriptsPageView({
                 reelCostRollups={reelCostRollups}
                 videoJobsByReelScriptId={videoJobsByReelScriptId}
                 voiceoverByReelScriptId={voiceoverByReelScriptId}
+                assemblyByReelScriptId={assemblyByReelScriptId}
                 showCostRollup={showCostSummary}
                 onCopy={copyToClipboard}
                 onRegenerateCaption={(slotIndex) => void handleRegenerateCaption(slotIndex)}
@@ -1159,6 +1289,18 @@ export function ScriptsPageView({
                 }}
                 onVoiceoverToastSuccess={handleVoiceoverToastSuccess}
                 onVoiceoverError={handleVoiceoverError}
+                onRequestAssemblyReassemble={openReassembleDialog}
+                onAssemblySuccess={(result) => {
+                  if (row.scriptId) {
+                    handleAssemblySuccess(
+                      row.scriptId,
+                      result,
+                      row.targetDurationSec,
+                    );
+                  }
+                }}
+                onAssemblyToastSuccess={handleAssemblyToastSuccess}
+                onAssemblyError={handleAssemblyError}
                 captionRegeneratingSlot={captionRegeneratingSlot}
                 captionSelectingSlot={captionSelectingSlot}
                 isBusy={isBusy}
@@ -1302,6 +1444,7 @@ type ReelDetailPanelProps = {
   reelCostRollups: ReelCostRollupsMap;
   videoJobsByReelScriptId: OperatorVideoJobsByReelMap;
   voiceoverByReelScriptId: VoiceoverSummaryByReelMap;
+  assemblyByReelScriptId: OperatorAssemblyJobsByReelMap;
   showCostRollup: boolean;
   onCopy: (text: string) => void;
   onRegenerateCaption: (slotIndex: number) => void;
@@ -1312,6 +1455,10 @@ type ReelDetailPanelProps = {
   onVoiceoverSuccess: (result: SynthesizeVoiceoverForReelScriptSuccess) => void;
   onVoiceoverToastSuccess: (summary: string) => void;
   onVoiceoverError: (message: string) => void;
+  onRequestAssemblyReassemble: (reelScriptId: string) => void;
+  onAssemblySuccess: (result: AssembleReelForScriptSuccess) => void;
+  onAssemblyToastSuccess: (summary: string) => void;
+  onAssemblyError: (message: string) => void;
   captionRegeneratingSlot: number | null;
   captionSelectingSlot: number | null;
   isBusy: boolean;
@@ -1326,6 +1473,7 @@ function ReelDetailPanel({
   reelCostRollups,
   videoJobsByReelScriptId,
   voiceoverByReelScriptId,
+  assemblyByReelScriptId,
   showCostRollup,
   onCopy,
   onRegenerateCaption,
@@ -1336,6 +1484,10 @@ function ReelDetailPanel({
   onVoiceoverSuccess,
   onVoiceoverToastSuccess,
   onVoiceoverError,
+  onRequestAssemblyReassemble,
+  onAssemblySuccess,
+  onAssemblyToastSuccess,
+  onAssemblyError,
   captionRegeneratingSlot,
   captionSelectingSlot,
   isBusy,
@@ -1346,6 +1498,8 @@ function ReelDetailPanel({
     row.scriptId !== null ? videoJobsByReelScriptId[row.scriptId] : null;
   const voiceoverSummary =
     row.scriptId !== null ? voiceoverByReelScriptId[row.scriptId] : null;
+  const assemblyJob =
+    row.scriptId !== null ? assemblyByReelScriptId[row.scriptId] : null;
 
   return (
     <div>
@@ -1391,6 +1545,19 @@ function ReelDetailPanel({
         onRequestRetry={onRequestVideoJobRetry}
         onRequestOverride={onRequestVideoJobOverride}
       />
+      {row.scriptId ? (
+        <OperatorAssemblyPanel
+          reelScriptId={row.scriptId}
+          initialJob={assemblyJob}
+          primaryVideoJob={videoJob}
+          copy={copy.assembly}
+          disabled={isBusy}
+          onRequestReassemble={onRequestAssemblyReassemble}
+          onAssembleSuccess={onAssemblySuccess}
+          onError={onAssemblyError}
+          onToastSuccess={onAssemblyToastSuccess}
+        />
+      ) : null}
       <TabView>
       <TabPanel header={copy.caption.tabs.script}>
         <ScriptDetailPanel row={row} copy={copy} onCopy={onCopy} />

@@ -1151,6 +1151,60 @@
         "internal": "Something went wrong. Please try again later."
       }
     },
+    "assembly": {
+      "title": "Reel assembly",
+      "empty": "No assembly job yet for this Reel.",
+      "status": {
+        "queued": "Queued",
+        "processing": "Processing",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "failureReasonLabel": "Failure reason",
+      "durationTarget": "Target duration: {seconds}s",
+      "durationActual": "Output duration: {seconds}s",
+      "preview": "Assembled Reel preview",
+      "previewLoading": "Loading preview…",
+      "previewError": "We could not load the assembled Reel preview.",
+      "polling": "Refreshing status…",
+      "toastAssembleSuccess": "Assembly job queued.",
+      "actions": {
+        "assemble": "Assemble Reel",
+        "reassemble": "Re-assemble",
+        "assembling": "Assembling…"
+      },
+      "failure": {
+        "staleTimeout": "Assembly timed out while processing."
+      },
+      "errors": {
+        "inputsIncomplete": "Assembly inputs are incomplete for this Reel.",
+        "facelessNoPrimary": "Faceless Reels need a completed primary video before assembly.",
+        "missingAudio": "Primary video has no audio — generate a voiceover first.",
+        "unauthenticated": "Please log in to continue.",
+        "forbidden": "You do not have access to that.",
+        "notFound": "That Reel script was not found.",
+        "validation": "Please check the request and try again.",
+        "forbiddenFields": "Invalid assembly request.",
+        "internal": "Something went wrong. Please try again later."
+      },
+      "reassembleConfirm": {
+        "title": "Confirm re-assembly",
+        "body": "This starts a new assembly run using the latest primary video and voiceover inputs. Continue?",
+        "confirm": "Re-assemble",
+        "cancel": "Cancel",
+        "errors": {
+          "inputsIncomplete": "Assembly inputs are incomplete for this Reel.",
+          "facelessNoPrimary": "Faceless Reels need a completed primary video before assembly.",
+          "missingAudio": "Primary video has no audio — generate a voiceover first.",
+          "unauthenticated": "Please log in to continue.",
+          "forbidden": "You do not have access to that.",
+          "notFound": "That Reel script was not found.",
+          "validation": "Please check the request and try again.",
+          "forbiddenFields": "Invalid assembly request.",
+          "internal": "Something went wrong. Please try again later."
+        }
+      }
+    },
     "providerRecommendation": {
       "title": "Provider recommendation",
       "loading": "Loading recommendations…",

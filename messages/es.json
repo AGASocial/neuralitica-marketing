@@ -1151,6 +1151,60 @@
         "internal": "Algo salió mal. Inténtalo más tarde."
       }
     },
+    "assembly": {
+      "title": "Ensamblado del Reel",
+      "empty": "Aún no hay job de ensamblado para este Reel.",
+      "status": {
+        "queued": "En cola",
+        "processing": "Procesando",
+        "completed": "Completado",
+        "failed": "Fallido"
+      },
+      "failureReasonLabel": "Motivo del fallo",
+      "durationTarget": "Duración objetivo: {seconds}s",
+      "durationActual": "Duración de salida: {seconds}s",
+      "preview": "Vista previa del Reel ensamblado",
+      "previewLoading": "Cargando vista previa…",
+      "previewError": "No pudimos cargar la vista previa del Reel ensamblado.",
+      "polling": "Actualizando estado…",
+      "toastAssembleSuccess": "Job de ensamblado en cola.",
+      "actions": {
+        "assemble": "Ensamblar Reel",
+        "reassemble": "Re-ensamblar",
+        "assembling": "Ensamblando…"
+      },
+      "failure": {
+        "staleTimeout": "El ensamblado expiró mientras se procesaba."
+      },
+      "errors": {
+        "inputsIncomplete": "Faltan insumos de ensamblado para este Reel.",
+        "facelessNoPrimary": "Los Reels faceless necesitan un video primario completado antes del ensamblado.",
+        "missingAudio": "El video primario no tiene audio — genera un voiceover primero.",
+        "unauthenticated": "Inicia sesión para continuar.",
+        "forbidden": "No tienes acceso a eso.",
+        "notFound": "No se encontró ese guion de Reel.",
+        "validation": "Revisa la solicitud e inténtalo de nuevo.",
+        "forbiddenFields": "Solicitud de ensamblado no válida.",
+        "internal": "Algo salió mal. Inténtalo más tarde."
+      },
+      "reassembleConfirm": {
+        "title": "Confirmar re-ensamblado",
+        "body": "Esto inicia un nuevo ensamblado con el video primario y voiceover más recientes. ¿Continuar?",
+        "confirm": "Re-ensamblar",
+        "cancel": "Cancelar",
+        "errors": {
+          "inputsIncomplete": "Faltan insumos de ensamblado para este Reel.",
+          "facelessNoPrimary": "Los Reels faceless necesitan un video primario completado antes del ensamblado.",
+          "missingAudio": "El video primario no tiene audio — genera un voiceover primero.",
+          "unauthenticated": "Inicia sesión para continuar.",
+          "forbidden": "No tienes acceso a eso.",
+          "notFound": "No se encontró ese guion de Reel.",
+          "validation": "Revisa la solicitud e inténtalo de nuevo.",
+          "forbiddenFields": "Solicitud de ensamblado no válida.",
+          "internal": "Algo salió mal. Inténtalo más tarde."
+        }
+      }
+    },
     "providerRecommendation": {
       "title": "Recomendación de proveedor",
       "loading": "Cargando recomendaciones…",

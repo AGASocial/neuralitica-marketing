@@ -69,6 +69,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
       reelCostRollups: {},
       videoJobsByReelScriptId: {},
       voiceoverByReelScriptId: {},
+      assemblyByReelScriptId: {},
     };
   }
 
@@ -88,6 +89,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
         reelCostRollups: {},
         videoJobsByReelScriptId: {},
         voiceoverByReelScriptId: {},
+        assemblyByReelScriptId: {},
       };
 
   return (
@@ -165,6 +167,10 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
           toastOverrideSuccess: t.scripts.videoJob.toastOverrideSuccess,
         },
         voiceover: t.scripts.voiceover,
+        assembly: {
+          ...t.scripts.assembly,
+          reassembleConfirm: t.scripts.assembly.reassembleConfirm,
+        },
         cost: {
           actual: t.scripts.cost.actual,
           rollup: {

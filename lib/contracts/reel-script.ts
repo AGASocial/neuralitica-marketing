@@ -8,6 +8,7 @@ import {
   reelCostRollupsMapSchema,
   reelWeekCostSummarySchema,
 } from "@/lib/contracts/actual-cost";
+import { operatorAssemblyJobsByReelMapSchema } from "@/lib/contracts/assembly-job";
 import { voiceoverSummaryByReelMapSchema } from "@/lib/contracts/tts-voiceover";
 import { operatorVideoJobsByReelMapSchema } from "@/lib/contracts/video-job";
 import { reelCaptionSummarySchema } from "@/lib/contracts/reel-caption";
@@ -103,6 +104,8 @@ export const getReelScriptsForWeekSuccessSchema = z
     videoJobsByReelScriptId: operatorVideoJobsByReelMapSchema,
     /** US-9.3 — Operator-only latest voiceover asset per reelScriptId. */
     voiceoverByReelScriptId: voiceoverSummaryByReelMapSchema,
+    /** US-9.1 — Operator-only latest assembly job per reelScriptId. */
+    assemblyByReelScriptId: operatorAssemblyJobsByReelMapSchema,
   })
   .strict();
 

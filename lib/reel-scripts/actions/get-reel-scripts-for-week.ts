@@ -19,8 +19,11 @@ import { getReelCostSummaryForWeek } from "@/lib/cost-policy/get-reel-cost-summa
 import type { ReelCostRollupsMap } from "@/lib/contracts/actual-cost";
 import { buildReelScriptListForStrategy } from "@/lib/reel-scripts/list-reel-scripts-for-week";
 import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved-strategy-for-week";
+import { getAssemblyJobsForReelScripts } from "@/lib/assembly/get-assembly-jobs-for-reel-scripts";
 import { getVideoJobsForReelScripts } from "@/lib/video-jobs/get-video-jobs-for-reel-scripts";
 import { getVoiceoverSummariesForReelScripts } from "@/lib/tts/get-voiceover-summaries-for-reel-scripts";
+import { getAssemblyJobsForReelScripts } from "@/lib/assembly/get-assembly-jobs-for-reel-scripts";
+import type { VisualModality } from "@/lib/contracts/visual-preferences";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
 
 function authGuardEnvelope(error: {
@@ -76,6 +79,7 @@ export async function getReelScriptsForWeek(
         reelCostRollups: {},
         videoJobsByReelScriptId: {},
         voiceoverByReelScriptId: {},
+        assemblyByReelScriptId: {},
       };
     }
 
@@ -138,6 +142,18 @@ export async function getReelScriptsForWeek(
       itemsByScriptId,
     });
 
+    const modalidadByReelScriptId = new Map(
+      items
+        .filter((item) => item.scriptId !== null)
+        .map((item) => [item.scriptId as string, item.modalidad]),
+    );
+
+    const assemblyByReelScriptId = await getAssemblyJobsForReelScripts({
+      clientId,
+      reelScriptIds: rollupScriptIds,
+      modalidadByReelScriptId,
+    });
+
     return {
       ok: true,
       weekStart,
@@ -152,6 +168,7 @@ export async function getReelScriptsForWeek(
       reelCostRollups,
       videoJobsByReelScriptId,
       voiceoverByReelScriptId,
+      assemblyByReelScriptId,
     };
   } catch (error) {
     if (isAuthGuardError(error)) {

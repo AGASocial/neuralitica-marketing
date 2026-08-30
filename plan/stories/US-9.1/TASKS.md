@@ -76,13 +76,13 @@
 
 **Consumer surfaces:** `/operator/scripts` expand row (same pattern as video job panel).
 
-- [ ] Extend Reel production panel with **assembly section**: status badge (`queued` / `processing` / `completed` / `failed`), `failure_reason` (sanitized), duration vs target display when completed.
-- [ ] **Assemble Reel** button — calls `assembleReelForScript({ reelScriptId })`; disabled when primary video job not `completed` (UI convenience — server enforces).
-- [ ] **Re-assemble** when script `updated_at` or inputs changed — confirm dialog (new assembly run).
-- [ ] **Preview player** — `<video>` via authenticated assemble output URL (`GET /api/media/assets/[assetId]` or CONTRACT path); loading/error states.
-- [ ] Poll assembly status: interval refresh or reuse batch map from `getReelScriptsForWeek` — CONTRACT picks one round-trip (mirror video jobs).
-- [ ] EN/ES keys: **`scripts.assembly.title`**, **`scripts.assembly.status.*`**, **`scripts.assembly.actions.assemble`**, **`scripts.assembly.actions.reassemble`**, **`scripts.assembly.errors.inputsIncomplete`**, **`scripts.assembly.preview`**, **`scripts.assembly.durationTarget`**.
-- [ ] No Cliente routes · no cost fields · no FFmpeg details in UI.
+- [x] Extend Reel production panel with **assembly section**: status badge (`queued` / `processing` / `completed` / `failed`), `failure_reason` (sanitized), duration vs target display when completed.
+- [x] **Assemble Reel** button — calls `assembleReelForScript({ reelScriptId })`; disabled when primary video job not `completed` (UI convenience — server enforces).
+- [x] **Re-assemble** when script `updated_at` or inputs changed — confirm dialog (new assembly run).
+- [x] **Preview player** — `<video>` via authenticated assemble output URL (`GET /api/media/assets/[assetId]` or CONTRACT path); loading/error states.
+- [x] Poll assembly status: interval refresh or reuse batch map from `getReelScriptsForWeek` — CONTRACT picks one round-trip (mirror video jobs).
+- [x] EN/ES keys: **`scripts.assembly.title`**, **`scripts.assembly.status.*`**, **`scripts.assembly.actions.assemble`**, **`scripts.assembly.actions.reassemble`**, **`scripts.assembly.errors.inputsIncomplete`**, **`scripts.assembly.preview`**, **`scripts.assembly.durationTarget`**.
+- [x] No Cliente routes · no cost fields · no FFmpeg details in UI.
 
 ---
 
