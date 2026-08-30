@@ -126,8 +126,8 @@ Concrete FE consumer: `/operator/scripts` list + detail panel.
 
 ## DB checklist
 
-- [ ] **No migration** — metrics computed at read time.
-- [ ] **Do not** add readability columns to `neuramark_reel_scripts` unless CONTRACT documents exception (PO veto: none).
+- [x] **No migration** — metrics computed at read time.
+- [x] **Do not** add readability columns to `neuramark_reel_scripts` unless CONTRACT documents exception (PO veto: none).
 
 ---
 
@@ -136,11 +136,11 @@ Concrete FE consumer: `/operator/scripts` list + detail panel.
 - [x] SPEC-REVIEW.md (spec-guardian)
 - [x] SECURITY.md (security-architect)
 - [x] CONTRACT.md authored (nextjs-backend) — extend US-5.1 read contract; **Reviewed by FE** required before BUILD
-- [ ] BUILD (nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] BUILD (nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md
+- [x] QA.md — APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 3 Low; CLOSE yes)
 
-**Status:** BUILD (2026-08-30). BE slice: readability tests + mapper + forbidden-key guards. FE BUILD in progress.
+**Status:** CLOSED (2026-08-30). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** **US-6.1** generate Instagram caption per Reel.
 
 ---
 

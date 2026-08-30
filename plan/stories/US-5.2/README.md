@@ -1,18 +1,35 @@
 # US-5.2 — Preview script readability for vertical video
 
-**Status:** CONTRACT — frozen 2026-08-30. Awaiting **Reviewed by FE** → BUILD.
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 3 Low; CLOSE yes). Build BE `b503241` · FE `b68d2ee`.
 
 **As an** Operator, **I want** on-screen text length validated, **so that** subtitles fit 9:16 Reels.
 
 Ship **readability preview on the existing Operator Scripts workspace**: extend `/operator/scripts` to show **non-blocking warnings** when on-screen text beats exceed configured char/line limits for 9:16 Reels, and display **voiceover word-count estimate vs `target_duration_sec`**. Server computes metrics via a shared **readability helper** attached to `getReelScriptsForWeek` list items — **no new DB columns**, **no script edit/save path in V1** (US-5.1 scripts remain read-only; helper is reusable when edit lands). **nextjs-backend + nextjs-frontend only** — no agent prompt changes, no content-agents-engineer BUILD slice.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-5.2 (do **not** check off in PREP).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-5.2 (checked on CLOSE).
 
-**This folder:** [`plan/stories/US-5.2/`](./) — `README.md` · `TASKS.md` *(CONTRACT, SECURITY, etc. — next gates)*.
+**This folder:** [`plan/stories/US-5.2/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
+
+**Branch:** `feature/US-5.2-script-readability`
 
 **Depends on:** [US-5.1](../US-5.1/) ✅ `/operator/scripts` · `lib/contracts/reel-script.ts` · `getReelScriptsForWeek` · `onScreenText` newline-separated beats · `targetDurationSec` 15–45.
 
 **Unblocks:** [US-6.1](../../USER_STORIES.md) (Operator reviews scripts before captions) · [US-9.1](../../USER_STORIES.md) (assembly/subtitles consume on-screen text with known limits).
+
+---
+
+## Close verdicts
+
+| Gate | Verdict |
+|------|---------|
+| SPEC-REVIEW | ALIGNED (gaps closed in CONTRACT) |
+| SECURITY | APPROVE WITH CONDITIONS |
+| CONTRACT | Frozen 2026-08-30; Reviewed by FE (BUILD `b68d2ee`) |
+| BUILD | BE `b503241` · FE `b68d2ee` |
+| VALIDATION | PASS WITH NOTES (`8ba616e`) |
+| QA | APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 3 Low; CLOSE yes) |
+
+**QA handoff (non-blocking, post-CLOSE):** L1 — add `server-only` guard to compute module; L2 — UTF-16 char counting (documented V1 limitation); L3 — duplicate on-screen text in detail panel (optional UX polish). **Next:** **US-6.1** generate Instagram caption per Reel.
 
 ---
 
@@ -85,8 +102,8 @@ _Evitar:_ generic "subtitle validator", "caption linter".
 - [x] SPEC-REVIEW.md (spec-guardian — readability vs SPEC §3 warnings line; no agent/DB creep)
 - [x] SECURITY.md (security-architect — read-only preview; no new attack surface on mutations)
 - [x] CONTRACT.md (nextjs-backend) — extend US-5.1 list DTO; freeze constants; **Reviewed by FE** before BUILD
-- [ ] BUILD (nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] BUILD (nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md
+- [x] QA.md — APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 3 Low; CLOSE yes)
 
-**Next gate:** nextjs-frontend FE signoff on CONTRACT → BUILD.
+**Status:** CLOSED (2026-08-30). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** **US-6.1** generate Instagram caption per Reel.
