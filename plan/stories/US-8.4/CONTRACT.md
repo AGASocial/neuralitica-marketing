@@ -1,9 +1,9 @@
-Reviewed by FE: pending — 2026-08-29 — awaiting nextjs-frontend signoff before BUILD.
+Reviewed by FE: yes — 2026-08-29 — nextjs-frontend.
 
 # API Contract — US-8.4 Job status and failure handling UI (closes US-8.2 Phase B)
 
 **Story:** US-8.4  
-**Status:** Frozen — 2026-08-29 (pending FE signoff line above)  
+**Status:** Frozen — 2026-08-29 (Reviewed by FE)  
 **Security:** `plan/stories/US-8.4/SECURITY.md` (APPROVE WITH CONDITIONS — reconciled below)  
 **Spec review:** `plan/stories/US-8.4/SPEC-REVIEW.md` (GAPS — resolved by this contract)  
 **Extends:** `plan/stories/US-8.2/CONTRACT.md` § Phase B (imported verbatim below — do not contradict)  
@@ -641,8 +641,17 @@ Merge and reject with **`FORBIDDEN_FIELDS`**:
 
 ---
 
+## Reviewed by FE
+
+**Reviewed by FE** — 2026-08-29 (nextjs-frontend)
+
+Batch `videoJobsByReelScriptId[scriptId]` on `getReelScriptsForWeek` fits the existing `/operator/scripts` round-trip (same pattern as `reelCostRollups`). **Slot row:** add a video-job status `Tag` in the status column when `scriptId` is set and the map entry is non-null (`queued` · `processing` · `completed` · `failed` · `cancelled` → PrimeReact severity). **Expand row:** new read-only job panel inside `ReelDetailPanel` (below `ReelCostRollupPanel` / above `TabView`) rendering `OperatorVideoJobSummaryDto` — status, `failureReason` (plain text; resolve via i18n when value is a known `messageKey` such as `scripts.videoJob.failure.staleTimeout`), `attempt`, `regenerationCount`, nested `cost` (`OperatorProductionJobCostDto`), retry affordances driven by `canRetry` / `retryBlockedReasonKey`. **Mutations:** `previewRetryVideoJobEstimate` → confirm dialog (`confirmEstimateCents` must match preview) → `retryVideoJob`; on `RETRY_LIMIT_EXCEEDED`, `overrideVideoJobRetryLimit` with reason field. **Optional poll:** small client boundary in expand row — `GET /api/video-jobs/[jobId]` every ~5s while `queued`/`processing`; merge status fields only (cost stays from batch until navigation refresh). **i18n:** EN + ES under `scripts.videoJob.*`. No Cliente surfaces; no `external_job_id` or provider URLs in UI. Types in `lib/contracts/video-job.ts` match fixtures; extend `getReelScriptsForWeekSuccessSchema` with `videoJobsByReelScriptId` during BUILD as specified.
+
+---
+
 ## Changelog
 
 | Date | Change |
 |------|--------|
 | 2026-08-29 | Initial freeze — US-8.4 orchestration + Operator `/operator/scripts` surfaces; imports US-8.2 Phase B; resolves SPEC-REVIEW + SECURITY gaps |
+| 2026-08-29 | Reviewed by FE — nextjs-frontend signoff; BUILD unblocked for FE slice |
