@@ -97,14 +97,14 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
 ## Gates (orchestrator)
 
-- [x] SPEC-REVIEW.md (spec-guardian — catalog vs SPEC §3 Cost Policy; seed economics; no FE scope creep)
-- [x] SECURITY.md (security-architect — no client catalog exposure; env var names only; operator-only future writes; server-only helper)
+- [x] SPEC-REVIEW.md (spec-guardian — catalog vs SPEC §3 Cost Policy; seed economics; no FE scope creep) — ALIGNED
+- [x] SECURITY.md (security-architect — no client catalog exposure; env var names only; operator-only future writes; server-only helper) — APPROVE WITH CONDITIONS
 - [x] CONTRACT.md authored (nextjs-backend) + FE signoff *(N/A waived — BE-only story; CONTRACT notes "Reviewed by FE: N/A — 2026-08-29")*
-- [x] BUILD (nextjs-backend — migrations + helpers + tests)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] BUILD (nextjs-backend — migrations + helpers + tests) — BE `5ba9876`
+- [x] VALIDATION.md — PASS WITH NOTES
+- [x] QA.md — APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium, 2 Low; CLOSE yes)
 
-**Status:** BUILD complete (2026-08-29). **Next gate:** VALIDATION.
+**Status:** CLOSED (2026-08-29). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** **US-4.1** Content Strategy (Sprint 3).
 
 ---
 

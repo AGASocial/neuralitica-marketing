@@ -1,22 +1,37 @@
 # US-X.4 — Seed provider catalog and tier defaults
 
-**Status:** PREP — story folder created; gates not started.
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium non-blocking, 2 Low; CLOSE yes). Build BE `5ba9876`.
 
 **As a** Developer, **I want** a server-side provider catalog with low/high tier mappings, **so that** all agents and video jobs resolve vendors consistently without hardcoding in each story.
 
 Ship **data-driven provider catalog + global cost-policy seed**: migrate `neuramark_provider_catalog` and `neuramark_cost_policies`, seed V1 low-tier rows (plus inactive high-tier placeholders), expose server-only `getProviderCatalog()` for trusted server jobs, and wire existing `resolveProvider()` in `lib/providers/provider-adapters.ts` against DB-backed rows. Operator tier/budget **UI** (US-7.1), policy engine ranking (US-7.2), and concrete vendor adapters (US-8.x) stay **out**.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-X.4 (do **not** check off in PREP).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-X.4 (checked on CLOSE).
 
-**This folder:** [`plan/stories/US-X.4/`](./) — `README.md` · `TASKS.md` · *(gates: SPEC-REVIEW → SECURITY → CONTRACT → BUILD → VALIDATION → QA)*.
+**This folder:** [`plan/stories/US-X.4/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · [`CONTRACT.md`](./CONTRACT.md) (frozen) · `VALIDATION.md` · `QA.md`.
 
-**Branch:** `null` (not started — set on BUILD).
+**Branch:** `feature/US-X.4-provider-catalog`
 
 **Depends on:** [US-X.3](../../USER_STORIES.md) ✅ — `getCurrentUser()` seam · [US-14.5](../US-14.5/) ✅ (`requireOperator()` for any future catalog/policy writes).
 
 **Unblocks:** [US-4.1](../../USER_STORIES.md) (Content Strategy LLM resolution) · [US-7.2](../../USER_STORIES.md) (policy engine) · [US-8.1](../../USER_STORIES.md)+ (provider adapters) · [US-9.3](../../USER_STORIES.md) · [US-10.1](../../USER_STORIES.md).
 
 **Reference code (already shipped):** `lib/providers/provider-adapters.ts` (`resolveProvider`, adapter interfaces) · `lib/contracts/providers.ts` (Zod schemas, `DEFAULT_LOW_TIER_PROVIDER_KEYS`) · `plan/PROVIDER_TIERS.html` (seed key table).
+
+---
+
+## Close verdicts
+
+| Gate | Verdict |
+|------|---------|
+| SPEC-REVIEW | ALIGNED |
+| SECURITY | APPROVE WITH CONDITIONS |
+| CONTRACT | Frozen, Reviewed by FE: N/A — BE-only story (2026-08-29) |
+| BUILD | BE `5ba9876` |
+| VALIDATION | PASS WITH NOTES |
+| QA | APPROVE WITH NOTES (0 Critical, 0 High, 1 Medium, 2 Low; CLOSE yes) |
+
+**QA handoff (non-blocking):** M1 — add read-time secret-pattern scan on `cost_model` / `capabilities` jsonb (CONTRACT partial); L1 — avoid barrel `@/lib/providers` imports in downstream stories; L2 — consider `server-only` on mapper module. Optional: sync `plan/PROVIDER_TIERS.html`. **Next:** **US-4.1** Content Strategy with `getProviderCatalog()` + `resolveProvider({ llmVariant: 'default' })`.
 
 ---
 
