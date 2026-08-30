@@ -135,6 +135,16 @@ export async function applyBrandingJobUpdate(
     throw new Error("Branding job status update failed");
   }
 
+  if (nextStatus === "completed") {
+    const { onBrandingCompleted } = await import(
+      "@/lib/qa/on-branding-completed"
+    );
+    await onBrandingCompleted({
+      assembledReelId: job.id,
+      clientId: job.clientId,
+    });
+  }
+
   return {
     ok: true,
     jobId: job.id,
