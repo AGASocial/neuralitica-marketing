@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: US-11.1
-story_status: QA
-feature_branch: feature/US-11.1-client-approval
-last_completed_story: US-10.2
+current_story: SELECT
+story_status: DONE
+feature_branch: null
+last_completed_story: US-11.1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T23:15:00Z
+updated_at: 2026-08-30T23:20:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -38,7 +38,7 @@ updated_at: 2026-08-30T23:15:00Z
 | US-9.2 Add subtitles, logo, and cover | done | worker `7518bc5` · BE `36e9dd3`+fix `757da6a` · FE `a15921b` · VALIDATION `4378c65` · QA `c0d6f66` · CLOSE `92b196a` |
 | US-10.1 Run automated QA | done | agents `0b56c9e`/`75802d6` · BE `5e50115` · FE `b5e0941` · VALIDATION `d95555d` · QA `a6ba923` · CLOSE `b7a3bb9` (6/6 AC; override → US-10.2) |
 | US-10.2 Operator override with reason | done | BE `a9cc533` · FE `0c6bfb0` · VALIDATION `d7e3cd5` · QA `3da5547` · CLOSE `c9b97e5` (7/7 AC; approval render → US-11.1) |
-| US-11.1 Present Reel package for client approval | QA | VALIDATION PASS WITH NOTES `633c6f5` (25/25) |
+| US-11.1 Present Reel package for client approval | done | BE `d830b0f` · FE `defd9ff` · VALIDATION `633c6f5` · QA `3f39db9` · CLOSE `4f11d38` (5/5 AC; request-changes → US-11.2) |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -50,6 +50,7 @@ updated_at: 2026-08-30T23:15:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-11.1 CLOSE Phase A: 5/5 AC checked; VALIDATION PASS WITH NOTES `633c6f5` (25/25); QA APPROVE WITH CONDITIONS `3f39db9`; FF-merge `4f11d38` to main; Phase 3 → SELECT **US-11.2** (recommended) or US-11.3 or US-8.5.
 - 2026-08-30 · US-11.1 SELECT → PREP. Branch `feature/US-11.1-client-approval` from main; deps US-10.1 ✅ · US-10.2 ✅ · US-9.2 ✅.
 - 2026-08-30 · US-10.2 CLOSE Phase A: 7/7 AC checked; VALIDATION PASS WITH NOTES `d7e3cd5` (22/22); QA APPROVE WITH CONDITIONS `3da5547`; FF-merge `c9b97e5` to main; Phase 3 → SELECT **US-11.1** (recommended) or US-8.5.
 - 2026-08-30 · US-10.2 SELECT → PREP. Branch `feature/US-10.2-qa-override` from main; deps US-10.1 ✅.
