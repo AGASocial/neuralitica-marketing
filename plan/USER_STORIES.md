@@ -886,11 +886,12 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | MuseTalk adapter (e.g. Replicate): reference video loop + TTS audio → poll → store MP4; `provider_key` `musetalk_low` |
 | **DB** | Reuse `video_jobs` |
 
-**Acceptance criteria**
-- [ ] Selected by policy for `generic_avatar` when a reference loop asset exists, or as operator-configured low-tier alternative to SadTalker
-- [ ] Estimated cost uses flat per-run model from catalog (~$0.19/Reel at research baseline)
-- [ ] Same consent, budget, download-and-own, and polling security rules as US-8.2
-- [ ] [SEC] Generic-avatar impersonation rules (US-3.4) still apply; MuseTalk does not bypass QA disclosure requirements
+**Acceptance criteria** *(V1 CLOSED 2026-08-30 — operator override AC deferred P1)*
+- [x] Selected by policy for `generic_avatar` when a reference loop asset exists
+- [ ] Operator-configured low-tier alternative to SadTalker *(P1 defer — V1 policy-only routing)*
+- [x] Estimated cost uses flat per-run model from catalog (~$0.19/Reel at research baseline)
+- [x] Same consent, budget, download-and-own, and polling security rules as US-8.2
+- [x] [SEC] Generic-avatar impersonation rules (US-3.4) still apply; MuseTalk does not bypass QA disclosure requirements
 
 **Depends on:** US-8.1, US-3.1, US-9.3, US-X.4
 

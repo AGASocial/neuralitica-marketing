@@ -168,17 +168,17 @@ Concrete consumers: **`createTalkingHeadVideoJob()`** · US-8.4 poller · **`ret
 
 ### Phase A — MuseTalk adapter
 
-- [ ] **`lib/contracts/musetalk-low.ts`** — env key, model version, input fields, MIME allowlists, output hosts, fetch limits.
-- [ ] **`lib/providers/video/musetalk-low-adapter.ts`** — implement **`VideoProviderAdapter`** for **`musetalk_low`** / **`primary`**.
-- [ ] **`estimateCost`** — return catalog flat **`per_run`** cents (**19** from bootstrap).
-- [ ] **`createJob`** — validate `referenceVideoAssetId` + `voiceoverAssetId`; reject portrait still ids; POST Replicate prediction.
-- [ ] **`getJobStatus`** — GET prediction; **`normalizeVideoJobStatusResult`**; allowlisted **`rawOutputUrl`** only when terminal.
-- [ ] **`fetchAsset`** — **`validateProviderOutputUrl`** → download → Storage upload → **`storedMediaAssetSchema`**; job context map for poller L1.
-- [ ] **Registry** — register **`createMusetalkLowAdapter`**; add **`musetalk_low`** to **`buildBootstrapCatalog()`**.
-- [ ] **Asset resolver seam** — injectable **`resolveMediaAssetUrl(assetId, clientId, kind)`** with **`video`** + **`audio`** kinds (extend default impl or shared helper).
-- [ ] **[SEC] `server-only`**; token never logged/returned; untrusted JSON sanitized; output URL allowlist; opaque **`external_job_id`**.
-- [ ] **`lib/providers/video/musetalk-low-adapter.test.ts`** — mocked HTTP round-trip; missing env; invalid MIME; sanitized errors.
-- [ ] **Update registry tests** — **`getVideoAdapter("musetalk_low")`** returns real adapter.
+- [x] **`lib/contracts/musetalk-low.ts`** — env key, model version, input fields, MIME allowlists, output hosts, fetch limits.
+- [x] **`lib/providers/video/musetalk-low-adapter.ts`** — implement **`VideoProviderAdapter`** for **`musetalk_low`** / **`primary`**.
+- [x] **`estimateCost`** — return catalog flat **`per_run`** cents (**19** from bootstrap).
+- [x] **`createJob`** — validate `referenceVideoAssetId` + `voiceoverAssetId`; reject portrait still ids; POST Replicate prediction.
+- [x] **`getJobStatus`** — GET prediction; **`normalizeVideoJobStatusResult`**; allowlisted **`rawOutputUrl`** only when terminal.
+- [x] **`fetchAsset`** — **`validateProviderOutputUrl`** → download → Storage upload → **`storedMediaAssetSchema`**; job context map for poller L1.
+- [x] **Registry** — register **`createMusetalkLowAdapter`**; add **`musetalk_low`** to **`buildBootstrapCatalog()`**.
+- [x] **Asset resolver seam** — injectable **`resolveMediaAssetUrl(assetId, clientId, kind)`** with **`video`** + **`audio`** kinds (extend default impl or shared helper).
+- [x] **[SEC] `server-only`**; token never logged/returned; untrusted JSON sanitized; output URL allowlist; opaque **`external_job_id`**.
+- [x] **`lib/providers/video/musetalk-low-adapter.test.ts`** — mocked HTTP round-trip; missing env; invalid MIME; sanitized errors.
+- [x] **Update registry tests** — **`getVideoAdapter("musetalk_low")`** returns real adapter.
 
 ### Phase B — Orchestrator wiring
 
@@ -198,22 +198,22 @@ Concrete consumers: **`createTalkingHeadVideoJob()`** · US-8.4 poller · **`ret
 
 All objects keep `neuramark_` prefix. **No migration in US-8.6 BUILD** (PO freeze).
 
-- [ ] **No CREATE / ALTER `neuramark_video_jobs`** — reuse US-8.4 DDL; document **`portrait_asset_id`** overload for MuseTalk in CONTRACT.
-- [ ] **No catalog seed changes** — `musetalk_low` row from US-X.4 is authoritative.
-- [ ] RLS deny-by-default unchanged; service-role Node only.
+- [x] **No CREATE / ALTER `neuramark_video_jobs`** — reuse US-8.4 DDL; document **`portrait_asset_id`** overload for MuseTalk in CONTRACT.
+- [x] **No catalog seed changes** — `musetalk_low` row from US-X.4 is authoritative.
+- [x] RLS deny-by-default unchanged; service-role Node only.
 
 ---
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
+- [x] SPEC-REVIEW.md (spec-guardian)
+- [x] SECURITY.md (security-architect)
 - [x] CONTRACT.md authored (nextjs-backend — frozen; **Reviewed by FE: N/A**)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend — Phase A + Phase B)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend — Phase A + Phase B)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES)
+- [x] QA.md (qa-engineer — APPROVE WITH CONDITIONS)
 
-**Status:** CONTRACT frozen — **Next:** BUILD (Phase A adapter + Phase B orchestrator).
+**Status:** CLOSED (2026-08-30). V1 scope complete; 4/5 AC checked in `plan/USER_STORIES.md` (operator override P1 defer). **Next:** **US-8.5** Wan B-roll adapter or **SELECT** next Sprint 4 story.
 
 ---
 

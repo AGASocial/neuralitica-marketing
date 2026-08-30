@@ -1,12 +1,12 @@
 # US-8.6 — MuseTalk adapter (low-tier talking-head alternative)
 
-**Status:** PREP — story folder + PO decisions frozen (2026-08-30). Gates pending: SPEC-REVIEW · SECURITY · CONTRACT · BUILD · VALIDATION · QA.
+**Status:** CLOSED (2026-08-30) — VALIDATION PASS WITH NOTES · QA APPROVE WITH CONDITIONS · PO AC check-off on `feature/US-8.6-musetalk-adapter` @ `82bde3d`. V1 scope: policy-routed `generic_avatar` + reference loop → `musetalk_low`. Operator SadTalker↔MuseTalk override deferred P1.
 
 **As a** System, **I want** MuseTalk lip-sync via a cloud API, **so that** generic-avatar mode can use a reference video loop when SadTalker is not the best fit.
 
 Ship **server-only Replicate MuseTalk adapter** for catalog key **`musetalk_low`**: implement **`VideoProviderAdapter`** behind **`REPLICATE_API_TOKEN`** (same env as SadTalker); wire **`createMusetalkLowAdapter`** in **`getProviderRegistry()`** / **`initializeProviderRegistryFromCatalog()`**; implement **`estimateCost`** from catalog **`cost_model`** (**19¢** per-run baseline); pipe **`createJob` / `getJobStatus` / `fetchAsset`** through US-8.1 normalization helpers; cover with **mocked-HTTP unit tests only**. **Phase B (same story):** unlock **`createTalkingHeadVideoJob()`** for policy-selected **`musetalk_low`** (reference video loop + voiceover audio); resolve reference-loop asset **server-side**; reuse **US-8.4** poller, job rows, retry lineage, and **`/operator/scripts`** status UI — **no new FE**. **US-9.3 TTS not required for V1 slice** — voiceover via existing **`neuramark_media_assets`** row (`voiceoverAssetId`) is acceptable for adapter + orchestrator E2E.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.6 (**intentionally unchecked** until VALIDATION).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.6 (**4/5 AC checked** — operator override P1 defer).
 
 **This folder:** [`plan/stories/US-8.6/`](./) — `README.md` · `TASKS.md` (gates: `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` — create when story enters sprint).
 
@@ -85,23 +85,23 @@ _Evitar:_ client-supplied `provider_key`; long-lived third-party `output_url` as
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 S3.M9)
-- [ ] SECURITY.md (security-architect — loop asset SSRF, impersonation, download-and-own)
-- [ ] CONTRACT.md (nextjs-backend — frozen; **Reviewed by FE: N/A**)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend — Phase A adapter + Phase B orchestrator)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 S3.M9)
+- [x] SECURITY.md (security-architect — loop asset SSRF, impersonation, download-and-own)
+- [x] CONTRACT.md (nextjs-backend — frozen; **Reviewed by FE: N/A**)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend — Phase A adapter + Phase B orchestrator)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES)
+- [x] QA.md (qa-engineer — APPROVE WITH CONDITIONS)
 
-**Status:** PREP complete — next gate **SPEC-REVIEW** → **SECURITY** → **CONTRACT**.
+**Status:** CLOSED (2026-08-30). **Next:** **US-8.5** Wan B-roll adapter or **SELECT** next Sprint 4 story.
 
 ---
 
-## Acceptance criteria mapping (do not check until VALIDATION)
+## Acceptance criteria mapping (V1 CLOSED 2026-08-30)
 
-| USER_STORIES § US-8.6 AC | Deliverable |
-|--------------------------|-------------|
-| Selected by policy for `generic_avatar` when reference loop exists | US-7.2 ✅ + Phase B orchestrator accepts `musetalk_low` |
-| Operator-configured low-tier alternative to SadTalker | **Deferred P1** — V1 policy-only routing |
-| Estimated cost ~19¢ from catalog | Phase A `estimateCost` + spend event at create |
-| Same consent, budget, download-and-own, polling security as US-8.2 | Phase B orchestrator gates + Phase A `fetchAsset` + US-8.4 poller |
-| [SEC] US-3.4 generic-avatar impersonation / QA disclosure | No adapter bypass; downstream QA unchanged |
+| USER_STORIES § US-8.6 AC | Deliverable | Status |
+|--------------------------|-------------|--------|
+| Selected by policy for `generic_avatar` when reference loop exists | US-7.2 ✅ + Phase B orchestrator accepts `musetalk_low` | ✅ |
+| Operator-configured low-tier alternative to SadTalker | **Deferred P1** — V1 policy-only routing | ⏸ P1 |
+| Estimated cost ~19¢ from catalog | Phase A `estimateCost` + spend event at create | ✅ |
+| Same consent, budget, download-and-own, polling security as US-8.2 | Phase B orchestrator gates + Phase A `fetchAsset` + US-8.4 poller | ✅ |
+| [SEC] US-3.4 generic-avatar impersonation / QA disclosure | No adapter bypass; downstream QA unchanged | ✅ |
