@@ -4,16 +4,14 @@ import type {
   ApplyBrandingForAssemblyRequest,
   ApplyBrandingForAssemblyResult,
 } from "@/lib/contracts/branding-job";
+import { applyBrandingForAssemblyInner } from "@/lib/assembly/create-branding-job-for-assembly";
 
 /**
  * Operator branding apply / re-brand (US-9.2).
- * Implementation: nextjs-backend — replace stub when BE lands.
+ * Frontend consumer: `/operator/scripts` — Apply branding / Re-brand.
  */
 export async function applyBrandingForAssembly(
-  _input: ApplyBrandingForAssemblyRequest,
+  input: ApplyBrandingForAssemblyRequest,
 ): Promise<ApplyBrandingForAssemblyResult> {
-  return {
-    ok: false,
-    error: { code: "INTERNAL_ERROR" },
-  };
+  return applyBrandingForAssemblyInner(input);
 }
