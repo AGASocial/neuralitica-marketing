@@ -1,4 +1,4 @@
-Reviewed by FE: pending
+Reviewed by FE: yes — 2026-08-30 — nextjs-frontend.
 
 # API Contract — US-9.3 Text-to-speech for voiceover
 
@@ -688,7 +688,13 @@ voiceoverByReelScriptId: voiceoverSummaryByReelMapSchema;
 
 ## Reviewed by FE
 
-**Reviewed by FE:** pending
+**Reviewed by FE** — 2026-08-30 (nextjs-frontend)
+
+**Preferencias (`/settings/preferences`):** Extend `PreferencesEditor` / `PreferencesView` with a voice section when visible. Use server `voicePickerVisible` + `availableVoices[]` + `voiceId` from `getVisualPreferencesForClient`; during draft edits, mirror the CONTRACT visibility table from **draft** `allowedModes` + `facelessStyle.voice` (same pattern as faceless-style axes today). When hidden, render i18n `settings.preferences.voice.hiddenNoAiVoice` only — no client catalog. Picker: PrimeReact `RadioButton` or `Dropdown` over `availableVoices`; label via `labelKey` → `messages/{en,es}.json`. Sample playback: same-origin `<audio controls src={sampleUrl}>` per voice (public `/tts-samples/*.mp3` — no auth). Persist `voiceId` on existing `upsertVisualPreferences` save (optional field; omit = unchanged). No `providerVoice`, `toneTags`, or cost in UI.
+
+**Operator scripts (`/operator/scripts`):** Batch `voiceoverByReelScriptId[scriptId]` on `getReelScriptsForWeek` — same override-map pattern as `videoJobsByReelScriptId`. New panel in `ReelDetailPanel` expand row (above `OperatorVideoJobSummaryPanel`): status Tag (missing / ready from `voiceoverAssetId`), optional `<audio controls src={/api/media/assets/{voiceoverAssetId}}>` when ready (operator cookie auth). **Generate voiceover** / **Regenerate voiceover** call `synthesizeVoiceoverForReelScript({ reelScriptId })` only — no budget confirm dialog (forbidden `confirmGeneration`); map `error.messageKey` when present else `error.code` → `scripts.voiceover.error.*`. On success, merge `voiceoverAssetId` + `voiceId` into local overrides; surface id for downstream `createTalkingHeadVideoJob` when that CTA ships (US-8.4 retry path exists; primary generate-video button still future). No cost on `VoiceoverSummaryDto` — roll-ups stay on `reelCostRollups`. Types in `lib/contracts/tts-voiceover.ts` + extensions to `visual-preferences.ts` / `reel-script.ts` per BUILD.
+
+**i18n:** EN + ES under `settings.preferences.voice.*` (section title, four catalog labels, hidden explanation, save states) and `scripts.voiceover.*` (generate/regenerate labels, pending, status missing/ready, error codes). No Supabase in Client Components.
 
 ---
 
@@ -697,3 +703,4 @@ voiceoverByReelScriptId: voiceoverSummaryByReelMapSchema;
 | Date | Change |
 |------|--------|
 | 2026-08-30 | Initial freeze — CosyVoice2 adapter, voice catalog, orchestrator, migration, Preferencias + Operator scripts surfaces; resolves SPEC-REVIEW + SECURITY gaps; Phase A only |
+| 2026-08-30 | Reviewed by FE — nextjs-frontend signoff; BUILD unblocked for FE slice |
