@@ -25,6 +25,8 @@ import {
   DEFAULT_LOW_TIER_PROVIDER_KEYS,
   PROVIDER_NOT_FOUND,
 } from "../contracts/providers";
+import { rankCatalogCandidatesByCost } from "./rank-catalog-candidates-by-cost";
+import { rankCatalogCandidatesByCost } from "./rank-catalog-candidates-by-cost";
 
 export type {
   AssetRole,
@@ -176,7 +178,7 @@ export function resolveProvider(
     return matched;
   }
 
-  return resolvedCandidates[0];
+  return rankCatalogCandidatesByCost(resolvedCandidates)[0]!;
 }
 
 /**

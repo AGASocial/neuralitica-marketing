@@ -42,6 +42,7 @@ export type AssertReelBudgetAllowsSpendResult =
       maxCostCents: number;
       providerTier: ProviderTier;
       providerKey: string;
+      rationaleKey: import("@/lib/contracts/provider-decisions").ProviderRationaleKey;
       didOverride: boolean;
     }
   | {
@@ -158,6 +159,7 @@ export async function assertReelBudgetAllowsSpend(
       maxCostCents,
       providerTier: policyResult.policy.providerTier,
       providerKey: estimateResult.providerKey,
+      rationaleKey: estimateResult.rationaleKey,
       didOverride: true,
     };
   }
@@ -169,6 +171,7 @@ export async function assertReelBudgetAllowsSpend(
     maxCostCents,
     providerTier: policyResult.policy.providerTier,
     providerKey: estimateResult.providerKey,
+    rationaleKey: estimateResult.rationaleKey,
     didOverride: false,
   };
 }

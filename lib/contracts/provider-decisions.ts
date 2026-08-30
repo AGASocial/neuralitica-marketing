@@ -7,9 +7,12 @@ import { z } from "zod";
 import { reelSpendJobKindSchema } from "@/lib/contracts/cost-policy";
 import {
   assetRoleSchema,
+  providerRationaleKeySchema,
   providerTierSchema,
   visualModeSchema,
 } from "@/lib/contracts/providers";
+
+export { providerRationaleKeySchema } from "@/lib/contracts/providers";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
 import { visualModalitySchema } from "@/lib/contracts/visual-preferences";
 
@@ -22,22 +25,7 @@ export const DEFAULT_BROLL_CLIP_SEC = 5 as const;
 /** Footnote i18n key on every recommendation DTO. */
 export const MANUAL_FALLBACK_NOTE_KEY = "manual_upload_available" as const;
 
-/** Closed enum — FE maps to scripts.providerRecommendation.rationale.* */
-export const providerRationaleKeySchema = z.enum([
-  "cheapest_active_low_tier",
-  "cheapest_active_high_tier",
-  "llm_variant_default",
-  "llm_variant_fallback",
-  "reference_loop_prefers_musetalk",
-  "own_avatar_talking_head",
-  "generic_avatar_talking_head",
-  "faceless_broll_wan",
-  "tts_voiceover_required",
-  "high_tier_inactive",
-  "manual_fallback_operator",
-]);
-
-export type ProviderRationaleKey = z.infer<typeof providerRationaleKeySchema>;
+export type ProviderRationaleKey = import("@/lib/contracts/providers").ProviderRationaleKey;
 
 export const providerDecisionSchema = z
   .object({
@@ -94,6 +82,18 @@ export const getReelProviderRecommendationsInputSchema = z
 
 export type GetReelProviderRecommendationsInput = z.infer<
   typeof getReelProviderRecommendationsInputSchema
+>;
+
+/** Server Action boundary — clientId derived from requireOperator(). */
+export const getReelProviderRecommendationsActionInputSchema = z
+  .object({
+    weekStart: trendWeekStartSchema,
+    slotIndex: z.number().int().min(0).max(6).optional(),
+  })
+  .strict();
+
+export type GetReelProviderRecommendationsActionInput = z.infer<
+  typeof getReelProviderRecommendationsActionInputSchema
 >;
 
 export const logProviderDecisionInputSchema = z

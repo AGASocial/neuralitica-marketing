@@ -188,6 +188,13 @@ describe("migrations (US-X.4)", () => {
     ),
     "utf8",
   );
+  const providerDecisionsMigration = readFileSync(
+    path.join(
+      repoRoot,
+      "supabase/migrations/20260830510300_neuramark_provider_decisions.sql",
+    ),
+    "utf8",
+  );
 
   it("catalog migration defines neuramark_provider_catalog with RLS and seed keys", () => {
     assert.match(catalogMigration, /neuramark_provider_catalog/);
@@ -212,6 +219,17 @@ describe("migrations (US-X.4)", () => {
     );
     assert.match(costPolicyMigration, /\n  150,\n/);
     assert.match(costPolicyMigration, /'low'/);
+  });
+
+  it("provider decisions migration defines append-only neuramark_provider_decisions", () => {
+    assert.match(providerDecisionsMigration, /neuramark_provider_decisions/);
+    assert.match(providerDecisionsMigration, /rationale_key/);
+    assert.match(
+      providerDecisionsMigration,
+      /neuramark_provider_decisions_reel_script_id_idx/,
+    );
+    assert.match(providerDecisionsMigration, /ENABLE ROW LEVEL SECURITY/);
+    assert.equal(/CREATE POLICY/i.test(providerDecisionsMigration), false);
   });
 
   it("seed SQL contains no secret-shaped strings", () => {
@@ -417,6 +435,30 @@ describe("resolveProvider (US-X.4)", () => {
     });
     assert.equal(manual.key, "manual");
     assert.equal(manual.costModel.unitCostCents, 0);
+  });
+
+  it("rankCatalogCandidatesByCost picks cheapest active row", () => {
+    const { rankCatalogCandidatesByCost } = withServerOnlyStub(() =>
+      require("./rank-catalog-candidates-by-cost.ts"),
+    );
+    const cheaper = row("siliconflow_cosyvoice2", "tts", "low", true, {}, {
+      unitCostCents: 1,
+    });
+    const pricier = row("siliconflow_wan21_turbo", "broll", "low", true, {}, {
+      unitCostCents: 99,
+    });
+    const ranked = rankCatalogCandidatesByCost([pricier, cheaper]);
+    assert.equal(ranked[0]?.key, "siliconflow_cosyvoice2");
+  });
+
+  it("resolveProvider picks cheapest talking_head when no loop preference", () => {
+    const { resolveProvider } = loadProviderAdapters();
+    const resolved = resolveProvider(catalog, {
+      assetRole: "talking_head",
+      tier: "low",
+      hasReferenceLoop: false,
+    });
+    assert.equal(resolved.key, DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead);
   });
 
   it("getCatalogRowByKey finds row by key", () => {

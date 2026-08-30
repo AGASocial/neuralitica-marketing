@@ -37,12 +37,16 @@ import { persistReelScript } from "@/lib/reel-scripts/persist-reel-script";
 import { getBusinessProfileForAgents } from "@/lib/profile/get-business-profile-for-agents";
 import { getPlaybookForAgents } from "@/lib/playbook/get-playbook-for-agents";
 import { getTrendSnapshotForWeek } from "@/lib/trend/get-trend-snapshot-for-week";
-import { getCostPolicyForClient } from "@/lib/cost-policy/get-cost-policy-for-client";
 import { assertReelBudgetAllowsSpend } from "@/lib/cost-policy/assert-reel-budget-allows-spend";
+import { logProviderDecision } from "@/lib/cost-policy/log-provider-decision";
 import { recordReelSpendEvent } from "@/lib/cost-policy/record-reel-spend-event";
+import { logProviderDecision } from "@/lib/cost-policy/log-provider-decision";
 import { resolveReelScriptBudgetContext } from "@/lib/cost-policy/resolve-reel-script-for-budget";
 import { getProviderCatalog } from "@/lib/providers/get-provider-catalog";
-import { resolveProvider } from "@/lib/providers/provider-adapters";
+import {
+  resolveCatalogRowForDecision,
+  resolveProviderForJob,
+} from "@/lib/providers/resolve-provider-for-job";
 import { createSiliconFlowLlmAdapter } from "@/lib/providers/siliconflow-llm-adapter";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
 import type { BusinessProfileForAgentsView } from "@/lib/contracts/profile";
@@ -170,19 +174,21 @@ export async function generateReelScriptsForClient(
       return reelScriptInternalError();
     }
 
-    const policyResult = await getCostPolicyForClient(clientId);
-    if (!policyResult.ok) {
-      return reelScriptCostPolicyUnavailableError();
+    const llmDecisionResult = await resolveProviderForJob({
+      clientId,
+      assetRole: "llm",
+      llmVariant: "fallback",
+    });
+    if (!llmDecisionResult.ok) {
+      return reelScriptProviderUnavailableError();
     }
+    const llmDecision = llmDecisionResult.decision;
 
-    let provider;
-    try {
-      provider = resolveProvider(catalogResult.providers, {
-        assetRole: "llm",
-        tier: policyResult.policy.providerTier,
-        llmVariant: "fallback",
-      });
-    } catch {
+    const provider = resolveCatalogRowForDecision(
+      catalogResult.providers,
+      llmDecision.providerKey,
+    );
+    if (!provider) {
       return reelScriptProviderUnavailableError();
     }
 
@@ -233,6 +239,8 @@ export async function generateReelScriptsForClient(
     type SlotGateOk = {
       estimatedCostCents: number;
       providerKey: string;
+      providerTier: import("@/lib/contracts/providers").ProviderTier;
+      rationaleKey: import("@/lib/contracts/provider-decisions").ProviderRationaleKey;
     };
     const gateBySlot = new Map<number, SlotGateOk>();
 
@@ -275,6 +283,8 @@ export async function generateReelScriptsForClient(
         gateBySlot.set(slot.slotIndex, {
           estimatedCostCents: gateResult.estimatedCostCents,
           providerKey: gateResult.providerKey,
+          providerTier: gateResult.providerTier,
+          rationaleKey: gateResult.rationaleKey,
         });
       }
     }
@@ -328,6 +338,8 @@ export async function generateReelScriptsForClient(
         gate = {
           estimatedCostCents: gateResult.estimatedCostCents,
           providerKey: gateResult.providerKey,
+          providerTier: gateResult.providerTier,
+          rationaleKey: gateResult.rationaleKey,
         };
       }
 
@@ -396,6 +408,30 @@ export async function generateReelScriptsForClient(
         estimatedCostCents: item.gate.estimatedCostCents,
         operatorClientId,
         providerKey: item.gate.providerKey,
+      });
+
+      await logProviderDecision({
+        clientId,
+        reelScriptId: persisted.scriptId,
+        jobKind: spendJobKind,
+        assetRole: "llm",
+        providerTier: item.gate.providerTier,
+        providerKey: item.gate.providerKey,
+        estimatedCostCents: item.gate.estimatedCostCents,
+        rationaleKey: item.gate.rationaleKey,
+        operatorClientId,
+      });
+
+      await logProviderDecision({
+        clientId,
+        reelScriptId: persisted.scriptId,
+        jobKind: spendJobKind,
+        assetRole: "llm",
+        providerTier: llmDecision.providerTier,
+        providerKey: llmDecision.providerKey,
+        estimatedCostCents: llmDecision.estimatedCostCents,
+        rationaleKey: llmDecision.rationaleKey,
+        operatorClientId,
       });
     }
 

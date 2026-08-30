@@ -1,3 +1,5 @@
+import { FORBIDDEN_PROVIDER_AUTHORITY_KEYS } from "@/lib/contracts/provider-decisions";
+
 const FORBIDDEN_REEL_CAPTION_KEYS = new Set([
   "clientId",
   "client_id",
@@ -5,8 +7,6 @@ const FORBIDDEN_REEL_CAPTION_KEYS = new Set([
   "strategy_id",
   "reelScriptId",
   "reel_script_id",
-  "providerKey",
-  "provider_key",
   "tier",
   "envKeyName",
   "model",
@@ -51,6 +51,7 @@ const FORBIDDEN_REEL_CAPTION_KEYS = new Set([
   "override_budget",
   "confirmGeneration",
   "confirm_generation",
+  ...FORBIDDEN_PROVIDER_AUTHORITY_KEYS,
 ]);
 
 export function findForbiddenReelCaptionKeys(raw: unknown): string[] {

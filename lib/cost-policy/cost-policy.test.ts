@@ -525,4 +525,116 @@ describe("assert-reel-budget gate behavior (mocked)", () => {
       mock.restore();
     }
   });
+
+  it("estimateLlmJobCost returns fallback variant rationaleKey", async () => {
+    const nodeModule = Module as unknown as NodeModuleLoad;
+    const originalLoad = nodeModule._load.bind(nodeModule);
+
+    nodeModule._load = function (request, parent, isMain) {
+      if (request === "server-only") return {};
+      if (request === "react") {
+        return { cache: (fn: (...args: unknown[]) => unknown) => fn };
+      }
+      const req = String(request);
+      if (req.includes("get-cost-policy-for-client")) {
+        return {
+          getCostPolicyForClient: async () => ({
+            ok: true,
+            policy: {
+              id: GLOBAL_POLICY_ID,
+              clientId: null,
+              providerTier: "low",
+              maxCostCents: 150,
+              rules: null,
+              createdAt: "2026-01-01T00:00:00.000Z",
+              updatedAt: "2026-01-01T00:00:00.000Z",
+            },
+            scope: "global",
+          }),
+          loadCostPolicyForClientFresh: async () => ({
+            ok: true,
+            policy: {
+              id: GLOBAL_POLICY_ID,
+              clientId: null,
+              providerTier: "low",
+              maxCostCents: 150,
+              rules: null,
+              createdAt: "2026-01-01T00:00:00.000Z",
+              updatedAt: "2026-01-01T00:00:00.000Z",
+            },
+            scope: "global",
+          }),
+        };
+      }
+      if (req.includes("get-provider-catalog")) {
+        return {
+          getProviderCatalog: async () => ({
+            providers: [
+              {
+                key: "siliconflow_deepseek_flash",
+                assetRole: "llm",
+                tier: "low",
+                active: true,
+                capabilities: {},
+                costModel: {
+                  billingUnit: "per_1m_tokens",
+                  unitCostCents: 14,
+                },
+                envKeyName: "SILICONFLOW_API_KEY",
+              },
+              {
+                key: "siliconflow_qwen",
+                assetRole: "llm",
+                tier: "low",
+                active: true,
+                capabilities: {},
+                costModel: { billingUnit: "per_1m_tokens", unitCostCents: 18 },
+                envKeyName: "SILICONFLOW_API_KEY",
+              },
+            ],
+          }),
+        };
+      }
+      if (req.includes("siliconflow-llm-adapter")) {
+        return {
+          createSiliconFlowLlmAdapter: () => ({
+            estimateCost: async () => ({
+              estimatedCostCents: 2,
+              currency: "USD",
+              providerKey: "siliconflow_qwen",
+            }),
+          }),
+        };
+      }
+      return originalLoad(request, parent, isMain);
+    };
+
+    try {
+      clearCostPolicyModuleCache();
+      const { estimateLlmJobCost } = await import(
+        `../cost-policy/estimate-llm-job-cost.ts?delegate=${Date.now()}`
+      );
+      const result = await estimateLlmJobCost({
+        clientId: CLIENT_ID,
+        providerTier: "low",
+        llmVariant: "fallback",
+      });
+      assert.equal(result.ok, true);
+      if (result.ok) {
+        assert.equal(result.providerKey, "siliconflow_qwen");
+        assert.equal(result.rationaleKey, "llm_variant_fallback");
+      }
+    } finally {
+      nodeModule._load = originalLoad;
+      clearCostPolicyModuleCache();
+    }
+  });
+
+  it("rejects client providerKey on script generate input", () => {
+    const keys = findForbiddenReelScriptKeys({
+      weekStart: "2026-01-05",
+      providerKey: "heygen_high",
+    });
+    assert.ok(keys.includes("providerKey"));
+  });
 });

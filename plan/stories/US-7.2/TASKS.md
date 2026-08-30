@@ -198,20 +198,20 @@ Concrete BE consumers: **`getReelProviderRecommendations`** · extended **`getRe
 
 Concrete FE consumers: recommendation panel · budget confirm enrichment · US-8.x seam.
 
-- [ ] **Migration:** `neuramark_provider_decisions` append-only (CONTRACT freezes columns + indexes on `reel_script_id`, `(client_id, created_at)`).
-- [ ] **`lib/contracts/provider-decisions.ts`** (or extend `cost-policy.ts`) — Zod for `ProviderDecision`, `ReelProviderRecommendation`, `ProviderRationaleKey`, `LogProviderDecisionInput`.
-- [ ] **`rankCatalogCandidatesByCost(candidates)`** — sort by `unitCostCents`, stable tie-break.
-- [ ] **Extend `resolveProvider`** — apply cost ranking after capability filters; preserve `llmVariant`, loop, manual exclusion behavior.
-- [ ] **`resolveProviderDecision(input)`** — catalog + rank + adapter `estimateCost`; map `providerKey` → `displayLabel`.
-- [ ] **Refactor `estimateLlmJobCost`** — delegate to `resolveProviderDecision`; remove duplicate resolve/adapter path.
-- [ ] **`getReelProviderRecommendations({ clientId, weekStart, slotIndex? })`** — operator-gated; resolve policy tier + profile visual mode + strategy slots; build multi-role `components[]` per AC routing table.
-- [ ] **`logProviderDecision(input)`** — INSERT decision row; call from script/caption orchestrators **after successful LLM** alongside `recordReelSpendEvent`.
-- [ ] **Wire orchestrators** — pass `rationaleKey` + `providerKey` from decision into spend event metadata optional field (CONTRACT freezes whether duplicate or FK-only).
-- [ ] **Generalize display labels** — extend beyond LLM keys (SadTalker, MuseTalk, Wan, CosyVoice2, HeyGen, Manual).
-- [ ] **Export seam** — document **`resolveProviderDecision` + `logProviderDecision`** for US-8.1 CONTRACT (video job create).
-- [ ] **[SEC] Forbidden fields** — reject `providerKey`, `assetRole`, `providerTier` on generate/regenerate (extend US-7.1 helpers).
-- [ ] **[SEC] Operator-only** reads for recommendations — `requireOperator()` on preview/recommendation actions.
-- [ ] **Automated tests:** extend `lib/providers/providers.test.ts` + `lib/cost-policy/cost-policy.test.ts` — cheapest-active ranking; low tier never picks high row; loop → MuseTalk; faceless → broll; manual excluded from auto rank; `estimateLlmJobCost` delegates; decision log INSERT; forbidden client `providerKey`; inactive high tier → `PROVIDER_UNAVAILABLE`.
+- [x] **Migration:** `neuramark_provider_decisions` append-only (CONTRACT freezes columns + indexes on `reel_script_id`, `(client_id, created_at)`).
+- [x] **`lib/contracts/provider-decisions.ts`** (or extend `cost-policy.ts`) — Zod for `ProviderDecision`, `ReelProviderRecommendation`, `ProviderRationaleKey`, `LogProviderDecisionInput`.
+- [x] **`rankCatalogCandidatesByCost(candidates)`** — sort by `unitCostCents`, stable tie-break.
+- [x] **Extend `resolveProvider`** — apply cost ranking after capability filters; preserve `llmVariant`, loop, manual exclusion behavior.
+- [x] **`resolveProviderDecision(input)`** — catalog + rank + adapter `estimateCost`; map `providerKey` → `displayLabel`.
+- [x] **Refactor `estimateLlmJobCost`** — delegate to `resolveProviderDecision`; remove duplicate resolve/adapter path.
+- [x] **`getReelProviderRecommendations({ clientId, weekStart, slotIndex? })`** — operator-gated; resolve policy tier + profile visual mode + strategy slots; build multi-role `components[]` per AC routing table.
+- [x] **`logProviderDecision(input)`** — INSERT decision row; call from script/caption orchestrators **after successful LLM** alongside `recordReelSpendEvent`.
+- [x] **Wire orchestrators** — pass `rationaleKey` + `providerKey` from decision into spend event metadata optional field (CONTRACT freezes whether duplicate or FK-only).
+- [x] **Generalize display labels** — extend beyond LLM keys (SadTalker, MuseTalk, Wan, CosyVoice2, HeyGen, Manual).
+- [x] **Export seam** — document **`resolveProviderDecision` + `logProviderDecision`** for US-8.1 CONTRACT (video job create).
+- [x] **[SEC] Forbidden fields** — reject `providerKey`, `assetRole`, `providerTier` on generate/regenerate (extend US-7.1 helpers).
+- [x] **[SEC] Operator-only** reads for recommendations — `requireOperator()` on preview/recommendation actions.
+- [x] **Automated tests:** extend `lib/providers/providers.test.ts` + `lib/cost-policy/cost-policy.test.ts` — cheapest-active ranking; low tier never picks high row; loop → MuseTalk; faceless → broll; manual excluded from auto rank; `estimateLlmJobCost` delegates; decision log INSERT; forbidden client `providerKey`; inactive high tier → `PROVIDER_UNAVAILABLE`.
 
 ---
 
@@ -219,10 +219,10 @@ Concrete FE consumers: recommendation panel · budget confirm enrichment · US-8
 
 All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
-- [ ] **CREATE** **`neuramark_provider_decisions`** per CONTRACT DDL.
-- [ ] **No change** to `neuramark_provider_catalog` seed or `neuramark_cost_policies`.
-- [ ] RLS deny-by-default on new table; service-role Node only.
-- [ ] Indexes: `reel_script_id`, `(client_id, created_at DESC)` for later US-7.3 analysis.
+- [x] **CREATE** **`neuramark_provider_decisions`** per CONTRACT DDL.
+- [x] **No change** to `neuramark_provider_catalog` seed or `neuramark_cost_policies`.
+- [x] RLS deny-by-default on new table; service-role Node only.
+- [x] Indexes: `reel_script_id`, `(client_id, created_at DESC)` for later US-7.3 analysis.
 
 ---
 

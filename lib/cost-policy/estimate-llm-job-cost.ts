@@ -1,11 +1,8 @@
 import "server-only";
 
 import type { LlmVariant, ProviderTier } from "@/lib/contracts/providers";
-import { getProviderCatalog } from "@/lib/providers/get-provider-catalog";
-import { resolveProvider } from "@/lib/providers/provider-adapters";
-import { createSiliconFlowLlmAdapter } from "@/lib/providers/siliconflow-llm-adapter";
-
-import { resolveLlmProviderLabel } from "./llm-provider-label";
+import type { ProviderRationaleKey } from "@/lib/contracts/provider-decisions";
+import { resolveProviderForJob } from "@/lib/providers/resolve-provider-for-job";
 
 export type EstimateLlmJobCostInput = {
   clientId: string;
@@ -19,58 +16,30 @@ export type EstimateLlmJobCostResult =
       estimatedCostCents: number;
       providerKey: string;
       resolvedLlmProviderLabel: string;
+      rationaleKey: ProviderRationaleKey;
     }
   | { ok: false; code: "PROVIDER_UNAVAILABLE" };
 
 export async function estimateLlmJobCost(
   input: EstimateLlmJobCostInput,
 ): Promise<EstimateLlmJobCostResult> {
-  const catalogResult = await getProviderCatalog();
-  if ("loadFailed" in catalogResult && catalogResult.loadFailed) {
+  const result = await resolveProviderForJob({
+    clientId: input.clientId,
+    assetRole: "llm",
+    llmVariant: input.llmVariant,
+  });
+
+  if (!result.ok) {
     return { ok: false, code: "PROVIDER_UNAVAILABLE" };
   }
 
-  let provider;
-  try {
-    provider = resolveProvider(catalogResult.providers, {
-      assetRole: "llm",
-      tier: input.providerTier,
-      llmVariant: input.llmVariant,
-    });
-  } catch {
-    return { ok: false, code: "PROVIDER_UNAVAILABLE" };
-  }
-
-  const adapter = createSiliconFlowLlmAdapter(provider.key, provider.envKeyName);
-  if (!adapter) {
-    return { ok: false, code: "PROVIDER_UNAVAILABLE" };
-  }
-
-  try {
-    const estimate = await adapter.estimateCost({
-      clientId: input.clientId,
-      providerKey: provider.key,
-      locale: "es",
-      systemPrompt: "estimate",
-      userPrompt: "estimate",
-    });
-
-    if (
-      !Number.isSafeInteger(estimate.estimatedCostCents) ||
-      estimate.estimatedCostCents < 0
-    ) {
-      return { ok: false, code: "PROVIDER_UNAVAILABLE" };
-    }
-
-    return {
-      ok: true,
-      estimatedCostCents: estimate.estimatedCostCents,
-      providerKey: provider.key,
-      resolvedLlmProviderLabel: resolveLlmProviderLabel(provider.key),
-    };
-  } catch {
-    return { ok: false, code: "PROVIDER_UNAVAILABLE" };
-  }
+  return {
+    ok: true,
+    estimatedCostCents: result.decision.estimatedCostCents,
+    providerKey: result.decision.providerKey,
+    resolvedLlmProviderLabel: result.decision.displayLabel,
+    rationaleKey: result.decision.rationaleKey,
+  };
 }
 
 export function llmVariantForJobKind(

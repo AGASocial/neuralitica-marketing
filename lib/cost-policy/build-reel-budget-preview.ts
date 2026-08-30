@@ -147,6 +147,12 @@ async function buildPreviewForSlot(params: {
       modalidad: params.slot.modalidad,
       hasBrollBeats: params.hasBrollBeats,
     }),
+    llmRecommendation: {
+      displayLabel: estimateResult.resolvedLlmProviderLabel,
+      providerTier: policyResult.policy.providerTier,
+      estimatedCostCents: estimateResult.estimatedCostCents,
+      rationaleKey: estimateResult.rationaleKey,
+    },
     wouldExceed: wouldExceedBudget(
       cumulativeCostCents,
       estimatedCostCents,

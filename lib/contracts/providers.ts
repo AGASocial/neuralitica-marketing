@@ -39,6 +39,23 @@ export const envKeyNameSchema = z
 export const llmVariantSchema = z.enum(["default", "fallback"]);
 export type LlmVariant = z.infer<typeof llmVariantSchema>;
 
+/** Closed enum — FE maps to scripts.providerRecommendation.rationale.* (US-7.2). */
+export const providerRationaleKeySchema = z.enum([
+  "cheapest_active_low_tier",
+  "cheapest_active_high_tier",
+  "llm_variant_default",
+  "llm_variant_fallback",
+  "reference_loop_prefers_musetalk",
+  "own_avatar_talking_head",
+  "generic_avatar_talking_head",
+  "faceless_broll_wan",
+  "tts_voiceover_required",
+  "high_tier_inactive",
+  "manual_fallback_operator",
+]);
+
+export type ProviderRationaleKey = z.infer<typeof providerRationaleKeySchema>;
+
 export const providerCatalogRowSchema = z.object({
   key: z.string().min(1),
   assetRole: assetRoleSchema,
