@@ -2,7 +2,7 @@
 
 **Story:** Configure max budget per Reel  
 **Branch:** `feature/US-7.1-cost-policy`  
-**Date:** 2026-08-30  
+**Date:** 2026-08-30 (re-validated after fix `69d274f`)  
 **Validator:** requirements-validator  
 
 **Tests run:**
@@ -13,13 +13,15 @@ npx tsx --test lib/cost-policy/cost-policy.test.ts \
   lib/reel-captions/reel-captions.test.ts
 ```
 
-**Result:** 97/97 pass (cost-policy 17, reel-scripts 28, reel-captions 52).
+**Result:** 99/99 pass (cost-policy 17, reel-scripts 30, reel-captions 52).
 
 ---
 
-## Verdict: FAIL
+## Verdict: PASS WITH NOTES
 
-Core policy resolution, gate math, audit events, Operator settings, preview DTOs, migrations, and single-slot flows match CONTRACT and story AC. **Batch generate/regenerate without `budgetOverride` violates frozen CONTRACT batch semantics** by gating and invoking LLM per slot in sequence instead of evaluating all target slots before any LLM I/O — a later slot block can leave earlier slots with wasted LLM calls (no spend ledger rows, but margin leak).
+Core policy resolution, gate math, audit events, Operator settings, preview DTOs, migrations, and batch/single-slot flows match CONTRACT and story AC. Fix `69d274f` resolves the prior **batch pre-gate ordering** gap: batch generate/regenerate without `budgetOverride` now evaluates all target slots through `assertReelBudgetAllowsSpend` before any LLM I/O, with integration tests asserting zero LLM calls on `BUDGET_EXCEEDED`.
+
+**Notes (non-blocking):** batch orchestrator error responses still return only the first failing `blockedSlotIndexes` entry (preview returns all); CONTRACT unit-test matrix rows 11, 13, 14, 16 remain uncovered.
 
 ---
 
@@ -29,7 +31,7 @@ Core policy resolution, gate math, audit events, Operator settings, preview DTOs
 |-----------|--------|----------|
 | Global default `provider_tier` is `low`; per-client override optional | **PASS** | US-X.4 seed `provider_tier = low` (`supabase/migrations/20260829260100_neuramark_cost_policies.sql`); `getCostPolicyForClient` client→global fallback (`lib/cost-policy/get-cost-policy-for-client.ts`); client override UPSERT/DELETE (`lib/cost-policy/actions/update-client-cost-policy-override.ts:86-148`); settings UI (`components/cost-policy/CostPolicySettingsForm.tsx`, `app/(app)/operator/settings/cost-policy/page.tsx`). |
 | Seeded default `max_cost_cents` is **150** ($1.50/Reel) | **PASS** | US-X.4 migration seed; `DEFAULT_MAX_COST_CENTS = 150` (`lib/contracts/cost-policy.ts:15`); global fallback test (`lib/cost-policy/cost-policy.test.ts:161-219`). |
-| Generation blocked if estimate exceeds max without override | **PASS** (single-slot / per-call) **PARTIAL** (batch) | Gate returns `BUDGET_EXCEEDED` + `blocked` audit (`lib/cost-policy/assert-reel-budget-allows-spend.ts:106-124`); tests (`cost-policy.test.ts:429-451`). Batch without override may still run LLM for earlier slots before a later slot blocks — see Gaps. |
+| Generation blocked if estimate exceeds max without override | **PASS** | Gate returns `BUDGET_EXCEEDED` + `blocked` audit (`lib/cost-policy/assert-reel-budget-allows-spend.ts:106-124`); single-slot tests (`cost-policy.test.ts:429-451`); batch pre-gate before LLM (`generate-reel-scripts-for-client.ts:239-280`, `generate-reel-captions-for-client.ts:211-244`); integration tests assert zero LLM (`reel-scripts.test.ts:1370-1420`, `reel-captions.test.ts:1100+`). |
 | Policy considers avatar required vs faceless | **PASS** (V1 projection) | `resolveProjectionHintKey` maps `visualMode` + `modalidad` + b-roll (`lib/cost-policy/resolve-projection-hint.ts`); preview DTO includes `projectionHintKey` (`lib/cost-policy/build-reel-budget-preview.ts:145-149`); i18n hints (`messages/en.json:953-957`, `messages/es.json`). Blocking estimate remains LLM-only per TASKS/CONTRACT V1 scope. |
 | Estimate shown before user confirms generation | **PASS** | `getReelBudgetPreview` Operator-gated (`lib/cost-policy/actions/get-reel-budget-preview.ts:42-69`); `ScriptsPageView` opens `ReelBudgetConfirmDialog` before mutations (`components/scripts/ScriptsPageView.tsx:454,705-721`). |
 | Budget check counts cumulative cost of all attempts for the same Reel | **PASS** (LLM V1) | `neuramark_reel_spend_events` + `sumReelCumulativeCostCents` (`lib/cost-policy/sum-reel-cumulative-cost-cents.ts`); `recordReelSpendEvent` after successful LLM (`lib/reel-scripts/generate-reel-scripts-for-client.ts:391-399`, `lib/reel-captions/generate-reel-captions-for-client.ts:398+`). Video/TTS deferred per CONTRACT out-of-scope. |
@@ -55,9 +57,9 @@ Core policy resolution, gate math, audit events, Operator settings, preview DTOs
 | `getReelBudgetPreview` | **PASS** | `build-reel-budget-preview.ts`, batch `blockedSlotIndexes` |
 | Generate action extensions (`budgetOverride`, forbidden keys) | **PASS** | `generate-reel-scripts.ts`, `regenerate-reel-script-slot.ts`, caption counterparts |
 | DB migrations (spend events, audit log, client unique index) | **PASS** | `20260830510000_*`, `20260830510100_*`, `20260830510200_*` |
-| **Batch fail-entire without override — no partial LLM** | **FAIL** | CONTRACT L438-439, L602-603. Implementation only pre-gates all slots when `budgetOverride === true` (`generate-reel-scripts-for-client.ts:239-280`). Without override, gate+LLM run inside per-slot loop (`289-373`) — slot *N* block after slot *0..N-1* LLM. Same pattern in `generate-reel-captions-for-client.ts:211-244` vs `276-298`. |
-| Batch `blockedSlotIndexes` on server error | **PARTIAL** | Preview returns all blocked slots (`build-reel-budget-preview.ts:237-243`). Orchestrator returns only first failing slot (`generate-reel-scripts-for-client.ts:318-320`). |
-| CONTRACT unit test matrix rows 9, 11, 13, 14, 16 | **PARTIAL** | Rows 1–8, 10, 12, 15, 17 covered in `cost-policy.test.ts`. Missing: batch orchestrator integration (#9), settings non-operator (#11), global `clientId` reject (#13), client override UPSERT/delete (#14), spend-after-LLM (#16). |
+| **Batch fail-entire without override — no partial LLM** | **PASS** | Fix `69d274f`: pre-loop gate for all batch slots (`generate-reel-scripts-for-client.ts:239-280`, `generate-reel-captions-for-client.ts:211-244`); LLM loop uses cached gate results (`289-373`, `254+`). Tests: `reel-scripts.test.ts:1370-1420`, `reel-captions.test.ts:1100+`. |
+| Batch `blockedSlotIndexes` on server error | **PARTIAL** | Preview returns all blocked slots (`build-reel-budget-preview.ts:237-243`). Orchestrator returns only first failing slot (`generate-reel-scripts-for-client.ts:265-267`, `generate-reel-captions-for-client.ts:229-231`). Acceptable for V1 — FE uses preview for confirm dialog. |
+| CONTRACT unit test matrix rows 9, 11, 13, 14, 16 | **PARTIAL** | Row #9 covered (batch zero-LLM integration). Rows 11, 13, 14, 16 still missing: settings non-operator, global `clientId` reject, client override lifecycle, spend-after-LLM unit test. |
 
 ---
 
@@ -75,14 +77,11 @@ Core policy resolution, gate math, audit events, Operator settings, preview DTOs
 
 ---
 
-## Gaps (what blocks PASS)
+## Gaps (non-blocking notes)
 
-1. **Batch gate ordering (CONTRACT + margin AC)** — Without `budgetOverride`, batch script/caption orchestrators must evaluate **all** target slots through `assertReelBudgetAllowsSpend` **before** any `generateReelScriptForSlot` / caption LLM call. Current code gates inline in the processing loop, allowing partial LLM when a later slot exceeds cap.  
-   **Files:** `lib/reel-scripts/generate-reel-scripts-for-client.ts:239-373`, `lib/reel-captions/generate-reel-captions-for-client.ts:211-298`.
+1. **Batch `blockedSlotIndexes` parity** — Orchestrator returns first failing slot only; preview returns all. FE confirm flow uses preview; no user-facing defect observed.
 
-2. **CONTRACT test matrix #9 not implemented** — No automated test asserting batch abort-with-zero-LLM when any slot would exceed without override.
-
-3. **Optional hardening (non-blocking if #1 fixed):** Return full `blockedSlotIndexes` on batch `BUDGET_EXCEEDED` to match preview; add tests for settings 403, global `clientId` reject, client override lifecycle (#11, #13, #14).
+2. **CONTRACT test matrix gaps** — Rows #11 (settings non-operator 403), #13 (global `clientId` reject), #14 (client override UPSERT/delete), #16 (spend-after-LLM unit) not automated. Recommended follow-up hardening, not story blockers.
 
 ---
 
@@ -96,10 +95,10 @@ None identified. Video/TTS gate, catalog CRUD, Cliente cost UI, and US-7.2 ranki
 
 | Action | Owner |
 |--------|-------|
-| Refactor batch orchestrators: pre-loop all slots with `assertReelBudgetAllowsSpend`; abort entire batch on any `BUDGET_EXCEEDED` without override; only then run LLM for all slots | **nextjs-backend** |
-| Add integration test: batch with two slots, second would exceed → zero LLM invocations, `BUDGET_EXCEEDED` + `blockedSlotIndexes` | **nextjs-backend** |
-| Re-run VALIDATION after fix | **requirements-validator** |
-| PO checks AC boxes in `USER_STORIES.md` only after PASS | **product-owner** |
+| PO checks AC boxes in `USER_STORIES.md` (already checked per source file) | **product-owner** |
+| Optional: return full `blockedSlotIndexes` on batch `BUDGET_EXCEEDED` to match preview | **nextjs-backend** |
+| Optional: add tests for settings 403, global `clientId` reject, client override lifecycle, spend-after-LLM (#11, #13, #14, #16) | **nextjs-backend** |
+| Merge `feature/US-7.1-cost-policy` when ready | **product-owner** |
 
 ---
 
@@ -111,3 +110,11 @@ None identified. Video/TTS gate, catalog CRUD, Cliente cost UI, and US-7.2 ranki
 | US-5.1 reel scripts generate/regenerate | Satisfied (extended with gate) |
 | US-X.4 cost policies seed + catalog | Satisfied (prior VALIDATION PASS) |
 | US-14.5 `requireOperator()` | Satisfied (used on all cost surfaces) |
+
+---
+
+## Fix history
+
+| Commit | Change |
+|--------|--------|
+| `69d274f` | Batch orchestrators pre-gate all slots before LLM I/O; integration tests for zero LLM on `BUDGET_EXCEEDED`. Resolves prior FAIL on batch gate ordering. |
