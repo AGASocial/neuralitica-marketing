@@ -14,6 +14,14 @@ import { TabPanel, TabView } from "primereact/tabview";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
 
+import {
+  ReelBudgetConfirmDialog,
+  type ReelBudgetConfirmCopy,
+} from "@/components/cost-policy/ReelBudgetConfirmDialog";
+import type {
+  ReelBudgetBatchPreview,
+  ReelBudgetPreview,
+} from "@/lib/contracts/cost-policy";
 import type {
   ContentStrategyDayOfWeek,
   ContentStrategySlotGoal,
@@ -29,6 +37,7 @@ import type {
   ReelScriptErrorCode,
   ReelScriptListItem,
 } from "@/lib/contracts/reel-script";
+import { getReelBudgetPreview } from "@/lib/cost-policy/actions/get-reel-budget-preview";
 import { generateReelCaptions } from "@/lib/reel-captions/actions/generate-reel-captions";
 import { regenerateReelCaption } from "@/lib/reel-captions/actions/regenerate-reel-caption";
 import { selectReelCaptionCta } from "@/lib/reel-captions/actions/select-reel-caption-cta";
@@ -101,6 +110,8 @@ type ScriptsPageCopy = {
     unauthenticated: string;
     forbidden: string;
     internal: string;
+    budgetExceeded: string;
+    costPolicyUnavailable: string;
   };
   readability: {
     beatCharsExceeded: string;
@@ -113,6 +124,7 @@ type ScriptsPageCopy = {
     maxCharsPerBeatLine: number;
     maxBeatLinesTotal: number;
   };
+  budget: ReelBudgetConfirmCopy;
   caption: {
     tabs: {
       script: string;
@@ -190,6 +202,12 @@ function messageForCode(
   if (messageKey === "scripts.errors.strategyVersionChanged") {
     return copy.errors.strategyVersionChanged;
   }
+  if (messageKey === "scripts.budget.errors.exceeded") {
+    return copy.errors.budgetExceeded;
+  }
+  if (messageKey === "scripts.budget.errors.policyUnavailable") {
+    return copy.errors.costPolicyUnavailable;
+  }
 
   switch (code) {
     case "VALIDATION_ERROR":
@@ -231,6 +249,15 @@ function messageForCaptionCode(
   }
   if (messageKey === "scripts.caption.ctaSelect.errors.captionNotFound") {
     return copy.caption.ctaSelect.errors.captionNotFound;
+  }
+  if (messageKey === "scripts.budget.errors.exceeded") {
+    return copy.errors.budgetExceeded;
+  }
+  if (messageKey === "scripts.budget.errors.policyUnavailable") {
+    return copy.errors.costPolicyUnavailable;
+  }
+  if (messageKey === "scripts.budget.errors.providerUnavailable") {
+    return copy.budget.errors.providerUnavailable;
   }
 
   switch (code) {
@@ -290,6 +317,17 @@ function formatTemplate(
   );
 }
 
+type BudgetPendingAction =
+  | { kind: "script_batch" }
+  | { kind: "script_regenerate"; slotIndex: number }
+  | { kind: "caption_batch" }
+  | { kind: "caption_regenerate"; slotIndex: number };
+
+type BudgetOverridePayload = {
+  budgetOverride: true;
+  overrideReason: string;
+};
+
 export function ScriptsPageView({
   weekStart,
   data,
@@ -308,6 +346,18 @@ export function ScriptsPageView({
   const [captionSelectingSlot, setCaptionSelectingSlot] = useState<number | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<ReelScriptListItem[]>([]);
+  const [budgetDialogVisible, setBudgetDialogVisible] = useState(false);
+  const [budgetPreviewLoading, setBudgetPreviewLoading] = useState(false);
+  const [budgetPreviewError, setBudgetPreviewError] = useState<string | null>(null);
+  const [budgetPreview, setBudgetPreview] = useState<
+    ReelBudgetPreview | ReelBudgetBatchPreview | null
+  >(null);
+  const [budgetPreviewIsBatch, setBudgetPreviewIsBatch] = useState(false);
+  const [budgetPendingAction, setBudgetPendingAction] = useState<BudgetPendingAction | null>(
+    null,
+  );
+  const [budgetOverrideReason, setBudgetOverrideReason] = useState("");
+  const [budgetConfirmPending, setBudgetConfirmPending] = useState(false);
 
   const weekDate = weekStartToDate(weekStart);
   const weekRangeLabel = formatWeekRange(weekStart, locale);
@@ -316,7 +366,9 @@ export function ScriptsPageView({
     captionBatchPending ||
     regeneratingSlot !== null ||
     captionRegeneratingSlot !== null ||
-    captionSelectingSlot !== null;
+    captionSelectingSlot !== null ||
+    budgetPreviewLoading ||
+    budgetConfirmPending;
   const hasApprovedStrategy = data.approvedStrategy !== null;
   const hasAnyGenerated = data.items.some((item) => item.status === "generated");
   const hasAnyCaptionGenerated = data.items.some(
@@ -334,16 +386,93 @@ export function ScriptsPageView({
     router.refresh();
   }
 
-  async function handleGenerate() {
+  function closeBudgetDialog() {
+    if (budgetConfirmPending) {
+      return;
+    }
+    setBudgetDialogVisible(false);
+    setBudgetPendingAction(null);
+    setBudgetPreview(null);
+    setBudgetPreviewError(null);
+    setBudgetOverrideReason("");
+  }
+
+  function budgetPreviewErrorMessage(code: string, messageKey?: string): string {
+    if (messageKey === "scripts.budget.errors.policyUnavailable") {
+      return copy.budget.errors.policyUnavailable;
+    }
+    if (messageKey === "scripts.budget.errors.providerUnavailable") {
+      return copy.budget.errors.providerUnavailable;
+    }
+    return copy.budget.loadError;
+  }
+
+  function buildPreviewInput(action: BudgetPendingAction) {
+    switch (action.kind) {
+      case "script_batch":
+        return {
+          weekStart,
+          jobKind: "script_generate" as const,
+          mode: "batch" as const,
+        };
+      case "script_regenerate":
+        return {
+          weekStart,
+          jobKind: "script_generate" as const,
+          mode: "slot" as const,
+          slotIndex: action.slotIndex,
+        };
+      case "caption_batch":
+        return {
+          weekStart,
+          jobKind: "caption_generate" as const,
+          mode: "batch" as const,
+        };
+      case "caption_regenerate":
+        return {
+          weekStart,
+          jobKind: "caption_generate" as const,
+          mode: "slot" as const,
+          slotIndex: action.slotIndex,
+        };
+    }
+  }
+
+  async function openBudgetDialog(action: BudgetPendingAction) {
     if (isBusy) {
       return;
     }
 
+    setBudgetPendingAction(action);
+    setBudgetDialogVisible(true);
+    setBudgetPreviewLoading(true);
+    setBudgetPreviewError(null);
+    setBudgetPreview(null);
+    setBudgetOverrideReason("");
+
+    try {
+      const result = await getReelBudgetPreview(buildPreviewInput(action));
+      if (result.ok) {
+        setBudgetPreview(result.preview);
+        setBudgetPreviewIsBatch("isBatch" in result && result.isBatch === true);
+        return;
+      }
+      setBudgetPreviewError(
+        budgetPreviewErrorMessage(result.error.code, result.error.messageKey),
+      );
+    } catch {
+      setBudgetPreviewError(copy.budget.loadError);
+    } finally {
+      setBudgetPreviewLoading(false);
+    }
+  }
+
+  async function executeGenerateScripts(override?: BudgetOverridePayload) {
     setBatchPending(true);
     setBanner(null);
 
     try {
-      const result = await generateReelScripts({ weekStart });
+      const result = await generateReelScripts({ weekStart, ...override });
 
       if (result.ok) {
         toastRef.current?.show({
@@ -363,16 +492,15 @@ export function ScriptsPageView({
     }
   }
 
-  async function handleRegenerate(slotIndex: number) {
-    if (isBusy) {
-      return;
-    }
-
+  async function executeRegenerateScript(
+    slotIndex: number,
+    override?: BudgetOverridePayload,
+  ) {
     setRegeneratingSlot(slotIndex);
     setBanner(null);
 
     try {
-      const result = await regenerateReelScriptSlot({ weekStart, slotIndex });
+      const result = await regenerateReelScriptSlot({ weekStart, slotIndex, ...override });
 
       if (result.ok) {
         toastRef.current?.show({
@@ -392,16 +520,12 @@ export function ScriptsPageView({
     }
   }
 
-  async function handleGenerateCaptions() {
-    if (isBusy) {
-      return;
-    }
-
+  async function executeGenerateCaptions(override?: BudgetOverridePayload) {
     setCaptionBatchPending(true);
     setBanner(null);
 
     try {
-      const result = await generateReelCaptions({ weekStart });
+      const result = await generateReelCaptions({ weekStart, ...override });
 
       if (result.ok) {
         toastRef.current?.show({
@@ -419,6 +543,95 @@ export function ScriptsPageView({
     } finally {
       setCaptionBatchPending(false);
     }
+  }
+
+  async function executeRegenerateCaption(
+    slotIndex: number,
+    override?: BudgetOverridePayload,
+  ) {
+    setCaptionRegeneratingSlot(slotIndex);
+    setBanner(null);
+
+    try {
+      const result = await regenerateReelCaption({ weekStart, slotIndex, ...override });
+
+      if (result.ok) {
+        toastRef.current?.show({
+          severity: "success",
+          summary: copy.caption.toastRegenerateSuccess,
+          detail: copy.caption.ctaSelect.clearedOnRegen,
+          life: 5000,
+        });
+        router.refresh();
+        return;
+      }
+
+      setBanner(messageForCaptionCode(result.error.code, result.error.messageKey, copy));
+    } catch {
+      setBanner(copy.caption.errors.internal);
+    } finally {
+      setCaptionRegeneratingSlot(null);
+    }
+  }
+
+  async function confirmBudgetAction(override?: BudgetOverridePayload) {
+    if (!budgetPendingAction) {
+      return;
+    }
+
+    setBudgetConfirmPending(true);
+
+    try {
+      switch (budgetPendingAction.kind) {
+        case "script_batch":
+          await executeGenerateScripts(override);
+          break;
+        case "script_regenerate":
+          await executeRegenerateScript(budgetPendingAction.slotIndex, override);
+          break;
+        case "caption_batch":
+          await executeGenerateCaptions(override);
+          break;
+        case "caption_regenerate":
+          await executeRegenerateCaption(budgetPendingAction.slotIndex, override);
+          break;
+      }
+      closeBudgetDialog();
+    } finally {
+      setBudgetConfirmPending(false);
+    }
+  }
+
+  function requestGenerateScripts() {
+    void openBudgetDialog({ kind: "script_batch" });
+  }
+
+  function requestRegenerateScript(slotIndex: number) {
+    void openBudgetDialog({ kind: "script_regenerate", slotIndex });
+  }
+
+  function requestGenerateCaptions() {
+    void openBudgetDialog({ kind: "caption_batch" });
+  }
+
+  function requestRegenerateCaption(slotIndex: number) {
+    void openBudgetDialog({ kind: "caption_regenerate", slotIndex });
+  }
+
+  async function handleGenerate() {
+    requestGenerateScripts();
+  }
+
+  async function handleRegenerate(slotIndex: number) {
+    requestRegenerateScript(slotIndex);
+  }
+
+  async function handleGenerateCaptions() {
+    requestGenerateCaptions();
+  }
+
+  async function handleRegenerateCaption(slotIndex: number) {
+    requestRegenerateCaption(slotIndex);
   }
 
   async function handleSelectCaptionCta(slotIndex: number, selectedCtaIndex: number) {
@@ -456,36 +669,6 @@ export function ScriptsPageView({
     }
   }
 
-  async function handleRegenerateCaption(slotIndex: number) {
-    if (isBusy) {
-      return;
-    }
-
-    setCaptionRegeneratingSlot(slotIndex);
-    setBanner(null);
-
-    try {
-      const result = await regenerateReelCaption({ weekStart, slotIndex });
-
-      if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.caption.toastRegenerateSuccess,
-          detail: copy.caption.ctaSelect.clearedOnRegen,
-          life: 5000,
-        });
-        router.refresh();
-        return;
-      }
-
-      setBanner(messageForCaptionCode(result.error.code, result.error.messageKey, copy));
-    } catch {
-      setBanner(copy.caption.errors.internal);
-    } finally {
-      setCaptionRegeneratingSlot(null);
-    }
-  }
-
   function copyToClipboard(text: string) {
     void navigator.clipboard.writeText(text).then(() => {
       toastRef.current?.show({
@@ -519,6 +702,26 @@ export function ScriptsPageView({
   return (
     <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
       <Toast ref={toastRef} />
+      <ReelBudgetConfirmDialog
+        visible={budgetDialogVisible}
+        loading={budgetPreviewLoading}
+        loadError={budgetPreviewError}
+        preview={budgetPreview}
+        isBatch={budgetPreviewIsBatch}
+        locale={locale}
+        copy={copy.budget}
+        overrideReason={budgetOverrideReason}
+        onOverrideReasonChange={setBudgetOverrideReason}
+        pending={budgetConfirmPending}
+        onHide={closeBudgetDialog}
+        onConfirm={() => void confirmBudgetAction()}
+        onProceedAnyway={() =>
+          void confirmBudgetAction({
+            budgetOverride: true,
+            overrideReason: budgetOverrideReason.trim(),
+          })
+        }
+      />
       <PageHeader copy={copy} />
 
       <div style={{ marginBottom: "1.5rem", maxWidth: "320px" }}>

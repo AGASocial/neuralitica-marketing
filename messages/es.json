@@ -51,7 +51,8 @@
       "playbook": "Playbook de formatos",
       "trends": "Snapshots de tendencias",
       "strategy": "Estrategia semanal",
-      "scripts": "Guiones"
+      "scripts": "Guiones",
+      "costPolicy": "Política de costo"
     }
   },
   "auth": {
@@ -923,6 +924,77 @@
           "indexOutOfBounds": "Esa variante CTA no está disponible para este caption.",
           "captionNotFound": "No se encontró caption para este Reel."
         }
+      }
+    },
+    "budget": {
+      "confirm": {
+        "title": "Confirmar costo de generación",
+        "confirm": "Generar",
+        "cancel": "Cancelar",
+        "proceedAnyway": "Continuar de todos modos",
+        "loading": "Cargando vista previa de presupuesto…",
+        "loadError": "No pudimos cargar la vista previa de presupuesto. Inténtalo más tarde.",
+        "estimated": "Costo estimado",
+        "cumulative": "Gastado en este Reel",
+        "cap": "Presupuesto máximo por Reel",
+        "remaining": "Restante",
+        "providerTier": "Nivel de proveedor",
+        "providerLabel": "Proveedor LLM",
+        "providerTierOptions": {
+          "low": "Bajo",
+          "high": "Alto"
+        },
+        "slotLabel": "Slot de Reel {index}",
+        "blockedSlots": "Superaría el presupuesto en slot(s): {slots}",
+        "aggregateEstimate": "Costo LLM estimado total: {amount}",
+        "wouldExceedWarning": "Esta acción superaría el presupuesto máximo por Reel.",
+        "overrideReasonLabel": "Motivo del override (obligatorio para continuar)",
+        "overrideReasonRequired": "Ingresa un motivo breve (1–500 caracteres) para continuar sobre presupuesto.",
+        "projectionHints": {
+          "faceless_broll_later": "La producción posterior puede agregar costos de video B-roll (no incluidos en esta estimación).",
+          "own_avatar_video_later": "La producción posterior puede agregar costos de video con avatar propio (no incluidos en esta estimación).",
+          "generic_avatar_video_later": "La producción posterior puede agregar costos de video con avatar genérico (no incluidos en esta estimación)."
+        }
+      },
+      "errors": {
+        "exceeded": "Generación bloqueada — el costo acumulado del Reel superaría el presupuesto máximo.",
+        "policyUnavailable": "La política de costo no está disponible. Revisa la configuración o inténtalo más tarde.",
+        "providerUnavailable": "No hay proveedor LLM disponible para el nivel seleccionado."
+      }
+    }
+  },
+  "settings": {
+    "costPolicy": {
+      "title": "Política de costo",
+      "subtitle": "Configura el presupuesto máximo por Reel y el nivel de proveedor LLM para trabajos de generación.",
+      "globalSectionTitle": "Valores globales",
+      "clientSectionTitle": "Presupuesto personalizado para este cliente",
+      "clientOverrideToggle": "Usar presupuesto personalizado para este cliente",
+      "maxCostLabel": "Presupuesto máximo por Reel",
+      "maxCostHint": "Máximo {max} por Reel (tope de la aplicación).",
+      "providerTierLabel": "Nivel de proveedor",
+      "providerTierOptions": {
+        "low": "Bajo",
+        "high": "Alto"
+      },
+      "resolvedProviderLabel": "Proveedor LLM resuelto",
+      "effectiveTitle": "Política efectiva para esta sesión",
+      "effectiveGlobal": "Usando valores globales",
+      "effectiveClient": "Usando override del cliente",
+      "saveGlobal": "Guardar valores globales",
+      "saveClient": "Guardar override del cliente",
+      "saving": "Guardando…",
+      "toastGlobalSuccess": "Política de costo global guardada.",
+      "toastClientSuccess": "Override de política de costo del cliente guardado.",
+      "highTierInactiveWarning": "El nivel alto está seleccionado pero no hay proveedor LLM activo de nivel alto. La generación puede fallar hasta que haya un proveedor disponible.",
+      "backDashboard": "Volver al dashboard",
+      "loadError": "No pudimos cargar la configuración de política de costo. Actualiza la página e inténtalo de nuevo.",
+      "errors": {
+        "validation": "Revisa los campos marcados e inténtalo de nuevo.",
+        "unavailable": "La política de costo no está disponible. Inténtalo más tarde.",
+        "unauthenticated": "Inicia sesión para administrar la política de costo.",
+        "forbidden": "No tienes permiso para administrar la política de costo.",
+        "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
       }
     }
   }

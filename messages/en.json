@@ -51,7 +51,8 @@
       "playbook": "Format catalog",
       "trends": "Trend snapshots",
       "strategy": "Weekly strategy",
-      "scripts": "Scripts"
+      "scripts": "Scripts",
+      "costPolicy": "Cost policy"
     }
   },
   "auth": {
@@ -923,6 +924,77 @@
           "indexOutOfBounds": "That CTA variant is not available for this caption.",
           "captionNotFound": "Caption not found for this Reel."
         }
+      }
+    },
+    "budget": {
+      "confirm": {
+        "title": "Confirm generation cost",
+        "confirm": "Generate",
+        "cancel": "Cancel",
+        "proceedAnyway": "Proceed anyway",
+        "loading": "Loading budget preview…",
+        "loadError": "We could not load the budget preview. Try again later.",
+        "estimated": "Estimated cost",
+        "cumulative": "Spent on this Reel",
+        "cap": "Max budget per Reel",
+        "remaining": "Remaining",
+        "providerTier": "Provider tier",
+        "providerLabel": "LLM provider",
+        "providerTierOptions": {
+          "low": "Low",
+          "high": "High"
+        },
+        "slotLabel": "Reel slot {index}",
+        "blockedSlots": "Would exceed budget on slot(s): {slots}",
+        "aggregateEstimate": "Total estimated LLM cost: {amount}",
+        "wouldExceedWarning": "This action would exceed the max budget per Reel.",
+        "overrideReasonLabel": "Override reason (required to proceed)",
+        "overrideReasonRequired": "Enter a brief reason (1–500 characters) to proceed over budget.",
+        "projectionHints": {
+          "faceless_broll_later": "Later production may add B-roll video costs (not included in this estimate).",
+          "own_avatar_video_later": "Later production may add own-avatar video costs (not included in this estimate).",
+          "generic_avatar_video_later": "Later production may add generic-avatar video costs (not included in this estimate)."
+        }
+      },
+      "errors": {
+        "exceeded": "Generation blocked — cumulative Reel cost would exceed the max budget.",
+        "policyUnavailable": "Cost policy is unavailable. Check settings or try again later.",
+        "providerUnavailable": "No LLM provider is available for the selected tier."
+      }
+    }
+  },
+  "settings": {
+    "costPolicy": {
+      "title": "Cost policy",
+      "subtitle": "Configure the max budget per Reel and LLM provider tier for generation jobs.",
+      "globalSectionTitle": "Global defaults",
+      "clientSectionTitle": "Custom budget for this client",
+      "clientOverrideToggle": "Use a custom budget for this client",
+      "maxCostLabel": "Max budget per Reel",
+      "maxCostHint": "Maximum {max} per Reel (application ceiling).",
+      "providerTierLabel": "Provider tier",
+      "providerTierOptions": {
+        "low": "Low",
+        "high": "High"
+      },
+      "resolvedProviderLabel": "Resolved LLM provider",
+      "effectiveTitle": "Effective policy for this session",
+      "effectiveGlobal": "Using global defaults",
+      "effectiveClient": "Using custom client override",
+      "saveGlobal": "Save global defaults",
+      "saveClient": "Save client override",
+      "saving": "Saving…",
+      "toastGlobalSuccess": "Global cost policy saved.",
+      "toastClientSuccess": "Client cost policy override saved.",
+      "highTierInactiveWarning": "High tier is selected but no active high-tier LLM provider is configured. Generation may fail until a provider is available.",
+      "backDashboard": "Back to dashboard",
+      "loadError": "We could not load cost policy settings. Refresh the page to try again.",
+      "errors": {
+        "validation": "Please check the highlighted fields and try again.",
+        "unavailable": "Cost policy is unavailable. Try again later.",
+        "unauthenticated": "Sign in to manage cost policy.",
+        "forbidden": "You do not have permission to manage cost policy.",
+        "internal": "Something went wrong. Please try again later."
       }
     }
   }

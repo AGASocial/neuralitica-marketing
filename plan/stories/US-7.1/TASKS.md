@@ -139,17 +139,17 @@ export const updateClientCostPolicyOverrideInputSchema = z
 
 Concrete BE consumers: **`getCostPolicyForSettings`** (page load) · **`updateGlobalCostPolicy`** · **`updateClientCostPolicyOverride`** · **`getReelBudgetPreview`** · generate/regenerate actions with optional **`budgetOverride`**.
 
-- [ ] **New route** `app/(app)/operator/settings/cost-policy/page.tsx` — Operator layout; load effective global policy + whether client override exists.
-- [ ] **Settings form (PrimeReact):** `maxCostCents` input (display dollars/cents per CONTRACT); `providerTier` `SelectButton` or dropdown `low` \| `high`; save global via Server Action.
-- [ ] **Client override section:** toggle "Use custom budget for this client"; when enabled, show override fields; save/delete override action; show effective policy summary ("Using global" vs "Custom").
-- [ ] **Resolved provider label** read-only (from server DTO) — no catalog secrets.
-- [ ] **Operator nav link** to cost-policy settings (CONTRACT freezes placement).
-- [ ] **`/operator/scripts`:** before **Generate scripts** (batch), **Regenerate script** (slot), **Generate captions** (batch), **Regenerate caption** (slot) — call preview action; open **`ConfirmDialog`** with estimate, cumulative, cap, remaining, tier, provider label, projection hint when faceless.
-- [ ] **Blocked state:** when `wouldExceed`, primary action disabled or shows block message; **secondary "Proceed anyway"** triggers mutation with **`budgetOverride: true`** (second confirm optional — PO lean: same dialog with explicit override button).
-- [ ] **Error handling:** `BUDGET_EXCEEDED`, `FORBIDDEN`, validation errors on policy save.
-- [ ] **EN + ES** `settings.costPolicy.*`, `scripts.budget.*`.
-- [ ] **No Supabase in Client Components**; no client-side cost math for authority — display server DTO only.
-- [ ] **No Cliente** cost fields on any shared route.
+- [x] **New route** `app/(app)/operator/settings/cost-policy/page.tsx` — Operator layout; load effective global policy + whether client override exists.
+- [x] **Settings form (PrimeReact):** `maxCostCents` input (display dollars/cents per CONTRACT); `providerTier` `SelectButton` or dropdown `low` \| `high`; save global via Server Action.
+- [x] **Client override section:** toggle "Use custom budget for this client"; when enabled, show override fields; save/delete override action; show effective policy summary ("Using global" vs "Custom").
+- [x] **Resolved provider label** read-only (from server DTO) — no catalog secrets.
+- [x] **Operator nav link** to cost-policy settings (CONTRACT freezes placement).
+- [x] **`/operator/scripts`:** before **Generate scripts** (batch), **Regenerate script** (slot), **Generate captions** (batch), **Regenerate caption** (slot) — call preview action; open **`ConfirmDialog`** with estimate, cumulative, cap, remaining, tier, provider label, projection hint when faceless.
+- [x] **Blocked state:** when `wouldExceed`, primary action disabled or shows block message; **secondary "Proceed anyway"** triggers mutation with **`budgetOverride: true`** (second confirm optional — PO lean: same dialog with explicit override button).
+- [x] **Error handling:** `BUDGET_EXCEEDED`, `FORBIDDEN`, validation errors on policy save.
+- [x] **EN + ES** `settings.costPolicy.*`, `scripts.budget.*`.
+- [x] **No Supabase in Client Components**; no client-side cost math for authority — display server DTO only.
+- [x] **No Cliente** cost fields on any shared route.
 
 ---
 

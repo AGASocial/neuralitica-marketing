@@ -63,6 +63,12 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
               >
                 {t.header.nav.scripts}
               </Link>
+              <Link
+                href="/operator/settings/cost-policy"
+                style={{ color: "#374151", textDecoration: "none" }}
+              >
+                {t.header.nav.costPolicy}
+              </Link>
             </>
           ) : null}
         </nav>

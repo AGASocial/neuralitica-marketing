@@ -12,6 +12,7 @@ import {
 import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved-strategy-for-week";
 import { getBusinessProfileForAgents } from "@/lib/profile/get-business-profile-for-agents";
 import { listReelScriptsForStrategy } from "@/lib/reel-scripts/persist-reel-script";
+import type { VisualModeSummary } from "@/lib/contracts/visual-preferences";
 
 import {
   estimateLlmJobCost,
@@ -46,6 +47,18 @@ export type BuildReelBudgetPreviewResult =
         | "STRATEGY_NOT_APPROVED"
         | "SLOT_NOT_FOUND";
     };
+
+function deriveVisualModeFromSummary(
+  summary: VisualModeSummary,
+): "own_avatar" | "generic_avatar" | "faceless" {
+  if (summary.allowedModes.includes("own_avatar")) {
+    return "own_avatar";
+  }
+  if (summary.allowedModes.includes("generic_avatar")) {
+    return "generic_avatar";
+  }
+  return "faceless";
+}
 
 function resolvePreviewJobKind(
   inputJobKind: PreviewJobKind,
@@ -161,7 +174,7 @@ export async function buildReelBudgetPreview(
   if (!profile.exists || profile.visualModeSummary === null) {
     return { ok: false, code: "COST_POLICY_UNAVAILABLE" };
   }
-  const visualMode = profile.visualModeSummary.visualMode;
+  const visualMode = deriveVisualModeFromSummary(profile.visualModeSummary);
 
   const scripts = await listReelScriptsForStrategy({
     clientId: input.clientId,

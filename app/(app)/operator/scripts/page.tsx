@@ -136,6 +136,12 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
           unauthenticated: t.auth.errors.unauthenticated,
           forbidden: t.auth.errors.forbidden,
           internal: t.scripts.errors.internal,
+          budgetExceeded: t.scripts.budget.errors.exceeded,
+          costPolicyUnavailable: t.scripts.budget.errors.policyUnavailable,
+        },
+        budget: {
+          ...t.scripts.budget.confirm,
+          errors: t.scripts.budget.errors,
         },
         caption: {
           tabs: t.scripts.caption.tabs,
