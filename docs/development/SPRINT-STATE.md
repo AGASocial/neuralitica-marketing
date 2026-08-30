@@ -32,7 +32,7 @@ updated_at: 2026-08-30T17:15:00Z
 | US-8.2 SadTalker adapter | done | Phase A `258fcef` · Phase B closed via US-8.4 `35a433d` |
 | US-8.4 Job status and failure UI | done | BE `689d8c6`/`77142b9` · FE `25737db` · VALIDATION `4e36fbc` · QA `9b24c48` · CLOSE `35a433d` |
 | US-8.6 MuseTalk adapter | done | Phase A `dbc9ce2` · Phase B `bdfaaf2` · VALIDATION `798635e` · QA `82bde3d` · CLOSE `2fb7573` (4/5 AC; P1 override defer) |
-| US-8.3 Manual video upload fallback | BUILD (QA fix) | QA BLOCK `0980dbe` — next.config import |
+| US-8.3 Manual video upload fallback | QA | build fixes `f3f78af`/`b2fb1cc` · re-QA running |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
