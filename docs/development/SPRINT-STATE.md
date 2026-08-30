@@ -4,10 +4,10 @@
 
 ```yaml
 current_phase: 3
-current_story: US-7.2
-story_status: CONTRACT
-feature_branch: feature/US-7.2-provider-ranking
-last_completed_story: US-7.1
+current_story: US-7.3
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-7.2
 phase_status: in_progress
 blocked_reason: null
 updated_at: 2026-08-30T01:45:00Z
@@ -25,7 +25,8 @@ updated_at: 2026-08-30T01:45:00Z
 | US-6.1 Generate Instagram caption per Reel | done | agents `c385372` · FE `d075781` · BE `1f45244` · VALIDATION `2cebd89` · CLOSE 5/5 AC |
 | US-6.2 CTA variants for caption testing | done | BE `146479c` · FE `f82ba33` · VALIDATION `258773c` · QA `fc0f4b2` · CLOSE `72723c5` |
 | US-7.1 Configure max budget per Reel | done | BE `3bdc709` · FE `bb19e4d` · fix `69d274f` · VALIDATION `13531f8` · QA `f8ac2a7` · CLOSE `d68b71a` |
-| US-7.2 Select provider by economics | CONTRACT | PREP + SPEC-REVIEW + SECURITY + CONTRACT `45c46e5`; FE signoff; branch `feature/US-7.2-provider-ranking` |
+| US-7.2 Select provider by economics | done | BE `8eab3f7` · FE `2ab482c` · fix `78e6aa1` · VALIDATION `eb03f8e` · QA `4ed7fe9` · CLOSE `fcecce4` |
+| US-7.3 Track actual cost per job | SELECT | Next story |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -37,6 +38,7 @@ updated_at: 2026-08-30T01:45:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-7.2 CLOSE: 8/8 AC; QA APPROVE WITH NOTES after fix `78e6aa1`; BE `8eab3f7` · FE `2ab482c` · VALIDATION PASS WITH NOTES `eb03f8e`; Phase 3 → SELECT US-7.3.
 - 2026-08-30 · US-7.2 CONTRACT: frozen `45c46e5`; FE signoff; story_status CONTRACT → BUILD next.
 - 2026-08-30 · US-7.2 PREP: README + TASKS + SPEC-REVIEW (GAPS) + SECURITY APPROVE WITH CONDITIONS.
 - 2026-08-30 · US-7.1 CLOSE: 10/10 AC; QA APPROVE WITH NOTES; BE `3bdc709` · FE `bb19e4d` · fix `69d274f` · VALIDATION PASS WITH NOTES `13531f8`; Phase 3 → SELECT US-7.2.
