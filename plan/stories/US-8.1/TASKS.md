@@ -181,20 +181,20 @@ export type CostEstimate = z.infer<typeof costEstimateSchema>;
 
 Concrete consumers: **US-8.2+** job create/poller · **`estimateVideoJobCost()`** · future **`resolveProviderForJob` → registry** wiring.
 
-- [ ] **Consolidate** `VideoProviderAdapter`, `VideoJobStatusResult`, `CostEstimate` in `lib/providers/provider-adapters.ts` — align method names with USER_STORIES AC (`estimateCost`, `createJob`, `getJobStatus`, `fetchAsset`).
-- [ ] **Consolidate** `ProviderRegistry` + `InMemoryProviderRegistry` — typed `getVideoAdapter` / `registerVideo` (already present; verify no drift).
-- [ ] **`lib/providers/video/create-stub-video-adapter.ts`** — shared factory for stub video adapters (mirror LLM stub pattern).
-- [ ] **Register stubs** for **`sadtalker_low`**, **`siliconflow_wan21_turbo`**, **`heygen_high`** with correct `videoAssetRole`.
-- [ ] **`getProviderRegistry()`** — singleton factory in `lib/providers/` (CONTRACT picks exact path); pre-registers video stubs.
-- [ ] **`lib/contracts/providers.ts`** — add **`costEstimateSchema`** (+ export type if CONTRACT moves `CostEstimate` inference here); ensure all adapter result types have Zod mirrors.
-- [ ] **Sanitize helper** (optional module `lib/providers/sanitize-provider-error.ts`) — strip/control chars, max length for `sanitizedErrorMessage` — CONTRACT freezes.
-- [ ] **`estimateVideoJobCost`** — optionally default to `getProviderRegistry()` when registry arg omitted (CONTRACT decides; avoid breaking callers).
-- [ ] **[SEC] `server-only`** on new adapter/registry modules; no `NEXT_PUBLIC_*` env reads.
-- [ ] **[SEC] `external_job_id`** — document + test opaque handling; no path concatenation in stubs.
-- [ ] **[SEC] Untrusted status** — stub `getJobStatus` output passes `videoJobStatusResultSchema.parse`.
-- [ ] **No HTTP routes** — regression test: no new `app/api/**` provider/job endpoints.
-- [ ] **Export** registry factory from appropriate module (avoid forcing barrel import in tests).
-- [ ] **Automated tests:** `getVideoAdapter("sadtalker_low")` succeeds; unknown key throws; each stub implements four methods; statuses ⊆ `VIDEO_JOB_STATUSES`; `createJob` → `getJobStatus` → `fetchAsset` round-trip; `server-only` import present; optional integration: `estimateVideoJobCost(catalog, registry, …)` with stub registry.
+- [x] **Consolidate** `VideoProviderAdapter`, `VideoJobStatusResult`, `CostEstimate` in `lib/providers/provider-adapters.ts` — align method names with USER_STORIES AC (`estimateCost`, `createJob`, `getJobStatus`, `fetchAsset`).
+- [x] **Consolidate** `ProviderRegistry` + `InMemoryProviderRegistry` — typed `getVideoAdapter` / `registerVideo` (already present; verify no drift).
+- [x] **`lib/providers/video/create-stub-video-adapter.ts`** — shared factory for stub video adapters (mirror LLM stub pattern).
+- [x] **Register stubs** for **`sadtalker_low`**, **`siliconflow_wan21_turbo`**, **`heygen_high`** with correct `videoAssetRole`.
+- [x] **`getProviderRegistry()`** — singleton factory in `lib/providers/` (CONTRACT picks exact path); pre-registers video stubs.
+- [x] **`lib/contracts/providers.ts`** — add **`costEstimateSchema`** (+ export type if CONTRACT moves `CostEstimate` inference here); ensure all adapter result types have Zod mirrors.
+- [x] **Sanitize helper** (optional module `lib/providers/sanitize-provider-error.ts`) — strip/control chars, max length for `sanitizedErrorMessage` — CONTRACT freezes.
+- [x] **`estimateVideoJobCost`** — optionally default to `getProviderRegistry()` when registry arg omitted (CONTRACT decides; avoid breaking callers).
+- [x] **[SEC] `server-only`** on new adapter/registry modules; no `NEXT_PUBLIC_*` env reads.
+- [x] **[SEC] `external_job_id`** — document + test opaque handling; no path concatenation in stubs.
+- [x] **[SEC] Untrusted status** — stub `getJobStatus` output passes `videoJobStatusResultSchema.parse`.
+- [x] **No HTTP routes** — regression test: no new `app/api/**` provider/job endpoints.
+- [x] **Export** registry factory from appropriate module (avoid forcing barrel import in tests).
+- [x] **Automated tests:** `getVideoAdapter("sadtalker_low")` succeeds; unknown key throws; each stub implements four methods; statuses ⊆ `VIDEO_JOB_STATUSES`; `createJob` → `getJobStatus` → `fetchAsset` round-trip; `server-only` import present; optional integration: `estimateVideoJobCost(catalog, registry, …)` with stub registry.
 
 ---
 
