@@ -195,7 +195,7 @@ All objects keep `neuramark_` prefix.
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
+- [x] SPEC-REVIEW.md (spec-guardian)
 - [ ] SECURITY.md (security-architect)
 - [ ] CONTRACT.md authored (nextjs-backend — frozen; **Reviewed by FE** line required)
 - [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)

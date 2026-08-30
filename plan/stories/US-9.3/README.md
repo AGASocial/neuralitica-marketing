@@ -85,7 +85,7 @@ _Evitar:_ client-supplied `provider_key`; arbitrary vendor `voice_id`; human aud
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
+- [x] SPEC-REVIEW.md (spec-guardian)
 - [ ] SECURITY.md (security-architect)
 - [ ] CONTRACT.md (nextjs-backend — frozen; **Reviewed by FE** line required)
 - [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
