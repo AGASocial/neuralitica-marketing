@@ -1,12 +1,12 @@
 # US-9.1 — Assemble final 9:16 Reel
 
-**Status:** PREP (2026-08-30) — story folder + PO decisions frozen; gates **SPEC-REVIEW → SECURITY → CONTRACT** next.
+**Status:** CLOSED Phase A (2026-08-30) — VALIDATION PASS WITH NOTES `03dff73` · QA APPROVE WITH CONDITIONS `5c0ec7e` · PO AC check-off 5/5 on `feature/US-9.1-assemble-reel`. Builds worker `f74570f`/`153b73a` · BE `7189f4b` · FE `9e7142c`. Faceless B-roll stitch deferred Phase B (US-8.5).
 
 **As a** System, **I want** to combine voice, avatar/B-roll, template, and timing, **so that** output is Instagram-ready vertical video.
 
 Ship **FFmpeg assembly** on the **Fly.io worker** (ADR-0003): Operator-triggered pipeline that resolves **completed primary video** + **script timing** (+ **voiceover asset** for lineage / remux when needed) → **`neuramark_assembled_reels`** row + **`neuramark_media_assets`** (`asset_type = assembled_reel`); **9:16 output**, **duration within target ± tolerance**, **idempotent per script version**. **Phase A** = normalize/mux talking-head and manual-primary paths; **Phase B** = faceless multi-clip B-roll stitch + `editing_hints` (cold open / rewind).
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-9.1 (source of truth — **do not check off in PREP**).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-9.1 (5/5 AC checked Phase A — faceless B-roll stitch deferred Phase B).
 
 **This folder:** [`plan/stories/US-9.1/`](./) — `README.md` · `TASKS.md` (gates: `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` — create when story enters sprint).
 
