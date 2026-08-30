@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-10.2
-story_status: CONTRACT
+story_status: SIGNOFF
 feature_branch: feature/US-10.2-qa-override
 last_completed_story: US-10.1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T22:20:00Z
+updated_at: 2026-08-30T22:25:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
