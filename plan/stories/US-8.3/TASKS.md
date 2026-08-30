@@ -179,13 +179,13 @@ All objects keep `neuramark_` prefix.
 ## Gates (orchestrator)
 
 - [x] SPEC-REVIEW.md (spec-guardian) — **GAPS** (intent aligned; CONTRACT/SECURITY freezes required)
-- [ ] SECURITY.md (security-architect)
+- [x] SECURITY.md (security-architect)
 - [x] CONTRACT.md authored (nextjs-backend — upload action, validator, migration, DTO refresh; **Reviewed by FE** before BUILD)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend — BE `eaa974a` · FE `fc6deca`)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES @ `25e7acb`)
+- [x] QA.md (qa-engineer — APPROVE WITH CONDITIONS @ `a58faeb`; build fixes @ `f3f78af` + `b2fb1cc`)
 
-**Status:** PREP — TASKS ready for spec-guardian + security-architect. **Do not check USER_STORIES AC until VALIDATION PASS.**
+**Status:** CLOSED — PO checked USER_STORIES AC (2026-08-30). **Branch:** `feature/US-8.3-manual-upload` @ `a58faeb`. **Follow-up (pre/post-merge, non-blocking):** spend finalize rollback on failure (QA F3); consent gate orchestrator test (QA F4); US-3.3 delete test mock (QA F7); multi-client serve ownership (QA F5); concurrent upload TOCTOU (QA F6).
 
 ---
 

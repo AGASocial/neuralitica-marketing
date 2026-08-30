@@ -1,12 +1,12 @@
 # US-8.3 — Manual video upload fallback
 
-**Status:** PREP — story folder active; gates pending (`SECURITY.md` · `CONTRACT.md` · BUILD · VALIDATION · QA).
+**Status:** CLOSED (2026-08-30) — VALIDATION PASS WITH NOTES · QA APPROVE WITH CONDITIONS · PO AC check-off on `feature/US-8.3-manual-upload` @ `a58faeb`. Builds BE `eaa974a` / FE `fc6deca`. Pre/post-merge follow-ups tracked in QA.md (spend finalize rollback, consent gate test, US-3.3 delete mock).
 
 **As an** Operator, **I want** to upload a video file when API generation fails or is too expensive, **so that** production continues without blocking the client.
 
 Ship **Operator-only manual video upload** on **`/operator/scripts`** Reel detail: extend the **US-3.3 shared upload validation stack** for **`generated_video`** ingest (video MIME magic bytes, size cap, duration probe); register catalog key **`manual`** as a **`VideoProviderAdapter`** with **zero-cost** semantics; **`uploadManualVideoJob()`** orchestrator writes the **same `neuramark_video_jobs` row shape** as API providers but completes **synchronously** (no poller); INSERT **`neuramark_media_assets`** (`asset_type = generated_video`); record spend via **`finalizeGenerationCost({ mode: "sync_insert", manualActualCostCents: 0 })`** (US-7.3 Phase B rule); **reuse US-8.4** `OperatorVideoJobSummaryPanel` status badges, cost DTO, and batch map refresh — add upload affordance only.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.3 (unchecked until VALIDATION).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.3 (all 7 AC checked — CLOSED).
 
 **This folder:** [`plan/stories/US-8.3/`](./) — `README.md` · `TASKS.md` (gates: `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` — create when story enters sprint).
 
@@ -86,17 +86,17 @@ _Evitar:_ client-supplied `provider_key`; treating manual upload as Cliente self
 ## Gates (orchestrator)
 
 - [x] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 upload manual) — **GAPS** @ `418acaa` PREP
-- [ ] SECURITY.md (security-architect — operator gate, validation stack, attribution)
+- [x] SECURITY.md (security-architect — operator gate, validation stack, attribution)
 - [x] CONTRACT.md (nextjs-backend — upload action, validator extension, migration, DTOs; **Reviewed by FE** before BUILD)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend — BE `eaa974a` · FE `fc6deca`)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES @ `25e7acb`)
+- [x] QA.md (qa-engineer — APPROVE WITH CONDITIONS @ `a58faeb`)
 
-**Status:** PREP complete when README + TASKS committed on feature branch. **Next gate:** spec-guardian SPEC-REVIEW → security-architect SECURITY.md → nextjs-backend CONTRACT.md.
+**Status:** CLOSED. **PO close:** `f8408ec` · **QA baseline:** `a58faeb` on `feature/US-8.3-manual-upload`.
 
 ---
 
-## Acceptance criteria mapping (PREP — unchecked until VALIDATION)
+## Acceptance criteria mapping (CLOSED — validated @ `25e7acb`, QA @ `a58faeb`)
 
 | USER_STORIES § US-8.3 AC | Planned deliverable |
 |--------------------------|---------------------|

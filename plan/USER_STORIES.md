@@ -820,14 +820,14 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | `manual` adapter: accept upload → same job record shape as API providers |
 | **DB** | Reuse `video_jobs` + `media_assets` |
 
-**Acceptance criteria**
-- [ ] Manual upload bypasses cost policy API charges
-- [ ] Downstream assembly treats manual raw video like provider output
-- [ ] File type and duration validated
-- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403)
-- [ ] [SEC] Manual upload applies the same file validation stack as US-3.3 (size limit, video MIME allowlist via magic bytes, server-generated storage key, storage outside web root)
-- [ ] [SEC] Manual uploads are restricted to the Operator role and recorded with uploader identity, so `manual` provider jobs are attributable
-- [ ] [SEC] A manual job still goes through QA (US-10.1) before approval — the manual path bypasses cost, not compliance
+**Acceptance criteria** *(CLOSED — `feature/US-8.3-manual-upload` @ `a58faeb`; VALIDATION PASS WITH NOTES · QA APPROVE WITH CONDITIONS)*
+- [x] Manual upload bypasses cost policy API charges
+- [x] Downstream assembly treats manual raw video like provider output
+- [x] File type and duration validated
+- [x] Operator-only: endpoint/action rejects non-operator sessions server-side (403)
+- [x] [SEC] Manual upload applies the same file validation stack as US-3.3 (size limit, video MIME allowlist via magic bytes, server-generated storage key, storage outside web root)
+- [x] [SEC] Manual uploads are restricted to the Operator role and recorded with uploader identity, so `manual` provider jobs are attributable
+- [x] [SEC] A manual job still goes through QA (US-10.1) before approval — the manual path bypasses cost, not compliance
 
 **Depends on:** US-8.1
 
