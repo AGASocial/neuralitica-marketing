@@ -233,7 +233,7 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 - [x] CONTRACT.md authored (nextjs-backend — frozen; **Reviewed by FE** required before BUILD)
 - [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
 - [x] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] QA.md (qa-engineer) — BLOCK; see `QA.md`
 
 **Status:** PREP (2026-08-29). Gates not started. **Next:** SPEC-REVIEW on `feature/US-7.2-provider-ranking`.
 
