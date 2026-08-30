@@ -153,15 +153,15 @@ export type ReelWeekCostSummary = {
 
 Concrete BE consumers: **`getReelCostSummaryForWeek`** (or cost block on **`getReelScriptsForWeek`**) · extended list DTO.
 
-- [ ] **Estimated vs actual column** on `/operator/scripts` production list — per slot: show cumulative estimate + actual (formatted cents → currency); **pending** when `hasPendingActual`.
-- [ ] **Unavailable reason** — when actual null with reason, show subdued i18n label (not raw enum string to Operator).
-- [ ] **Weekly actual total** — footer or header stat: `weeklyActualCostCents` with estimate alongside for context.
-- [ ] **Empty / pending states** — slots without spend events show **—**; generated but pre-7.3 rows may have null actual until regenerated.
-- [ ] **Loading / error** states for cost summary fetch (if separate from list load).
-- [ ] **EN + ES** `scripts.cost.actual.*` (column header, estimate label, actual label, pending, weekly total, unavailable reasons).
-- [ ] **No Supabase in Client Components**; no client-side cost math.
-- [ ] **No Cliente** cost fields on any shared route or serializer.
-- [ ] **Read-only** — no inline edit of actual costs.
+- [x] **Estimated vs actual column** on `/operator/scripts` production list — per slot: show cumulative estimate + actual (formatted cents → currency); **pending** when `hasPendingActual`.
+- [x] **Unavailable reason** — when actual null with reason, show subdued i18n label (not raw enum string to Operator).
+- [x] **Weekly actual total** — footer or header stat: `weeklyActualCostCents` with estimate alongside for context.
+- [x] **Empty / pending states** — slots without spend events show **—**; generated but pre-7.3 rows may have null actual until regenerated.
+- [x] **Loading / error** states for cost summary fetch (if separate from list load).
+- [x] **EN + ES** `scripts.cost.actual.*` (column header, estimate label, actual label, pending, weekly total, unavailable reasons).
+- [x] **No Supabase in Client Components**; no client-side cost math.
+- [x] **No Cliente** cost fields on any shared route or serializer.
+- [x] **Read-only** — no inline edit of actual costs.
 
 ---
 

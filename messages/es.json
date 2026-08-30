@@ -926,6 +926,23 @@
         }
       }
     },
+    "cost": {
+      "actual": {
+        "columnHeader": "Costo",
+        "estimated": "Est.",
+        "actual": "Real",
+        "pending": "Pendiente",
+        "weeklyTotal": "Total semanal",
+        "weeklyEstimated": "Est. {amount}",
+        "weeklyActual": "Real {amount}",
+        "partialActualHint": "Algunos trabajos de generación aún tienen costo real pendiente.",
+        "unavailable": {
+          "usage_missing": "Faltan datos de uso",
+          "catalog_cost_model_unsupported": "Modelo de facturación no compatible",
+          "provider_no_billing": "Facturación del proveedor no disponible"
+        }
+      }
+    },
     "budget": {
       "confirm": {
         "title": "Confirmar costo de generación",

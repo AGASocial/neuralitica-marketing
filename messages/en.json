@@ -926,6 +926,23 @@
         }
       }
     },
+    "cost": {
+      "actual": {
+        "columnHeader": "Cost",
+        "estimated": "Est.",
+        "actual": "Act.",
+        "pending": "Pending",
+        "weeklyTotal": "Weekly total",
+        "weeklyEstimated": "Est. {amount}",
+        "weeklyActual": "Act. {amount}",
+        "partialActualHint": "Some generation jobs still have pending actual costs.",
+        "unavailable": {
+          "usage_missing": "Usage data missing",
+          "catalog_cost_model_unsupported": "Billing model unsupported",
+          "provider_no_billing": "Provider billing unavailable"
+        }
+      }
+    },
     "budget": {
       "confirm": {
         "title": "Confirm generation cost",

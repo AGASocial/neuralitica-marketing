@@ -23,9 +23,10 @@ import {
   type ProviderRecommendationCopy,
 } from "@/components/scripts/ProviderRecommendationPanel";
 import type {
-  ReelBudgetBatchPreview,
-  ReelBudgetPreview,
-} from "@/lib/contracts/cost-policy";
+  ActualCostUnavailableReason,
+  ReelSlotCostSummary,
+  ReelWeekCostSummary,
+} from "@/lib/contracts/actual-cost";
 import type {
   ContentStrategyDayOfWeek,
   ContentStrategySlotGoal,
@@ -42,6 +43,7 @@ import type {
   ReelScriptListItem,
 } from "@/lib/contracts/reel-script";
 import { getReelBudgetPreview } from "@/lib/cost-policy/actions/get-reel-budget-preview";
+import { formatCentsForDisplay } from "@/lib/cost-policy/format-cents-for-display";
 import { generateReelCaptions } from "@/lib/reel-captions/actions/generate-reel-captions";
 import { regenerateReelCaption } from "@/lib/reel-captions/actions/regenerate-reel-caption";
 import { selectReelCaptionCta } from "@/lib/reel-captions/actions/select-reel-caption-cta";
@@ -50,6 +52,10 @@ import type {
   ReelScriptReadabilityBeatLine,
   ReelScriptReadabilityVoiceover,
 } from "@/lib/contracts/reel-script-readability";
+import type {
+  ReelBudgetBatchPreview,
+  ReelBudgetPreview,
+} from "@/lib/contracts/cost-policy";
 import type { VisualModality } from "@/lib/contracts/visual-preferences";
 import { generateReelScripts } from "@/lib/reel-scripts/actions/generate-reel-scripts";
 import { regenerateReelScriptSlot } from "@/lib/reel-scripts/actions/regenerate-reel-script-slot";
@@ -130,6 +136,19 @@ type ScriptsPageCopy = {
   };
   budget: ReelBudgetConfirmCopy;
   providerRecommendation: ProviderRecommendationCopy;
+  cost: {
+    actual: {
+      columnHeader: string;
+      estimated: string;
+      actual: string;
+      pending: string;
+      weeklyTotal: string;
+      weeklyEstimated: string;
+      weeklyActual: string;
+      partialActualHint: string;
+      unavailable: Record<ActualCostUnavailableReason, string>;
+    };
+  };
   caption: {
     tabs: {
       script: string;
@@ -322,6 +341,63 @@ function formatTemplate(
   );
 }
 
+function findSlotCostSummary(
+  costSummary: ReelWeekCostSummary | undefined,
+  slotIndex: number,
+): ReelSlotCostSummary | undefined {
+  return costSummary?.slots.find((slot) => slot.slotIndex === slotIndex);
+}
+
+type ActualCostCopy = ScriptsPageCopy["cost"]["actual"];
+
+function formatUnavailableReasons(
+  reasons: ActualCostUnavailableReason[],
+  copy: ActualCostCopy,
+): string {
+  return reasons.map((reason) => copy.unavailable[reason]).join(", ");
+}
+
+function renderActualCostValue(
+  slotCost: ReelSlotCostSummary | undefined,
+  locale: string,
+  copy: ActualCostCopy,
+): { text: string; subdued: boolean } {
+  if (!slotCost) {
+    return { text: "—", subdued: false };
+  }
+
+  if (slotCost.actualCostCents !== null) {
+    return {
+      text: formatCentsForDisplay(slotCost.actualCostCents, locale),
+      subdued: false,
+    };
+  }
+
+  if (slotCost.hasPendingActual) {
+    return { text: copy.pending, subdued: true };
+  }
+
+  if (slotCost.unavailableReasonKeys.length > 0) {
+    return {
+      text: formatUnavailableReasons(slotCost.unavailableReasonKeys, copy),
+      subdued: true,
+    };
+  }
+
+  return { text: "—", subdued: false };
+}
+
+function renderEstimatedCostValue(
+  slotCost: ReelSlotCostSummary | undefined,
+  locale: string,
+): string {
+  if (!slotCost || slotCost.estimatedCostCents <= 0) {
+    return "—";
+  }
+
+  return formatCentsForDisplay(slotCost.estimatedCostCents, locale);
+}
+
 type BudgetPendingAction =
   | { kind: "script_batch" }
   | { kind: "script_regenerate"; slotIndex: number }
@@ -383,6 +459,8 @@ export function ScriptsPageView({
     hasApprovedStrategy && data.items.length > 0 && !hasAnyGenerated;
   const allCaptionsPending =
     hasApprovedStrategy && hasAnyGenerated && !hasAnyCaptionGenerated;
+  const costSummary = data.costSummary;
+  const showCostSummary = costSummary !== undefined;
 
   function navigateWeek(nextWeekStart: string) {
     const params = new URLSearchParams();
@@ -924,6 +1002,32 @@ export function ScriptsPageView({
                 </div>
               )}
             />
+            {showCostSummary ? (
+              <Column
+                header={copy.cost.actual.columnHeader}
+                body={(row: ReelScriptListItem) => {
+                  const slotCost = findSlotCostSummary(costSummary, row.slotIndex);
+                  const actual = renderActualCostValue(slotCost, locale, copy.cost.actual);
+
+                  return (
+                    <div style={{ display: "grid", gap: "0.2rem", fontSize: "0.875rem" }}>
+                      <div style={{ color: "#374151" }}>
+                        <span style={{ color: "#6b7280", marginRight: "0.35rem" }}>
+                          {copy.cost.actual.estimated}
+                        </span>
+                        {renderEstimatedCostValue(slotCost, locale)}
+                      </div>
+                      <div style={{ color: actual.subdued ? "#6b7280" : "#374151" }}>
+                        <span style={{ color: "#6b7280", marginRight: "0.35rem" }}>
+                          {copy.cost.actual.actual}
+                        </span>
+                        {actual.text}
+                      </div>
+                    </div>
+                  );
+                }}
+              />
+            ) : null}
             <Column
               header={copy.columns.actions}
               body={(row: ReelScriptListItem) => (
@@ -943,6 +1047,13 @@ export function ScriptsPageView({
               )}
             />
           </DataTable>
+          {showCostSummary ? (
+            <WeeklyCostFooter
+              costSummary={costSummary}
+              locale={locale}
+              copy={copy.cost.actual}
+            />
+          ) : null}
         </>
       )}
     </div>
@@ -1654,6 +1765,58 @@ function ScriptField({
       >
         {value}
       </div>
+    </div>
+  );
+}
+
+function WeeklyCostFooter({
+  costSummary,
+  locale,
+  copy,
+}: {
+  costSummary: ReelWeekCostSummary;
+  locale: string;
+  copy: ActualCostCopy;
+}) {
+  const estimatedLabel = formatTemplate(copy.weeklyEstimated, {
+    amount: formatCentsForDisplay(costSummary.weeklyEstimatedCostCents, locale),
+  });
+  const actualAmount =
+    costSummary.weeklyActualCostCents !== null
+      ? formatCentsForDisplay(costSummary.weeklyActualCostCents, locale)
+      : "—";
+  const actualLabel = formatTemplate(copy.weeklyActual, { amount: actualAmount });
+
+  return (
+    <div
+      style={{
+        marginTop: "1rem",
+        padding: "0.85rem 1rem",
+        borderRadius: "0.5rem",
+        border: "1px solid #e5e7eb",
+        background: "#f9fafb",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "0.5rem 1rem",
+          alignItems: "baseline",
+          fontSize: "0.875rem",
+        }}
+      >
+        <span style={{ fontWeight: 600, color: "#374151" }}>{copy.weeklyTotal}</span>
+        <span style={{ color: "#374151" }}>{estimatedLabel}</span>
+        <span style={{ color: costSummary.weeklyActualCostCents === null ? "#6b7280" : "#374151" }}>
+          {actualLabel}
+        </span>
+      </div>
+      {costSummary.hasPartialActual ? (
+        <p style={{ margin: "0.5rem 0 0", fontSize: "0.8125rem", color: "#6b7280" }}>
+          {copy.partialActualHint}
+        </p>
+      ) : null}
     </div>
   );
 }
