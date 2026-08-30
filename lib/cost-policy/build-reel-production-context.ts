@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { ContentStrategySlot } from "@/lib/contracts/content-strategy";
 import {
   DEFAULT_BROLL_CLIP_SEC,
   DEFAULT_REEL_DURATION_SEC,
