@@ -1,9 +1,9 @@
-Reviewed by FE: pending
+Reviewed by FE: yes — 2026-08-30 — nextjs-frontend.
 
 # API Contract — US-9.1 Assemble final 9:16 Reel
 
 **Story:** US-9.1  
-**Status:** Frozen — 2026-08-30  
+**Status:** Frozen — 2026-08-30 (Reviewed by FE)  
 **Security:** `plan/stories/US-9.1/SECURITY.md` (APPROVE WITH CONDITIONS — reconciled below)  
 **Spec review:** `plan/stories/US-9.1/SPEC-REVIEW.md` (GAPS — resolved by this contract)  
 **Pattern:** `plan/stories/US-8.4/CONTRACT.md` (poll seam, Operator DTOs, forbidden keys, migration SQL verbatim)  
@@ -818,7 +818,19 @@ assemblyByReelScriptId: operatorAssemblyJobsByReelMapSchema;
 
 ## Reviewed by FE
 
-**Reviewed by FE:** pending
+**Reviewed by FE** — 2026-08-30 (nextjs-frontend)
+
+Assembly panel on `/operator/scripts` expand row is implementable against this contract:
+
+- **Surface:** Same `ReelDetailPanel` placement as `OperatorVideoJobSummaryPanel` / `OperatorVoiceoverPanel` — no new route.
+- **Batch load:** `assemblyByReelScriptId` mirrors `videoJobsByReelScriptId`; null entry + completed primary video job gates initial **Assemble Reel**.
+- **Mutate:** `assembleReelForScript({ reelScriptId })` only — no forbidden authority keys from FE.
+- **Poll:** Client interval poll via `GET /api/assembly-jobs/[jobId]` while `queued`/`processing`; merge polled fields into batch DTO (preserve `canAssemble` when omitted from poll subset); use `ASSEMBLY_JOB_POLL_INTERVAL_MS_DEFAULT` (3000 ms), not the §562 “5s” prose.
+- **Preview:** `<video src="/api/media/assets/{outputMediaAssetId}">` when `completed` — same authenticated serve pattern as voiceover `<audio>`.
+- **Errors:** Map `ASSEMBLY_INPUTS_INCOMPLETE` + `messageKey` (`facelessNoPrimary`, `missingAudio`); resolve `failureReason` i18n keys (e.g. `scripts.assembly.failure.staleTimeout`) like video job stale timeout.
+- **Re-assemble:** Confirm dialog before mutate when `canReassemble`; follow `VideoJobRetryConfirmDialog` pattern (i18n keys to add at BUILD).
+- **i18n:** `scripts.assembly.*` EN + ES — TASKS baseline keys plus CONTRACT `messageKey` / `failureReason` keys.
+- **Out of scope:** No Cliente routes, cost fields, or FFmpeg details in UI.
 
 ---
 
@@ -826,4 +838,5 @@ assemblyByReelScriptId: operatorAssemblyJobsByReelMapSchema;
 
 | Date | Change |
 |------|--------|
+| 2026-08-30 | Reviewed by FE — nextjs-frontend signoff; BUILD unblocked for FE slice |
 | 2026-08-30 | Initial freeze — assembly pipeline DDL, orchestrator, worker seam, FFmpeg Phase A graph, DTOs, media serve; resolves SPEC-REVIEW + SECURITY gaps |
