@@ -941,6 +941,25 @@
           "catalog_cost_model_unsupported": "Modelo de facturación no compatible",
           "provider_no_billing": "Facturación del proveedor no disponible"
         }
+      },
+      "rollup": {
+        "title": "Desglose de costo del Reel",
+        "estimated": "Total estimado",
+        "actual": "Total real",
+        "variance": "Varianza: {amount}",
+        "overBudget": "Sobre presupuesto — supera el máximo de {max}",
+        "pending": "Pendiente",
+        "empty": "Aún no hay gasto registrado para este Reel.",
+        "phaseNote": "Los costos de video y voz en off aparecerán aquí cuando se ejecuten los trabajos de producción.",
+        "breakdownRole": "Componente",
+        "breakdownEstimated": "Estimado",
+        "breakdownActual": "Real",
+        "component": {
+          "llm": "LLM",
+          "talkingHead": "Video",
+          "broll": "B-roll",
+          "tts": "Voz en off"
+        }
       }
     },
     "budget": {

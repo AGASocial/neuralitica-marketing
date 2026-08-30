@@ -154,6 +154,11 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
         providerRecommendation: t.scripts.providerRecommendation,
         cost: {
           actual: t.scripts.cost.actual,
+          rollup: {
+            ...t.scripts.cost.rollup,
+            actualPending: t.scripts.cost.actual.pending,
+            unavailable: t.scripts.cost.actual.unavailable,
+          },
         },
         caption: {
           tabs: t.scripts.caption.tabs,

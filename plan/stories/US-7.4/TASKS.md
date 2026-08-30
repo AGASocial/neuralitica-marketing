@@ -130,18 +130,18 @@ sum(slots[].actualCostCents where not null) === weeklyActualCostCents
 
 Concrete BE consumers: **`getReelCostDetailForScript`** or **`reelCostDetails`** map on **`getReelScriptsForWeek`**.
 
-- [ ] **`ReelCostSection`** component — embedded in **`ReelDetailPanel`** below `ProviderRecommendationPanel`, above `TabView`.
-- [ ] **Total row** — formatted estimated vs actual (currency); **variance** when actual known (signed, color-coded subdued).
-- [ ] **Breakdown table** — one row per role with events; role labels via i18n (`llm`, `video`, `broll`, `voiceover`).
-- [ ] **Over-budget highlight** — when `isOverBudget`, show warning banner/badge comparing total to `maxCostCents` (formatted).
-- [ ] **Pending actual** — role/total shows pending label when `hasPendingActual` (reuse US-7.3 pending copy pattern where possible).
-- [ ] **Empty state** — no spend events: **"—"** + short explanation (no generation yet).
-- [ ] **V1 LLM-only note** — when breakdown length === 1 && role === llm, optional muted helper text (phase B).
-- [ ] **Loading / error** if lazy-fetch on expand; otherwise inherit list loading.
-- [ ] **EN + ES** `scripts.cost.rollup.*` (section title, totals, variance, overBudget, roles, empty, pending, phaseNote).
-- [ ] **No Supabase in Client Components**; no client-side cost math.
-- [ ] **No Cliente** cost fields on any shared route.
-- [ ] **Read-only** — no inline edit.
+- [x] **`ReelCostSection`** component — embedded in **`ReelDetailPanel`** below `ProviderRecommendationPanel`, above `TabView`.
+- [x] **Total row** — formatted estimated vs actual (currency); **variance** when actual known (signed, color-coded subdued).
+- [x] **Breakdown table** — one row per role with events; role labels via i18n (`llm`, `video`, `broll`, `voiceover`).
+- [x] **Over-budget highlight** — when `isOverBudget`, show warning banner/badge comparing total to `maxCostCents` (formatted).
+- [x] **Pending actual** — role/total shows pending label when `hasPendingActual` (reuse US-7.3 pending copy pattern where possible).
+- [x] **Empty state** — no spend events: **"—"** + short explanation (no generation yet).
+- [x] **V1 LLM-only note** — when breakdown length === 1 && role === llm, optional muted helper text (phase B).
+- [x] **Loading / error** if lazy-fetch on expand; otherwise inherit list loading.
+- [x] **EN + ES** `scripts.cost.rollup.*` (section title, totals, variance, overBudget, roles, empty, pending, phaseNote).
+- [x] **No Supabase in Client Components**; no client-side cost math.
+- [x] **No Cliente** cost fields on any shared route.
+- [x] **Read-only** — no inline edit.
 
 ---
 

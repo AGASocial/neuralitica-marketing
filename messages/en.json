@@ -941,6 +941,25 @@
           "catalog_cost_model_unsupported": "Billing model unsupported",
           "provider_no_billing": "Provider billing unavailable"
         }
+      },
+      "rollup": {
+        "title": "Reel cost breakdown",
+        "estimated": "Estimated total",
+        "actual": "Actual total",
+        "variance": "Variance: {amount}",
+        "overBudget": "Over budget — exceeds max of {max}",
+        "pending": "Pending",
+        "empty": "No spend recorded for this Reel yet.",
+        "phaseNote": "Video and voiceover costs will appear here when production jobs run.",
+        "breakdownRole": "Component",
+        "breakdownEstimated": "Estimated",
+        "breakdownActual": "Actual",
+        "component": {
+          "llm": "LLM",
+          "talkingHead": "Video",
+          "broll": "B-roll",
+          "tts": "Voiceover"
+        }
       }
     },
     "budget": {

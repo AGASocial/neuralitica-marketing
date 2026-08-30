@@ -22,8 +22,13 @@ import {
   ProviderRecommendationPanel,
   type ProviderRecommendationCopy,
 } from "@/components/scripts/ProviderRecommendationPanel";
+import {
+  ReelCostRollupPanel,
+  type ReelCostRollupCopy,
+} from "@/components/scripts/ReelCostRollupPanel";
 import type {
   ActualCostUnavailableReason,
+  ReelCostRollupsMap,
   ReelSlotCostSummary,
   ReelWeekCostSummary,
 } from "@/lib/contracts/actual-cost";
@@ -148,6 +153,7 @@ type ScriptsPageCopy = {
       partialActualHint: string;
       unavailable: Record<ActualCostUnavailableReason, string>;
     };
+    rollup: ReelCostRollupCopy;
   };
   caption: {
     tabs: {
@@ -460,6 +466,7 @@ export function ScriptsPageView({
   const allCaptionsPending =
     hasApprovedStrategy && hasAnyGenerated && !hasAnyCaptionGenerated;
   const costSummary = data.costSummary;
+  const reelCostRollups = data.reelCostRollups;
   const showCostSummary = costSummary !== undefined;
 
   function navigateWeek(nextWeekStart: string) {
@@ -928,6 +935,8 @@ export function ScriptsPageView({
                 weekStart={weekStart}
                 locale={locale}
                 copy={copy}
+                reelCostRollups={reelCostRollups}
+                showCostRollup={showCostSummary}
                 onCopy={copyToClipboard}
                 onRegenerateCaption={(slotIndex) => void handleRegenerateCaption(slotIndex)}
                 onSelectCaptionCta={(slotIndex, selectedCtaIndex) =>
@@ -1065,6 +1074,8 @@ type ReelDetailPanelProps = {
   weekStart: string;
   locale: string;
   copy: ScriptsPageCopy;
+  reelCostRollups: ReelCostRollupsMap;
+  showCostRollup: boolean;
   onCopy: (text: string) => void;
   onRegenerateCaption: (slotIndex: number) => void;
   onSelectCaptionCta: (slotIndex: number, selectedCtaIndex: number) => void;
@@ -1078,6 +1089,8 @@ function ReelDetailPanel({
   weekStart,
   locale,
   copy,
+  reelCostRollups,
+  showCostRollup,
   onCopy,
   onRegenerateCaption,
   onSelectCaptionCta,
@@ -1085,6 +1098,9 @@ function ReelDetailPanel({
   captionSelectingSlot,
   isBusy,
 }: ReelDetailPanelProps) {
+  const rollup =
+    row.scriptId !== null ? reelCostRollups[row.scriptId] : undefined;
+
   return (
     <div>
       <ProviderRecommendationPanel
@@ -1093,6 +1109,13 @@ function ReelDetailPanel({
         locale={locale}
         copy={copy.providerRecommendation}
       />
+      {showCostRollup ? (
+        <ReelCostRollupPanel
+          rollup={rollup}
+          locale={locale}
+          copy={copy.cost.rollup}
+        />
+      ) : null}
       <TabView>
       <TabPanel header={copy.caption.tabs.script}>
         <ScriptDetailPanel row={row} copy={copy} onCopy={onCopy} />
