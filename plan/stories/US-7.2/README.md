@@ -1,14 +1,14 @@
 # US-7.2 — Select provider by economics and quality floor
 
-**Status:** PREP — story folder + TASKS ready; gates not started.
+**Status:** CLOSED — VALIDATION PASS WITH NOTES (8/8 AC); QA BLOCK remediated `78e6aa1` (139/139 tests green). BE `8eab3f7` · `a507264` · FE `2ab482c` · fix `78e6aa1`.
 
 **As a** System, **I want** automatic provider recommendation per piece, **so that** we default to the cheapest acceptable option.
 
 Ship **server-side policy engine + Operator read-only provider recommendations**: extend `resolveProvider()` with explicit **cheapest-active** ranking from catalog `cost_model`; map **`provider_tier` + visual mode + asset role** (`llm` \| `talking_head` \| `broll` \| `tts`) → **`provider_key` + `estimated_cost_cents`**; **log every resolution** (tier, role, key, estimate, rationale) for later cost analysis; surface **read-only recommendations** on **`/operator/scripts`** (slot expand/detail panel and existing budget confirm dialog); **wire `estimateLlmJobCost`** (US-7.1) through the unified engine so preview, gate, and spend paths share one resolver. **Actual video/TTS vendor adapters** (US-8.x / US-9.3) and **catalog admin UI** stay **out**.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-7.2 (do **not** check off in PREP).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-7.2 (checked on CLOSE).
 
-**This folder:** [`plan/stories/US-7.2/`](./) — `README.md` · `TASKS.md` · *(SPEC-REVIEW, SECURITY, CONTRACT, VALIDATION, QA — pending gates)*.
+**This folder:** [`plan/stories/US-7.2/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
 
 **Branch:** `feature/US-7.2-provider-ranking`
 
@@ -77,11 +77,11 @@ _Evitar:_ client-picked vendor; exposing `envKeyName` / raw `cost_model` to brow
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend — frozen; **Reviewed by FE** before BUILD)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] SPEC-REVIEW.md (spec-guardian)
+- [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
+- [x] CONTRACT.md (nextjs-backend — frozen `45c46e5`; **Reviewed by FE** before BUILD)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES; 139/139 after fix `78e6aa1`)
+- [x] QA.md (qa-engineer — BLOCK remediated `78e6aa1`; M1/M2 post-close hardening)
 
-**Next after PREP:** spec-guardian SPEC-REVIEW → security-architect SECURITY → nextjs-backend CONTRACT (FE signoff) → BUILD on `feature/US-7.2-provider-ranking`.
+**Status:** CLOSED (2026-08-30). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** **US-7.3** Track actual cost per generation job.

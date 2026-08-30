@@ -711,14 +711,14 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | `provider_catalog` (key, asset_role, tier `low` \| `high`, capabilities JSON, cost_model JSON, active) |
 
 **Acceptance criteria**
-- [ ] With `provider_tier = low` (default): talking-head routes to SadTalker (US-8.2); generic-avatar may route to MuseTalk (US-8.6) when a reference loop exists; faceless B-roll routes to Wan (US-8.5)
-- [ ] With `provider_tier = high`: talking-head may route to HeyGen (US-8.7); B-roll may route to LTX/Kling when those catalog rows are active
-- [ ] Manual upload always available as zero-cost fallback
-- [ ] Decision logged per job (tier, asset role, provider_key, estimate) for later cost analysis
-- [ ] Cheapest **active** provider in the resolved tier is the default — high-tier providers are never chosen while tier is `low` (roadmap rule: cheap API first)
-- [ ] Provider catalog is data-driven and seeded by US-X.4: providers can be activated/deactivated without redesign
-- [ ] [SEC] `provider_key` for a job is chosen by the server-side policy engine; a client-supplied provider key is never accepted at job creation (prevents forcing an expensive provider or an inactive/unknown adapter)
-- [ ] [SEC] `provider_catalog.cost_model` and `capabilities` are trusted config maintained server-side only; no endpoint exposes writes to the catalog in V1
+- [x] With `provider_tier = low` (default): talking-head routes to SadTalker (US-8.2); generic-avatar may route to MuseTalk (US-8.6) when a reference loop exists; faceless B-roll routes to Wan (US-8.5)
+- [x] With `provider_tier = high`: talking-head may route to HeyGen (US-8.7); B-roll may route to LTX/Kling when those catalog rows are active
+- [x] Manual upload always available as zero-cost fallback
+- [x] Decision logged per job (tier, asset role, provider_key, estimate) for later cost analysis
+- [x] Cheapest **active** provider in the resolved tier is the default — high-tier providers are never chosen while tier is `low` (roadmap rule: cheap API first)
+- [x] Provider catalog is data-driven and seeded by US-X.4: providers can be activated/deactivated without redesign
+- [x] [SEC] `provider_key` for a job is chosen by the server-side policy engine; a client-supplied provider key is never accepted at job creation (prevents forcing an expensive provider or an inactive/unknown adapter)
+- [x] [SEC] `provider_catalog.cost_model` and `capabilities` are trusted config maintained server-side only; no endpoint exposes writes to the catalog in V1
 
 **Depends on:** US-7.1, US-X.4
 

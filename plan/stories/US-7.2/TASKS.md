@@ -228,14 +228,14 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [x] CONTRACT.md authored (nextjs-backend — frozen; **Reviewed by FE** required before BUILD)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
-- [x] VALIDATION.md (requirements-validator)
-- [x] QA.md (qa-engineer) — BLOCK; see `QA.md`
+- [x] SPEC-REVIEW.md (spec-guardian)
+- [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
+- [x] CONTRACT.md authored (nextjs-backend — frozen `45c46e5`; **Reviewed by FE** before BUILD)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES; 139/139 after fix `78e6aa1`)
+- [x] QA.md (qa-engineer — BLOCK remediated `78e6aa1`; M1/M2 post-close hardening)
 
-**Status:** PREP (2026-08-29). Gates not started. **Next:** SPEC-REVIEW on `feature/US-7.2-provider-ranking`.
+**Status:** CLOSED (2026-08-30). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** **US-7.3** Track actual cost per generation job.
 
 ---
 
