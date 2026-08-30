@@ -22,7 +22,7 @@ export async function uploadManualVideoJob(
   try {
     let operator;
     try {
-      operator = await requireOperator("action");
+      operator = await requireOperator("handler");
     } catch (error) {
       if (isAuthGuardError(error)) {
         return manualUploadError(
