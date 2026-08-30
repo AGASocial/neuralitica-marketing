@@ -212,11 +212,11 @@ All objects keep `neuramark_` prefix. **No migration required.**
 - [x] SPEC-REVIEW.md (spec-guardian)
 - [x] SECURITY.md (security-architect)
 - [x] CONTRACT.md authored (nextjs-backend — frozen; **Reviewed by FE: N/A**)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend — `a11d4ae`)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES `7367929`)
+- [x] QA.md (qa-engineer — BLOCK remediated `4193a1e`; M1 catalog bootstrap deferred to US-8.2)
 
-**Status:** SELECT — PREP complete. **Next:** SPEC-REVIEW → SECURITY → CONTRACT freeze → BUILD.
+**Status:** CLOSED (2026-08-30). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** **US-8.2** SadTalker adapter.
 
 ---
 

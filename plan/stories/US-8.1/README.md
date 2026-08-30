@@ -1,14 +1,14 @@
 # US-8.1 — Provider adapter interface
 
-**Status:** SELECT — PREP (`README.md` + `TASKS.md`). Gates pending: SPEC-REVIEW · SECURITY · CONTRACT · BUILD · VALIDATION · QA.
+**Status:** CLOSED — VALIDATION PASS WITH NOTES (6/6 AC); QA BLOCK remediated `4193a1e` (14/14 tests; type-check green). BE `a11d4ae` · fix `4193a1e` · VALIDATION `7367929` · QA `7f34bdb`.
 
 **As a** System, **I want** a single adapter contract for all video providers, **so that** swapping SadTalker for MuseTalk or HeyGen does not rewrite the pipeline.
 
 Ship **server-only video adapter contract + registry**: consolidate and extend the stubs already started in `lib/providers/provider-adapters.ts` and `lib/contracts/providers.ts` (US-X.4 / US-7.2); wire **`ProviderRegistry` / `InMemoryProviderRegistry`** keyed by **`provider_key`** from the policy engine (`resolveProviderForJob`); register **stub `VideoProviderAdapter` implementations** for catalog seed keys **`sadtalker_low`**, **`siliconflow_wan21_turbo`**, **`heygen_high`** (no vendor HTTP); add **registry lookup + interface-compliance tests**. **No Route Handlers**, **no FE**, **no `neuramark_video_jobs` writes** — concrete vendor I/O ships in **US-8.2+**.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.1 (unchecked until VALIDATION).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.1 (checked on CLOSE).
 
-**This folder:** [`plan/stories/US-8.1/`](./) — `README.md` · `TASKS.md` · (gates pending) `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
+**This folder:** [`plan/stories/US-8.1/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
 
 **Branch:** `feature/US-8.1-provider-adapter-interface`
 
@@ -78,8 +78,8 @@ _Evitar:_ client-supplied `provider_key`; API secrets in catalog rows or respons
 - [x] SPEC-REVIEW.md (spec-guardian)
 - [x] SECURITY.md (security-architect)
 - [x] CONTRACT.md (nextjs-backend — frozen; **Reviewed by FE: N/A**)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend — `a11d4ae`)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES `7367929`)
+- [x] QA.md (qa-engineer — BLOCK remediated `4193a1e`; M1 post-close hardening for US-8.2)
 
-**Status:** SELECT — PREP complete. **Next:** SPEC-REVIEW → SECURITY → CONTRACT freeze → BUILD.
+**Status:** CLOSED (2026-08-30). All gates complete; 6/6 AC checked in `plan/USER_STORIES.md`. **Next:** **US-8.2** SadTalker adapter (or **SELECT** next Sprint 4 story).

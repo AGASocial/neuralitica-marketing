@@ -776,12 +776,12 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | — |
 
 **Acceptance criteria**
-- [ ] `VideoProviderAdapter` interface exists in `lib/providers/` with the four methods above; types shared via `lib/contracts/providers.ts`
-- [ ] New provider = new adapter class + catalog row + env var, no changes to assembly pipeline (US-9.x)
-- [ ] All jobs share statuses: `queued`, `processing`, `completed`, `failed`, `cancelled`
-- [ ] [SEC] All adapter code is server-only; provider API keys are read exclusively from server environment variables — never stored in the DB, never in `NEXT_PUBLIC_*` vars, never serialized into any response or log
-- [ ] [SEC] The adapter interface treats all provider responses as untrusted input: status values, URLs, and error messages are validated/normalized before persistence, and provider error text is sanitized before display
-- [ ] [SEC] `external_job_id` is stored opaque and only ever sent back to the same provider's adapter; it is never used to build local file paths or DB queries beyond an exact-match lookup
+- [x] `VideoProviderAdapter` interface exists in `lib/providers/` with the four methods above; types shared via `lib/contracts/providers.ts`
+- [x] New provider = new adapter class + catalog row + env var, no changes to assembly pipeline (US-9.x)
+- [x] All jobs share statuses: `queued`, `processing`, `completed`, `failed`, `cancelled`
+- [x] [SEC] All adapter code is server-only; provider API keys are read exclusively from server environment variables — never stored in the DB, never in `NEXT_PUBLIC_*` vars, never serialized into any response or log
+- [x] [SEC] The adapter interface treats all provider responses as untrusted input: status values, URLs, and error messages are validated/normalized before persistence, and provider error text is sanitized before display
+- [x] [SEC] `external_job_id` is stored opaque and only ever sent back to the same provider's adapter; it is never used to build local file paths or DB queries beyond an exact-match lookup
 
 **Depends on:** US-7.2
 

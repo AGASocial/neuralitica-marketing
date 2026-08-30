@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: US-8.1
-story_status: CONTRACT
-feature_branch: feature/US-8.1-provider-adapter-interface
-last_completed_story: US-7.4
+current_story: null
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-8.1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T03:00:00Z
+updated_at: 2026-08-30T03:50:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -28,7 +28,7 @@ updated_at: 2026-08-30T03:00:00Z
 | US-7.2 Select provider by economics | done | BE `8eab3f7` · FE `2ab482c` · fix `78e6aa1` · VALIDATION `eb03f8e` · QA `4ed7fe9` · CLOSE `fcecce4` |
 | US-7.3 Track actual cost per job | done | BE `030d85f` · FE `02b399b`/`ddca524` · fix `f60579d` · VALIDATION `09656e0` · QA `691f657` · CLOSE Phase A |
 | US-7.4 Report real total cost per Reel | done | BE `5c9abb4` · FE `8735be2` · fix `5b3e9d7` · VALIDATION `a678ac4` · QA `746a563` · CLOSE Phase A `f0ca5a0` |
-| US-8.1 Provider adapter interface | CONTRACT | PREP + SPEC-REVIEW + SECURITY + CONTRACT `335f73c`; branch `feature/US-8.1-provider-adapter-interface` |
+| US-8.1 Provider adapter interface | done | BE `a11d4ae` · fix `4193a1e` · VALIDATION `7367929` · QA `7f34bdb` · CLOSE |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -40,6 +40,7 @@ updated_at: 2026-08-30T03:00:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-8.1 CLOSE: 6/6 AC; QA BLOCK remediated `4193a1e`; BE `a11d4ae` · VALIDATION PASS WITH NOTES `7367929`; Phase 3 → SELECT next story (US-8.2 recommended).
 - 2026-08-30 · US-7.4 CLOSE: 6/6 AC Phase A; QA APPROVE WITH CONDITIONS after fix `5b3e9d7`; BE `5c9abb4` · FE `8735be2` · VALIDATION PASS WITH NOTES `a678ac4`; Phase 3 → SELECT next story. Phase B (video/TTS/B-roll lines) deferred.
 - 2026-08-30 · US-7.4 CONTRACT: frozen `08b4131`; FE signoff; story_status CONTRACT → BUILD next.
 - 2026-08-30 · US-7.4 PREP: README + TASKS + SPEC-REVIEW (GAPS) + SECURITY APPROVE WITH CONDITIONS.
