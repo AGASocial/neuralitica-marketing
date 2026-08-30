@@ -57,8 +57,10 @@ function internalErrorResponse(): Response {
 }
 
 /**
- * Authenticated ownership-checked media serve (US-3.3 + US-8.3 + US-9.3).
- * avatar_reference: cliente session. generated_video + voiceover: Operator session.
+ * Authenticated ownership-checked media serve (US-3.3 + US-8.3 + US-9.2 + US-11.1).
+ * avatar_reference / client_logo / cover_frame: Cliente session.
+ * generated_video + voiceover: Operator only.
+ * assembled_reel: owning Cliente (requireActive) or Operator (requireOperator).
  */
 export async function GET(
   _request: Request,
@@ -214,17 +216,47 @@ export async function GET(
       originalFilename = metaParsed.data.originalFilename;
     }
   } else if (row.asset_type === MEDIA_ASSET_TYPE_ASSEMBLED_REEL) {
-    let operator;
+    // US-11.1: Cliente ownership first, then Operator ownership (do not widen
+    // generated_video / voiceover).
+    let allowed = false;
+    let hadSuccessfulAuth = false;
+    let lastAuthError: import("@/lib/auth/require-user").AuthGuardError | null =
+      null;
+
     try {
-      operator = await requireOperator("handler");
+      const user = await requireActive("handler");
+      hadSuccessfulAuth = true;
+      if (row.client_id === user.id) {
+        allowed = true;
+      }
     } catch (authError) {
       if (isAuthGuardError(authError)) {
-        return authGuardResponse(authError);
+        lastAuthError = authError;
+      } else {
+        throw authError;
       }
-      throw authError;
     }
 
-    if (row.client_id !== operator.id) {
+    if (!allowed) {
+      try {
+        const operator = await requireOperator("handler");
+        hadSuccessfulAuth = true;
+        if (row.client_id === operator.id) {
+          allowed = true;
+        }
+      } catch (authError) {
+        if (isAuthGuardError(authError)) {
+          lastAuthError = authError;
+        } else {
+          throw authError;
+        }
+      }
+    }
+
+    if (!allowed) {
+      if (!hadSuccessfulAuth && lastAuthError) {
+        return authGuardResponse(lastAuthError);
+      }
       return notFoundResponse();
     }
 

@@ -914,6 +914,111 @@ describe("GET serve route", () => {
     }
   });
 
+  it("US-11.1 serves assembled_reel for owning Cliente", async () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), "neuramark-assembled-serve-"));
+    const key = "f6a7b8c9-d0e1-4234-9567-89abcdef0123.mp4";
+    await new LocalDiskStorage(tmp).put(key, mp4MagicBuffer(80), {
+      contentType: "video/mp4",
+      sizeBytes: 80,
+    });
+
+    const restore = installMediaMocks({
+      mediaRoot: tmp,
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({
+              data: {
+                id: ASSET_ID,
+                client_id: CLIENT_ID,
+                asset_type: "assembled_reel",
+                storage_key: key,
+                metadata: {
+                  detectedMime: "video/mp4",
+                  sizeBytes: 80,
+                  durationSec: 30,
+                },
+              },
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    });
+
+    try {
+      const { resetMediaStorageCacheForTests } = loadMediaModule("./storage/get-media-storage.ts");
+      resetMediaStorageCacheForTests();
+      const { GET } = loadMediaModule("../../app/api/media/assets/[assetId]/route.ts");
+      const res = await GET(new Request("http://localhost/api/media/assets/" + ASSET_ID), {
+        params: Promise.resolve({ assetId: ASSET_ID }),
+      });
+      assert.equal(res.status, 200);
+      assert.equal(res.headers.get("Cache-Control"), "private, no-store");
+      assert.equal(res.headers.get("Content-Type"), "video/mp4");
+    } finally {
+      restore();
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("US-11.1 foreign assembled_reel → 404 for Cliente", async () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), "neuramark-assembled-foreign-"));
+    const key = "a7b8c9d0-e1f2-4345-9678-9abcdef01234.mp4";
+    await new LocalDiskStorage(tmp).put(key, mp4MagicBuffer(80), {
+      contentType: "video/mp4",
+      sizeBytes: 80,
+    });
+
+    const restore = installMediaMocks({
+      mediaRoot: tmp,
+      // Cliente auth ok but ownership miss; Operator also fails role → 404
+      requireOperator: async () => {
+        const err = new Error("forbidden") as Error & {
+          status: number;
+          envelope: unknown;
+        };
+        err.status = 403;
+        err.envelope = { ok: false, error: { code: "FORBIDDEN" } };
+        throw err;
+      },
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({
+              data: {
+                id: VICTIM_ID,
+                client_id: VICTIM_ID,
+                asset_type: "assembled_reel",
+                storage_key: key,
+                metadata: {
+                  detectedMime: "video/mp4",
+                  sizeBytes: 80,
+                  durationSec: 30,
+                },
+              },
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    });
+
+    try {
+      const { resetMediaStorageCacheForTests } = loadMediaModule("./storage/get-media-storage.ts");
+      resetMediaStorageCacheForTests();
+      const { GET } = loadMediaModule("../../app/api/media/assets/[assetId]/route.ts");
+      const res = await GET(
+        new Request("http://localhost/api/media/assets/" + VICTIM_ID),
+        { params: Promise.resolve({ assetId: VICTIM_ID }) },
+      );
+      assert.equal(res.status, 404);
+    } finally {
+      restore();
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it("migration defines neuramark_media_assets with RLS", () => {
     const mig = path.join(
       repoRoot,

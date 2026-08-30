@@ -155,24 +155,24 @@
 
 ## BE checklist
 
-- [ ] Migration `neuramark_approvals` per PO DDL (+ RLS zero policies).
+- [x] Migration `neuramark_approvals` per PO DDL (+ RLS zero policies).
 - [x] Zod + types in `lib/contracts/approval.ts` (CONTRACT freezes names).
-- [ ] `ensureApprovalPackageForAssembledReel` — gate + branding + CTA; idempotent INSERT.
-- [ ] `listPendingApprovals` / `getApprovalPackage` — Cliente-scoped; 404 foreign.
-- [ ] `decideApproval` — approve/reject only; gate re-check; state machine; actor from session.
-- [ ] Forbidden-key scan: reject `qaPassed`, `ready`, `status` (as authority), `clientId`, override spoof fields.
-- [ ] Widen `app/api/media/assets/[assetId]/route.ts` for `assembled_reel` + Cliente tenancy.
-- [ ] Compose package from assembly + caption + disclosure flag + US-10.2 overrides load.
-- [ ] Import `getQaGateStatusForAssembledReel` — do not fork readiness rules.
-- [ ] Import `buildEffectiveInstagramCaption` for effective caption field.
-- [ ] Security / unit tests: gate fail on decide; IDOR; double-decide; media tenancy; CTA null on ensure.
-- [ ] `revalidatePath("/approvals")` (and detail) after decide.
+- [x] `ensureApprovalPackageForAssembledReel` — gate + branding + CTA; idempotent INSERT.
+- [x] `listPendingApprovals` / `getApprovalPackage` — Cliente-scoped; 404 foreign.
+- [x] `decideApproval` — approve/reject only; gate re-check; state machine; actor from session.
+- [x] Forbidden-key scan: reject `qaPassed`, `ready`, `status` (as authority), `clientId`, override spoof fields.
+- [x] Widen `app/api/media/assets/[assetId]/route.ts` for `assembled_reel` + Cliente tenancy.
+- [x] Compose package from assembly + caption + disclosure flag + US-10.2 overrides load.
+- [x] Import `getQaGateStatusForAssembledReel` — do not fork readiness rules.
+- [x] Import `buildEffectiveInstagramCaption` for effective caption field.
+- [x] Security / unit tests: gate fail on decide; IDOR; double-decide; media tenancy; CTA null on ensure.
+- [x] `revalidatePath("/approvals")` (and detail) after decide.
 
 ## DB checklist
 
-- [ ] `neuramark_approvals` as above; all objects `neuramark_` prefixed.
-- [ ] UNIQUE(`assembled_reel_id`); indexes for Cliente pending list.
-- [ ] No US-11.2 revision columns in this migration.
+- [x] `neuramark_approvals` as above; all objects `neuramark_` prefixed.
+- [x] UNIQUE(`assembled_reel_id`); indexes for Cliente pending list.
+- [x] No US-11.2 revision columns in this migration.
 
 ---
 
