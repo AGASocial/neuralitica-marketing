@@ -182,15 +182,15 @@ Concrete consumers: **`createTalkingHeadVideoJob()`** · US-8.4 poller · **`ret
 
 ### Phase B — Orchestrator wiring
 
-- [ ] **`getPrimaryReferenceLoopVideoAssetForClient`** (or equivalent) — server-only; earliest video **`avatar_reference`** by `created_at ASC`.
-- [ ] **`create-talking-head-video-job.ts`** — accept **`musetalk_low`** from policy; remove **`museTalkNotSupported`** early reject.
-- [ ] **Branch inputs** — MuseTalk: resolve loop video id + voiceover; SadTalker: existing portrait path unchanged.
-- [ ] **Provider guard** — allow only **`sadtalker_low` \| `musetalk_low`** for Phase B talking-head create (reject Wan/HeyGen here).
-- [ ] **Job INSERT** — MuseTalk rows: **`portrait_asset_id`** = reference loop video asset id; **`voiceover_asset_id`** set.
-- [ ] **`resolvedCreateVideoJobInput`** — include **`referenceVideoAssetId`** for MuseTalk **`adapter.createJob`**.
-- [ ] **Retry path** — re-resolve policy + assets; MuseTalk retries stay on loop path when `hasReferenceLoop`.
-- [ ] **Orchestrator tests** — mocked registry: policy selects **`musetalk_low`** → create succeeds with loop + voiceover fixtures.
-- [ ] **No new Route Handlers** — reuse US-8.4 surfaces.
+- [x] **`getPrimaryReferenceLoopVideoAssetForClient`** (or equivalent) — server-only; earliest video **`avatar_reference`** by `created_at ASC`.
+- [x] **`create-talking-head-video-job.ts`** — accept **`musetalk_low`** from policy; remove **`museTalkNotSupported`** early reject.
+- [x] **Branch inputs** — MuseTalk: resolve loop video id + voiceover; SadTalker: existing portrait path unchanged.
+- [x] **Provider guard** — allow only **`sadtalker_low` \| `musetalk_low`** for Phase B talking-head create (reject Wan/HeyGen here).
+- [x] **Job INSERT** — MuseTalk rows: **`portrait_asset_id`** = reference loop video asset id; **`voiceover_asset_id`** set.
+- [x] **`resolvedCreateVideoJobInput`** — include **`referenceVideoAssetId`** for MuseTalk **`adapter.createJob`**.
+- [x] **Retry path** — re-resolve policy + assets; MuseTalk retries stay on loop path when `hasReferenceLoop`.
+- [x] **Orchestrator tests** — mocked registry: policy selects **`musetalk_low`** → create succeeds with loop + voiceover fixtures.
+- [x] **No new Route Handlers** — reuse US-8.4 surfaces.
 
 ---
 

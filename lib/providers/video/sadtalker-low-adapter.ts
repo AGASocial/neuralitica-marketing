@@ -4,13 +4,11 @@ import {
   PROVIDER_CONFIG_MISSING,
   REPLICATE_API_BASE_URL,
   SADTALKER_ALLOWED_OUTPUT_HOSTS,
-  SADTALKER_AUDIO_MIME_ALLOWLIST,
   SADTALKER_DEFAULT_PREDICTION_INPUT,
   SADTALKER_ENV_KEY_NAME,
   SADTALKER_FETCH_MAX_BYTES,
   SADTALKER_FETCH_MAX_REDIRECTS,
   SADTALKER_FETCH_TIMEOUT_MS,
-  SADTALKER_PORTRAIT_MIME_ALLOWLIST,
   SADTALKER_REPLICATE_INPUT_FIELDS,
   SADTALKER_REPLICATE_MODEL_VERSION,
 } from "@/lib/contracts/sadtalker-low";
@@ -291,10 +289,7 @@ export function createSadtalkerLowAdapter(
       resolveMediaAssetUrlForProvider({
         assetId,
         clientId,
-        allowedMimeTypes:
-          kind === "portrait"
-            ? SADTALKER_PORTRAIT_MIME_ALLOWLIST
-            : SADTALKER_AUDIO_MIME_ALLOWLIST,
+        kind,
       }));
 
   const jobContextByExternalId = new Map<ExternalJobId, JobContext>(

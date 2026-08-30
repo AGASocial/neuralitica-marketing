@@ -9,6 +9,7 @@ import { DEFAULT_LOW_TIER_PROVIDER_KEYS } from "@/lib/contracts/providers";
 import { assertReelBudgetAllowsEstimatedSpend } from "@/lib/cost-policy/assert-reel-budget-allows-estimated-spend";
 import { recordReelSpendEvent } from "@/lib/cost-policy/record-reel-spend-event";
 import { requireOperator } from "@/lib/auth/require-user";
+import { getPrimaryReferenceLoopVideoAssetForClient } from "@/lib/media/get-primary-reference-loop-video-asset-for-client";
 import { resolveProviderForJob } from "@/lib/providers/resolve-provider-for-job";
 import { initializeProviderRegistryFromCatalog } from "@/lib/providers/create-provider-registry";
 import { assertActiveAvatarConsentForJobs } from "@/lib/visual-preferences/assert-active-avatar-consent-for-jobs";
@@ -40,6 +41,13 @@ async function verifyMediaAssetOwned(params: {
     .maybeSingle();
 
   return !error && !!data;
+}
+
+function isAllowedTalkingHeadProviderKey(providerKey: string): boolean {
+  return (
+    providerKey === DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead ||
+    providerKey === DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHeadLoop
+  );
 }
 
 export type CreateTalkingHeadVideoJobOptions = {
@@ -75,12 +83,6 @@ export async function createTalkingHeadVideoJob(
       return videoJobMutationError("FORBIDDEN");
     }
 
-    if (input.referenceVideoAssetId) {
-      return videoJobMutationError("PROVIDER_UNAVAILABLE", {
-        messageKey: "scripts.videoJob.errors.museTalkNotSupported",
-      });
-    }
-
     const script = await loadReelScriptForVideoJob({
       reelScriptId: input.reelScriptId,
       clientId: input.clientId,
@@ -109,18 +111,14 @@ export async function createTalkingHeadVideoJob(
       return videoJobMutationError("PROVIDER_UNAVAILABLE");
     }
 
-    if (providerResult.decision.providerKey !== DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead) {
+    const providerKey = providerResult.decision.providerKey;
+    if (!isAllowedTalkingHeadProviderKey(providerKey)) {
       return videoJobMutationError("PROVIDER_UNAVAILABLE");
     }
 
     const registry = await initializeProviderRegistryFromCatalog();
-    const adapter = registry.getVideoAdapter(providerResult.decision.providerKey);
+    const adapter = registry.getVideoAdapter(providerKey);
 
-    const portraitAssetId =
-      options?.portraitAssetId ??
-      input.portraitAssetId ??
-      input.referenceImageAssetId ??
-      null;
     const voiceoverAssetId =
       options?.voiceoverAssetId ?? input.voiceoverAssetId ?? null;
 
@@ -130,33 +128,103 @@ export async function createTalkingHeadVideoJob(
       });
     }
 
-    if (!portraitAssetId) {
-      return videoJobMutationError("VALIDATION_ERROR", {
-        fields: { portraitAssetId: ["REQUIRED"] },
-      });
+    const isMusetalk =
+      providerKey === DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHeadLoop;
+
+    let portraitAssetIdForInsert: string;
+    let resolvedInput: Parameters<typeof adapter.createJob>[0];
+
+    if (isMusetalk) {
+      if (script.visualMode === "own_avatar" || script.modalidad === "own_avatar") {
+        return videoJobMutationError("VALIDATION_ERROR");
+      }
+
+      if (!hasReferenceLoop) {
+        return videoJobMutationError("VALIDATION_ERROR");
+      }
+
+      let referenceVideoAssetId = options?.portraitAssetId ?? null;
+      if (!referenceVideoAssetId) {
+        const loopAsset = await getPrimaryReferenceLoopVideoAssetForClient(
+          input.clientId,
+        );
+        if (!loopAsset) {
+          return videoJobMutationError("NOT_FOUND");
+        }
+        referenceVideoAssetId = loopAsset.assetId;
+      }
+
+      const [loopOwned, voiceoverOwned] = await Promise.all([
+        verifyMediaAssetOwned({
+          assetId: referenceVideoAssetId,
+          clientId: input.clientId,
+        }),
+        verifyMediaAssetOwned({
+          assetId: voiceoverAssetId,
+          clientId: input.clientId,
+        }),
+      ]);
+
+      if (!loopOwned || !voiceoverOwned) {
+        return videoJobMutationError("NOT_FOUND");
+      }
+
+      portraitAssetIdForInsert = referenceVideoAssetId;
+      resolvedInput = {
+        reelScriptId: input.reelScriptId,
+        clientId: input.clientId,
+        providerKey,
+        providerTier: providerResult.decision.providerTier,
+        assetRole: "primary",
+        targetDurationSec:
+          input.targetDurationSec ?? script.package.targetDurationSec,
+        voiceoverAssetId,
+        referenceVideoAssetId,
+        prompt: input.prompt,
+      };
+    } else {
+      const portraitAssetId =
+        options?.portraitAssetId ??
+        input.portraitAssetId ??
+        input.referenceImageAssetId ??
+        null;
+
+      if (!portraitAssetId) {
+        return videoJobMutationError("VALIDATION_ERROR", {
+          fields: { portraitAssetId: ["REQUIRED"] },
+        });
+      }
+
+      const [portraitOwned, voiceoverOwned] = await Promise.all([
+        verifyMediaAssetOwned({
+          assetId: portraitAssetId,
+          clientId: input.clientId,
+        }),
+        verifyMediaAssetOwned({
+          assetId: voiceoverAssetId,
+          clientId: input.clientId,
+        }),
+      ]);
+
+      if (!portraitOwned || !voiceoverOwned) {
+        return videoJobMutationError("NOT_FOUND");
+      }
+
+      portraitAssetIdForInsert = portraitAssetId;
+      resolvedInput = {
+        reelScriptId: input.reelScriptId,
+        clientId: input.clientId,
+        providerKey,
+        providerTier: providerResult.decision.providerTier,
+        assetRole: "primary",
+        targetDurationSec:
+          input.targetDurationSec ?? script.package.targetDurationSec,
+        voiceoverAssetId,
+        portraitAssetId,
+        referenceImageAssetId: input.referenceImageAssetId,
+        prompt: input.prompt,
+      };
     }
-
-    const [portraitOwned, voiceoverOwned] = await Promise.all([
-      verifyMediaAssetOwned({ assetId: portraitAssetId, clientId: input.clientId }),
-      verifyMediaAssetOwned({ assetId: voiceoverAssetId, clientId: input.clientId }),
-    ]);
-
-    if (!portraitOwned || !voiceoverOwned) {
-      return videoJobMutationError("NOT_FOUND");
-    }
-
-    const resolvedInput = {
-      reelScriptId: input.reelScriptId,
-      clientId: input.clientId,
-      providerKey: providerResult.decision.providerKey,
-      providerTier: providerResult.decision.providerTier,
-      assetRole: "primary" as const,
-      targetDurationSec: input.targetDurationSec ?? script.package.targetDurationSec,
-      voiceoverAssetId,
-      portraitAssetId,
-      referenceImageAssetId: input.referenceImageAssetId,
-      prompt: input.prompt,
-    };
 
     const estimate = await adapter.estimateCost(resolvedInput);
 
@@ -199,13 +267,13 @@ export async function createTalkingHeadVideoJob(
       .insert({
         client_id: input.clientId,
         reel_script_id: input.reelScriptId,
-        provider_key: providerResult.decision.providerKey,
+        provider_key: providerKey,
         provider_tier: providerResult.decision.providerTier,
         asset_role: "primary",
         external_job_id: createResult.externalJobId,
         status: createResult.status,
         estimated_cost_cents: estimate.estimatedCostCents,
-        portrait_asset_id: portraitAssetId,
+        portrait_asset_id: portraitAssetIdForInsert,
         voiceover_asset_id: voiceoverAssetId,
         parent_job_id: options?.parentJobId ?? null,
         attempt,
@@ -232,7 +300,7 @@ export async function createTalkingHeadVideoJob(
       estimatedCostCents: estimate.estimatedCostCents,
       actualCostCents: null,
       operatorClientId: operator.id,
-      providerKey: providerResult.decision.providerKey,
+      providerKey,
     });
 
     await supabase

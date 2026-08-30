@@ -3,7 +3,16 @@ import "server-only";
 import { createHmac } from "node:crypto";
 
 import { getAllowlistedSiteOrigin } from "@/lib/auth/site-origin";
-import { SADTALKER_INPUT_URL_TTL_SEC } from "@/lib/contracts/sadtalker-low";
+import type { ProviderMediaAssetKind } from "@/lib/contracts/musetalk-low";
+import {
+  MUSETALK_AUDIO_MIME_ALLOWLIST,
+  MUSETALK_INPUT_URL_TTL_SEC,
+  MUSETALK_VIDEO_MIME_ALLOWLIST,
+} from "@/lib/contracts/musetalk-low";
+import {
+  SADTALKER_INPUT_URL_TTL_SEC,
+  SADTALKER_PORTRAIT_MIME_ALLOWLIST,
+} from "@/lib/contracts/sadtalker-low";
 import { getProviderAssetUrlSecret } from "@/lib/media/provider-asset-url-secret";
 import { ProviderAdapterError } from "@/lib/providers/normalize-provider-response";
 import {
@@ -16,6 +25,49 @@ const MEDIA_TABLE = "neuramark_media_assets";
 export const PROVIDER_ASSET_NOT_FOUND = "PROVIDER_ASSET_NOT_FOUND" as const;
 export const PROVIDER_ASSET_MIME_REJECTED =
   "PROVIDER_ASSET_MIME_REJECTED" as const;
+
+type ResolveByKind = {
+  assetId: string;
+  clientId: string;
+  kind: ProviderMediaAssetKind;
+  ttlSec?: number;
+  allowedMimeTypes?: never;
+};
+
+type ResolveByMimeList = {
+  assetId: string;
+  clientId: string;
+  allowedMimeTypes: readonly string[];
+  ttlSec?: number;
+  kind?: never;
+};
+
+export type ResolveMediaAssetUrlForProviderParams =
+  | ResolveByKind
+  | ResolveByMimeList;
+
+function mimeAllowlistForKind(
+  kind: ProviderMediaAssetKind,
+): readonly string[] {
+  switch (kind) {
+    case "video":
+      return MUSETALK_VIDEO_MIME_ALLOWLIST;
+    case "audio":
+      return MUSETALK_AUDIO_MIME_ALLOWLIST;
+    case "portrait":
+      return SADTALKER_PORTRAIT_MIME_ALLOWLIST;
+  }
+}
+
+function defaultTtlForParams(params: ResolveMediaAssetUrlForProviderParams): number {
+  if (params.ttlSec !== undefined) {
+    return params.ttlSec;
+  }
+  if ("kind" in params && params.kind !== undefined) {
+    return MUSETALK_INPUT_URL_TTL_SEC;
+  }
+  return SADTALKER_INPUT_URL_TTL_SEC;
+}
 
 function requireProviderAssetUrlSecret(): string {
   const secret = getProviderAssetUrlSecret();
@@ -66,16 +118,17 @@ function buildSignedProviderAssetReadUrl(params: {
 
 /**
  * Resolve a tenant-owned media asset to a short-lived HTTPS URL readable by video vendors.
- * Never accepts client-supplied URLs — only DB-backed asset IDs (US-8.2 CONTRACT).
+ * Never accepts client-supplied URLs — only DB-backed asset IDs (US-8.2 / US-8.6 CONTRACT).
  */
-export async function resolveMediaAssetUrlForProvider(params: {
-  assetId: string;
-  clientId: string;
-  allowedMimeTypes: readonly string[];
-  ttlSec?: number;
-}): Promise<string> {
-  const { assetId, clientId, allowedMimeTypes } = params;
-  const ttlSec = params.ttlSec ?? SADTALKER_INPUT_URL_TTL_SEC;
+export async function resolveMediaAssetUrlForProvider(
+  params: ResolveMediaAssetUrlForProviderParams,
+): Promise<string> {
+  const { assetId, clientId } = params;
+  const allowedMimeTypes =
+    "kind" in params && params.kind !== undefined
+      ? mimeAllowlistForKind(params.kind)
+      : params.allowedMimeTypes;
+  const ttlSec = defaultTtlForParams(params);
 
   if (!isSupabaseConfigured()) {
     throw new ProviderAdapterError(
