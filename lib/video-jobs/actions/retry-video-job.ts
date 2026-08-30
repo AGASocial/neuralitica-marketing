@@ -245,11 +245,7 @@ export async function retryVideoJob(
     }
   }
 
-  if (override) {
-    await consumeRetryOverride(override.id);
-  }
-
-  return createTalkingHeadVideoJob(
+  const createResult = await createTalkingHeadVideoJob(
     {
       clientId: failedJob.clientId,
       reelScriptId: failedJob.reelScriptId,
@@ -266,4 +262,14 @@ export async function retryVideoJob(
       voiceoverAssetId: failedJob.voiceoverAssetId,
     },
   );
+
+  if (!createResult.ok) {
+    return createResult;
+  }
+
+  if (override) {
+    await consumeRetryOverride(override.id);
+  }
+
+  return createResult;
 }

@@ -2,24 +2,16 @@ import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 
+import { getProviderAssetUrlSecret } from "@/lib/media/provider-asset-url-secret";
+import { getMediaStorage } from "@/lib/media/storage/get-media-storage";
 import {
   createServerSupabaseClient,
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
-import { getMediaStorage } from "@/lib/media/storage/get-media-storage";
 
 const MEDIA_TABLE = "neuramark_media_assets";
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-function getProviderAssetUrlSecret(): string | null {
-  return (
-    process.env.NEURAMARK_PROVIDER_ASSET_URL_SECRET ??
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.SUPABASE_SECRET_KEY ??
-    null
-  );
-}
 
 function verifySignature(params: {
   assetId: string;

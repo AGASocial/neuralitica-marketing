@@ -4,6 +4,7 @@ import { createHmac } from "node:crypto";
 
 import { getAllowlistedSiteOrigin } from "@/lib/auth/site-origin";
 import { SADTALKER_INPUT_URL_TTL_SEC } from "@/lib/contracts/sadtalker-low";
+import { getProviderAssetUrlSecret } from "@/lib/media/provider-asset-url-secret";
 import { ProviderAdapterError } from "@/lib/providers/normalize-provider-response";
 import {
   createServerSupabaseClient,
@@ -16,12 +17,8 @@ export const PROVIDER_ASSET_NOT_FOUND = "PROVIDER_ASSET_NOT_FOUND" as const;
 export const PROVIDER_ASSET_MIME_REJECTED =
   "PROVIDER_ASSET_MIME_REJECTED" as const;
 
-function getProviderAssetUrlSecret(): string {
-  const secret =
-    process.env.NEURAMARK_PROVIDER_ASSET_URL_SECRET ??
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.SUPABASE_SECRET_KEY;
-
+function requireProviderAssetUrlSecret(): string {
+  const secret = getProviderAssetUrlSecret();
   if (!secret) {
     throw new ProviderAdapterError(
       "PROVIDER_CONFIG_MISSING",
@@ -56,7 +53,7 @@ function buildSignedProviderAssetReadUrl(params: {
 
   const exp = Math.floor(Date.now() / 1000) + params.ttlSec;
   const payload = `${params.assetId}:${params.clientId}:${exp}`;
-  const sig = createHmac("sha256", getProviderAssetUrlSecret())
+  const sig = createHmac("sha256", requireProviderAssetUrlSecret())
     .update(payload)
     .digest("hex");
 

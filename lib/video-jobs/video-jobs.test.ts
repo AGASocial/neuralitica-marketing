@@ -26,6 +26,7 @@ const PORTRAIT_ASSET_ID = "66666666-6666-4666-8666-666666666666";
 const VOICEOVER_ASSET_ID = "77777777-7777-4777-8777-777777777777";
 const FOREIGN_JOB_ID = "99999999-9999-4999-8999-999999999999";
 const EXTERNAL_JOB_ID = "pred-test-001";
+const OVERRIDE_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
 type NodeModuleLoad = {
   _load: (
@@ -215,6 +216,237 @@ describe("provider-assets route HMAC", () => {
       .digest("hex");
 
     assert.equal(sig, expected);
+  });
+});
+
+describe("provider asset URL secret", () => {
+  const originalEnv = { ...process.env };
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+    for (const key of Object.keys(require.cache)) {
+      if (key.replace(/\\/g, "/").includes("/lib/media/provider-asset-url-secret")) {
+        delete require.cache[key];
+      }
+    }
+  });
+
+  it("requires NEURAMARK_PROVIDER_ASSET_URL_SECRET in production", async () => {
+    await withServerOnlyStub(async () => {
+      process.env.NODE_ENV = "production";
+      delete process.env.NEURAMARK_PROVIDER_ASSET_URL_SECRET;
+      process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-key";
+
+      const { getProviderAssetUrlSecret } = await import(
+        "../media/provider-asset-url-secret.ts"
+      );
+      assert.equal(getProviderAssetUrlSecret(), null);
+    });
+  });
+
+  it("prefers dedicated secret over service-role fallback", async () => {
+    await withServerOnlyStub(async () => {
+      process.env.NODE_ENV = "development";
+      process.env.NEURAMARK_PROVIDER_ASSET_URL_SECRET = "dedicated-secret";
+      process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-key";
+
+      const { getProviderAssetUrlSecret } = await import(
+        "../media/provider-asset-url-secret.ts"
+      );
+      assert.equal(getProviderAssetUrlSecret(), "dedicated-secret");
+    });
+  });
+
+  it("allows service-role fallback only in non-production", async () => {
+    await withServerOnlyStub(async () => {
+      process.env.NODE_ENV = "test";
+      delete process.env.NEURAMARK_PROVIDER_ASSET_URL_SECRET;
+      process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-key";
+
+      const { getProviderAssetUrlSecret } = await import(
+        "../media/provider-asset-url-secret.ts"
+      );
+      assert.equal(getProviderAssetUrlSecret(), "service-role-key");
+    });
+  });
+});
+
+describe("retry override consumption", () => {
+  function installRetryVideoJobMocks(options: {
+    createResult: { ok: true; jobId: string; status: "queued"; estimatedCostCents: number; attempt: number } | { ok: false; error: { code: string } };
+    onConsume?: () => void;
+    onCreate?: () => void;
+  }) {
+    const nodeModule = Module as unknown as NodeModuleLoad;
+    const originalLoad = nodeModule._load.bind(nodeModule);
+    let consumeCalled = false;
+    let createCalled = false;
+
+    const failedJobRow = baseVideoJobRow({
+      status: "failed",
+      attempt: 1,
+    });
+
+    const mockAdapter = {
+      estimateCost: async () => ({ estimatedCostCents: 10 }),
+    };
+
+    nodeModule._load = function (request, parent, isMain) {
+      if (request === "server-only") return {};
+      const req = String(request);
+      if (req.includes("require-user")) {
+        return {
+          requireOperator: async () => ({
+            id: CLIENT_ID,
+            role: "operator",
+          }),
+          isAuthGuardError: () => false,
+        };
+      }
+      if (req.includes("load-video-job")) {
+        return {
+          loadVideoJobScoped: async () => {
+            const { mapVideoJobRow } = require("./video-job-row.ts");
+            return mapVideoJobRow(failedJobRow);
+          },
+        };
+      }
+      if (req.includes("retry-eligibility")) {
+        return {
+          getMaxAttemptForReel: async () => VIDEO_MAX_RETRIES_PER_REEL_DEFAULT,
+          findUnconsumedRetryOverride: async () => ({ id: OVERRIDE_ID }),
+          consumeRetryOverride: async () => {
+            consumeCalled = true;
+            options.onConsume?.();
+          },
+          evaluateRetryEligibility: async () => ({
+            canRetry: true,
+            retryBlockedReasonKey: null,
+          }),
+        };
+      }
+      if (req.includes("assert-video-job-budget")) {
+        return {
+          assertVideoJobBudgetAllowsSpend: async () => ({ ok: true }),
+        };
+      }
+      if (req.includes("load-reel-script-for-video-job")) {
+        return {
+          loadReelScriptForVideoJob: async () => ({
+            visualMode: "stock",
+            modalidad: "stock",
+            hasReferenceLoop: false,
+            package: {
+              targetDurationSec: 30,
+              voiceoverText: "Retry override test",
+            },
+          }),
+        };
+      }
+      if (req.includes("resolve-provider-for-job")) {
+        return {
+          resolveProviderForJob: async () => ({
+            ok: true,
+            decision: { providerKey: "sadtalker_low", providerTier: "low" },
+          }),
+        };
+      }
+      if (req.includes("create-provider-registry")) {
+        return {
+          initializeProviderRegistryFromCatalog: async () => ({
+            getVideoAdapter: () => mockAdapter,
+          }),
+        };
+      }
+      if (req.includes("create-talking-head-video-job")) {
+        return {
+          createTalkingHeadVideoJob: async () => {
+            createCalled = true;
+            options.onCreate?.();
+            return options.createResult;
+          },
+        };
+      }
+      return originalLoad(request, parent, isMain);
+    };
+
+    return {
+      restore: () => {
+        nodeModule._load = originalLoad;
+        clearVideoJobModuleCache();
+      },
+      wasConsumeCalled: () => consumeCalled,
+      wasCreateCalled: () => createCalled,
+    };
+  }
+
+  it("does not consume override when child job create fails", async () => {
+    await withServerOnlyStub(async () => {
+      const mocks = installRetryVideoJobMocks({
+        createResult: {
+          ok: false,
+          error: { code: "INTERNAL_ERROR" },
+        },
+      });
+
+      try {
+        clearVideoJobModuleCache();
+        const { retryVideoJob } = loadVideoJobModule(
+          "./actions/retry-video-job.ts",
+        );
+
+        const result = await retryVideoJob({
+          failedJobId: JOB_ID,
+          confirmRetry: true,
+          confirmEstimateCents: 10,
+        });
+
+        assert.equal(result.ok, false);
+        assert.equal(mocks.wasCreateCalled(), true);
+        assert.equal(mocks.wasConsumeCalled(), false);
+      } finally {
+        mocks.restore();
+      }
+    });
+  });
+
+  it("consumes override only after successful child job create", async () => {
+    await withServerOnlyStub(async () => {
+      let consumeAfterCreate = false;
+
+      const mocks = installRetryVideoJobMocks({
+        createResult: {
+          ok: true,
+          jobId: "88888888-8888-4888-8888-888888888888",
+          status: "queued",
+          estimatedCostCents: 10,
+          attempt: 2,
+        },
+        onConsume: () => {
+          consumeAfterCreate = mocks.wasCreateCalled();
+        },
+      });
+
+      try {
+        clearVideoJobModuleCache();
+        const { retryVideoJob } = loadVideoJobModule(
+          "./actions/retry-video-job.ts",
+        );
+
+        const result = await retryVideoJob({
+          failedJobId: JOB_ID,
+          confirmRetry: true,
+          confirmEstimateCents: 10,
+        });
+
+        assert.equal(result.ok, true);
+        assert.equal(mocks.wasCreateCalled(), true);
+        assert.equal(mocks.wasConsumeCalled(), true);
+        assert.equal(consumeAfterCreate, true);
+      } finally {
+        mocks.restore();
+      }
+    });
   });
 });
 
