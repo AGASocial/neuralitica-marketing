@@ -90,29 +90,31 @@
 
 **Concrete consumers:** FE assemble button · FE preview player · FE status badges · downstream US-9.2/10.1/11.1 (assembled reel id + output asset id).
 
-- [ ] **`lib/contracts/assembly-job.ts`** (CONTRACT) — request/response Zod schemas, status enum, error codes.
-- [ ] Migration **`neuramark_assembled_reels`** + enum value **`assembled_reel`** on `neuramark_media_asset_type` (CONTRACT verbatim DDL).
-- [ ] **`lib/assembly/create-assembly-job-for-reel-script.ts`** — orchestrator:
+- [x] **`lib/contracts/assembly-job.ts`** (CONTRACT) — request/response Zod schemas, status enum, error codes.
+- [x] Migration **`neuramark_assembled_reels`** + enum value **`assembled_reel`** on `neuramark_media_asset_type` (CONTRACT verbatim DDL).
+- [x] **`lib/assembly/create-assembly-job-for-reel-script.ts`** — orchestrator:
   - `requireOperator()` → load script row (`target_duration_sec`, `updated_at`, `modalidad`, `client_id`)
   - Resolve latest **completed** primary video job → `primary_video_asset_id`
   - Resolve latest voiceover asset (optional) for fingerprint / remux edge
   - Compute `input_fingerprint` · check idempotency → return existing if completed
   - INSERT assembly row `status = queued` · `template_id = reel_v1_basic`
   - `enqueueAssemblyJob(assemblyJobId)`
-- [ ] **`lib/assembly/load-assembly-job.ts`** · **`mapOperatorAssemblyJobDto`**
-- [ ] **`lib/assembly/resolve-assembly-inputs.ts`** — ownership-verified asset load; modalidad gates per Phase A/B
-- [ ] **`insertAssembledReelMediaAsset()`** — mirror video/voiceover insert pattern
-- [ ] **`GET /api/assembly-jobs/[jobId]`** — operator + client scope → 404 foreign
-- [ ] **`assembleReelForScript`** Server Action — thin wrapper over orchestrator
-- [ ] Extend **`getReelScriptsForWeek`** success DTO with **`assemblyByReelScriptId`** (latest job per script)
-- [ ] **`findForbiddenAssemblyKeys`** — reject client-supplied asset/template/URL fields
-- [ ] Unit tests: idempotency, input resolution, forbidden keys, modalidad Phase A gate, duration tolerance math (mocked worker)
+- [x] **`lib/assembly/load-assembly-job.ts`** · **`mapOperatorAssemblyJobDto`**
+- [x] **`lib/assembly/resolve-assembly-inputs.ts`** — ownership-verified asset load; modalidad gates per Phase A/B
+- [x] **`insertAssembledReelMediaAsset()`** — mirror video/voiceover insert pattern
+- [x] **`GET /api/assembly-jobs/[jobId]`** — operator + client scope → 404 foreign
+- [x] **`assembleReelForScript`** Server Action — thin wrapper over orchestrator
+- [x] Extend **`getReelScriptsForWeek`** success DTO with **`assemblyByReelScriptId`** (latest job per script)
+- [x] **`findForbiddenAssemblyKeys`** — reject client-supplied asset/template/URL fields
+- [x] **`applyAssemblyJobUpdate`** · **`enqueueAssemblyJob`** · **`markStaleAssemblyJobsFailed`**
+- [x] Extend **`GET /api/media/assets/[assetId]`** for `assembled_reel` Operator serve
+- [x] Unit tests: forbidden keys, config defaults, args builder, spawn contract, grep guards
 
 ---
 
 ## Database (nextjs-backend)
 
-- [ ] Table **`neuramark_assembled_reels`** (CONTRACT freezes columns):
+- [x] Table **`neuramark_assembled_reels`** (CONTRACT freezes columns):
   - `id`, `client_id`, `reel_script_id`, `template_id`, `status`
   - `primary_video_asset_id`, `voiceover_asset_id` (nullable FKs → `neuramark_media_assets`)
   - `output_media_asset_id` (nullable FK)
@@ -121,11 +123,11 @@
   - `target_duration_sec`, `actual_duration_sec` (nullable until complete)
   - `failure_reason` (nullable text, sanitized codes)
   - `created_at`, `updated_at`
-- [ ] Indexes: `(client_id, reel_script_id)`, `(status, updated_at)` for worker poll
-- [ ] Unique partial index (CONTRACT): one **completed** row per idempotency triple — or app-level check + documented race handling
-- [ ] RLS deny-by-default (service-role worker + server helpers only)
-- [ ] Extend **`neuramark_media_asset_type`**: **`assembled_reel`**
-- [ ] Storage key pattern: **`neuramark/{clientId}/{reelScriptId}/assembled-{uuid}.mp4`**
+- [x] Indexes: `(client_id, reel_script_id)`, `(status, updated_at)` for worker poll
+- [x] Unique partial index (CONTRACT): one **completed** row per idempotency triple — or app-level check + documented race handling
+- [x] RLS deny-by-default (service-role worker + server helpers only)
+- [x] Extend **`neuramark_media_asset_type`**: **`assembled_reel`**
+- [x] Storage key pattern: **`neuramark/{clientId}/{reelScriptId}/assembled-{uuid}.mp4`**
 
 ---
 

@@ -7,11 +7,13 @@ import {
   requireOperator,
 } from "@/lib/auth/require-user";
 import {
+  MEDIA_ASSET_TYPE_ASSEMBLED_REEL,
   MEDIA_ASSET_TYPE_AVATAR_REFERENCE,
   MEDIA_ASSET_TYPE_GENERATED_VIDEO,
   MEDIA_ASSET_TYPE_VOICEOVER,
 } from "@/lib/contracts/media-assets";
 import {
+  assembledReelAssetMetadataSchema,
   avatarReferenceAssetMetadataSchema,
   generatedVideoAssetMetadataSchema,
   voiceoverAssetMetadataSchema,
@@ -163,6 +165,31 @@ export async function GET(
     if (metaParsed.success) {
       contentType = metaParsed.data.detectedMime;
       originalFilename = metaParsed.data.originalFilename;
+    }
+  } else if (row.asset_type === MEDIA_ASSET_TYPE_ASSEMBLED_REEL) {
+    let operator;
+    try {
+      operator = await requireOperator("handler");
+    } catch (authError) {
+      if (isAuthGuardError(authError)) {
+        return authGuardResponse(authError);
+      }
+      throw authError;
+    }
+
+    if (row.client_id !== operator.id) {
+      return notFoundResponse();
+    }
+
+    const metaParsed = assembledReelAssetMetadataSchema.safeParse(
+      row.metadata ?? {},
+    );
+    if (metaParsed.success) {
+      contentType = metaParsed.data.detectedMime;
+      originalFilename = "assembled-reel.mp4";
+    } else {
+      contentType = "video/mp4";
+      originalFilename = "assembled-reel.mp4";
     }
   } else {
     return notFoundResponse();
