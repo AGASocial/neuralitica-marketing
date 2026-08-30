@@ -4,7 +4,7 @@
 
 ```yaml
 current_phase: 3
-current_story: null
+current_story: US-8.1
 story_status: SELECT
 feature_branch: null
 last_completed_story: US-7.4
@@ -27,7 +27,8 @@ updated_at: 2026-08-30T03:00:00Z
 | US-7.1 Configure max budget per Reel | done | BE `3bdc709` · FE `bb19e4d` · fix `69d274f` · VALIDATION `13531f8` · QA `f8ac2a7` · CLOSE `d68b71a` |
 | US-7.2 Select provider by economics | done | BE `8eab3f7` · FE `2ab482c` · fix `78e6aa1` · VALIDATION `eb03f8e` · QA `4ed7fe9` · CLOSE `fcecce4` |
 | US-7.3 Track actual cost per job | done | BE `030d85f` · FE `02b399b`/`ddca524` · fix `f60579d` · VALIDATION `09656e0` · QA `691f657` · CLOSE Phase A |
-| US-7.4 Report real total cost per Reel | done | BE `5c9abb4` · FE `8735be2` · fix `5b3e9d7` · VALIDATION `a678ac4` · QA `746a563` · CLOSE Phase A |
+| US-7.4 Report real total cost per Reel | done | BE `5c9abb4` · FE `8735be2` · fix `5b3e9d7` · VALIDATION `a678ac4` · QA `746a563` · CLOSE Phase A `f0ca5a0` |
+| US-8.1 Provider adapter interface | SELECT | Next story — Video Provider Adapter module |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
