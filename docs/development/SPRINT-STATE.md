@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-8.4
-story_status: BUILD
+story_status: QA
 feature_branch: feature/US-8.4-video-jobs
 last_completed_story: US-8.2
 phase_status: in_progress
-blocked_reason: QA P1 — override consume order + HMAC secret (9637142)
-updated_at: 2026-08-30T05:15:00Z
+blocked_reason: null
+updated_at: 2026-08-30T05:25:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
