@@ -1,20 +1,35 @@
 # US-5.1 — Generate Reel script package per slot
 
-**Status:** CONTRACT — `CONTRACT.md` frozen 2026-08-30; awaiting FE signoff → BUILD.
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 3 Medium, 3 Low; CLOSE yes). Build agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e`.
 
 **As a** System, **I want** each planned Reel to get hook, script, voiceover text, on-screen text, and CTA, **so that** video production has complete instructions.
 
 Ship **Video Script Agent V1 (Operator-triggered)**: Operator triggers **Generate scripts** for an **approved** Estrategia semanal (batch all slots) or **Regenerate this Reel** for a single `slot_index`; server job composes inputs from `getApprovedStrategyForWeek`, `getBusinessProfileForAgents`, `getPlaybookForAgents`, `getTrendSnapshotForWeek`, and `getProviderCatalog` + `resolveProvider({ assetRole: 'llm', llmVariant: 'fallback' })`; LLM output is schema-validated and persisted in `neuramark_reel_scripts`. Operator views script list per week with expandable hook/body/CTA/on-screen/VO and copy-to-clipboard. **`strategyHasScripts`** wired so US-4.2 lock-after-scripts engages. **Readability warnings (US-5.2), captions (US-6.x), weekly cycle automation, and Cliente script view** stay **out**.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-5.1 (do **not** check off until VALIDATION/CLOSE).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-5.1 (checked on CLOSE).
 
-**This folder:** [`plan/stories/US-5.1/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · *(VALIDATION, QA — gates pending)*.
+**This folder:** [`plan/stories/US-5.1/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
 
 **Branch:** `feature/US-5.1-reel-scripts`
 
 **Depends on:** [US-4.2](../US-4.2/) ✅ approve + `getApprovedStrategyForWeek` · [US-3.4](../US-3.4/) ✅ `visualModeSummary.mustDiscloseNotOwner` · [US-X.4](../US-X.4/) ✅ `llmVariant: 'fallback'` → `siliconflow_qwen` · [US-16.1](../US-16.1/) ✅ `getPlaybookForAgents()` · [US-16.2](../US-16.2/) ✅ `getTrendSnapshotForWeek()` · [US-14.5](../US-14.5/) ✅ `requireOperator()`.
 
 **Unblocks:** [US-5.2](../../USER_STORIES.md) (on-screen/VO length warnings) · [US-6.1](../../USER_STORIES.md) (captions per script) · [US-7.1](../../USER_STORIES.md) (cost policy per Reel) · [US-9.x](../../USER_STORIES.md) (assembly consumes scripts).
+
+---
+
+## Close verdicts
+
+| Gate | Verdict |
+|------|---------|
+| SPEC-REVIEW | ALIGNED (gaps closed in CONTRACT) |
+| SECURITY | APPROVE WITH CONDITIONS |
+| CONTRACT | Frozen 2026-08-30; Reviewed by FE (BUILD `18abc7e`) |
+| BUILD | agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e` |
+| VALIDATION | PASS WITH NOTES (`f387659`) |
+| QA | APPROVE WITH NOTES (0 Critical, 0 High, 3 Medium, 3 Low; CLOSE yes) |
+
+**QA handoff (non-blocking, post-CLOSE):** M1 — rate limit fail-open on DB errors; M2 — batch partial-failure transaction alignment; M3 — `loadApprovedStrategyForScriptJob` week mismatch test gap; L1–L3 — logger mocks, IDOR edge tests, ops polish. **Next:** **US-5.2** preview script readability for vertical video.
 
 ---
 

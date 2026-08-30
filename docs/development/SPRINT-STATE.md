@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: US-5.1
-story_status: VALIDATION
-feature_branch: feature/US-5.1-reel-scripts
-last_completed_story: US-4.2
+current_story: US-5.2
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-5.1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T00:53:00Z
+updated_at: 2026-08-30T02:30:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -20,7 +20,8 @@ updated_at: 2026-08-30T00:53:00Z
 | US-X.4 Provider catalog + resolveProvider | done | BE `5ba9876` · CLOSE `291313b` |
 | US-4.1 Content Strategy agent | done | BE `af998d9` · FE `dcbd15a` · agents `bbd159d` · CLOSE |
 | US-4.2 Review and approve strategy | done | BE `ba57bac` · FE `4367287` · CLOSE 5/5 AC |
-| US-5.1 Reel script package per slot | VALIDATION | agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e`; 109/109 tests; PASS WITH NOTES (0 blockers); branch `feature/US-5.1-reel-scripts` |
+| US-5.1 Reel script package per slot | done | agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e` · CLOSE 6/6 AC |
+| US-5.2 Preview script readability | SELECT | Next story — depends on US-5.1 ✅ |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -32,6 +33,8 @@ updated_at: 2026-08-30T00:53:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-5.1 CLOSE: 6/6 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 3 Medium, 3 Low); agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e`; Phase 3 → SELECT US-5.2.
+- 2026-08-30 · US-5.1 QA: APPROVE WITH NOTES (0 Critical, 0 High, 3 Medium, 3 Low); `plan/stories/US-5.1/QA.md`; 47/47 story tests; CLOSE recommended yes; agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e` · VALIDATION `f387659`; story_status QA.
 - 2026-08-30 · US-5.1 VALIDATION: PASS WITH NOTES (0 blockers, 109/109 tests); `plan/stories/US-5.1/VALIDATION.md`; agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e`; story_status VALIDATION.
 - 2026-08-30 · US-5.1 CONTRACT: `plan/stories/US-5.1/CONTRACT.md` frozen; SPEC-REVIEW gaps closed; story_status CONTRACT; branch `feature/US-5.1-reel-scripts`.
 - 2026-08-30 · US-5.1 PREP: `plan/stories/US-5.1/README.md` + `TASKS.md`; PO decisions frozen; story_status PREP.

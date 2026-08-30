@@ -162,9 +162,9 @@ Coordinates with BE on CONTRACT; owns agent logic and script schema.
 - [x] CONTRACT.md authored (nextjs-backend) — frozen 2026-08-30; **Reviewed by FE** line required before BUILD
 - [x] BUILD (content-agents-engineer + nextjs-backend + nextjs-frontend) — BE slice on `feature/US-5.1-reel-scripts`
 - [x] VALIDATION.md
-- [ ] QA.md
+- [x] QA.md — APPROVE WITH NOTES (0 Critical, 0 High, 3 Medium, 3 Low; CLOSE yes)
 
-**Status:** BUILD (2026-08-30). BE/DB + agent module + 32/32 tests on `feature/US-5.1-reel-scripts`; FE `/operator/scripts` pending.
+**Status:** CLOSED (2026-08-30). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** **US-5.2** preview script readability for vertical video.
 
 ---
 
