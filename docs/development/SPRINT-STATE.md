@@ -6,18 +6,18 @@
 current_phase: 3
 current_story: US-X.4
 feature_branch: feature/US-X.4-provider-catalog
-story_status: BUILD
+story_status: VALIDATION complete
 last_completed_story: US-16.2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T00:30:00Z
+updated_at: 2026-08-30T01:15:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3 start)
 
 | Story | Status | Notes |
 |-------|--------|-------|
-| US-X.4 Provider catalog + resolveProvider | BUILD | `plan/stories/US-X.4/` — migrations, `getProviderCatalog`, `getDefaultCostPolicy`, `llmVariant` resolver; next: VALIDATION |
+| US-X.4 Provider catalog + resolveProvider | VALIDATION complete | `plan/stories/US-X.4/VALIDATION.md` — PASS WITH NOTES (0 blockers); BE `5ba9876`; next: QA |
 | US-4.1 Content Strategy agent | pending | Depends on US-X.4 |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
@@ -30,6 +30,7 @@ updated_at: 2026-08-30T00:30:00Z
 
 ## Historial reciente
 
+- 2026-08-29 · US-X.4 VALIDATION complete: PASS WITH NOTES (0 blockers, 26/26 tests); `plan/stories/US-X.4/VALIDATION.md`; next QA.
 - 2026-08-29 · US-X.4 BUILD: provider catalog migrations + server helpers + resolveProvider `llmVariant` routing on `feature/US-X.4-provider-catalog`.
 - 2026-08-29 · US-X.4 CONTRACT frozen: `plan/stories/US-X.4/CONTRACT.md` (migrations, seed, `getProviderCatalog`, `getDefaultCostPolicy`, `llmVariant` routing).
 - 2026-08-29 · US-X.4 PREP: story folder + TASKS.md created (`plan/stories/US-X.4/`).
