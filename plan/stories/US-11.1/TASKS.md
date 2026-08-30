@@ -195,8 +195,15 @@
 
 ## Definition of done (Phase A)
 
-- [ ] PREP artifacts committed; CONTRACT frozen + FE signoff
-- [ ] Cliente can open `/approvals`, preview gated package (video+caption+disclosure+overrides), approve or reject
-- [ ] Ungated decide rejected; foreign IDs 404; `assembled_reel` playable for owning Cliente
-- [ ] VALIDATION.md + QA.md; AC checkoff only on CLOSE
-- [ ] No request-changes mutation; no AC checkoff in PREP
+- [x] PREP artifacts committed; CONTRACT frozen + FE signoff
+- [x] Cliente can open `/approvals`, preview gated package (video+caption+disclosure+overrides), approve or reject
+- [x] Ungated decide rejected; foreign IDs 404; `assembled_reel` playable for owning Cliente
+- [x] VALIDATION.md + QA.md; AC checkoff only on CLOSE
+- [x] No request-changes mutation; no AC checkoff in PREP
+
+## Done when
+
+- [x] All USER_STORIES § US-11.1 AC satisfied — VALIDATION PASS WITH NOTES `633c6f5` · QA APPROVE WITH CONDITIONS `3f39db9` · PO CLOSE 5/5 AC (request-changes → US-11.2; ready/download → US-11.3)
+- [x] Gate re-check on ensure + decide; IDOR → 404; Cliente `assembled_reel` serve only
+- [x] Approve / reject only; no `changes_requested` write in Phase A
+- [x] US-11.2 / US-11.3 can extend without schema churn on Phase A columns

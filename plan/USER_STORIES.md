@@ -1041,12 +1041,12 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | `GET` approval package; status `pending_client`; gate on QA pass or override |
 | **DB** | `approvals` (assembled_reel_id, status, client_feedback, decided_at) |
 
-**Acceptance criteria**
-- [ ] Nothing reaches client without assembly complete + QA resolved
-- [ ] Mobile-friendly preview
-- [ ] AI disclosure visible when required
-- [ ] [SEC] The gate "assembly complete + QA passed or validly overridden" is re-checked server-side when the approval package is created AND when a decision is submitted — a direct POST to the decision endpoint for an ungated Reel is rejected
-- [ ] [SEC] Approval package lookups are scoped to the current client; a Reel/approval ID belonging to another client returns 404 (IDOR guard)
+**Acceptance criteria** *(Phase A CLOSED 2026-08-30 — approve/reject; request-changes → US-11.2; ready/download polish → US-11.3)*
+- [x] Nothing reaches client without assembly complete + QA resolved
+- [x] Mobile-friendly preview *(layout evidence; device-lab deferred)*
+- [x] AI disclosure visible when required
+- [x] [SEC] The gate "assembly complete + QA passed or validly overridden" is re-checked server-side when the approval package is created AND when a decision is submitted — a direct POST to the decision endpoint for an ungated Reel is rejected
+- [x] [SEC] Approval package lookups are scoped to the current client; a Reel/approval ID belonging to another client returns 404 (IDOR guard)
 
 **Depends on:** US-10.1, US-10.2, US-9.2
 

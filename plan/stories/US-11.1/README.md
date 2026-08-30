@@ -1,6 +1,6 @@
 # US-11.1 — Present Reel package for client approval
 
-**Status:** CONTRACT frozen (2026-08-30) — FE Reviewed by pending; next BUILD after FE signoff. Do **not** check off AC in `plan/USER_STORIES.md`.
+**Status:** CLOSED Phase A (2026-08-30) — VALIDATION PASS WITH NOTES `633c6f5` (25/25) · QA APPROVE WITH CONDITIONS `3f39db9` · 5/5 AC. Request-changes → US-11.2; ready/download → US-11.3.
 
 **As a** Client, **I want** to preview video, caption, and CTA together, **so that** I can approve what will represent my business.
 
@@ -115,11 +115,13 @@ _Evitar:_ “approval decision” as product noun; admin/staff; exposing Operato
 - [x] PREP — README + TASKS + PO freezes
 - [x] SPEC-REVIEW.md (spec-guardian) — ALIGNED `1270732`
 - [x] SECURITY.md (security-architect) — APPROVE WITH CONDITIONS `b790328`
-- [x] CONTRACT.md (nextjs-backend) — Frozen; Zod `lib/contracts/approval.ts`
-- [ ] FE Reviewed by (CONTRACT signoff)
-- [ ] BUILD · VALIDATION · QA · CLOSE
+- [x] CONTRACT.md (nextjs-backend) — Frozen; Zod `lib/contracts/approval.ts` · Reviewed by FE: **yes** `980b043`
+- [x] BUILD (nextjs-backend `d830b0f` + nextjs-frontend `defd9ff`)
+- [x] VALIDATION.md — **PASS WITH NOTES** `633c6f5` (25/25)
+- [x] QA.md — **APPROVE WITH CONDITIONS** `3f39db9` · CLOSE yes
+- [x] CLOSE Phase A — 5/5 AC checked; request-changes → US-11.2; ready/download → US-11.3
 
-**Next:** FE reviews CONTRACT → parallel BUILD (BE ‖ FE).
+**Next:** SELECT **US-11.2** (recommended) or US-11.3 or US-8.5.
 
 ---
 
