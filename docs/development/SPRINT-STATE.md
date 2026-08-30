@@ -37,7 +37,8 @@ updated_at: 2026-08-30T01:45:00Z
 
 ## Historial reciente
 
-- 2026-08-30 · US-7.1 CONTRACT: frozen `9470d49`; FE signoff; branch `feature/US-7.1-cost-policy`; story_status CONTRACT → BUILD next.
+- 2026-08-30 · US-7.1 CLOSE: 10/10 AC; QA APPROVE WITH NOTES; BE `3bdc709` · FE `bb19e4d` · fix `69d274f` · VALIDATION PASS WITH NOTES `13531f8`; Phase 3 → SELECT US-7.2.
+- 2026-08-30 · US-7.1 BUILD: frozen `9470d49`; FE signoff; branch `feature/US-7.1-cost-policy`; story_status CONTRACT → BUILD next.
 - 2026-08-30 · US-7.1 PREP: README + TASKS + SPEC-REVIEW (GAPS) + SECURITY APPROVE WITH CONDITIONS.
 - 2026-08-30 · US-6.2 CLOSE: 3/3 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 4 Low); BE `146479c` · FE `f82ba33` · VALIDATION `258773c` · QA `fc0f4b2` · CLOSE `72723c5`; Phase 3 → SELECT US-7.1.
 - 2026-08-30 · US-6.2 BUILD: BE `146479c` · FE `f82ba33`; VALIDATION PASS WITH NOTES `258773c`; QA APPROVE WITH NOTES `fc0f4b2`.
