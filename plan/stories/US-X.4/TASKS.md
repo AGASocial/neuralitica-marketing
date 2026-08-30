@@ -67,16 +67,16 @@
 
 Concrete consumers: US-4.1 / US-7.2 / US-8.x / US-9.3 / US-10.1 via `getProviderCatalog()` + `resolveProvider()` only.
 
-- [ ] **Migration** `neuramark_provider_catalog` (CONTRACT freezes columns: `key` UNIQUE, `asset_role`, `tier`, `active`, `capabilities` jsonb, `cost_model` jsonb, `env_key_name`, timestamps).
-- [ ] **Migration** `neuramark_cost_policies` (CONTRACT freezes: nullable `client_id` FK, `provider_tier`, `max_cost_cents`, optional `rules` jsonb, timestamps; UNIQUE partial index or constraint for one global row when `client_id IS NULL`).
-- [ ] **Seed migration** — low-tier active rows per PO table above; high-tier inactive rows (`heygen_high`, `ltx_broll_high`, `elevenlabs_tts_high`); global cost policy (`low`, `150`).
-- [ ] **`getProviderCatalog()`** server-only helper: validated `ProviderCatalogRow[]`; active + inactive rows returned (callers filter via `resolveProvider`); soft failure when Supabase unconfigured.
-- [ ] **`getDefaultCostPolicy()`** (or CONTRACT-named equivalent): returns global default tier + cap.
-- [ ] **Wire tests:** seed keys match `DEFAULT_LOW_TIER_PROVIDER_KEYS`; `resolveProvider()` picks expected low-tier row per asset role; inactive high-tier rows excluded; `musetalk_low` preferred when `hasReferenceLoop`; `manual` zero cost.
-- [ ] **[SEC]** No catalog write endpoints; no client-readable full catalog API.
-- [ ] **[SEC]** `env_key_name` only — no API key material in rows or logs.
-- [ ] **[SEC]** Document that future catalog/policy mutations MUST use `requireOperator("handler")`.
-- [ ] Parameterized queries; service-role Node only.
+- [x] **Migration** `neuramark_provider_catalog` (CONTRACT freezes columns: `key` UNIQUE, `asset_role`, `tier`, `active`, `capabilities` jsonb, `cost_model` jsonb, `env_key_name`, timestamps).
+- [x] **Migration** `neuramark_cost_policies` (CONTRACT freezes: nullable `client_id` FK, `provider_tier`, `max_cost_cents`, optional `rules` jsonb, timestamps; UNIQUE partial index or constraint for one global row when `client_id IS NULL`).
+- [x] **Seed migration** — low-tier active rows per PO table above; high-tier inactive rows (`heygen_high`, `ltx_broll_high`, `elevenlabs_tts_high`); global cost policy (`low`, `150`).
+- [x] **`getProviderCatalog()`** server-only helper: validated `ProviderCatalogRow[]`; active + inactive rows returned (callers filter via `resolveProvider`); soft failure when Supabase unconfigured.
+- [x] **`getDefaultCostPolicy()`** (or CONTRACT-named equivalent): returns global default tier + cap.
+- [x] **Wire tests:** seed keys match `DEFAULT_LOW_TIER_PROVIDER_KEYS`; `resolveProvider()` picks expected low-tier row per asset role; inactive high-tier rows excluded; `musetalk_low` preferred when `hasReferenceLoop`; `manual` zero cost.
+- [x] **[SEC]** No catalog write endpoints; no client-readable full catalog API.
+- [x] **[SEC]** `env_key_name` only — no API key material in rows or logs.
+- [x] **[SEC]** Document that future catalog/policy mutations MUST use `requireOperator("handler")`.
+- [x] Parameterized queries; service-role Node only.
 
 ---
 
@@ -84,14 +84,14 @@ Concrete consumers: US-4.1 / US-7.2 / US-8.x / US-9.3 / US-10.1 via `getProvider
 
 All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
-- [ ] Create **`neuramark_provider_catalog`** per CONTRACT.
-- [ ] Create **`neuramark_cost_policies`** per CONTRACT.
-- [ ] UNIQUE on `neuramark_provider_catalog.key`.
-- [ ] Index on `(asset_role, tier, active)` if needed for policy queries (CONTRACT confirms).
-- [ ] **Seed** all V1 catalog rows (low active + high inactive + `manual`).
-- [ ] **Seed** global cost policy: `provider_tier = low`, `max_cost_cents = 150`, `client_id IS NULL`.
-- [ ] RLS: zero policies / deny-by-default (match Fase 1 pattern).
-- [ ] **Do not** create vendor job tables, adapter registry tables, or Operator settings UI tables here.
+- [x] Create **`neuramark_provider_catalog`** per CONTRACT.
+- [x] Create **`neuramark_cost_policies`** per CONTRACT.
+- [x] UNIQUE on `neuramark_provider_catalog.key`.
+- [x] Index on `(asset_role, tier, active)` if needed for policy queries (CONTRACT confirms).
+- [x] **Seed** all V1 catalog rows (low active + high inactive + `manual`).
+- [x] **Seed** global cost policy: `provider_tier = low`, `max_cost_cents = 150`, `client_id IS NULL`.
+- [x] RLS: zero policies / deny-by-default (match Fase 1 pattern).
+- [x] **Do not** create vendor job tables, adapter registry tables, or Operator settings UI tables here.
 
 ---
 
@@ -100,11 +100,11 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 - [x] SPEC-REVIEW.md (spec-guardian — catalog vs SPEC §3 Cost Policy; seed economics; no FE scope creep)
 - [x] SECURITY.md (security-architect — no client catalog exposure; env var names only; operator-only future writes; server-only helper)
 - [x] CONTRACT.md authored (nextjs-backend) + FE signoff *(N/A waived — BE-only story; CONTRACT notes "Reviewed by FE: N/A — 2026-08-29")*
-- [ ] BUILD (nextjs-backend — migrations + helpers + tests)
+- [x] BUILD (nextjs-backend — migrations + helpers + tests)
 - [ ] VALIDATION.md
 - [ ] QA.md
 
-**Status:** CONTRACT frozen (2026-08-29). **Next gate:** BUILD (nextjs-backend).
+**Status:** BUILD complete (2026-08-29). **Next gate:** VALIDATION.
 
 ---
 

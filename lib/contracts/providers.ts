@@ -30,6 +30,15 @@ export const providerCostModelSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
+export const envKeyNameSchema = z
+  .string()
+  .min(1)
+  .regex(/^[A-Z][A-Z0-9_]+$/, "envKeyName must be UPPER_SNAKE_CASE")
+  .refine((v) => !v.startsWith("NEXT_PUBLIC_"), "NEXT_PUBLIC_* forbidden");
+
+export const llmVariantSchema = z.enum(["default", "fallback"]);
+export type LlmVariant = z.infer<typeof llmVariantSchema>;
+
 export const providerCatalogRowSchema = z.object({
   key: z.string().min(1),
   assetRole: assetRoleSchema,
@@ -37,8 +46,54 @@ export const providerCatalogRowSchema = z.object({
   active: z.boolean(),
   capabilities: z.record(z.string(), z.unknown()),
   costModel: providerCostModelSchema,
-  envKeyName: z.string().min(1),
+  envKeyName: envKeyNameSchema,
 });
+
+export const costPolicyRowSchema = z.object({
+  id: z.string().uuid(),
+  clientId: z.string().uuid().nullable(),
+  providerTier: providerTierSchema,
+  maxCostCents: z.number().int().positive(),
+  rules: z.record(z.string(), z.unknown()).nullable(),
+  createdAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
+});
+
+export type CostPolicyRow = z.infer<typeof costPolicyRowSchema>;
+
+export const providerCatalogSuccessSchema = z.object({
+  providers: z.array(providerCatalogRowSchema),
+});
+
+export const providerCatalogLoadFailedSchema = z.object({
+  providers: z.array(providerCatalogRowSchema).length(0),
+  loadFailed: z.literal(true),
+});
+
+export type ProviderCatalogResult =
+  | z.infer<typeof providerCatalogSuccessSchema>
+  | z.infer<typeof providerCatalogLoadFailedSchema>;
+
+export const defaultCostPolicySuccessSchema = z.object({
+  policy: costPolicyRowSchema,
+});
+
+export const defaultCostPolicyLoadFailedSchema = z.object({
+  policy: z.null(),
+  loadFailed: z.literal(true),
+});
+
+export type DefaultCostPolicyResult =
+  | z.infer<typeof defaultCostPolicySuccessSchema>
+  | z.infer<typeof defaultCostPolicyLoadFailedSchema>;
+
+/** Error codes for provider catalog / cost policy loaders and resolver. */
+export const PROVIDER_CATALOG_ROW_INVALID = "PROVIDER_CATALOG_ROW_INVALID" as const;
+export const PROVIDER_CATALOG_LOAD_FAILED = "PROVIDER_CATALOG_LOAD_FAILED" as const;
+export const COST_POLICY_ROW_INVALID = "COST_POLICY_ROW_INVALID" as const;
+export const COST_POLICY_GLOBAL_MISSING = "COST_POLICY_GLOBAL_MISSING" as const;
+export const COST_POLICY_LOAD_FAILED = "COST_POLICY_LOAD_FAILED" as const;
+export const PROVIDER_NOT_FOUND = "PROVIDER_NOT_FOUND" as const;
 
 export const createVideoJobInputSchema = z.object({
   reelScriptId: z.string().uuid(),
@@ -116,9 +171,24 @@ export type StoredMediaAsset = z.infer<typeof storedMediaAssetSchema>;
 /** Default V1 low-tier catalog seed keys (US-X.4). */
 export const DEFAULT_LOW_TIER_PROVIDER_KEYS = {
   llm: "siliconflow_deepseek_flash",
+  llmFallback: "siliconflow_qwen",
   tts: "siliconflow_cosyvoice2",
   talkingHead: "sadtalker_low",
   talkingHeadLoop: "musetalk_low",
   broll: "siliconflow_wan21_turbo",
   manual: "manual",
 } as const;
+
+/** All 10 V1 catalog seed keys (7 low active + 3 high inactive). */
+export const V1_CATALOG_SEED_KEYS = [
+  DEFAULT_LOW_TIER_PROVIDER_KEYS.llm,
+  DEFAULT_LOW_TIER_PROVIDER_KEYS.llmFallback,
+  DEFAULT_LOW_TIER_PROVIDER_KEYS.tts,
+  DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead,
+  DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHeadLoop,
+  DEFAULT_LOW_TIER_PROVIDER_KEYS.broll,
+  DEFAULT_LOW_TIER_PROVIDER_KEYS.manual,
+  "heygen_high",
+  "ltx_broll_high",
+  "elevenlabs_tts_high",
+] as const;

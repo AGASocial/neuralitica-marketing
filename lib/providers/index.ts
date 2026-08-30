@@ -6,9 +6,14 @@ export {
   VIDEO_ASSET_ROLES,
   VIDEO_JOB_STATUSES,
   VISUAL_MODES,
+  ProviderResolveError,
   estimateVideoJobCost,
+  getCatalogRowByKey,
   resolveProvider,
 } from "./provider-adapters";
+
+export { getDefaultCostPolicy } from "./get-default-cost-policy";
+export { getProviderCatalog } from "./get-provider-catalog";
 
 export type {
   AssetRole,
@@ -19,6 +24,7 @@ export type {
   LlmCompletionInput,
   LlmCompletionResult,
   LlmProviderAdapter,
+  LlmVariant,
   ProviderCatalogRow,
   ProviderRegistry,
   ProviderTier,

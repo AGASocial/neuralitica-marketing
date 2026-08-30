@@ -7,10 +7,13 @@
  * Swapping vendors = new adapter class + catalog row + env var.
  * Assembly (US-9.x), approval, and FE flows stay unchanged.
  */
+import "server-only";
+
 import type {
   AssetRole,
   CreateVideoJobInput,
   CreateVideoJobResult,
+  LlmVariant,
   ProviderCatalogRow,
   ProviderTier,
   StoredMediaAsset,
@@ -18,11 +21,16 @@ import type {
   VideoAssetRole,
   VideoJobStatus,
 } from "../contracts/providers";
+import {
+  DEFAULT_LOW_TIER_PROVIDER_KEYS,
+  PROVIDER_NOT_FOUND,
+} from "../contracts/providers";
 
 export type {
   AssetRole,
   CreateVideoJobInput,
   CreateVideoJobResult,
+  LlmVariant,
   ProviderCatalogRow,
   ProviderTier,
   StoredMediaAsset,
@@ -32,8 +40,11 @@ export type {
 } from "../contracts/providers";
 
 export {
+  DEFAULT_LOW_TIER_PROVIDER_KEYS,
+  PROVIDER_NOT_FOUND,
   assetRoleSchema,
   costBillingUnitSchema,
+  llmVariantSchema,
   providerTierSchema,
   supportedLocaleSchema,
   videoAssetRoleSchema,
@@ -76,37 +87,96 @@ export interface ResolveProviderContext {
   /** True when generic_avatar has a reference video loop (may prefer MuseTalk). */
   hasReferenceLoop?: boolean;
   needsBroll?: boolean;
+  /** When assetRole is "llm" and multiple active rows share tier, pick by variant. */
+  llmVariant?: LlmVariant;
+  /** When true, allows selecting rows with capabilities.manualFallback === true. Default false. */
+  allowManualFallback?: boolean;
+}
+
+export class ProviderResolveError extends Error {
+  readonly code = PROVIDER_NOT_FOUND;
+
+  constructor(
+    public readonly assetRole: AssetRole,
+    public readonly tier: ProviderTier,
+    public readonly llmVariant?: LlmVariant,
+  ) {
+    super(`No active provider for assetRole=${assetRole} tier=${tier}`);
+    this.name = "ProviderResolveError";
+  }
+}
+
+/**
+ * Lookup a catalog row by key (explicit selection / policy override).
+ */
+export function getCatalogRowByKey(
+  catalog: readonly ProviderCatalogRow[],
+  key: string,
+): ProviderCatalogRow | undefined {
+  return catalog.find((row) => row.key === key);
 }
 
 /**
  * Pick the active catalog row for an asset role at the given tier.
- * Throws if no matching active row exists (caller maps to 503 / operator message).
+ * Throws ProviderResolveError if no matching active row exists (caller maps to 503 / operator message).
  */
 export function resolveProvider(
   catalog: readonly ProviderCatalogRow[],
   context: ResolveProviderContext,
 ): ProviderCatalogRow {
+  const allowManual = context.allowManualFallback === true;
+
   const candidates = catalog.filter(
     (row) =>
       row.active &&
       row.tier === context.tier &&
-      row.assetRole === context.assetRole,
+      row.assetRole === context.assetRole &&
+      (allowManual || row.capabilities.manualFallback !== true),
   );
 
   if (candidates.length === 0) {
-    throw new Error(
-      `No active provider for assetRole=${context.assetRole} tier=${context.tier}`,
+    throw new ProviderResolveError(
+      context.assetRole,
+      context.tier,
+      context.llmVariant,
     );
   }
 
   if (context.assetRole === "talking_head" && context.hasReferenceLoop) {
-    const loopPreferred = candidates.find((r) =>
-      r.capabilities.prefersReferenceLoop === true,
+    const loopPreferred = candidates.find(
+      (r) => r.capabilities.prefersReferenceLoop === true,
     );
     if (loopPreferred) return loopPreferred;
   }
 
-  return candidates[0];
+  let resolvedCandidates = candidates;
+
+  if (context.assetRole === "talking_head" && !context.hasReferenceLoop) {
+    const nonLoop = candidates.filter(
+      (row) => row.capabilities.prefersReferenceLoop !== true,
+    );
+    if (nonLoop.length > 0) {
+      resolvedCandidates = nonLoop;
+    }
+  }
+
+  if (context.assetRole === "llm" && resolvedCandidates.length > 1) {
+    const targetKey =
+      context.llmVariant === "fallback"
+        ? DEFAULT_LOW_TIER_PROVIDER_KEYS.llmFallback
+        : DEFAULT_LOW_TIER_PROVIDER_KEYS.llm;
+    const matched = resolvedCandidates.find((row) => row.key === targetKey);
+    if (!matched) {
+      throw new ProviderResolveError(
+        context.assetRole,
+        context.tier,
+        context.llmVariant,
+      );
+    }
+    return matched;
+  }
+
+  return resolvedCandidates[0];
 }
 
 /**
