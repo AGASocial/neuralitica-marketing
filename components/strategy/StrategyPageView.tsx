@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "primereact/button";
@@ -54,6 +55,7 @@ type StrategyPageCopy = {
   toastApproveSuccess: string;
   approvedLockedHint: string;
   approvalCaption: string;
+  viewScripts: string;
   status: {
     draft: string;
     approved: string;
@@ -472,11 +474,16 @@ export function StrategyPageView({
       ) : null}
 
       {strategy?.status === "approved" ? (
-        <Message
-          severity="info"
-          text={copy.approvedLockedHint}
-          style={{ width: "100%", marginBottom: "1rem" }}
-        />
+        <div style={{ marginBottom: "1rem" }}>
+          <Message
+            severity="info"
+            text={copy.approvedLockedHint}
+            style={{ width: "100%", marginBottom: "0.75rem" }}
+          />
+          <Link href={`/operator/scripts?weekStart=${weekStart}`}>
+            <Button type="button" label={copy.viewScripts} icon="pi pi-file-edit" />
+          </Link>
+        </div>
       ) : null}
 
       {strategy && canEdit ? (

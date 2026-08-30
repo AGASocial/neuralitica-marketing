@@ -105,6 +105,7 @@ export default async function StrategyPage({ searchParams }: StrategyPageProps) 
         toastApproveSuccess: t.strategy.page.toastApproveSuccess,
         approvedLockedHint: t.strategy.page.approvedLockedHint,
         approvalCaption: t.strategy.page.approvalCaption,
+        viewScripts: t.scripts.page.viewScripts,
         status: t.strategy.page.status,
         sections: t.strategy.page.sections,
         slot: t.strategy.page.slot,

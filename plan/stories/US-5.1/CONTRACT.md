@@ -858,6 +858,6 @@ Page loaders use `requireOperator("page")` redirects — not this JSON envelope.
 
 ## FE signoff
 
-- [ ] **Reviewed by FE** — _pending_
+- [x] **Reviewed by FE** — 2026-08-30 — /operator/scripts, generate/regen actions, list DTO, EN/ES strings.
 
-When signed, add line: `**Reviewed by FE:** YYYY-MM-DD — /operator/scripts, generate/regen actions, list DTO, EN/ES strings.`
+**Reviewed by FE:** 2026-08-30 — /operator/scripts, generate/regen actions, list DTO, EN/ES strings.

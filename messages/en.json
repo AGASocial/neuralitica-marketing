@@ -50,7 +50,8 @@
       "dashboard": "Dashboard",
       "playbook": "Format catalog",
       "trends": "Trend snapshots",
-      "strategy": "Weekly strategy"
+      "strategy": "Weekly strategy",
+      "scripts": "Scripts"
     }
   },
   "auth": {
@@ -796,6 +797,68 @@
       "notDraft": "Only draft strategies can be edited or approved.",
       "invalidTransition": "This strategy can no longer be approved. Refresh and try again.",
       "locked": "This strategy is locked because scripts already exist.",
+      "internal": "Something went wrong. Please try again later."
+    }
+  },
+  "scripts": {
+    "loading": {
+      "page": "Loading Reel scripts…"
+    },
+    "page": {
+      "title": "Reel scripts",
+      "subtitle": "Generate and review script packages for each Reel slot on an approved weekly strategy.",
+      "weekLabel": "Week",
+      "generate": "Generate scripts",
+      "generating": "Script agent running…",
+      "regenerate": "Regenerate this Reel",
+      "regenerating": "Regenerating…",
+      "emptyNoStrategy": "Approve a weekly strategy for this week before generating scripts.",
+      "emptyNoStrategyCta": "Open weekly strategy",
+      "emptyNoScripts": "Generate scripts to create packages for each Reel slot.",
+      "loadError": "We could not load scripts for this week. Refresh the page to try again.",
+      "backDashboard": "Back to dashboard",
+      "toastGenerateSuccess": "Script packages generated.",
+      "toastRegenerateSuccess": "Reel script regenerated.",
+      "toastCopySuccess": "Copied to clipboard.",
+      "strategyVersionWarning": "Scripts may be from a prior approved strategy version. Regenerate to refresh.",
+      "versionLabel": "Approved v{version}",
+      "copyField": "Copy",
+      "durationSeconds": "{seconds}s",
+      "columns": {
+        "tema": "Topic",
+        "day": "Day",
+        "duration": "Target duration",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "Pending",
+        "generated": "Generated"
+      },
+      "fields": {
+        "hook": "Hook",
+        "body": "Body",
+        "cta": "CTA",
+        "onScreenText": "On-screen text",
+        "voiceoverText": "Voiceover",
+        "brollBeats": "B-roll beats",
+        "coldOpenNotes": "Cold open notes",
+        "editingNotes": "Editing notes"
+      },
+      "viewScripts": "View scripts"
+    },
+    "errors": {
+      "validation": "Please check the highlighted fields and try again.",
+      "forbiddenFields": "Something went wrong. Please try again.",
+      "notFound": "That script was not found.",
+      "rateLimited": "Too many script generations. Wait up to an hour and try again.",
+      "inFlight": "A script is already generating. Wait for it to finish.",
+      "profileIncomplete": "Complete the living profile and visual preferences before generating scripts.",
+      "scriptOutputInvalid": "The script agent returned an invalid package. Try again or contact support.",
+      "providerUnavailable": "The script service is temporarily unavailable. Try again later.",
+      "strategyNotApproved": "Approve the weekly strategy for this week before generating scripts.",
+      "slotNotFound": "That Reel slot was not found on the approved strategy.",
+      "strategyVersionChanged": "Scripts may be from a prior approved strategy version.",
       "internal": "Something went wrong. Please try again later."
     }
   }
