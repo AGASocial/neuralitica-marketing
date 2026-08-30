@@ -1,7 +1,7 @@
 # API Contract — US-7.3 Track actual cost per generation job
 
 **Story:** US-7.3  
-**Status:** Frozen — 2026-08-29 (awaiting FE signoff)  
+**Status:** Frozen — 2026-08-29 (FE signoff complete)  
 **Security:** `plan/stories/US-7.3/SECURITY.md` (APPROVE WITH CONDITIONS — binding freeze; reconciled below)  
 **Spec review:** `plan/stories/US-7.3/SPEC-REVIEW.md` (GAPS — resolved by this contract)  
 **Depends on:** US-7.1 ✅ spend ledger + gate · US-7.2 ✅ provider engine + adapter `actualCostCents` · US-5.1 ✅ `/operator/scripts` · US-6.1 ✅ caption orchestrators · US-14.5 ✅ `requireOperator()` · US-8.4 ⏳ Phase B production list · US-9.3 ⏳ Phase B TTS  
@@ -668,9 +668,9 @@ Internal **`finalizeGenerationCost`** errors propagate to orchestrator → exist
 
 ## FE signoff
 
-- [ ] **Reviewed by FE** — `/operator/scripts` cost column + weekly footer from `costSummary`; EN/ES `scripts.cost.actual.*`; pending/unavailable states; no client cost math.
+- [x] **Reviewed by FE** — `/operator/scripts` cost column + weekly footer from `costSummary`; EN/ES `scripts.cost.actual.*`; pending/unavailable states; no client cost math.
 
-**Reviewed by FE:** _pending_
+**Reviewed by FE:** yes — 2026-08-29 — nextjs-frontend. **Column:** add read-only **costo estimado / costo real** column to existing `ScriptsPageView` `DataTable` (between status and actions); map each row via `costSummary.slots.find(s => s.slotIndex === item.slotIndex)`; format cents with `formatCentsForDisplay`; show estimate always when `estimatedCostCents > 0`, else **—**; actual: formatted cents when `actualCostCents != null`, **pending** when `hasPendingActual`, subdued unavailable label(s) from `unavailableReasonKeys` → `scripts.cost.actual.unavailable.*` (join when multiple). **Weekly footer:** header or footer stat from `weeklyEstimatedCostCents` + `weeklyActualCostCents` (show **—** when weekly actual null); optional `hasPartialActual` hint. **Data:** same `getReelScriptsForWeek` round-trip — no separate cost action; `costSummary` optional in stub until BE BUILD (hide column/footer when absent). **Phase B:** `/operator/production` + `OperatorProductionJobCostDto` deferred to US-8.4 — no Phase A FE work. **i18n:** EN + ES `scripts.cost.actual.*`. **Constraints:** Operator route only; no client cost math; read-only display.
 
 ---
 
