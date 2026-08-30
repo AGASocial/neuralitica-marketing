@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-8.6
-story_status: CONTRACT
+story_status: BUILD
 feature_branch: feature/US-8.6-musetalk-adapter
 last_completed_story: US-8.4
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T15:45:00Z
+updated_at: 2026-08-30T15:50:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
