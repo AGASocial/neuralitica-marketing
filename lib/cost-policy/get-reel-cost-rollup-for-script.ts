@@ -82,7 +82,7 @@ export async function getReelCostRollupForScript(
   const policyResult = await getCostPolicyForClient(clientId);
   const maxCostCents =
     policyResult.ok === true
-      ? policyResult.policy.max_cost_cents
+      ? policyResult.policy.maxCostCents
       : DEFAULT_MAX_COST_CENTS;
 
   if (policyResult.ok === false) {
