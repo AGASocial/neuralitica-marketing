@@ -1367,6 +1367,62 @@ describe("reel script agent (US-5.1)", () => {
     });
   });
 
+  it("batch without override aborts on budget block with zero LLM calls (US-7.1)", async () => {
+    let llmCalls = 0;
+    const restore = installReelScriptMocks({
+      resolveReelScriptBudgetContext: async (params: { slotIndex: number }) => ({
+        reelScriptId: `11111111-1111-4111-8111-11111111111${params.slotIndex}`,
+        persisted: false,
+      }),
+      assertReelBudgetAllowsSpend: async (input: { reelScriptId: string }) => {
+        if (input.reelScriptId.endsWith("1")) {
+          return { ok: false, code: "BUDGET_EXCEEDED" };
+        }
+        return {
+          ok: true,
+          estimatedCostCents: 1,
+          cumulativeCostCents: 0,
+          maxCostCents: 5000,
+          providerTier: "low",
+          providerKey: "siliconflow_qwen",
+          didOverride: false,
+        };
+      },
+      generateReelScriptForSlot: async () => {
+        llmCalls += 1;
+        return VALID_SCRIPT_PACKAGE;
+      },
+      from: (table: string) => {
+        if (table === "neuramark_content_strategies") {
+          return approvedStrategyFrom();
+        }
+        if (table === "neuramark_agent_rate_limits") {
+          return defaultRateLimitFrom();
+        }
+        throw new Error(`unexpected ${table}`);
+      },
+    });
+    try {
+      clearReelScriptModuleCache();
+      const { generateReelScriptsForClient } = require("./generate-reel-scripts-for-client.ts");
+      const result = await generateReelScriptsForClient({
+        clientId: OPERATOR_ID,
+        weekStart: WEEK_START,
+        strategyId: STRATEGY_ID,
+        invokedBy: "operator",
+        mode: "batch",
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) {
+        assert.equal(result.error.code, "BUDGET_EXCEEDED");
+        assert.deepEqual(result.error.blockedSlotIndexes, [1]);
+      }
+      assert.equal(llmCalls, 0);
+    } finally {
+      restore();
+    }
+  });
+
   it("five helpers called once per batch job", async () => {
     const counts = {
       profile: 0,

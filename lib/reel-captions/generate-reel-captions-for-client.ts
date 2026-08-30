@@ -208,7 +208,7 @@ export async function generateReelCaptionsForClient(
       return scriptRow !== undefined;
     });
 
-    if (params.mode === "batch" && allowBudgetOverride === true) {
+    if (params.mode === "batch") {
       for (const slot of slotsNeedingGate) {
         const scriptRow = scriptBySlot.get(slot.slotIndex)!;
         const gateResult = await assertReelBudgetAllowsSpend({
@@ -274,7 +274,7 @@ export async function generateReelCaptionsForClient(
       }
 
       let gate: SlotGateOk;
-      if (params.mode === "batch" && allowBudgetOverride === true) {
+      if (params.mode === "batch") {
         gate = gateBySlot.get(slot.slotIndex)!;
       } else {
         const gateResult = await assertReelBudgetAllowsSpend({

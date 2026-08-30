@@ -1097,6 +1097,50 @@ describe("reel caption helpers (US-6.1)", () => {
     }
   });
 
+  it("batch without override aborts on budget block with zero LLM calls (US-7.1)", async () => {
+    let llmCalls = 0;
+    const restore = installReelCaptionMocks({
+      assertReelBudgetAllowsSpend: async (input: { reelScriptId: string }) => {
+        if (input.reelScriptId === SCRIPT_ROW_1.id) {
+          return { ok: false, code: "BUDGET_EXCEEDED" };
+        }
+        return {
+          ok: true,
+          estimatedCostCents: 1,
+          cumulativeCostCents: 0,
+          maxCostCents: 5000,
+          providerTier: "low",
+          providerKey: "siliconflow_deepseek_flash",
+          didOverride: false,
+        };
+      },
+      generateReelCaptionForScript: async () => {
+        llmCalls += 1;
+        return VALID_CAPTION_OUTPUT;
+      },
+      from: defaultCaptionFrom([SCRIPT_ROW_0, SCRIPT_ROW_1]),
+    });
+    try {
+      clearReelCaptionModuleCache();
+      const { generateReelCaptionsForClient } = require("./generate-reel-captions-for-client.ts");
+      const result = await generateReelCaptionsForClient({
+        clientId: OPERATOR_ID,
+        weekStart: WEEK_START,
+        strategyId: STRATEGY_ID,
+        invokedBy: "operator",
+        mode: "batch",
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) {
+        assert.equal(result.error.code, "BUDGET_EXCEEDED");
+        assert.deepEqual(result.error.blockedSlotIndexes, [1]);
+      }
+      assert.equal(llmCalls, 0);
+    } finally {
+      restore();
+    }
+  });
+
   it("five helpers called once per batch job", async () => {
     const counts = { profile: 0, catalog: 0, policy: 0, strategy: 0 };
     const restore = installReelCaptionMocks({

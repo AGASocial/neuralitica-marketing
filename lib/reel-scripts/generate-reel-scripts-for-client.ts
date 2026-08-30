@@ -236,7 +236,7 @@ export async function generateReelScriptsForClient(
     };
     const gateBySlot = new Map<number, SlotGateOk>();
 
-    if (params.mode === "batch" && allowBudgetOverride === true) {
+    if (params.mode === "batch") {
       for (const slot of slots) {
         const scriptContext = await resolveReelScriptBudgetContext({
           clientId,
@@ -288,7 +288,7 @@ export async function generateReelScriptsForClient(
 
     for (const slot of slots) {
       let gate: SlotGateOk;
-      if (params.mode === "batch" && allowBudgetOverride === true) {
+      if (params.mode === "batch") {
         gate = gateBySlot.get(slot.slotIndex)!;
       } else {
         const scriptContext = await resolveReelScriptBudgetContext({
