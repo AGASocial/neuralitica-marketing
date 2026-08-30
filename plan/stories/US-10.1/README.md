@@ -1,6 +1,6 @@
 # US-10.1 — Run automated QA on script, caption, and video
 
-**Status:** PREP (2026-08-30) — PO decisions frozen; CONTRACT / SECURITY / BUILD not started. Do **not** check off AC in `plan/USER_STORIES.md`.
+**Status:** CONTRACT frozen (2026-08-30) — awaiting FE signoff; BUILD not started. Do **not** check off AC in `plan/USER_STORIES.md`.
 
 **As a** System, **I want** compliance checks before client review, **so that** risky content is flagged early.
 
@@ -8,7 +8,7 @@ Ship **QA/Compliance Agent V1**: after branded Ensamblado is ready (`branding_st
 
 **Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-10.1 (do **not** check off in PREP).
 
-**This folder:** [`plan/stories/US-10.1/`](./) — `README.md` · `TASKS.md` (PREP). `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` authored in later gates.
+**This folder:** [`plan/stories/US-10.1/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · [`CONTRACT.md`](./CONTRACT.md) (frozen; FE signoff pending).
 
 **Branch:** `feature/US-10.1-automated-qa`
 
@@ -117,13 +117,13 @@ _Evitar:_ “QA verdict” as product noun (use Veredicto QA); impersonation in 
 ## Gates (orchestrator)
 
 - [x] SPEC-REVIEW.md (spec-guardian) — **GAPS** (intent aligned; SECURITY clear; CONTRACT freezes listed)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend — DDL, actions, Zod checks JSON, gate helper; **Reviewed by FE** before BUILD)
+- [x] SECURITY.md (security-architect) — **APPROVE WITH CONDITIONS**
+- [x] CONTRACT.md (nextjs-backend — frozen; Zod `lib/contracts/qa-report.ts`; **Reviewed by FE: pending**)
 - [ ] BUILD (content-agents-engineer + nextjs-backend + nextjs-frontend)
 - [ ] VALIDATION.md
 - [ ] QA.md
 
-**Next gate:** security-architect SECURITY → nextjs-backend CONTRACT.
+**Next gate:** FE reviews CONTRACT → “Reviewed by FE: yes” → BUILD.
 
 ---
 
