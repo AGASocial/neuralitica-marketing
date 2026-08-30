@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-8.3
-story_status: QA
+story_status: BUILD
 feature_branch: feature/US-8.3-manual-upload
 last_completed_story: US-8.6
 phase_status: in_progress
-blocked_reason: null
-updated_at: 2026-08-30T17:00:00Z
+blocked_reason: QA BLOCK — next.config contract import (0980dbe)
+updated_at: 2026-08-30T17:10:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
