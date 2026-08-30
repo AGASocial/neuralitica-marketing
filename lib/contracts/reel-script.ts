@@ -7,6 +7,7 @@ import { z } from "zod";
 import { reelCaptionSummarySchema } from "@/lib/contracts/reel-caption";
 import { reelScriptReadabilitySchema } from "@/lib/contracts/reel-script-readability";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
+import { budgetOverrideFieldsSchema } from "@/lib/contracts/cost-policy";
 import { visualModalitySchema } from "@/lib/contracts/visual-preferences";
 
 export const reelScriptBrollBeatSchema = z
@@ -36,6 +37,7 @@ export const generateReelScriptsInputSchema = z
   .object({
     weekStart: trendWeekStartSchema,
   })
+  .merge(budgetOverrideFieldsSchema)
   .strict();
 
 export const regenerateReelScriptSlotInputSchema = z
@@ -43,6 +45,7 @@ export const regenerateReelScriptSlotInputSchema = z
     weekStart: trendWeekStartSchema,
     slotIndex: z.number().int().min(0).max(6),
   })
+  .merge(budgetOverrideFieldsSchema)
   .strict();
 
 export const getReelScriptsForWeekInputSchema = z
@@ -123,6 +126,8 @@ export const reelScriptErrorCodeSchema = z.enum([
   "PROVIDER_UNAVAILABLE",
   "FORBIDDEN_FIELDS",
   "INTERNAL_ERROR",
+  "BUDGET_EXCEEDED",
+  "COST_POLICY_UNAVAILABLE",
 ]);
 
 export type ReelScriptMutationError = {
@@ -131,6 +136,8 @@ export type ReelScriptMutationError = {
     code: z.infer<typeof reelScriptErrorCodeSchema>;
     messageKey?: string;
     fields?: Record<string, string[]>;
+    blockedSlotIndexes?: number[];
+    previews?: import("@/lib/contracts/cost-policy").ReelBudgetPreview[];
   };
 };
 

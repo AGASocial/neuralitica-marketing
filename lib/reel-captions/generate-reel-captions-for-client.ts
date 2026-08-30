@@ -29,13 +29,17 @@ import {
   reelCaptionSlotNotFoundError,
   reelCaptionStrategyNotApprovedError,
   reelCaptionValidationError,
+  reelCaptionBudgetExceededError,
+  reelCaptionCostPolicyUnavailableError,
 } from "@/lib/reel-captions/errors";
 import { loadApprovedStrategyForScriptJob } from "@/lib/reel-scripts/load-approved-strategy-for-script-job";
 import { listReelScriptsForStrategy } from "@/lib/reel-scripts/persist-reel-script";
 import { loadReelScriptForCaptionJob } from "@/lib/reel-captions/load-reel-script-for-caption-job";
 import { persistReelCaption } from "@/lib/reel-captions/persist-reel-caption";
 import { getBusinessProfileForAgents } from "@/lib/profile/get-business-profile-for-agents";
-import { getDefaultCostPolicy } from "@/lib/providers/get-default-cost-policy";
+import { getCostPolicyForClient } from "@/lib/cost-policy/get-cost-policy-for-client";
+import { assertReelBudgetAllowsSpend } from "@/lib/cost-policy/assert-reel-budget-allows-spend";
+import { recordReelSpendEvent } from "@/lib/cost-policy/record-reel-spend-event";
 import { getProviderCatalog } from "@/lib/providers/get-provider-catalog";
 import { resolveProvider } from "@/lib/providers/provider-adapters";
 import { createSiliconFlowLlmAdapter } from "@/lib/providers/siliconflow-llm-adapter";
@@ -49,6 +53,9 @@ export type GenerateReelCaptionsForClientParams = {
   invokedBy: ReelCaptionInvoker;
   mode: "batch" | "slot";
   slotIndex?: number;
+  operatorClientId?: string;
+  budgetOverride?: true;
+  overrideReason?: string;
 };
 
 function resolveLocale(profile: BusinessProfileForAgentsView): "en" | "es" {
@@ -127,12 +134,9 @@ export async function generateReelCaptionsForClient(
       return reelCaptionInternalError();
     }
 
-    const policyResult = await getDefaultCostPolicy();
-    if ("loadFailed" in policyResult && policyResult.loadFailed) {
-      return reelCaptionInternalError();
-    }
-    if (!policyResult.policy) {
-      return reelCaptionInternalError();
+    const policyResult = await getCostPolicyForClient(clientId);
+    if (!policyResult.ok) {
+      return reelCaptionCostPolicyUnavailableError();
     }
 
     let provider;
@@ -185,6 +189,60 @@ export async function generateReelCaptionsForClient(
     }
 
     const locale = resolveLocale(profile);
+    const spendJobKind =
+      params.mode === "batch" ? ("caption_generate" as const) : ("caption_regenerate" as const);
+    const operatorClientId = params.operatorClientId ?? clientId;
+    const allowBudgetOverride =
+      params.invokedBy === "operator" ? params.budgetOverride : undefined;
+    const overrideReason =
+      params.invokedBy === "operator" ? params.overrideReason : undefined;
+
+    type SlotGateOk = {
+      estimatedCostCents: number;
+      providerKey: string;
+    };
+    const gateBySlot = new Map<number, SlotGateOk>();
+
+    const slotsNeedingGate = targetSlots.filter((slot) => {
+      const scriptRow = scriptBySlot.get(slot.slotIndex);
+      return scriptRow !== undefined;
+    });
+
+    if (params.mode === "batch" && allowBudgetOverride === true) {
+      for (const slot of slotsNeedingGate) {
+        const scriptRow = scriptBySlot.get(slot.slotIndex)!;
+        const gateResult = await assertReelBudgetAllowsSpend({
+          clientId,
+          reelScriptId: scriptRow.id,
+          reelScriptPersisted: true,
+          jobKind: spendJobKind,
+          operatorClientId,
+          budgetOverride: allowBudgetOverride,
+          overrideReason,
+        });
+
+        if (!gateResult.ok) {
+          if (gateResult.code === "VALIDATION_ERROR") {
+            return reelCaptionValidationError(gateResult.fields ?? {});
+          }
+          if (gateResult.code === "BUDGET_EXCEEDED") {
+            return reelCaptionBudgetExceededError({
+              blockedSlotIndexes: [slot.slotIndex],
+            });
+          }
+          if (gateResult.code === "PROVIDER_UNAVAILABLE") {
+            return reelCaptionProviderUnavailableError();
+          }
+          return reelCaptionCostPolicyUnavailableError();
+        }
+
+        gateBySlot.set(slot.slotIndex, {
+          estimatedCostCents: gateResult.estimatedCostCents,
+          providerKey: gateResult.providerKey,
+        });
+      }
+    }
+
     const captionIds: string[] = [];
     const skipped: Array<{ slotIndex: number; code: "SCRIPT_PENDING" }> = [];
     const errors: Array<{
@@ -213,6 +271,41 @@ export async function generateReelCaptionsForClient(
           continue;
         }
         return reelCaptionScriptNotFoundError();
+      }
+
+      let gate: SlotGateOk;
+      if (params.mode === "batch" && allowBudgetOverride === true) {
+        gate = gateBySlot.get(slot.slotIndex)!;
+      } else {
+        const gateResult = await assertReelBudgetAllowsSpend({
+          clientId,
+          reelScriptId: verified.reelScriptId,
+          reelScriptPersisted: true,
+          jobKind: spendJobKind,
+          operatorClientId,
+          budgetOverride: allowBudgetOverride,
+          overrideReason,
+        });
+
+        if (!gateResult.ok) {
+          if (gateResult.code === "VALIDATION_ERROR") {
+            return reelCaptionValidationError(gateResult.fields ?? {});
+          }
+          if (gateResult.code === "BUDGET_EXCEEDED") {
+            return reelCaptionBudgetExceededError({
+              blockedSlotIndexes: [slot.slotIndex],
+            });
+          }
+          if (gateResult.code === "PROVIDER_UNAVAILABLE") {
+            return reelCaptionProviderUnavailableError();
+          }
+          return reelCaptionCostPolicyUnavailableError();
+        }
+
+        gate = {
+          estimatedCostCents: gateResult.estimatedCostCents,
+          providerKey: gateResult.providerKey,
+        };
       }
 
       const slotContext = buildSlotContext(
@@ -301,6 +394,16 @@ export async function generateReelCaptionsForClient(
       }
 
       captionIds.push(persisted.captionId);
+
+      await recordReelSpendEvent({
+        clientId,
+        reelScriptId: verified.reelScriptId,
+        assetRole: "llm",
+        jobKind: spendJobKind,
+        estimatedCostCents: gate.estimatedCostCents,
+        operatorClientId,
+        providerKey: gate.providerKey,
+      });
 
       if (params.mode === "slot") {
         await recordCaptionGenerationSuccess(inFlightScope);

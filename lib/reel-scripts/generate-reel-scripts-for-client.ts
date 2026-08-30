@@ -29,13 +29,18 @@ import {
   reelScriptSlotNotFoundError,
   reelScriptStrategyNotApprovedError,
   reelScriptValidationError,
+  reelScriptBudgetExceededError,
+  reelScriptCostPolicyUnavailableError,
 } from "@/lib/reel-scripts/errors";
 import { loadApprovedStrategyForScriptJob } from "@/lib/reel-scripts/load-approved-strategy-for-script-job";
 import { persistReelScript } from "@/lib/reel-scripts/persist-reel-script";
 import { getBusinessProfileForAgents } from "@/lib/profile/get-business-profile-for-agents";
 import { getPlaybookForAgents } from "@/lib/playbook/get-playbook-for-agents";
 import { getTrendSnapshotForWeek } from "@/lib/trend/get-trend-snapshot-for-week";
-import { getDefaultCostPolicy } from "@/lib/providers/get-default-cost-policy";
+import { getCostPolicyForClient } from "@/lib/cost-policy/get-cost-policy-for-client";
+import { assertReelBudgetAllowsSpend } from "@/lib/cost-policy/assert-reel-budget-allows-spend";
+import { recordReelSpendEvent } from "@/lib/cost-policy/record-reel-spend-event";
+import { resolveReelScriptBudgetContext } from "@/lib/cost-policy/resolve-reel-script-for-budget";
 import { getProviderCatalog } from "@/lib/providers/get-provider-catalog";
 import { resolveProvider } from "@/lib/providers/provider-adapters";
 import { createSiliconFlowLlmAdapter } from "@/lib/providers/siliconflow-llm-adapter";
@@ -49,6 +54,9 @@ export type GenerateReelScriptsForClientParams = {
   invokedBy: ReelScriptInvoker;
   mode: "batch" | "slot";
   slotIndex?: number;
+  operatorClientId?: string;
+  budgetOverride?: true;
+  overrideReason?: string;
 };
 
 function buildSlotContext(
@@ -162,12 +170,9 @@ export async function generateReelScriptsForClient(
       return reelScriptInternalError();
     }
 
-    const policyResult = await getDefaultCostPolicy();
-    if ("loadFailed" in policyResult && policyResult.loadFailed) {
-      return reelScriptInternalError();
-    }
-    if (!policyResult.policy) {
-      return reelScriptInternalError();
+    const policyResult = await getCostPolicyForClient(clientId);
+    if (!policyResult.ok) {
+      return reelScriptCostPolicyUnavailableError();
     }
 
     let provider;
@@ -217,13 +222,115 @@ export async function generateReelScriptsForClient(
     }
 
     const locale = resolveLocale(profile);
+    const spendJobKind =
+      params.mode === "batch" ? ("script_generate" as const) : ("script_regenerate" as const);
+    const operatorClientId = params.operatorClientId ?? clientId;
+    const allowBudgetOverride =
+      params.invokedBy === "operator" ? params.budgetOverride : undefined;
+    const overrideReason =
+      params.invokedBy === "operator" ? params.overrideReason : undefined;
+
+    type SlotGateOk = {
+      estimatedCostCents: number;
+      providerKey: string;
+    };
+    const gateBySlot = new Map<number, SlotGateOk>();
+
+    if (params.mode === "batch" && allowBudgetOverride === true) {
+      for (const slot of slots) {
+        const scriptContext = await resolveReelScriptBudgetContext({
+          clientId,
+          strategyId,
+          slotIndex: slot.slotIndex,
+        });
+        if (!scriptContext) {
+          return reelScriptCostPolicyUnavailableError();
+        }
+
+        const gateResult = await assertReelBudgetAllowsSpend({
+          clientId,
+          reelScriptId: scriptContext.reelScriptId,
+          reelScriptPersisted: scriptContext.persisted,
+          jobKind: spendJobKind,
+          operatorClientId,
+          budgetOverride: allowBudgetOverride,
+          overrideReason,
+        });
+
+        if (!gateResult.ok) {
+          if (gateResult.code === "VALIDATION_ERROR") {
+            return reelScriptValidationError(gateResult.fields ?? {});
+          }
+          if (gateResult.code === "BUDGET_EXCEEDED") {
+            return reelScriptBudgetExceededError({
+              blockedSlotIndexes: [slot.slotIndex],
+            });
+          }
+          if (gateResult.code === "PROVIDER_UNAVAILABLE") {
+            return reelScriptProviderUnavailableError();
+          }
+          return reelScriptCostPolicyUnavailableError();
+        }
+
+        gateBySlot.set(slot.slotIndex, {
+          estimatedCostCents: gateResult.estimatedCostCents,
+          providerKey: gateResult.providerKey,
+        });
+      }
+    }
+
     const generatedPackages: Array<{
       slot: ContentStrategySlot;
       package: ReturnType<typeof reelScriptPackageSchema.parse>;
       mustDiscloseNotOwner: boolean;
+      gate: SlotGateOk;
     }> = [];
 
     for (const slot of slots) {
+      let gate: SlotGateOk;
+      if (params.mode === "batch" && allowBudgetOverride === true) {
+        gate = gateBySlot.get(slot.slotIndex)!;
+      } else {
+        const scriptContext = await resolveReelScriptBudgetContext({
+          clientId,
+          strategyId,
+          slotIndex: slot.slotIndex,
+        });
+        if (!scriptContext) {
+          return reelScriptCostPolicyUnavailableError();
+        }
+
+        const gateResult = await assertReelBudgetAllowsSpend({
+          clientId,
+          reelScriptId: scriptContext.reelScriptId,
+          reelScriptPersisted: scriptContext.persisted,
+          jobKind: spendJobKind,
+          operatorClientId,
+          budgetOverride: allowBudgetOverride,
+          overrideReason,
+        });
+
+        if (!gateResult.ok) {
+          if (gateResult.code === "VALIDATION_ERROR") {
+            return reelScriptValidationError(gateResult.fields ?? {});
+          }
+          if (gateResult.code === "BUDGET_EXCEEDED") {
+            return reelScriptBudgetExceededError({
+              blockedSlotIndexes: [slot.slotIndex],
+            });
+          }
+          if (gateResult.code === "PROVIDER_UNAVAILABLE") {
+            return reelScriptProviderUnavailableError();
+          }
+          return reelScriptCostPolicyUnavailableError();
+        }
+
+        gate = {
+          estimatedCostCents: gateResult.estimatedCostCents,
+          providerKey: gateResult.providerKey,
+        };
+      }
+
       const slotContext = buildSlotContext(slot, profile, playbook, trend);
 
       let rawOutput: unknown;
@@ -261,6 +368,7 @@ export async function generateReelScriptsForClient(
         slot,
         package: packageParsed.data,
         mustDiscloseNotOwner: slotContext.mustDiscloseForSlot,
+        gate,
       });
     }
 
@@ -279,6 +387,16 @@ export async function generateReelScriptsForClient(
         return reelScriptInternalError();
       }
       scriptIds.push(persisted.scriptId);
+
+      await recordReelSpendEvent({
+        clientId,
+        reelScriptId: persisted.scriptId,
+        assetRole: "llm",
+        jobKind: spendJobKind,
+        estimatedCostCents: item.gate.estimatedCostCents,
+        operatorClientId,
+        providerKey: item.gate.providerKey,
+      });
     }
 
     await recordScriptGenerationSuccess(inFlightScope);

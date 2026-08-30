@@ -32,6 +32,25 @@ const FORBIDDEN_REEL_CAPTION_KEYS = new Set([
   "invokedBy",
   "role",
   "auth_user_id",
+  // US-7.1: budget authority keys — use budgetOverride / overrideReason only
+  "maxCostCents",
+  "max_cost_cents",
+  "providerTier",
+  "provider_tier",
+  "estimatedCostCents",
+  "estimated_cost_cents",
+  "cumulativeCostCents",
+  "cumulative_cost_cents",
+  "budgetCap",
+  "policyId",
+  "policy_id",
+  "rules",
+  "skipBudgetCheck",
+  "skip_budget_check",
+  "overrideBudget",
+  "override_budget",
+  "confirmGeneration",
+  "confirm_generation",
 ]);
 
 export function findForbiddenReelCaptionKeys(raw: unknown): string[] {

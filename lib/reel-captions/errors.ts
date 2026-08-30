@@ -99,6 +99,27 @@ export function reelCaptionScriptNotFoundError(): ReelCaptionMutationError {
   );
 }
 
+export function reelCaptionBudgetExceededError(extra?: {
+  blockedSlotIndexes?: number[];
+  previews?: import("@/lib/contracts/cost-policy").ReelBudgetPreview[];
+}): ReelCaptionMutationError {
+  return {
+    ok: false,
+    error: {
+      code: "BUDGET_EXCEEDED",
+      messageKey: "scripts.budget.errors.exceeded",
+      ...extra,
+    },
+  };
+}
+
+export function reelCaptionCostPolicyUnavailableError(): ReelCaptionMutationError {
+  return reelCaptionError(
+    "COST_POLICY_UNAVAILABLE",
+    "scripts.budget.errors.policyUnavailable",
+  );
+}
+
 export function reelCaptionNotFoundForSelectError(): ReelCaptionMutationError {
   return reelCaptionError(
     "CAPTION_NOT_FOUND",

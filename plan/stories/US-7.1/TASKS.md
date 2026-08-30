@@ -157,24 +157,24 @@ Concrete BE consumers: **`getCostPolicyForSettings`** (page load) · **`updateGl
 
 Concrete FE consumers: settings page · scripts confirm dialogs · future US-8.x `checkReelBudget` reuse.
 
-- [ ] **Migration:** `neuramark_reel_spend_events` append-only ledger (CONTRACT freezes columns: `client_id`, `reel_script_id`, `asset_role`, `job_kind`, `estimated_cost_cents`, `actual_cost_cents` nullable, `operator_client_id`, `created_at`; indexes on `reel_script_id`, `(client_id, reel_script_id)`).
-- [ ] **Migration:** `neuramark_budget_audit_log` append-only (`event_type`, `client_id`, `reel_script_id` nullable, `operator_client_id`, `estimated_cost_cents`, `cumulative_cost_cents`, `max_cost_cents`, `provider_tier`, `metadata` jsonb nullable, `created_at`).
-- [ ] **Migration (if needed):** `UNIQUE INDEX` on `neuramark_cost_policies (client_id) WHERE client_id IS NOT NULL` — one override per client.
-- [ ] **`lib/contracts/cost-policy.ts`** — Zod schemas for policy DTOs, preview, audit enums, error codes (`BUDGET_EXCEEDED`, `POLICY_VALIDATION_ERROR`, etc.).
-- [ ] **`getCostPolicyForClient(clientId)`** — server-only; validated `CostPolicyRow`.
-- [ ] **`sumReelCumulativeCostCents(reelScriptId)`** — parameterized sum over spend events.
-- [ ] **`estimateLlmJobCost(...)`** — catalog + policy tier + `llmVariant` → adapter `estimateCost`.
-- [ ] **`checkReelBudget(input)`** — resolve policy, cumulative, estimate; if exceed and no override → audit `blocked` + return error; if override → audit `override_proceed` + allow.
-- [ ] **`recordReelSpendEvent(...)`** — INSERT after successful LLM job only.
-- [ ] **Wire `checkReelBudget`** into `generate-reel-scripts-for-client.ts` and `generate-reel-captions-for-client.ts` **before** LLM call; pass through `budgetOverride` from actions.
-- [ ] **`getReelBudgetPreview({ weekStart, slotIndex, jobKind })`** — operator-gated; resolves `reel_script_id`; no LLM call.
-- [ ] **`updateGlobalCostPolicy`** Server Action — `requireOperator`; UPDATE global row; audit `policy_updated`.
-- [ ] **`updateClientCostPolicyOverride`** Server Action — upsert/delete per-client row; audit `policy_updated`.
-- [ ] **`getCostPolicyForSettings`** Server Action or page loader — global + optional client override + effective resolved policy for session tenant.
-- [ ] **[SEC] Forbidden fields** on generate/regenerate actions — extend forbidden-key helpers.
-- [ ] **[SEC] Non-operator** policy writes → 403.
-- [ ] **Extend generate actions** input schemas with optional **`budgetOverride: z.literal(true).optional()`** strict — reject other truthy values.
-- [ ] **Automated tests:** `lib/cost-policy/cost-policy.test.ts` (or extend `providers.test.ts`) — resolver client vs global; block vs override; cumulative sum across regen; forbidden fields; bounds on policy save; audit rows inserted; preview DTO never includes `envKeyName`.
+- [x] **Migration:** `neuramark_reel_spend_events` append-only ledger (CONTRACT freezes columns: `client_id`, `reel_script_id`, `asset_role`, `job_kind`, `estimated_cost_cents`, `actual_cost_cents` nullable, `operator_client_id`, `created_at`; indexes on `reel_script_id`, `(client_id, reel_script_id)`).
+- [x] **Migration:** `neuramark_budget_audit_log` append-only (`event_type`, `client_id`, `reel_script_id` nullable, `operator_client_id`, `estimated_cost_cents`, `cumulative_cost_cents`, `max_cost_cents`, `provider_tier`, `metadata` jsonb nullable, `created_at`).
+- [x] **Migration (if needed):** `UNIQUE INDEX` on `neuramark_cost_policies (client_id) WHERE client_id IS NOT NULL` — one override per client.
+- [x] **`lib/contracts/cost-policy.ts`** — Zod schemas for policy DTOs, preview, audit enums, error codes (`BUDGET_EXCEEDED`, `POLICY_VALIDATION_ERROR`, etc.).
+- [x] **`getCostPolicyForClient(clientId)`** — server-only; validated `CostPolicyRow`.
+- [x] **`sumReelCumulativeCostCents(reelScriptId)`** — parameterized sum over spend events.
+- [x] **`estimateLlmJobCost(...)`** — catalog + policy tier + `llmVariant` → adapter `estimateCost`.
+- [x] **`checkReelBudget(input)`** — resolve policy, cumulative, estimate; if exceed and no override → audit `blocked` + return error; if override → audit `override_proceed` + allow.
+- [x] **`recordReelSpendEvent(...)`** — INSERT after successful LLM job only.
+- [x] **Wire `checkReelBudget`** into `generate-reel-scripts-for-client.ts` and `generate-reel-captions-for-client.ts` **before** LLM call; pass through `budgetOverride` from actions.
+- [x] **`getReelBudgetPreview({ weekStart, slotIndex, jobKind })`** — operator-gated; resolves `reel_script_id`; no LLM call.
+- [x] **`updateGlobalCostPolicy`** Server Action — `requireOperator`; UPDATE global row; audit `policy_updated`.
+- [x] **`updateClientCostPolicyOverride`** Server Action — upsert/delete per-client row; audit `policy_updated`.
+- [x] **`getCostPolicyForSettings`** Server Action or page loader — global + optional client override + effective resolved policy for session tenant.
+- [x] **[SEC] Forbidden fields** on generate/regenerate actions — extend forbidden-key helpers.
+- [x] **[SEC] Non-operator** policy writes → 403.
+- [x] **Extend generate actions** input schemas with optional **`budgetOverride: z.literal(true).optional()`** strict — reject other truthy values.
+- [x] **Automated tests:** `lib/cost-policy/cost-policy.test.ts` (or extend `providers.test.ts`) — resolver client vs global; block vs override; cumulative sum across regen; forbidden fields; bounds on policy save; audit rows inserted; preview DTO never includes `envKeyName`.
 
 ---
 
@@ -182,12 +182,12 @@ Concrete FE consumers: settings page · scripts confirm dialogs · future US-8.x
 
 All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
-- [ ] **CREATE** **`neuramark_reel_spend_events`** per CONTRACT DDL.
-- [ ] **CREATE** **`neuramark_budget_audit_log`** per CONTRACT DDL.
-- [ ] **ALTER/INDEX** **`neuramark_cost_policies`** — unique per `client_id` when not null (if not already enforced).
-- [ ] **No change** to US-X.4 global seed values in migration (still `low` / `150` on fresh DB).
-- [ ] **No change** to `neuramark_provider_catalog` in this story.
-- [ ] RLS deny-by-default on new tables; service-role Node only.
+- [x] **CREATE** **`neuramark_reel_spend_events`** per CONTRACT DDL.
+- [x] **CREATE** **`neuramark_budget_audit_log`** per CONTRACT DDL.
+- [x] **ALTER/INDEX** **`neuramark_cost_policies`** — unique per `client_id` when not null (if not already enforced).
+- [x] **No change** to US-X.4 global seed values in migration (still `low` / `150` on fresh DB).
+- [x] **No change** to `neuramark_provider_catalog` in this story.
+- [x] RLS deny-by-default on new tables; service-role Node only.
 
 ---
 

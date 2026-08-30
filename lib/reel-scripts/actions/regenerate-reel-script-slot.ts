@@ -92,6 +92,9 @@ export async function regenerateReelScriptSlot(
       invokedBy: "operator",
       mode: "slot",
       slotIndex,
+      operatorClientId: clientId,
+      budgetOverride: parsed.data.budgetOverride,
+      overrideReason: parsed.data.overrideReason,
     });
 
     if (result.ok) {

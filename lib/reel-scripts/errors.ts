@@ -91,3 +91,24 @@ export function reelScriptStrategyNotApprovedError(): ReelScriptMutationError {
 export function reelScriptSlotNotFoundError(): ReelScriptMutationError {
   return reelScriptError("SLOT_NOT_FOUND", "scripts.errors.slotNotFound");
 }
+
+export function reelScriptBudgetExceededError(extra?: {
+  blockedSlotIndexes?: number[];
+  previews?: import("@/lib/contracts/cost-policy").ReelBudgetPreview[];
+}): ReelScriptMutationError {
+  return {
+    ok: false,
+    error: {
+      code: "BUDGET_EXCEEDED",
+      messageKey: "scripts.budget.errors.exceeded",
+      ...extra,
+    },
+  };
+}
+
+export function reelScriptCostPolicyUnavailableError(): ReelScriptMutationError {
+  return reelScriptError(
+    "COST_POLICY_UNAVAILABLE",
+    "scripts.budget.errors.policyUnavailable",
+  );
+}

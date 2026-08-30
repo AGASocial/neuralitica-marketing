@@ -88,6 +88,9 @@ export async function generateReelScripts(
       strategyId: approved.id,
       invokedBy: "operator",
       mode: "batch",
+      operatorClientId: clientId,
+      budgetOverride: parsed.data.budgetOverride,
+      overrideReason: parsed.data.overrideReason,
     });
 
     if (result.ok) {

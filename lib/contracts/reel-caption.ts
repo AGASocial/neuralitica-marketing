@@ -5,6 +5,7 @@
 import { z } from "zod";
 
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
+import { budgetOverrideFieldsSchema } from "@/lib/contracts/cost-policy";
 
 export const IG_CAPTION_MAX_CHARS = 2200 as const;
 export const IG_HASHTAG_WARN_MAX = 15 as const;
@@ -212,6 +213,7 @@ export const generateReelCaptionsInputSchema = z
   .object({
     weekStart: trendWeekStartSchema,
   })
+  .merge(budgetOverrideFieldsSchema)
   .strict();
 
 export const regenerateReelCaptionInputSchema = z
@@ -219,6 +221,7 @@ export const regenerateReelCaptionInputSchema = z
     weekStart: trendWeekStartSchema,
     slotIndex: z.number().int().min(0).max(6),
   })
+  .merge(budgetOverrideFieldsSchema)
   .strict();
 
 export const selectReelCaptionCtaInputSchema = z
@@ -304,6 +307,8 @@ export const reelCaptionErrorCodeSchema = z.enum([
   "CAPTION_NOT_FOUND",
   "CAPTION_CTA_NOT_SELECTED",
   "EFFECTIVE_CAPTION_TOO_LONG",
+  "BUDGET_EXCEEDED",
+  "COST_POLICY_UNAVAILABLE",
 ]);
 
 export type ReelCaptionMutationError = {
@@ -312,6 +317,8 @@ export type ReelCaptionMutationError = {
     code: z.infer<typeof reelCaptionErrorCodeSchema>;
     messageKey?: string;
     fields?: Record<string, string[]>;
+    blockedSlotIndexes?: number[];
+    previews?: import("@/lib/contracts/cost-policy").ReelBudgetPreview[];
   };
 };
 

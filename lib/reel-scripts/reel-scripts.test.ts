@@ -239,6 +239,10 @@ type MockOptions = {
   getTrendSnapshotForWeek?: (weekStart: string) => Promise<unknown>;
   getProviderCatalog?: () => Promise<unknown>;
   getDefaultCostPolicy?: () => Promise<unknown>;
+  getCostPolicyForClient?: (clientId: string) => Promise<unknown>;
+  assertReelBudgetAllowsSpend?: (input: unknown) => Promise<unknown>;
+  recordReelSpendEvent?: (params: unknown) => Promise<void>;
+  resolveReelScriptBudgetContext?: (params: unknown) => Promise<unknown>;
   generateReelScriptForSlot?: (params: unknown) => Promise<unknown>;
   resolveProvider?: (...args: unknown[]) => unknown;
   createSiliconFlowLlmAdapter?: (key: string, env: string) => unknown | null;
@@ -380,6 +384,55 @@ function installReelScriptMocks(options: MockOptions) {
               createdAt: "2026-08-29T18:00:00.000Z",
               updatedAt: "2026-08-29T18:00:00.000Z",
             },
+          })),
+      };
+    }
+    if (String(request).includes("lib/cost-policy/get-cost-policy-for-client")) {
+      return {
+        getCostPolicyForClient:
+          options.getCostPolicyForClient ??
+          (async () => ({
+            ok: true,
+            scope: "global",
+            policy: {
+              id: "11111111-1111-4111-8111-111111111111",
+              clientId: null,
+              providerTier: "low",
+              maxCostCents: 5000,
+              rules: null,
+              createdAt: "2026-08-29T18:00:00.000Z",
+              updatedAt: "2026-08-29T18:00:00.000Z",
+            },
+          })),
+      };
+    }
+    if (String(request).includes("lib/cost-policy/assert-reel-budget-allows-spend")) {
+      return {
+        assertReelBudgetAllowsSpend:
+          options.assertReelBudgetAllowsSpend ??
+          (async () => ({
+            ok: true,
+            estimatedCostCents: 1,
+            cumulativeCostCents: 0,
+            maxCostCents: 5000,
+            providerTier: "low",
+            providerKey: "siliconflow_qwen",
+            didOverride: false,
+          })),
+      };
+    }
+    if (String(request).includes("lib/cost-policy/record-reel-spend-event")) {
+      return {
+        recordReelSpendEvent: options.recordReelSpendEvent ?? (async () => {}),
+      };
+    }
+    if (String(request).includes("lib/cost-policy/resolve-reel-script-for-budget")) {
+      return {
+        resolveReelScriptBudgetContext:
+          options.resolveReelScriptBudgetContext ??
+          (async () => ({
+            reelScriptId: "11111111-1111-4111-8111-111111111111",
+            persisted: false,
           })),
       };
     }
@@ -1351,9 +1404,11 @@ describe("reel script agent (US-5.1)", () => {
           ],
         };
       },
-      getDefaultCostPolicy: async () => {
+      getCostPolicyForClient: async () => {
         counts.policy += 1;
         return {
+          ok: true,
+          scope: "global",
           policy: {
             id: "11111111-1111-4111-8111-111111111111",
             clientId: null,
