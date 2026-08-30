@@ -1,7 +1,7 @@
 # API Contract — US-10.2 Operator override with reason
 
 **Story:** US-10.2  
-**Status:** Frozen — 2026-08-30 · Reviewed by FE: pending  
+**Status:** Frozen — 2026-08-30 · Reviewed by FE: yes — 2026-08-30 — nextjs-frontend.  
 **Security:** `plan/stories/US-10.2/SECURITY.md` (APPROVE WITH CONDITIONS — reconciled below)  
 **Spec review:** `plan/stories/US-10.2/SPEC-REVIEW.md` (ALIGNED — soft gaps closed below)  
 **Pattern:** `plan/stories/US-10.1/CONTRACT.md` · `plan/stories/US-8.4/CONTRACT.md` (append-only override + reason 1–500)  
@@ -700,13 +700,13 @@ US-10.1 orchestration remains the **sole** writer of report verdicts.
 
 ## Disputes / FE review notes
 
-**Open until FE signoff.** Soft FE preferences (non-blocking for freeze):
+**Closed by FE signoff (2026-08-30).** Soft FE preferences accepted as BUILD UX notes (non-blocking):
 
 1. **Dialog chrome** — Mirror `VideoJobRetryLimitOverrideDialog` (PrimeReact Dialog + textarea).  
 2. **Audit placement** — Below check rows inside `OperatorQaPanel` (chronological).  
 3. **Success merge** — Prefer returned `report` DTO over full page reload; `revalidatePath` still runs.  
 4. **Blocking UX** — Locked copy only; no disabled Override button that still posts.  
-5. **Gate display on Operator panel** — Optional informational “ready for Aprobación” badge from server-derived flags on detail; do **not** call gate helper from the browser.
+5. **Gate display on Operator panel** — Optional informational “ready for Aprobación” badge; derive from `checks` + `overrides[]` via `computeQaGateReady` in contracts (or omit until US-11.1). Do **not** call `getQaGateStatusForAssembledReel` from the browser.
 
 **No open PO product disputes** after SECURITY APPROVE WITH CONDITIONS. FE signoff freezes UX disputes without reopening DDL, catalog, or gate purity.
 
@@ -714,12 +714,14 @@ US-10.1 orchestration remains the **sole** writer of report verdicts.
 
 ## Reviewed by FE
 
-**Reviewed by FE:** pending
+**Verdict:** Accept with UX notes (BUILD only — no shape changes).
 
-*(FE fills this section after review. Expected: Accept / Accept with UX notes — panel modal, audit, i18n, types from `qa-override.ts` + extended `qa-report.ts`.)*
+**Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend.
+
+Shapes fit `OperatorQaPanel` + Server Action `overrideQaCheck`. Types from `lib/contracts/qa-override.ts` + extended `lib/contracts/qa-report.ts`. Fixtures cover modal success merge, blocking 403, and error mapping. No disputes that reopen DDL, catalog, or gate purity.
 
 ---
 
-**Reviewed by FE:** pending  
+**Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend.  
 **Frozen by:** nextjs-backend — 2026-08-30  
 **Zod mirror:** `lib/contracts/qa-override.ts` (+ additive `lib/contracts/qa-report.ts`)
