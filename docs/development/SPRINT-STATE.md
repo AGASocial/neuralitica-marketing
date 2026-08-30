@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-6.1
-story_status: BUILD
+story_status: VALIDATION
 feature_branch: feature/US-6.1-reel-captions
 last_completed_story: US-5.2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T21:30:00Z
+updated_at: 2026-08-30T22:00:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -22,7 +22,7 @@ updated_at: 2026-08-30T21:30:00Z
 | US-4.2 Review and approve strategy | done | BE `ba57bac` · FE `4367287` · CLOSE 5/5 AC |
 | US-5.1 Reel script package per slot | done | agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e` · CLOSE 6/6 AC |
 | US-5.2 Preview script readability | done | BE `b503241` · FE `b68d2ee` · VALIDATION `8ba616e` · CLOSE 2/2 AC |
-| US-6.1 Generate Instagram caption per Reel | BUILD | BE + agents on `feature/US-6.1-reel-captions`; FE Caption tab pending |
+| US-6.1 Generate Instagram caption per Reel | VALIDATION | agents `c385372` · FE `d075781` · BE `1f45244` · 45/48 tests · PASS WITH NOTES |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -34,6 +34,7 @@ updated_at: 2026-08-30T21:30:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-6.1 VALIDATION: PASS WITH NOTES (0 blockers, 45/48 tests); `plan/stories/US-6.1/VALIDATION.md`; agents `c385372` · FE `d075781` · BE `1f45244`; 3 agent prompt-fixture assertion failures documented; story_status VALIDATION.
 - 2026-08-30 · US-6.1 BUILD (BE): `neuramark_reel_captions` migration, caption contracts, orchestrator, Server Actions, list DTO extension, 34 caption tests; story_status BUILD.
 - 2026-08-30 · US-6.1 PREP: `plan/stories/US-6.1/README.md` + `TASKS.md`; PO decisions frozen; story_status PREP.
 - 2026-08-30 · US-5.2 CLOSE: 2/2 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 3 Low); BE `b503241` · FE `b68d2ee` · VALIDATION `8ba616e`; Phase 3 → SELECT US-6.1.
