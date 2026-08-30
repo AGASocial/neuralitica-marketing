@@ -1,7 +1,7 @@
 # API Contract — US-10.1 Run automated QA on script, caption, and video
 
 **Story:** US-10.1  
-**Status:** Frozen — 2026-08-30 · Reviewed by FE: pending  
+**Status:** Frozen — 2026-08-30 · Reviewed by FE: yes — 2026-08-30 — nextjs-frontend.  
 **Security:** `plan/stories/US-10.1/SECURITY.md` (APPROVE WITH CONDITIONS — reconciled below)  
 **Spec review:** `plan/stories/US-10.1/SPEC-REVIEW.md` (GAPS — resolved by this contract)  
 **Pattern:** `plan/stories/US-9.2/CONTRACT.md` · `plan/stories/US-9.1/CONTRACT.md` · `plan/stories/US-6.1/CONTRACT.md`  
@@ -864,18 +864,51 @@ export const qaReportErrorCodeSchema = z.enum([
 
 ## Disputes / FE review notes
 
-Items FE should confirm before “Reviewed by FE: yes”:
+**Resolved by FE signoff (2026-08-30)** — see § Reviewed by FE. Summary:
 
-1. **Panel chrome** — TabView tab vs section under Production; either OK if `/operator/scripts` only.  
-2. **Batch shape** — Prefer `qaByAssembledReelId` map (mirrors assembly maps) **and** optional `item.qaReport` convenience — FE pick one primary.  
-3. **In-flight UX** — Idempotent `{ ok: true, idempotent: true }` vs hard `GENERATION_IN_FLIGHT` error; contract prefers idempotent success.  
-4. **CTA without `selected_cta_index`** — Soft-fail `cta_presence` using first variant / script CTA (not hard reject). Confirm ops OK.  
-5. **No override UI** in mock/fixtures — ensure Storybook/mocks do not imply US-10.2 controls.
+1. **Panel chrome** — Stacked section after assembly/branding (not TabView).  
+2. **Batch shape** — Primary `qaByAssembledReelId` only (detail with checks on week load).  
+3. **In-flight UX** — Idempotent success preferred.  
+4. **CTA without `selected_cta_index`** — Soft-fail `cta_presence` confirmed.  
+5. **No override UI** — confirmed for Phase A fixtures/panel.
 
-**No open PO product disputes** remain after SECURITY APPROVE WITH CONDITIONS; any FE preference on (1)–(3) is UX-only and does not reopen DDL, catalog, or gate purity.
+**No open PO product disputes** remain after SECURITY APPROVE WITH CONDITIONS; FE preferences above are UX-only and do not reopen DDL, catalog, or gate purity.
 
 ---
 
-**Reviewed by FE:** pending  
+## Reviewed by FE
+
+**Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend.
+
+**Verdict:** Accept — Operator QA panel, Run/Re-run action, batch DTO, gate display, and i18n are implementable against existing `/operator/scripts` expand patterns. No forbidden client authority fields in the FE write path.
+
+**FE resolutions (UX disputes — frozen for BUILD):**
+
+| # | Topic | FE choice |
+|---|-------|-----------|
+| 1 | Panel chrome | **Stacked section** after `OperatorAssemblyPanel` in expand row (same pattern as voiceover / assembly / branding). **Not** a new TabView tab — Caption TabView stays script/caption only. Header: Veredicto QA / QA. |
+| 2 | Batch shape | **Primary only:** `qaByAssembledReelId: Record<assembledReelId, … \| null>`. **Do not** dual-ship `item.qaReport`. Lookup key = `assemblyJob.jobId` (= `assembledReelId`). Week load should attach **detail DTO** (with `checks[]`) given ≤3 Reels/week so the panel needs no second fetch; summary flags may be derived FE-side from `checks` or BE may enrich. |
+| 3 | In-flight UX | Prefer **idempotent** `{ ok: true, idempotent: true }` (mirror assembly/branding). Disable Run while `pending`/`running`; no error toast on double-click. Treat `GENERATION_IN_FLIGHT` as optional fallback only. |
+| 4 | CTA soft-fail | **Confirmed** — empty CTA → `cta_presence` fail badge only; Run still allowed when prereqs met. |
+| 5 | Override UI | **Absent** — no modal, reason, or pass control in panel or fixtures. |
+
+**BUILD notes (FE):**
+
+- **Surface:** New client panel (e.g. `OperatorQaPanel`) in `ScriptsPageView` expand — after assembly/branding. Props: `assembledReelId` from `assemblyJob.jobId`, initial report from `qaByAssembledReelId[jobId]`, `copy: scripts.qa.*`.
+- **Server Action:** `runQaForAssembledReel({ assembledReelId })` only — never send status/checks/severity/ready/passed/clientId/body text.
+- **Badges:** Overall `Tag` from report `status` (`pending` \| `running` \| `passed` \| `failed` \| `blocked`). Per-check rows: i18n `checkKey` label + outcome Tag + severity Tag (`blocking` / `overridable`). Evidence: `messageKey` → EN/ES; optional `detail` as plain text (no HTML).
+- **Actions:** Run QA when no report; Re-run when terminal. Disabled when assembly incomplete, branding incomplete, or status `pending`/`running`. Empty CTA when prereqs unmet.
+- **Idempotent in-flight:** On `idempotent: true`, merge returned DTO into local/override map; keep button disabled while non-terminal. **BE ask:** widen success `status` to allow `running` \| `pending` when `idempotent: true` (current Zod terminal-only is slightly inconsistent with in-flight short-circuit) — FE can also ignore returned status and keep local `running` until revalidate.
+- **Gate (display-only on this story):** Panel may show not-ready when status ≠ `passed`; do **not** call `getQaGateStatusForAssembledReel` from the browser — US-11.1 owns gate consume.
+- **Types:** Import from `lib/contracts/qa-report.ts` only (`OperatorQaReportDetailDto`, `RunQaForAssembledReelResult`, check keys/status enums). Reuse `GENERIC_AVATAR_NOT_OWNER_CHECK_KEY` / `qa.checks.*` where present.
+- **i18n:** Add `scripts.qa.*` (title, status labels, actions, empty/loading, errors for all `QaReportErrorCode`s) EN + ES; check labels under `scripts.qa.checks.*` or reuse `qa.checks.*`.
+- **Week payload:** Extend `getReelScriptsForWeek` / page props with `qaByAssembledReelId` (page.tsx already mirrors assembly/voiceover maps).
+- **Out of scope:** Override modal; Cliente QA; vision; new Operator route; client-writable pass.
+
+**Disputes:** None blocking BUILD. Soft BE follow-up: success schema status union when `idempotent: true` (running/pending).
+
+---
+
+**Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend.  
 **Frozen by:** nextjs-backend — 2026-08-30  
 **Zod mirror:** `lib/contracts/qa-report.ts`
