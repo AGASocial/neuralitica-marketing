@@ -21,6 +21,11 @@ import type {
   ReelScriptErrorCode,
   ReelScriptListItem,
 } from "@/lib/contracts/reel-script";
+import type {
+  ReelScriptReadability,
+  ReelScriptReadabilityBeatLine,
+  ReelScriptReadabilityVoiceover,
+} from "@/lib/contracts/reel-script-readability";
 import type { VisualModality } from "@/lib/contracts/visual-preferences";
 import { generateReelScripts } from "@/lib/reel-scripts/actions/generate-reel-scripts";
 import { regenerateReelScriptSlot } from "@/lib/reel-scripts/actions/regenerate-reel-script-slot";
@@ -86,6 +91,17 @@ type ScriptsPageCopy = {
     forbidden: string;
     internal: string;
   };
+  readability: {
+    beatCharsExceeded: string;
+    beatLinesExceeded: string;
+    tooManyBeats: string;
+    voiceoverOver: string;
+    voiceoverUnder: string;
+    voiceoverOk: string;
+    rowBadge: string;
+    maxCharsPerBeatLine: number;
+    maxBeatLinesTotal: number;
+  };
 };
 
 type ScriptsPageViewProps = {
@@ -147,6 +163,16 @@ function formatDuration(
     return "—";
   }
   return template.replace("{seconds}", String(seconds));
+}
+
+function formatTemplate(
+  template: string,
+  values: Record<string, string | number>,
+): string {
+  return Object.entries(values).reduce(
+    (result, [key, value]) => result.replace(`{${key}}`, String(value)),
+    template,
+  );
 }
 
 export function ScriptsPageView({
@@ -376,7 +402,16 @@ export function ScriptsPageView({
               field="tema"
               header={copy.columns.tema}
               body={(row: ReelScriptListItem) => (
-                <span style={{ fontWeight: 600 }}>{row.tema}</span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
+                  <span style={{ fontWeight: 600 }}>{row.tema}</span>
+                  {row.readability?.hasWarnings ? (
+                    <Tag
+                      value={copy.readability.rowBadge}
+                      severity="warning"
+                      icon="pi pi-exclamation-triangle"
+                    />
+                  ) : null}
+                </div>
               )}
             />
             <Column
@@ -474,12 +509,24 @@ function ScriptDetailPanel({ row, copy, onCopy }: ScriptDetailPanelProps) {
         copyLabel={copy.copyField}
         onCopy={onCopy}
       />
+      {row.readability ? (
+        <OnScreenReadabilityMetrics
+          readability={row.readability}
+          copy={copy}
+        />
+      ) : null}
       <ScriptField
         label={copy.fields.voiceoverText}
         value={pkg.voiceoverText}
         copyLabel={copy.copyField}
         onCopy={onCopy}
       />
+      {row.readability ? (
+        <VoiceoverReadabilityMetrics
+          voiceover={row.readability.voiceover}
+          copy={copy}
+        />
+      ) : null}
       {pkg.brollBeats && pkg.brollBeats.length > 0 ? (
         <ScriptField
           label={copy.fields.brollBeats}
@@ -517,6 +564,174 @@ type ScriptFieldProps = {
   preserveWhitespace?: boolean;
   onCopy: (text: string) => void;
 };
+
+function OnScreenReadabilityMetrics({
+  readability,
+  copy,
+}: {
+  readability: ReelScriptReadability;
+  copy: ScriptsPageCopy;
+}) {
+  const { onScreen } = readability;
+  const hasTooManyBeats = onScreen.warnings.includes("too_many_beats");
+
+  return (
+    <div style={{ display: "grid", gap: "0.5rem" }}>
+      {hasTooManyBeats ? (
+        <Message
+          severity="warn"
+          icon="pi pi-exclamation-triangle"
+          text={formatTemplate(copy.readability.tooManyBeats, {
+            max: copy.readability.maxBeatLinesTotal,
+          })}
+          style={{ width: "100%" }}
+        />
+      ) : null}
+      {onScreen.beatLines.map((beat) => (
+        <OnScreenBeatLineMetrics
+          key={beat.index}
+          beat={beat}
+          copy={copy}
+        />
+      ))}
+    </div>
+  );
+}
+
+function OnScreenBeatLineMetrics({
+  beat,
+  copy,
+}: {
+  beat: ReelScriptReadabilityBeatLine;
+  copy: ScriptsPageCopy;
+}) {
+  const hasCharWarning = beat.warnings.includes("chars_exceeded");
+  const hasLineWarning = beat.warnings.includes("lines_exceeded");
+  const hasWarning = hasCharWarning || hasLineWarning;
+  const displayIndex = beat.index + 1;
+
+  const warningMessages: string[] = [];
+  if (hasCharWarning) {
+    warningMessages.push(
+      formatTemplate(copy.readability.beatCharsExceeded, {
+        index: displayIndex,
+        charCount: beat.charCount,
+        max: copy.readability.maxCharsPerBeatLine,
+      }),
+    );
+  }
+  if (hasLineWarning) {
+    warningMessages.push(
+      formatTemplate(copy.readability.beatLinesExceeded, {
+        index: displayIndex,
+      }),
+    );
+  }
+
+  return (
+    <div
+      style={{
+        padding: "0.5rem 0.75rem",
+        borderRadius: "0.375rem",
+        border: hasWarning ? "1px solid #fcd34d" : "1px solid #e5e7eb",
+        background: hasWarning ? "#fffbeb" : "#f9fafb",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: "0.75rem",
+          flexWrap: "wrap",
+        }}
+      >
+        <span
+          style={{
+            fontSize: "0.875rem",
+            color: "#111827",
+            whiteSpace: "pre-wrap",
+            flex: "1 1 auto",
+          }}
+        >
+          {beat.text}
+        </span>
+        <span
+          style={{
+            fontSize: "0.8125rem",
+            color: hasWarning ? "#b45309" : "#6b7280",
+            fontWeight: hasWarning ? 600 : 400,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {beat.charCount}
+        </span>
+      </div>
+      {warningMessages.map((message) => (
+        <p
+          key={message}
+          style={{
+            margin: "0.35rem 0 0",
+            fontSize: "0.8125rem",
+            color: "#b45309",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.35rem",
+          }}
+        >
+          <i className="pi pi-exclamation-triangle" aria-hidden="true" />
+          <span>{message}</span>
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function VoiceoverReadabilityMetrics({
+  voiceover,
+  copy,
+}: {
+  voiceover: ReelScriptReadabilityVoiceover;
+  copy: ScriptsPageCopy;
+}) {
+  const template =
+    voiceover.status === "over"
+      ? copy.readability.voiceoverOver
+      : voiceover.status === "under"
+        ? copy.readability.voiceoverUnder
+        : copy.readability.voiceoverOk;
+
+  const summary = formatTemplate(template, {
+    wordCount: voiceover.wordCount,
+    targetWordCount: voiceover.targetWordCount,
+    targetDurationSec: voiceover.targetDurationSec,
+  });
+
+  const hasWarning = voiceover.status !== "ok";
+
+  if (hasWarning) {
+    return (
+      <Message
+        severity="warn"
+        icon="pi pi-exclamation-triangle"
+        text={summary}
+        style={{ width: "100%" }}
+      />
+    );
+  }
+
+  return (
+    <p
+      style={{
+        margin: 0,
+        fontSize: "0.875rem",
+        color: "#6b7280",
+      }}
+    >
+      {summary}
+    </p>
+  );
+}
 
 function ScriptField({
   label,

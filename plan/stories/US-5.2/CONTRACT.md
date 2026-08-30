@@ -441,4 +441,4 @@ Namespace: **`scripts.readability.*`**
 
 ## Reviewed by FE
 
-<!-- nextjs-frontend: add "Reviewed by FE — YYYY-MM-DD" line here before BUILD -->
+Reviewed by FE — 2026-08-30

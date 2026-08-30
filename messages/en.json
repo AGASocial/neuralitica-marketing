@@ -847,6 +847,15 @@
       },
       "viewScripts": "View scripts"
     },
+    "readability": {
+      "beatCharsExceeded": "Beat {index}: {charCount} chars (max {max})",
+      "beatLinesExceeded": "Beat {index}: too many lines",
+      "tooManyBeats": "More than {max} on-screen lines",
+      "voiceoverOver": "{wordCount} words — target ~{targetWordCount} for {targetDurationSec}s",
+      "voiceoverUnder": "{wordCount} words — target ~{targetWordCount} for {targetDurationSec}s",
+      "voiceoverOk": "{wordCount} words · target ~{targetWordCount} for {targetDurationSec}s",
+      "rowBadge": "Readability warnings"
+    },
     "errors": {
       "validation": "Please check the highlighted fields and try again.",
       "forbiddenFields": "Something went wrong. Please try again.",

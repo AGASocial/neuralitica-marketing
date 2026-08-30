@@ -95,16 +95,16 @@ type ReelScriptReadability = {
 
 Concrete BE consumer: extended `getReelScriptsForWeek` → `items[].readability`.
 
-- [ ] **On-screen field block** in detail panel: list beat lines with char count; **warn styling** when `beatLines[].warnings` includes `chars_exceeded` or `lines_exceeded`.
-- [ ] **On-screen aggregate warn** when `onScreen.warnings` includes `too_many_beats`.
-- [ ] **Voiceover field block**: show `wordCount`, `targetWordCount`, `targetDurationSec` summary line.
-- [ ] **VO warn styling** when `voiceover.status` is `over` or `under`.
-- [ ] **List row badge/icon** when `readability.hasWarnings === true` (generated scripts only).
-- [ ] **Pending / no package**: hide readability block (no false warnings).
-- [ ] **EN + ES strings** in `messages/en.json` / `es.json` (`scripts.readability.*`).
-- [ ] **No Supabase in Client Components**; no client-side recompute of limits — render server DTO.
-- [ ] **Non-blocking** — regenerate + copy actions unchanged.
-- [ ] **Accessibility**: warn text not color-only (icon + message).
+- [x] **On-screen field block** in detail panel: list beat lines with char count; **warn styling** when `beatLines[].warnings` includes `chars_exceeded` or `lines_exceeded`.
+- [x] **On-screen aggregate warn** when `onScreen.warnings` includes `too_many_beats`.
+- [x] **Voiceover field block**: show `wordCount`, `targetWordCount`, `targetDurationSec` summary line.
+- [x] **VO warn styling** when `voiceover.status` is `over` or `under`.
+- [x] **List row badge/icon** when `readability.hasWarnings === true` (generated scripts only).
+- [x] **Pending / no package**: hide readability block (no false warnings).
+- [x] **EN + ES strings** in `messages/en.json` / `es.json` (`scripts.readability.*`).
+- [x] **No Supabase in Client Components**; no client-side recompute of limits — render server DTO.
+- [x] **Non-blocking** — regenerate + copy actions unchanged.
+- [x] **Accessibility**: warn text not color-only (icon + message).
 
 ---
 

@@ -1,5 +1,9 @@
 import { ScriptsPageView } from "@/components/scripts/ScriptsPageView";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import {
+  REEL_SCRIPT_MAX_BEAT_LINES_TOTAL,
+  REEL_SCRIPT_MAX_CHARS_PER_BEAT_LINE,
+} from "@/lib/contracts/reel-script-readability";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
 import { getReelScriptsForWeek } from "@/lib/reel-scripts/actions/get-reel-scripts-for-week";
 import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
@@ -106,6 +110,17 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
         goals: t.strategy.page.goals,
         days: t.strategy.page.days,
         modalities: t.playbook.enums.modalities,
+        readability: {
+          beatCharsExceeded: t.scripts.readability.beatCharsExceeded,
+          beatLinesExceeded: t.scripts.readability.beatLinesExceeded,
+          tooManyBeats: t.scripts.readability.tooManyBeats,
+          voiceoverOver: t.scripts.readability.voiceoverOver,
+          voiceoverUnder: t.scripts.readability.voiceoverUnder,
+          voiceoverOk: t.scripts.readability.voiceoverOk,
+          rowBadge: t.scripts.readability.rowBadge,
+          maxCharsPerBeatLine: REEL_SCRIPT_MAX_CHARS_PER_BEAT_LINE,
+          maxBeatLinesTotal: REEL_SCRIPT_MAX_BEAT_LINES_TOTAL,
+        },
         errors: {
           validation: t.scripts.errors.validation,
           forbiddenFields: t.scripts.errors.forbiddenFields,

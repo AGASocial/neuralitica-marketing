@@ -847,6 +847,15 @@
       },
       "viewScripts": "Ver guiones"
     },
+    "readability": {
+      "beatCharsExceeded": "Línea {index}: {charCount} caracteres (máx. {max})",
+      "beatLinesExceeded": "Línea {index}: demasiadas líneas",
+      "tooManyBeats": "Más de {max} líneas de texto en pantalla",
+      "voiceoverOver": "{wordCount} palabras — objetivo ~{targetWordCount} para {targetDurationSec}s",
+      "voiceoverUnder": "{wordCount} palabras — objetivo ~{targetWordCount} para {targetDurationSec}s",
+      "voiceoverOk": "{wordCount} palabras · objetivo ~{targetWordCount} para {targetDurationSec}s",
+      "rowBadge": "Avisos de legibilidad"
+    },
     "errors": {
       "validation": "Revisa los campos marcados e inténtalo de nuevo.",
       "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
