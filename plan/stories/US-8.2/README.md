@@ -1,12 +1,12 @@
 # US-8.2 — SadTalker adapter (V1 default talking-head, low tier)
 
-**Status:** PREP — story folder ready; gates not started.
+**Status:** CLOSED — Phase A (2026-08-29). VALIDATION PASS WITH NOTES on `fba526c`; QA CLOSE after H1 fix `8a781fd`. BE `fba526c` · fix `8a781fd`. **Phase B** (orchestration, poller, job DDL, status UI, full USER_STORIES AC) → **US-8.4** (+ **US-9.3** voiceover E2E).
 
 **As a** System, **I want** SadTalker lip-sync via a cloud API, **so that** own-avatar and generic-avatar Reels are produced cheaply without client recording.
 
 Ship **server-only Replicate SadTalker adapter** for catalog key **`sadtalker_low`**: replace **`createSadtalkerLowStubAdapter`** with a real **`VideoProviderAdapter`** that calls Replicate behind **`REPLICATE_API_TOKEN`**; wire it in **`getProviderRegistry()`** / **`createProviderRegistry()`**; implement **`estimateCost`** from catalog **`cost_model`**; pipe **`createJob` / `getJobStatus` / `fetchAsset`** through US-8.1 normalization helpers; cover with **mocked-HTTP unit tests only**. **No FE**, **no Route Handlers**, **no `neuramark_video_jobs` DDL/writes**, **no poller/SSE/retry orchestration** — job lifecycle UI and server orchestration ship in **US-8.4**.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.2 (unchecked until VALIDATION).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.2 (**intentionally unchecked** — Phase A adapter slice only; full AC closure is **US-8.4** Phase B).
 
 **This folder:** [`plan/stories/US-8.2/`](./) — `README.md` · `TASKS.md` (gates: `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` — create when story enters sprint).
 
@@ -76,11 +76,27 @@ _Evitar:_ client-supplied `provider_key`; long-lived third-party `output_url` as
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
+- [x] SPEC-REVIEW.md (spec-guardian — GAPS; phased acceptance per CONTRACT)
+- [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
 - [x] CONTRACT.md (nextjs-backend — frozen; **Reviewed by FE: N/A**)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend — Phase A adapter)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES on `fba526c`)
+- [x] QA.md (qa-engineer — CLOSE Phase A after H1 fix `8a781fd`)
 
-**Status:** CONTRACT frozen. **Next gate:** BUILD (media-pipeline-engineer + nextjs-backend).
+**Status:** CLOSED — Phase A (2026-08-29). **Next:** **US-8.4** Job status and failure handling UI (closes remaining US-8.2 USER_STORIES AC + orchestration).
+
+---
+
+## Remaining AC — US-8.4 Phase B (do not check in USER_STORIES until US-8.4 closes)
+
+| USER_STORIES § US-8.2 AC | Owner |
+|--------------------------|-------|
+| Default talking-head E2E when `provider_tier = low` + `own_avatar` / `generic_avatar` | US-8.4 `createTalkingHeadVideoJob()` orchestrator |
+| Inputs: portrait still + voiceover from US-9.3 | US-8.4 orchestrator + US-9.3 TTS |
+| Playable video in `neuramark_media_assets` (not third-party URL) | US-8.4 poller INSERT after `fetchAsset` |
+| Failures + configurable retries / max attempts | US-8.4 retry handler + Operator UI |
+| [SEC] Consent (US-3.2) + budget (US-7.1) before submit | US-8.4 orchestrator gate order |
+| [SEC] Status updated only by server poller | US-8.4 Fly worker + job row writes |
+| [SEC] Browser status poll scoped to client → 404 foreign | US-8.4 `GET /api/video-jobs/[jobId]` |
+
+**Also US-8.4 own AC:** stale-job timeout, retry confirmation + estimate, regeneration count, retry max + operator override, webhook signature verification, retry override audit trail.

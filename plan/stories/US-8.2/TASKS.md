@@ -129,22 +129,22 @@ case DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead:
 
 Concrete consumers: **US-8.4** poller/orchestrator · **`estimateVideoJobCost()`** (already resolves registry) · future create-job Server Action.
 
-- [ ] **`lib/providers/video/sadtalker-low-adapter.ts`** — implement **`VideoProviderAdapter`** for **`sadtalker_low`** / **`primary`**.
-- [ ] **`estimateCost`** — return catalog flat **`per_run`** cents (`defaultEstimateCents` from registry bootstrap).
-- [ ] **`createJob`** — validate required asset IDs; resolve image + audio URLs; POST Replicate prediction; return **`createVideoJobResultSchema`**-compatible result.
-- [ ] **`getJobStatus`** — GET Replicate prediction; map via **`normalizeVideoJobStatusResult`**; set **`rawOutputUrl`** only when status terminal + URL allowlisted.
-- [ ] **`fetchAsset`** — **`validateProviderOutputUrl`** → download → Storage upload → **`storedMediaAssetSchema`** parse.
-- [ ] **Remove** **`sadtalker-low-stub-adapter.ts`**; update imports in **`create-provider-registry.ts`**.
-- [ ] **Registry** — register real adapter in **`createProviderRegistry`**; catalog bootstrap estimate still **10¢** from seed row.
-- [ ] **Asset resolver seam** — injectable **`resolveMediaAssetUrl(assetId, clientId)`** (CONTRACT freezes default impl: service-role read from `neuramark_media_assets` + signed URL).
-- [ ] **Storage seam** — injectable upload helper for tests (default: Supabase Storage put).
-- [ ] **[SEC] `server-only`** on adapter module; **`REPLICATE_API_TOKEN`** never logged or returned.
-- [ ] **[SEC] Untrusted vendor JSON** — no spread into results; errors sanitized.
-- [ ] **[SEC] Output URL allowlist** — reject non-Replicate hosts before fetch.
-- [ ] **[SEC] `external_job_id`** — opaque; no path/SQL interpolation.
-- [ ] **`lib/providers/video/sadtalker-low-adapter.test.ts`** — mocked HTTP: create → status (processing → completed) → fetchAsset round-trip; missing env throws; invalid URL rejected; error message sanitized.
-- [ ] **Update `provider-adapters.test.ts`** — SadTalker adapter is real (no `stub-sadtalker_low-` prefix); vendor host grep allows `replicate.com` under `lib/providers/video/sadtalker-low-adapter.ts`.
-- [ ] **No new Route Handlers** — regression unchanged.
+- [x] **`lib/providers/video/sadtalker-low-adapter.ts`** — implement **`VideoProviderAdapter`** for **`sadtalker_low`** / **`primary`**.
+- [x] **`estimateCost`** — return catalog flat **`per_run`** cents (`defaultEstimateCents` from registry bootstrap).
+- [x] **`createJob`** — validate required asset IDs; resolve image + audio URLs; POST Replicate prediction; return **`createVideoJobResultSchema`**-compatible result.
+- [x] **`getJobStatus`** — GET Replicate prediction; map via **`normalizeVideoJobStatusResult`**; set **`rawOutputUrl`** only when status terminal + URL allowlisted.
+- [x] **`fetchAsset`** — **`validateProviderOutputUrl`** → download → Storage upload → **`storedMediaAssetSchema`** parse.
+- [x] **Remove** **`sadtalker-low-stub-adapter.ts`**; update imports in **`create-provider-registry.ts`**.
+- [x] **Registry** — register real adapter in **`createProviderRegistry`**; catalog bootstrap estimate still **10¢** from seed row.
+- [x] **Asset resolver seam** — injectable **`resolveMediaAssetUrl(assetId, clientId)`** (CONTRACT freezes default impl: service-role read from `neuramark_media_assets` + signed URL).
+- [x] **Storage seam** — injectable upload helper for tests (default: Supabase Storage put).
+- [x] **[SEC] `server-only`** on adapter module; **`REPLICATE_API_TOKEN`** never logged or returned.
+- [x] **[SEC] Untrusted vendor JSON** — no spread into results; errors sanitized.
+- [x] **[SEC] Output URL allowlist** — reject non-Replicate hosts before fetch.
+- [x] **[SEC] `external_job_id`** — opaque; no path/SQL interpolation.
+- [x] **`lib/providers/video/sadtalker-low-adapter.test.ts`** — mocked HTTP: create → status (processing → completed) → fetchAsset round-trip; missing env throws; invalid URL rejected; error message sanitized.
+- [x] **Update `provider-adapters.test.ts`** — SadTalker adapter is real (no `stub-sadtalker_low-` prefix); vendor host grep allows `replicate.com` under `lib/providers/video/sadtalker-low-adapter.ts`.
+- [x] **No new Route Handlers** — regression unchanged.
 
 ---
 
@@ -152,22 +152,42 @@ Concrete consumers: **US-8.4** poller/orchestrator · **`estimateVideoJobCost()`
 
 All objects keep `neuramark_` prefix. **No migration in US-8.2 BUILD** (PO freeze).
 
-- [ ] **No CREATE `neuramark_video_jobs`** — US-8.4 / orchestration slice.
-- [ ] **No catalog seed changes** — `sadtalker_low` row from US-X.4 is authoritative.
-- [ ] RLS deny-by-default unchanged; service-role Node only.
+- [x] **No CREATE `neuramark_video_jobs`** — US-8.4 / orchestration slice.
+- [x] **No catalog seed changes** — `sadtalker_low` row from US-X.4 is authoritative.
+- [x] RLS deny-by-default unchanged; service-role Node only.
 
 ---
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
+- [x] SPEC-REVIEW.md (spec-guardian — GAPS; phased acceptance per CONTRACT)
+- [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
 - [x] CONTRACT.md authored (nextjs-backend — frozen; **Reviewed by FE: N/A**)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend — Phase A adapter on `fba526c`)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES on `fba526c`)
+- [x] QA.md (qa-engineer — CLOSE Phase A after H1 fix `8a781fd`)
 
-**Status:** PREP complete. **Next:** SPEC-REVIEW → SECURITY → CONTRACT on branch `feature/US-8.2-sadtalker-adapter`.
+**Status:** CLOSED — Phase A (2026-08-29). Phase A CONTRACT scope complete; **USER_STORIES § US-8.2 AC intentionally unchecked** until **US-8.4** closes Phase B. **Next:** **US-8.4** Job status and failure handling UI.
+
+---
+
+## Remaining AC — US-8.4 Phase B
+
+Full USER_STORIES § US-8.2 acceptance criteria remain open. US-8.4 owns closure:
+
+| AC | US-8.4 deliverable |
+|----|-------------------|
+| Default talking-head E2E (`provider_tier = low` + avatar modes) | `createTalkingHeadVideoJob()` wires policy → adapter |
+| Portrait still + voiceover inputs (US-9.3) | Orchestrator resolves asset IDs; US-9.3 produces voiceover |
+| Playable video in `neuramark_media_assets` | Poller INSERT + `output_media_asset_id` FK after `fetchAsset` |
+| Failures + configurable retries | Retry handler, `parent_job_id`, Operator UI |
+| [SEC] Consent + budget before submit | Orchestrator gate order (not adapter) |
+| [SEC] Poller-only status writes | Fly worker + `neuramark_video_jobs` |
+| [SEC] Client-scoped status poll → 404 foreign | `GET /api/video-jobs/[jobId]` |
+
+**US-8.4 own AC** (separate story): stale timeout, retry confirmation + estimate, regeneration count, retry max + override, webhook auth, retry override audit.
+
+**Known carry-forwards from Phase A QA:** M1 provider-asset read route (`/api/media/provider-assets/[assetId]`) before live default-path `createJob`; L1 worker `fetchAsset` context from job row.
 
 ---
 
