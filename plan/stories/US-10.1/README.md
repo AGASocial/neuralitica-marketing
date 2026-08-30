@@ -116,14 +116,14 @@ _Evitar:_ “QA verdict” as product noun (use Veredicto QA); impersonation in 
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
+- [x] SPEC-REVIEW.md (spec-guardian) — **GAPS** (intent aligned; SECURITY clear; CONTRACT freezes listed)
 - [ ] SECURITY.md (security-architect)
 - [ ] CONTRACT.md (nextjs-backend — DDL, actions, Zod checks JSON, gate helper; **Reviewed by FE** before BUILD)
 - [ ] BUILD (content-agents-engineer + nextjs-backend + nextjs-frontend)
 - [ ] VALIDATION.md
 - [ ] QA.md
 
-**Next gate:** spec-guardian SPEC-REVIEW → security-architect SECURITY → nextjs-backend CONTRACT.
+**Next gate:** security-architect SECURITY → nextjs-backend CONTRACT.
 
 ---
 
