@@ -279,6 +279,19 @@ const APPROVED_STRATEGY_VIEW = {
   updatedAt: "2026-01-05T12:00:00.000Z",
 };
 
+const DEFAULT_LLM_USAGE = {
+  inputTokens: 100,
+  outputTokens: 400,
+  adapterReportedCents: 1,
+};
+
+function wrapCaptionAgentOutput(output: unknown) {
+  return {
+    output,
+    llmUsage: DEFAULT_LLM_USAGE,
+  };
+}
+
 type MockOptions = {
   requireOperator?: () => Promise<unknown>;
   isAuthGuardError?: (error: unknown) => boolean;
@@ -292,7 +305,7 @@ type MockOptions = {
   getDefaultCostPolicy?: () => Promise<unknown>;
   getCostPolicyForClient?: (clientId: string) => Promise<unknown>;
   assertReelBudgetAllowsSpend?: (input: unknown) => Promise<unknown>;
-  recordReelSpendEvent?: (params: unknown) => Promise<void>;
+  finalizeGenerationCost?: (params: unknown) => Promise<{ ok: true; spendEventId: string }>;
   logProviderDecision?: (params: unknown) => Promise<void>;
   generateReelCaptionForScript?: (params: unknown) => Promise<unknown>;
   resolveProviderForJob?: (input: unknown) => Promise<unknown>;
@@ -450,9 +463,11 @@ function installReelCaptionMocks(options: MockOptions) {
           })),
       };
     }
-    if (String(request).includes("lib/cost-policy/record-reel-spend-event")) {
+    if (String(request).includes("lib/cost-policy/finalize-generation-cost")) {
       return {
-        recordReelSpendEvent: options.recordReelSpendEvent ?? (async () => {}),
+        finalizeGenerationCost:
+          options.finalizeGenerationCost ??
+          (async () => ({ ok: true as const, spendEventId: "spend-event-id" })),
       };
     }
     if (String(request).includes("lib/cost-policy/log-provider-decision")) {
@@ -497,7 +512,7 @@ function installReelCaptionMocks(options: MockOptions) {
       return {
         generateReelCaptionForScript:
           options.generateReelCaptionForScript ??
-          (async () => VALID_CAPTION_OUTPUT),
+          (async () => wrapCaptionAgentOutput(VALID_CAPTION_OUTPUT)),
       };
     }
     if (
@@ -719,7 +734,7 @@ describe("reel caption mutations (US-6.1)", () => {
       },
       generateReelCaptionForScript: async () => {
         agentCalled = true;
-        return VALID_CAPTION_OUTPUT;
+        return wrapCaptionAgentOutput(VALID_CAPTION_OUTPUT);
       },
       from: (table: string) => {
         if (table === "neuramark_reel_captions") {
@@ -752,7 +767,7 @@ describe("reel caption mutations (US-6.1)", () => {
       getApprovedStrategyForWeek: async () => null,
       generateReelCaptionForScript: async () => {
         agentCalled = true;
-        return VALID_CAPTION_OUTPUT;
+        return wrapCaptionAgentOutput(VALID_CAPTION_OUTPUT);
       },
       from: (table: string) => {
         if (table === "neuramark_agent_rate_limits") {
@@ -800,7 +815,7 @@ describe("reel caption mutations (US-6.1)", () => {
       getBusinessProfileForAgents: async () => ({ exists: false }),
       generateReelCaptionForScript: async () => {
         agentCalled = true;
-        return VALID_CAPTION_OUTPUT;
+        return wrapCaptionAgentOutput(VALID_CAPTION_OUTPUT);
       },
       from: defaultCaptionFrom(),
     });
@@ -873,9 +888,12 @@ describe("reel caption mutations (US-6.1)", () => {
       generateReelCaptionForScript: async () => {
         callCount += 1;
         if (callCount === 1) {
-          return { ...VALID_CAPTION_OUTPUT, hashtags: Array.from({ length: 31 }, (_, i) => `#t${i}`) };
+          return wrapCaptionAgentOutput({
+            ...VALID_CAPTION_OUTPUT,
+            hashtags: Array.from({ length: 31 }, (_, i) => `#t${i}`),
+          });
         }
-        return VALID_CAPTION_OUTPUT;
+        return wrapCaptionAgentOutput(VALID_CAPTION_OUTPUT);
       },
       from: (table: string) => {
         if (table === "neuramark_content_strategies") {
@@ -962,7 +980,7 @@ describe("reel caption mutations (US-6.1)", () => {
     const restore = installReelCaptionMocks({
       generateReelCaptionForScript: async () => {
         agentCalled = true;
-        return VALID_CAPTION_OUTPUT;
+        return wrapCaptionAgentOutput(VALID_CAPTION_OUTPUT);
       },
       from: defaultCaptionFrom([]),
     });
@@ -1147,7 +1165,7 @@ describe("reel caption helpers (US-6.1)", () => {
       },
       generateReelCaptionForScript: async () => {
         llmCalls += 1;
-        return VALID_CAPTION_OUTPUT;
+        return wrapCaptionAgentOutput(VALID_CAPTION_OUTPUT);
       },
       from: defaultCaptionFrom([SCRIPT_ROW_0, SCRIPT_ROW_1]),
     });

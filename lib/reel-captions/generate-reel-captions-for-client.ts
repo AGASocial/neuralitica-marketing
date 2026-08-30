@@ -39,7 +39,7 @@ import { persistReelCaption } from "@/lib/reel-captions/persist-reel-caption";
 import { getBusinessProfileForAgents } from "@/lib/profile/get-business-profile-for-agents";
 import { assertReelBudgetAllowsSpend } from "@/lib/cost-policy/assert-reel-budget-allows-spend";
 import { logProviderDecision } from "@/lib/cost-policy/log-provider-decision";
-import { recordReelSpendEvent } from "@/lib/cost-policy/record-reel-spend-event";
+import { finalizeGenerationCost } from "@/lib/cost-policy/finalize-generation-cost";
 import { getProviderCatalog } from "@/lib/providers/get-provider-catalog";
 import {
   resolveCatalogRowForDecision,
@@ -325,9 +325,9 @@ export async function generateReelCaptionsForClient(
         verified.reelScriptId,
       );
 
-      let rawOutput: unknown;
+      let agentResult: Awaited<ReturnType<typeof generateReelCaptionForScript>>;
       try {
-        rawOutput = await generateReelCaptionForScript({
+        agentResult = await generateReelCaptionForScript({
           profile,
           slotContext,
           provider,
@@ -357,7 +357,7 @@ export async function generateReelCaptionsForClient(
         continue;
       }
 
-      const agentParsed = reelCaptionAgentOutputSchema.safeParse(rawOutput);
+      const agentParsed = reelCaptionAgentOutputSchema.safeParse(agentResult.output);
       if (!agentParsed.success) {
         const fields = zodInterviewErrorToFieldErrors(agentParsed.error);
         if (params.mode === "slot") {
@@ -406,7 +406,8 @@ export async function generateReelCaptionsForClient(
 
       captionIds.push(persisted.captionId);
 
-      await recordReelSpendEvent({
+      await finalizeGenerationCost({
+        mode: "sync_insert",
         clientId,
         reelScriptId: verified.reelScriptId,
         assetRole: "llm",
@@ -414,6 +415,7 @@ export async function generateReelCaptionsForClient(
         estimatedCostCents: gate.estimatedCostCents,
         operatorClientId,
         providerKey: gate.providerKey,
+        llmUsage: agentResult.llmUsage,
       });
 
       await logProviderDecision({

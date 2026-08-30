@@ -5,6 +5,7 @@ import type {
   LlmCompletionResult,
   LlmProviderAdapter,
 } from "@/lib/providers/provider-adapters";
+import { computeLlmActualCost } from "@/lib/cost-policy/compute-llm-actual-cost";
 
 const SILICONFLOW_CHAT_URL =
   "https://api.siliconflow.cn/v1/chat/completions";
@@ -91,11 +92,21 @@ export class SiliconFlowLlmAdapter implements LlmProviderAdapter {
       throw new Error("LLM empty response");
     }
 
+    const inputTokens = payload.usage?.prompt_tokens ?? 0;
+    const outputTokens = payload.usage?.completion_tokens ?? 0;
+
+    const costResult = await computeLlmActualCost({
+      providerKey: this.providerKey,
+      inputTokens,
+      outputTokens,
+      adapterReportedCents: 0,
+    });
+
     return {
       content: extractJsonContent(content),
-      inputTokens: payload.usage?.prompt_tokens ?? 0,
-      outputTokens: payload.usage?.completion_tokens ?? 0,
-      actualCostCents: 0,
+      inputTokens,
+      outputTokens,
+      actualCostCents: costResult.ok ? costResult.actualCostCents : 0,
     };
   }
 }

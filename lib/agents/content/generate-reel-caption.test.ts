@@ -426,7 +426,7 @@ describe("generate-reel-caption agent module", () => {
     );
 
     const stub = createStubReelCaptionLlmAdapter(DEEPSEEK_PROVIDER.key);
-    const output = await generateReelCaptionForScript({
+    const agentResult = await generateReelCaptionForScript({
       profile: PROFILE_WITH_ZONE,
       slotContext: {
         slot: SLOT,
@@ -438,7 +438,7 @@ describe("generate-reel-caption agent module", () => {
       llmAdapter: stub,
     });
 
-    const validated = reelCaptionAgentOutputSchema.parse(output);
+    const validated = reelCaptionAgentOutputSchema.parse(agentResult.output);
     assert.ok(validated.caption.length > 0);
     assert.ok(validated.ctaVariants.length >= CTA_VARIANT_MIN);
     assert.ok(validated.ctaVariants.length <= CTA_VARIANT_MAX);
@@ -453,7 +453,7 @@ describe("generate-reel-caption agent module", () => {
     } = await loadReelCaptionModule();
 
     const stub = createStubReelCaptionLlmAdapter(DEEPSEEK_PROVIDER.key);
-    const output = await generateReelCaptionForScript({
+    const agentResult = await generateReelCaptionForScript({
       profile: PROFILE_NO_ZONE,
       slotContext: {
         slot: SLOT,
@@ -465,7 +465,10 @@ describe("generate-reel-caption agent module", () => {
       llmAdapter: stub,
     });
 
-    assert.equal(output.keywords.length, 0);
+    assert.equal(
+      (agentResult.output as { keywords: string[] }).keywords.length,
+      0,
+    );
   });
 });
 

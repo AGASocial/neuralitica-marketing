@@ -19,6 +19,17 @@ import type { ProviderCatalogRow, SupportedLocale } from "@/lib/contracts/provid
 import { extractJsonFromLlmContent } from "@/lib/agents/content/generate-weekly-strategy";
 import type { LlmProviderAdapter } from "@/lib/providers/provider-adapters";
 
+export type ReelCaptionLlmUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  adapterReportedCents: number;
+};
+
+export type ReelCaptionForScriptResult = {
+  output: unknown;
+  llmUsage: ReelCaptionLlmUsage;
+};
+
 export const REEL_CAPTION_LLM_VARIANT = "default" as const;
 
 export const UNTRUSTED_BUSINESS_PROFILE_TAG = "UNTRUSTED_BUSINESS_PROFILE";
@@ -204,7 +215,7 @@ export const parseAndValidateReelCaptionAgentOutput = parseAndValidateReelCaptio
  */
 export async function generateReelCaptionForScript(
   params: GenerateReelCaptionForScriptParams,
-): Promise<unknown> {
+): Promise<ReelCaptionForScriptResult> {
   const locale = resolveReelCaptionLocale(params.profile, params.locale);
   const { systemPrompt, userPrompt } = buildReelCaptionPrompts({
     profile: params.profile,
@@ -223,7 +234,14 @@ export async function generateReelCaptionForScript(
 
   const jsonText = extractJsonFromLlmContent(completion.content);
   try {
-    return JSON.parse(jsonText) as unknown;
+    return {
+      output: JSON.parse(jsonText) as unknown,
+      llmUsage: {
+        inputTokens: completion.inputTokens,
+        outputTokens: completion.outputTokens,
+        adapterReportedCents: completion.actualCostCents,
+      },
+    };
   } catch {
     throw new ReelCaptionAgentError(
       "AGENT_OUTPUT_INVALID",

@@ -23,6 +23,17 @@ import { extractJsonFromLlmContent } from "@/lib/agents/content/generate-weekly-
 import { buildGenericDisclosurePromptHint } from "@/lib/qa/build-generic-disclosure-prompt-hint";
 import type { LlmProviderAdapter } from "@/lib/providers/provider-adapters";
 
+export type ReelScriptLlmUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  adapterReportedCents: number;
+};
+
+export type ReelScriptForSlotResult = {
+  output: unknown;
+  llmUsage: ReelScriptLlmUsage;
+};
+
 export const REEL_SCRIPT_LLM_VARIANT = "fallback" as const;
 
 export const UNTRUSTED_BUSINESS_PROFILE_TAG = "UNTRUSTED_BUSINESS_PROFILE";
@@ -296,7 +307,7 @@ export function parseAndValidateReelScriptPackage(
  */
 export async function generateReelScriptForSlot(
   params: GenerateReelScriptForSlotParams,
-): Promise<unknown> {
+): Promise<ReelScriptForSlotResult> {
   const locale = resolveReelScriptLocale(params.profile, params.locale);
   const { systemPrompt, userPrompt } = buildReelScriptPrompts({
     profile: params.profile,
@@ -315,7 +326,14 @@ export async function generateReelScriptForSlot(
 
   const jsonText = extractJsonFromLlmContent(completion.content);
   try {
-    return JSON.parse(jsonText) as unknown;
+    return {
+      output: JSON.parse(jsonText) as unknown,
+      llmUsage: {
+        inputTokens: completion.inputTokens,
+        outputTokens: completion.outputTokens,
+        adapterReportedCents: completion.actualCostCents,
+      },
+    };
   } catch {
     throw new ReelScriptAgentError(
       "AGENT_OUTPUT_INVALID",

@@ -663,7 +663,7 @@ describe("reel script mutations (US-5.1)", () => {
       },
       generateReelScriptForSlot: async () => {
         agentCalled = true;
-        return VALID_SCRIPT_PACKAGE;
+        return wrapAgentOutput(VALID_SCRIPT_PACKAGE);
       },
       from: (table: string) => {
         if (table === "neuramark_reel_scripts") {
@@ -695,7 +695,7 @@ describe("reel script mutations (US-5.1)", () => {
     const restore = installReelScriptMocks({
       generateReelScriptForSlot: async () => {
         agentCalled = true;
-        return VALID_SCRIPT_PACKAGE;
+        return wrapAgentOutput(VALID_SCRIPT_PACKAGE);
       },
       from: (table: string) => {
         if (table === "neuramark_content_strategies") {
@@ -759,7 +759,7 @@ describe("reel script mutations (US-5.1)", () => {
       }),
       generateReelScriptForSlot: async () => {
         agentCalled = true;
-        return VALID_SCRIPT_PACKAGE;
+        return wrapAgentOutput(VALID_SCRIPT_PACKAGE);
       },
       from: (table: string) => {
         if (table === "neuramark_content_strategies") {
@@ -838,7 +838,7 @@ describe("reel script mutations (US-5.1)", () => {
         if (callCount === 2) {
           return { ...VALID_SCRIPT_PACKAGE, targetDurationSec: 99 };
         }
-        return VALID_SCRIPT_PACKAGE;
+        return wrapAgentOutput(VALID_SCRIPT_PACKAGE);
       },
       from: (table: string) => {
         if (table === "neuramark_content_strategies") {
@@ -878,7 +878,7 @@ describe("reel script mutations (US-5.1)", () => {
     const restore = installReelScriptMocks({
       generateReelScriptForSlot: async () => {
         agentCalled = true;
-        return VALID_SCRIPT_PACKAGE;
+        return wrapAgentOutput(VALID_SCRIPT_PACKAGE);
       },
       from: (table: string) => {
         if (table === "neuramark_content_strategies") {
@@ -1173,7 +1173,7 @@ describe("reel script mutations (US-5.1)", () => {
     const restore = installReelScriptMocks({
       generateReelScriptForSlot: async () => {
         agentCalled = true;
-        return VALID_SCRIPT_PACKAGE;
+        return wrapAgentOutput(VALID_SCRIPT_PACKAGE);
       },
       from: (table: string) => {
         if (table === "neuramark_content_strategies") {
@@ -1215,7 +1215,7 @@ describe("reel script mutations (US-5.1)", () => {
     const restore = installReelScriptMocks({
       generateReelScriptForSlot: async () => {
         agentCalled = true;
-        return VALID_SCRIPT_PACKAGE;
+        return wrapAgentOutput(VALID_SCRIPT_PACKAGE);
       },
       from: (table: string) => {
         if (table === "neuramark_content_strategies") {
@@ -1458,7 +1458,7 @@ describe("reel script agent (US-5.1)", () => {
       },
       generateReelScriptForSlot: async () => {
         llmCalls += 1;
-        return VALID_SCRIPT_PACKAGE;
+        return wrapAgentOutput(VALID_SCRIPT_PACKAGE);
       },
       from: (table: string) => {
         if (table === "neuramark_content_strategies") {

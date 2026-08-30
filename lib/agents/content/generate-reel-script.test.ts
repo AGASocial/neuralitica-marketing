@@ -484,14 +484,14 @@ describe("generate-reel-script agent module", () => {
     });
 
     const stub = createStubReelScriptLlmAdapter(QWEN_PROVIDER.key);
-    const rawPackage = await generateReelScriptForSlot({
+    const agentResult = await generateReelScriptForSlot({
       profile: PROFILE,
       slotContext,
       provider: QWEN_PROVIDER,
       llmAdapter: stub,
     });
 
-    const pkg = reelScriptPackageSchema.parse(rawPackage);
+    const pkg = reelScriptPackageSchema.parse(agentResult.output);
     assert.equal(pkg.targetDurationSec, 30);
     assert.match(pkg.hook, /Por qué revisar antes del frío/);
     assert.ok(pkg.brollBeats && pkg.brollBeats.length > 0);

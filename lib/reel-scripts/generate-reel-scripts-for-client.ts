@@ -39,7 +39,7 @@ import { getPlaybookForAgents } from "@/lib/playbook/get-playbook-for-agents";
 import { getTrendSnapshotForWeek } from "@/lib/trend/get-trend-snapshot-for-week";
 import { assertReelBudgetAllowsSpend } from "@/lib/cost-policy/assert-reel-budget-allows-spend";
 import { logProviderDecision } from "@/lib/cost-policy/log-provider-decision";
-import { recordReelSpendEvent } from "@/lib/cost-policy/record-reel-spend-event";
+import { finalizeGenerationCost } from "@/lib/cost-policy/finalize-generation-cost";
 import { resolveReelScriptBudgetContext } from "@/lib/cost-policy/resolve-reel-script-for-budget";
 import { getProviderCatalog } from "@/lib/providers/get-provider-catalog";
 import {
@@ -293,6 +293,11 @@ export async function generateReelScriptsForClient(
       package: ReturnType<typeof reelScriptPackageSchema.parse>;
       mustDiscloseNotOwner: boolean;
       gate: SlotGateOk;
+      llmUsage: {
+        inputTokens: number;
+        outputTokens: number;
+        adapterReportedCents: number;
+      };
     }> = [];
 
     for (const slot of slots) {
@@ -344,9 +349,9 @@ export async function generateReelScriptsForClient(
 
       const slotContext = buildSlotContext(slot, profile, playbook, trend);
 
-      let rawOutput: unknown;
+      let agentResult: Awaited<ReturnType<typeof generateReelScriptForSlot>>;
       try {
-        rawOutput = await generateReelScriptForSlot({
+        agentResult = await generateReelScriptForSlot({
           profile,
           slotContext,
           provider,
@@ -367,7 +372,7 @@ export async function generateReelScriptsForClient(
         });
       }
 
-      const packageParsed = reelScriptPackageSchema.safeParse(rawOutput);
+      const packageParsed = reelScriptPackageSchema.safeParse(agentResult.output);
       if (!packageParsed.success) {
         return reelScriptOutputInvalidError({
           slotIndex: [String(slot.slotIndex)],
@@ -380,6 +385,7 @@ export async function generateReelScriptsForClient(
         package: packageParsed.data,
         mustDiscloseNotOwner: slotContext.mustDiscloseForSlot,
         gate,
+        llmUsage: agentResult.llmUsage,
       });
     }
 
@@ -399,7 +405,8 @@ export async function generateReelScriptsForClient(
       }
       scriptIds.push(persisted.scriptId);
 
-      await recordReelSpendEvent({
+      await finalizeGenerationCost({
+        mode: "sync_insert",
         clientId,
         reelScriptId: persisted.scriptId,
         assetRole: "llm",
@@ -407,6 +414,7 @@ export async function generateReelScriptsForClient(
         estimatedCostCents: item.gate.estimatedCostCents,
         operatorClientId,
         providerKey: item.gate.providerKey,
+        llmUsage: item.llmUsage,
       });
 
       await logProviderDecision({
