@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-9.3
-story_status: SELECT
-feature_branch: null
+story_status: PREP
+feature_branch: feature/US-9.3-tts-voiceover
 last_completed_story: US-8.3
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T17:30:00Z
+updated_at: 2026-08-30T17:35:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
