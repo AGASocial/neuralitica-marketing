@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-8.4
-story_status: BUILD
+story_status: VALIDATION
 feature_branch: feature/US-8.4-video-jobs
 last_completed_story: US-8.2
 phase_status: in_progress
-blocked_reason: VALIDATION FAIL — fix tests + budget soft-disable (442b31a)
-updated_at: 2026-08-30T04:45:00Z
+blocked_reason: null
+updated_at: 2026-08-30T04:55:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -30,7 +30,7 @@ updated_at: 2026-08-30T04:45:00Z
 | US-7.4 Report real total cost per Reel | done | BE `5c9abb4` · FE `8735be2` · fix `5b3e9d7` · VALIDATION `a678ac4` · QA `746a563` · CLOSE Phase A `f0ca5a0` |
 | US-8.1 Provider adapter interface | done | BE `a11d4ae` · fix `4193a1e` · VALIDATION `7367929` · QA `7f34bdb` · CLOSE `3ac3304` |
 | US-8.2 SadTalker adapter | done (Phase A) | BE `fba526c` · fix `8a781fd` · VALIDATION `52b2e98` · QA `0448f65` · CLOSE Phase A `258fcef`; Phase B → US-8.4 |
-| US-8.4 Job status and failure UI | BUILD (remediation) | VALIDATION FAIL `442b31a` — tests + budget UX |
+| US-8.4 Job status and failure UI | VALIDATION | Remediation `ad4d514` · re-validate running |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
