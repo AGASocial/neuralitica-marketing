@@ -95,7 +95,22 @@ export const COST_POLICY_GLOBAL_MISSING = "COST_POLICY_GLOBAL_MISSING" as const;
 export const COST_POLICY_LOAD_FAILED = "COST_POLICY_LOAD_FAILED" as const;
 export const PROVIDER_NOT_FOUND = "PROVIDER_NOT_FOUND" as const;
 
-export const createVideoJobInputSchema = z.object({
+/** Client/handler request — provider assigned by policy engine (US-7.2). */
+export const createVideoJobRequestSchema = z
+  .object({
+    reelScriptId: z.string().uuid(),
+    clientId: z.string().uuid(),
+    targetDurationSec: z.number().int().positive().max(120),
+    voiceoverAssetId: z.string().uuid().optional(),
+    portraitAssetId: z.string().uuid().optional(),
+    referenceVideoAssetId: z.string().uuid().optional(),
+    prompt: z.string().max(4000).optional(),
+    referenceImageAssetId: z.string().uuid().optional(),
+  })
+  .strict();
+
+/** Internal adapter input — engine sets providerKey/tier/role after resolveProviderForJob. */
+export const resolvedCreateVideoJobInputSchema = z.object({
   reelScriptId: z.string().uuid(),
   clientId: z.string().uuid(),
   providerKey: z.string().min(1),
@@ -108,6 +123,9 @@ export const createVideoJobInputSchema = z.object({
   prompt: z.string().max(4000).optional(),
   referenceImageAssetId: z.string().uuid().optional(),
 });
+
+/** @deprecated Use createVideoJobRequestSchema at boundaries; resolvedCreateVideoJobInputSchema internally. */
+export const createVideoJobInputSchema = resolvedCreateVideoJobInputSchema;
 
 export const createVideoJobResultSchema = z.object({
   externalJobId: z.string().min(1),
@@ -130,7 +148,19 @@ export const storedMediaAssetSchema = z.object({
   actualCostCents: z.number().int().nonnegative(),
 });
 
-export const synthesizeSpeechInputSchema = z.object({
+/** Client/handler request — provider assigned by policy engine (US-7.2). */
+export const synthesizeSpeechRequestSchema = z
+  .object({
+    reelScriptId: z.string().uuid(),
+    clientId: z.string().uuid(),
+    text: z.string().min(1).max(50_000),
+    voiceId: z.string().min(1),
+    locale: supportedLocaleSchema,
+  })
+  .strict();
+
+/** Internal adapter input — engine sets providerKey after resolveProviderForJob. */
+export const resolvedSynthesizeSpeechInputSchema = z.object({
   reelScriptId: z.string().uuid(),
   clientId: z.string().uuid(),
   providerKey: z.string().min(1),
@@ -139,7 +169,11 @@ export const synthesizeSpeechInputSchema = z.object({
   locale: supportedLocaleSchema,
 });
 
-export const llmCompletionInputSchema = z.object({
+/** @deprecated Use synthesizeSpeechRequestSchema at boundaries; resolvedSynthesizeSpeechInputSchema internally. */
+export const synthesizeSpeechInputSchema = resolvedSynthesizeSpeechInputSchema;
+
+/** Internal adapter input — engine sets providerKey after resolveProviderForJob. */
+export const resolvedLlmCompletionInputSchema = z.object({
   clientId: z.string().uuid(),
   providerKey: z.string().min(1),
   locale: supportedLocaleSchema,
@@ -147,6 +181,9 @@ export const llmCompletionInputSchema = z.object({
   userPrompt: z.string().min(1),
   structuredOutputSchema: z.string().optional(),
 });
+
+/** @deprecated Use resolvedLlmCompletionInputSchema; providerKey is server-assigned. */
+export const llmCompletionInputSchema = resolvedLlmCompletionInputSchema;
 
 export const llmCompletionResultSchema = z.object({
   content: z.string(),
@@ -164,7 +201,17 @@ export type SupportedLocale = z.infer<typeof supportedLocaleSchema>;
 export type CostBillingUnit = z.infer<typeof costBillingUnitSchema>;
 export type ProviderCostModel = z.infer<typeof providerCostModelSchema>;
 export type ProviderCatalogRow = z.infer<typeof providerCatalogRowSchema>;
-export type CreateVideoJobInput = z.infer<typeof createVideoJobInputSchema>;
+export type CreateVideoJobRequest = z.infer<typeof createVideoJobRequestSchema>;
+export type ResolvedCreateVideoJobInput = z.infer<
+  typeof resolvedCreateVideoJobInputSchema
+>;
+export type CreateVideoJobInput = ResolvedCreateVideoJobInput;
+export type SynthesizeSpeechRequest = z.infer<
+  typeof synthesizeSpeechRequestSchema
+>;
+export type ResolvedSynthesizeSpeechInput = z.infer<
+  typeof resolvedSynthesizeSpeechInputSchema
+>;
 export type CreateVideoJobResult = z.infer<typeof createVideoJobResultSchema>;
 export type StoredMediaAsset = z.infer<typeof storedMediaAssetSchema>;
 
