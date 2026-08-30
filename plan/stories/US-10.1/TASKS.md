@@ -119,41 +119,41 @@ type QaCheckResult = {
 
 ## BE checklist
 
-- [ ] Migration: `neuramark_qa_reports` (+ indexes, UNIQUE on `assembled_reel_id`, RLS enabled zero policies)
-- [ ] Check catalog module: keys + severity map (immutable at runtime)
-- [ ] Wire `evaluateGenericAvatarNotOwnerCheck` from US-3.4
-- [ ] Deterministic `own_avatar_consent` (live consent ledger when own avatar)
-- [ ] Deterministic `cta_presence` + branding prerequisite
-- [ ] Server Action `runQaForAssembledReel` — `requireOperator`; load assembly → script → caption → profile
-- [ ] Reject missing branding / missing caption with typed errors (CONTRACT)
-- [ ] Invoke content-agents QA LLM via catalog resolve + budget assert
-- [ ] Persist checks + derived status; never accept client `passed`
-- [ ] Auto-chain hook after branding `completed`
-- [ ] Rate limit `qa_run`
-- [ ] `getQaGateStatusForAssembledReel` for US-11.1
-- [ ] Extend Operator list/detail DTO with QA summary (nullable)
-- [ ] `revalidatePath("/operator/scripts")` after run
-- [ ] Unit/integration tests: severity map, status derivation, no client pass smuggle, IDOR 404
+- [x] Migration: `neuramark_qa_reports` (+ indexes, UNIQUE on `assembled_reel_id`, RLS enabled zero policies)
+- [x] Check catalog module: keys + severity map (immutable at runtime)
+- [x] Wire `evaluateGenericAvatarNotOwnerCheck` from US-3.4
+- [x] Deterministic `own_avatar_consent` (live consent ledger when own avatar)
+- [x] Deterministic `cta_presence` + branding prerequisite
+- [x] Server Action `runQaForAssembledReel` — `requireOperator`; load assembly → script → caption → profile
+- [x] Reject missing branding / missing caption with typed errors (CONTRACT)
+- [x] Invoke content-agents QA LLM via catalog resolve + budget assert
+- [x] Persist checks + derived status; never accept client `passed`
+- [x] Auto-chain hook after branding `completed`
+- [x] Rate limit `qa_run`
+- [x] `getQaGateStatusForAssembledReel` for US-11.1
+- [x] Extend Operator list/detail DTO with QA summary (nullable)
+- [x] `revalidatePath("/operator/scripts")` after run
+- [x] Unit/integration tests: severity map, status derivation, no client pass smuggle, IDOR 404
 
 ## DB checklist
 
-- [ ] `neuramark_qa_reports` with `neuramark_` prefix on table, FKs, indexes, constraints
-- [ ] Columns: `id`, `client_id`, `assembled_reel_id`, `checks`, `status`, `created_at`, `updated_at`
-- [ ] FK `assembled_reel_id` → `neuramark_assembled_reels(id)`
-- [ ] UNIQUE `(assembled_reel_id)` for current-report model
-- [ ] CHECK on `status` enum values
-- [ ] RLS enabled; no policies (service-role Node only)
+- [x] `neuramark_qa_reports` with `neuramark_` prefix on table, FKs, indexes, constraints
+- [x] Columns: `id`, `client_id`, `assembled_reel_id`, `checks`, `status`, `created_at`, `updated_at`
+- [x] FK `assembled_reel_id` → `neuramark_assembled_reels(id)`
+- [x] UNIQUE `(assembled_reel_id)` for current-report model
+- [x] CHECK on `status` enum values
+- [x] RLS enabled; no policies (service-role Node only)
 
 ## content-agents-engineer checklist
 
-- [ ] Agent module under `lib/agents/content/`
-- [ ] Zod `.strict()` output for LLM check subset
-- [ ] Inputs: script package, caption, profile flags, modality/TTS disclosure context — trusted helpers only
-- [ ] Delimited untrusted content blocks in prompt
-- [ ] `resolveProvider` `llm` + `default` variant — no hardcoded vendor in agent
-- [ ] Server merges LLM results; severity from catalog not model
-- [ ] Fixtures: pass/fail samples for dangerous claims, tone, clarity, disclosure
-- [ ] Tests without live network (mock provider)
+- [x] Agent module under `lib/agents/content/` (`run-reel-qa.ts`)
+- [x] Zod `.strict()` output for LLM check subset (`qaLlmAgentOutputSchema` + sanitize)
+- [x] Inputs: script package, caption, modality/TTS disclosure context — trusted helpers only (`ReelQaAgentContext`)
+- [x] Delimited untrusted content blocks in prompt
+- [x] `resolveProvider` `llm` + `default` variant — no hardcoded vendor in agent (`REEL_QA_LLM_VARIANT`)
+- [x] Server merges LLM results; severity from catalog not model (`merge-qa-checks.ts` + catalog)
+- [x] Fixtures: pass/fail samples for dangerous claims, tone, clarity, disclosure (`stub-reel-qa-llm-adapter.ts`)
+- [x] Tests without live network (mock provider) — `run-reel-qa.test.ts` + `check-catalog.test.ts`
 
 ## Dependencies and sequence
 
