@@ -119,3 +119,35 @@ describe("US-9.3 voice catalog", () => {
     assert.match(source, /import ["']server-only["']/);
   });
 });
+
+describe("computeVoicePickerVisible", () => {
+  it("hides picker for faceless-only music_only", () => {
+    const { computeVoicePickerVisible } = require("../preferences/compute-voice-picker-visible.ts");
+    assert.equal(
+      computeVoicePickerVisible(
+        ["faceless"],
+        {
+          voice: "music_only",
+          onScreenText: "captions",
+          broll: "stock",
+        },
+      ),
+      false,
+    );
+  });
+
+  it("shows picker for faceless ai_voiceover", () => {
+    const { computeVoicePickerVisible } = require("../preferences/compute-voice-picker-visible.ts");
+    assert.equal(
+      computeVoicePickerVisible(
+        ["faceless"],
+        {
+          voice: "ai_voiceover",
+          onScreenText: "captions",
+          broll: "stock",
+        },
+      ),
+      true,
+    );
+  });
+});

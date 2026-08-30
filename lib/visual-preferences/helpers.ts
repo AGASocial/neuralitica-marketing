@@ -11,6 +11,8 @@ import {
   type VisualModality,
   type VisualPreferencesRules,
 } from "@/lib/contracts/visual-preferences";
+import type { TtsVoiceId } from "@/lib/contracts/tts-voiceover";
+import { ttsVoiceIdSchema } from "@/lib/contracts/tts-voiceover";
 
 /**
  * Identity / privilege / rules / consent / audit keys — reject as
@@ -43,6 +45,11 @@ const FORBIDDEN_UPSERT_KEYS = new Set(
     "updatedAt",
     "created_at",
     "createdAt",
+    "providerVoice",
+    "provider_voice",
+    "providerKey",
+    "provider_key",
+    "voice_id",
   ].map((key) => key.toLowerCase()),
 );
 
@@ -130,6 +137,7 @@ export type VisualPreferencesSelectRow = {
   allowed_modes: unknown;
   faceless_style: unknown;
   generic_avatar_id: unknown;
+  voice_id?: unknown;
   rules: unknown;
   updated_at: unknown;
 };
@@ -190,6 +198,19 @@ function parseRules(value: unknown): VisualPreferencesRules | null {
   return parsed.data;
 }
 
+function parseVoiceId(value: unknown): TtsVoiceId | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value === "string" && ttsVoiceIdSchema.safeParse(value).success) {
+    return value as TtsVoiceId;
+  }
+  return undefined;
+}
+
 /**
  * Map SELECT / UPSERT … RETURNING row to Cliente view slice (without consent flag).
  */
@@ -201,6 +222,7 @@ export function mapVisualPreferencesRow(params: {
       kind: "exists";
       allowedModes: VisualModality[];
       facelessStyle: FacelessStyle | null;
+      voiceId: TtsVoiceId | null;
       rules: VisualPreferencesRules;
       updatedAt: string;
     }
@@ -248,10 +270,17 @@ export function mapVisualPreferencesRow(params: {
     return { kind: "loadFailed" };
   }
 
+  const voiceId = parseVoiceId(params.data.voice_id);
+  if (voiceId === undefined) {
+    console.error("[preferences] voice_id invalid", { code: "invalid_type" });
+    return { kind: "loadFailed" };
+  }
+
   return {
     kind: "exists",
     allowedModes,
     facelessStyle,
+    voiceId: voiceId ?? null,
     rules,
     updatedAt,
   };
@@ -274,6 +303,7 @@ export function mapUpsertVisualPreferencesResult(
     allowedModes: mapped.allowedModes,
     facelessStyle: mapped.facelessStyle,
     genericAvatarId: null,
+    voiceId: mapped.voiceId,
     rules: mapped.rules,
     updatedAt: mapped.updatedAt,
   };
@@ -283,19 +313,27 @@ export function mapUpsertVisualPreferencesResult(
 export function buildVisualPreferencesUpsertPayload(params: {
   clientId: string;
   input: UpsertVisualPreferencesInput;
+  existingVoiceId?: TtsVoiceId | null;
 }): {
   client_id: string;
   allowed_modes: VisualModality[];
   faceless_style: FacelessStyle | null;
   generic_avatar_id: null;
+  voice_id: TtsVoiceId | null;
   rules: VisualPreferencesRules;
 } {
   const allowedModes = params.input.allowedModes;
+  let voiceId: TtsVoiceId | null = params.existingVoiceId ?? null;
+  if (params.input.voiceId !== undefined) {
+    voiceId = params.input.voiceId;
+  }
+
   return {
     client_id: params.clientId,
     allowed_modes: allowedModes,
     faceless_style: params.input.facelessStyle ?? null,
     generic_avatar_id: null,
+    voice_id: voiceId,
     rules: deriveVisualPreferencesRules(allowedModes),
   };
 }

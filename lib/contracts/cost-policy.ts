@@ -25,6 +25,8 @@ export const reelSpendJobKindSchema = z.enum([
   "caption_regenerate",
   "talking_head_generate",
   "talking_head_retry",
+  "tts_generate",
+  "tts_regenerate",
 ]);
 
 export type ReelSpendJobKind = z.infer<typeof reelSpendJobKindSchema>;

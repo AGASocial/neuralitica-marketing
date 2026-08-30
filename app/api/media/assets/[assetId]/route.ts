@@ -9,10 +9,12 @@ import {
 import {
   MEDIA_ASSET_TYPE_AVATAR_REFERENCE,
   MEDIA_ASSET_TYPE_GENERATED_VIDEO,
+  MEDIA_ASSET_TYPE_VOICEOVER,
 } from "@/lib/contracts/media-assets";
 import {
   avatarReferenceAssetMetadataSchema,
   generatedVideoAssetMetadataSchema,
+  voiceoverAssetMetadataSchema,
 } from "@/lib/contracts/media-assets";
 import { getMediaStorage } from "@/lib/media/storage/get-media-storage";
 import {
@@ -49,8 +51,8 @@ function internalErrorResponse(): Response {
 }
 
 /**
- * Authenticated ownership-checked media serve (US-3.3 + US-8.3).
- * avatar_reference: cliente session. generated_video: Operator session.
+ * Authenticated ownership-checked media serve (US-3.3 + US-8.3 + US-9.3).
+ * avatar_reference: cliente session. generated_video + voiceover: Operator session.
  */
 export async function GET(
   _request: Request,
@@ -134,6 +136,28 @@ export async function GET(
     }
 
     const metaParsed = generatedVideoAssetMetadataSchema.safeParse(
+      row.metadata ?? {},
+    );
+    if (metaParsed.success) {
+      contentType = metaParsed.data.detectedMime;
+      originalFilename = metaParsed.data.originalFilename;
+    }
+  } else if (row.asset_type === MEDIA_ASSET_TYPE_VOICEOVER) {
+    let operator;
+    try {
+      operator = await requireOperator("handler");
+    } catch (authError) {
+      if (isAuthGuardError(authError)) {
+        return authGuardResponse(authError);
+      }
+      throw authError;
+    }
+
+    if (row.client_id !== operator.id) {
+      return notFoundResponse();
+    }
+
+    const metaParsed = voiceoverAssetMetadataSchema.safeParse(
       row.metadata ?? {},
     );
     if (metaParsed.success) {

@@ -157,26 +157,26 @@ Concrete BE consumers: extended Preferencias loader; `upsertVisualPreferences` w
 
 Concrete FE consumers: Preferencias loader/action; scripts page action; media serve route for audio.
 
-- [ ] **`lib/providers/tts/siliconflow-cosyvoice2-adapter.ts`** — implement **`TtsProviderAdapter`**.
-- [ ] **`estimateCost`** — `per_1m_chars` from catalog unit cost.
-- [ ] **`synthesize`** — map catalog `voiceId` → provider param; POST SiliconFlow; decode audio; Storage upload; return **`storedMediaAssetSchema`**.
-- [ ] **Register adapter** in **`createProviderRegistry`**; extend **`buildBootstrapCatalog()`** with TTS row.
-- [ ] **`lib/tts/voice-catalog.ts`** — closed catalog + validation helpers.
-- [ ] **Migration** — `voiceover` enum value; audio `storage_key` regex; **`voice_id`** column on Preferencias.
-- [ ] **`lib/media/insert-voiceover-media-asset.ts`** — INSERT `neuramark_media_assets`.
-- [ ] **`lib/tts/synthesize-voiceover-for-reel-script.ts`** — orchestrator with policy + budget + adapter + INSERT + spend event.
-- [ ] **Extend `reelSpendJobKindSchema`** — `tts_generate`, `tts_regenerate`.
-- [ ] **Extend `upsertVisualPreferences`** — validate `voiceId` against catalog; persist column.
-- [ ] **Extend `getVisualPreferencesForClient`** — return `voiceId` + voice list for picker.
-- [ ] **Extend media serve route** — audio MIME types for `voiceover` assets.
+- [x] **`lib/providers/tts/siliconflow-cosyvoice2-adapter.ts`** — implement **`TtsProviderAdapter`**.
+- [x] **`estimateCost`** — `per_1m_chars` from catalog unit cost.
+- [x] **`synthesize`** — map catalog `voiceId` → provider param; POST SiliconFlow; decode audio; Storage upload; return **`storedMediaAssetSchema`**.
+- [x] **Register adapter** in **`createProviderRegistry`**; extend **`buildBootstrapCatalog()`** with TTS row.
+- [x] **`lib/tts/voice-catalog.ts`** — closed catalog + validation helpers.
+- [x] **Migration** — `voiceover` enum value; audio `storage_key` regex; **`voice_id`** column on Preferencias.
+- [x] **`lib/media/insert-voiceover-media-asset.ts`** — INSERT `neuramark_media_assets`.
+- [x] **`lib/tts/synthesize-voiceover-for-reel-script.ts`** — orchestrator with policy + budget + adapter + INSERT + spend event.
+- [x] **Extend `reelSpendJobKindSchema`** — `tts_generate`, `tts_regenerate`.
+- [x] **Extend `upsertVisualPreferences`** — validate `voiceId` against catalog; persist column.
+- [x] **Extend `getVisualPreferencesForClient`** — return `voiceId` + voice list for picker.
+- [x] **Extend media serve route** — audio MIME types for `voiceover` assets.
 - [ ] **Commit sample MP3s** under `public/tts-samples/` (or CONTRACT alternate).
-- [ ] **[SEC] `server-only`** on adapter, catalog, orchestrator; API key never logged/returned.
-- [ ] **[SEC] `voiceId` allowlist** on upsert and synthesize (prefs voice only — no request override of arbitrary vendor ids).
-- [ ] **[SEC] Budget gate** before vendor I/O; spend row only on success.
-- [ ] **[SEC] Tenancy** — script/asset queries scoped to `getCurrentUser()` client id.
-- [ ] **`lib/providers/tts/siliconflow-cosyvoice2-adapter.test.ts`** — mocked HTTP round-trip.
-- [ ] **Orchestrator tests** — budget block, empty voiceover text, happy path with mocked adapter.
-- [ ] **Registry test** — `getTtsAdapter("siliconflow_cosyvoice2")` returns real adapter.
+- [x] **[SEC] `server-only`** on adapter, catalog, orchestrator; API key never logged/returned.
+- [x] **[SEC] `voiceId` allowlist** on upsert and synthesize (prefs voice only — no request override of arbitrary vendor ids).
+- [x] **[SEC] Budget gate** before vendor I/O; spend row only on success.
+- [x] **[SEC] Tenancy** — script/asset queries scoped to `getCurrentUser()` client id.
+- [x] **`lib/providers/tts/siliconflow-cosyvoice2-adapter.test.ts`** — mocked HTTP round-trip.
+- [x] **Orchestrator tests** — budget block, empty voiceover text, happy path with mocked adapter.
+- [x] **Registry test** — `getTtsAdapter("siliconflow_cosyvoice2")` returns real adapter.
 
 ---
 
@@ -184,12 +184,12 @@ Concrete FE consumers: Preferencias loader/action; scripts page action; media se
 
 All objects keep `neuramark_` prefix.
 
-- [ ] **Extend `neuramark_media_asset_type`** — add **`voiceover`**.
-- [ ] **Update `neuramark_media_assets.storage_key` CHECK** — allow `.mp3`, `.wav`, `.m4a` (keep UUID + relative key rules).
-- [ ] **Add `neuramark_visual_preferences.voice_id`** — nullable `text`; COMMENT documents app-level catalog validation.
-- [ ] **No new tables** — voice catalog is code config V1.
-- [ ] RLS deny-by-default unchanged; service-role Node only.
-- [ ] Suggested filename: `supabase/migrations/YYYYMMDDHHMMSS_neuramark_tts_voiceover.sql`.
+- [x] **Extend `neuramark_media_asset_type`** — add **`voiceover`**.
+- [x] **Update `neuramark_media_assets.storage_key` CHECK** — allow `.mp3`, `.wav`, `.m4a` (keep UUID + relative key rules).
+- [x] **Add `neuramark_visual_preferences.voice_id`** — nullable `text`; COMMENT documents app-level catalog validation.
+- [x] **No new tables** — voice catalog is code config V1.
+- [x] RLS deny-by-default unchanged; service-role Node only.
+- [x] Suggested filename: `supabase/migrations/YYYYMMDDHHMMSS_neuramark_tts_voiceover.sql`.
 
 ---
 

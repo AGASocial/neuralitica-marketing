@@ -20,6 +20,7 @@ import type { ReelCostRollupsMap } from "@/lib/contracts/actual-cost";
 import { buildReelScriptListForStrategy } from "@/lib/reel-scripts/list-reel-scripts-for-week";
 import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved-strategy-for-week";
 import { getVideoJobsForReelScripts } from "@/lib/video-jobs/get-video-jobs-for-reel-scripts";
+import { getVoiceoverSummariesForReelScripts } from "@/lib/tts/get-voiceover-summaries-for-reel-scripts";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
 
 function authGuardEnvelope(error: {
@@ -74,6 +75,7 @@ export async function getReelScriptsForWeek(
         costSummary: emptyWeekCostSummary(weekStart, clientId),
         reelCostRollups: {},
         videoJobsByReelScriptId: {},
+        voiceoverByReelScriptId: {},
       };
     }
 
@@ -124,6 +126,18 @@ export async function getReelScriptsForWeek(
       reelScriptIds: rollupScriptIds,
     });
 
+    const itemsByScriptId = new Map(
+      items
+        .filter((item) => item.scriptId !== null)
+        .map((item) => [item.scriptId as string, item]),
+    );
+
+    const voiceoverByReelScriptId = await getVoiceoverSummariesForReelScripts({
+      clientId,
+      reelScriptIds: rollupScriptIds,
+      itemsByScriptId,
+    });
+
     return {
       ok: true,
       weekStart,
@@ -137,6 +151,7 @@ export async function getReelScriptsForWeek(
       costSummary,
       reelCostRollups,
       videoJobsByReelScriptId,
+      voiceoverByReelScriptId,
     };
   } catch (error) {
     if (isAuthGuardError(error)) {

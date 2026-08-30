@@ -26,6 +26,7 @@ import {
   type VisualPreferencesSelectRow,
   zodPreferencesErrorToFieldErrors,
 } from "@/lib/visual-preferences/helpers";
+import { ttsVoiceIdSchema, type TtsVoiceId } from "@/lib/contracts/tts-voiceover";
 import {
   createServerSupabaseClient,
   isSupabaseConfigured,
@@ -44,17 +45,35 @@ async function upsertOwnVisualPreferences(params: {
   clientId: string;
   input: UpsertVisualPreferencesInput;
 }): Promise<UpsertVisualPreferencesResult> {
+  const supabase = createServerSupabaseClient();
+
+  let existingVoiceId: TtsVoiceId | null = null;
+  if (params.input.voiceId === undefined) {
+    const { data: existing } = await supabase
+      .from("neuramark_visual_preferences")
+      .select("voice_id")
+      .eq("client_id", params.clientId)
+      .maybeSingle();
+    const rawVoiceId = (existing as { voice_id?: unknown } | null)?.voice_id;
+    if (rawVoiceId === null || rawVoiceId === undefined) {
+      existingVoiceId = null;
+    } else if (typeof rawVoiceId === "string") {
+      const parsed = ttsVoiceIdSchema.safeParse(rawVoiceId);
+      existingVoiceId = parsed.success ? parsed.data : null;
+    }
+  }
+
   const payload = buildVisualPreferencesUpsertPayload({
     clientId: params.clientId,
     input: params.input,
+    existingVoiceId,
   });
 
-  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("neuramark_visual_preferences")
     .upsert(payload, { onConflict: "client_id" })
     .select(
-      "allowed_modes, faceless_style, generic_avatar_id, rules, updated_at",
+      "allowed_modes, faceless_style, generic_avatar_id, voice_id, rules, updated_at",
     )
     .single();
 
@@ -99,6 +118,16 @@ async function upsertVisualPreferencesInner(
 
   if (isFacelessStylePayloadTooLarge(parsed.data.facelessStyle)) {
     return preferencesPayloadTooLargeError();
+  }
+
+  if (
+    parsed.data.voiceId !== undefined &&
+    parsed.data.voiceId !== null &&
+    !ttsVoiceIdSchema.safeParse(parsed.data.voiceId).success
+  ) {
+    return preferencesValidationError({
+      voiceId: ["invalid_type"],
+    });
   }
 
   if (parsed.data.allowedModes.includes("own_avatar")) {

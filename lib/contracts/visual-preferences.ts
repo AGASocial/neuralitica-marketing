@@ -5,6 +5,15 @@
  */
 import { z } from "zod";
 
+import {
+  ttsVoiceIdSchema,
+  ttsVoiceOptionDtoSchema,
+  type TtsVoiceId,
+  type TtsVoiceOptionDto,
+} from "@/lib/contracts/tts-voiceover";
+
+export type { TtsVoiceId, TtsVoiceOptionDto };
+
 export const visualModalitySchema = z.enum([
   "own_avatar",
   "generic_avatar",
@@ -49,6 +58,9 @@ export const visualPreferencesViewExistsSchema = z
     allowedModes: z.array(visualModalitySchema).max(3),
     facelessStyle: facelessStyleSchema.nullable(),
     genericAvatarId: z.null(),
+    voiceId: ttsVoiceIdSchema.nullable(),
+    availableVoices: z.array(ttsVoiceOptionDtoSchema),
+    voicePickerVisible: z.boolean(),
     rules: visualPreferencesRulesSchema,
     updatedAt: z.string().datetime({ offset: true }),
     ownAvatarConsentActive: z.boolean(),
@@ -65,6 +77,9 @@ export const visualPreferencesViewMissingSchema = z
     allowedModes: z.array(visualModalitySchema).length(0),
     facelessStyle: z.null(),
     genericAvatarId: z.null(),
+    voiceId: z.null(),
+    availableVoices: z.array(ttsVoiceOptionDtoSchema),
+    voicePickerVisible: z.boolean(),
     rules: z.null(),
     updatedAt: z.null(),
     ownAvatarConsentActive: z.boolean(),
@@ -109,6 +124,7 @@ export const upsertVisualPreferencesInputSchema = z
       }),
     facelessStyle: facelessStyleSchema.nullable().optional(),
     genericAvatarId: z.null().optional(),
+    voiceId: ttsVoiceIdSchema.nullable().optional(),
   })
   .strict()
   .superRefine((val, ctx) => {
@@ -140,6 +156,7 @@ export const upsertVisualPreferencesSuccessSchema = z
     allowedModes: z.array(visualModalitySchema).max(3),
     facelessStyle: facelessStyleSchema.nullable(),
     genericAvatarId: z.null(),
+    voiceId: ttsVoiceIdSchema.nullable(),
     rules: visualPreferencesRulesSchema,
     updatedAt: z.string().datetime({ offset: true }),
   })

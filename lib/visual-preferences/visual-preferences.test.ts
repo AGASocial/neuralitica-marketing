@@ -214,8 +214,24 @@ describe("findForbiddenUpsertVisualPreferencesKeys", () => {
         allowedModes: ["generic_avatar"],
         facelessStyle: null,
         genericAvatarId: null,
+        voiceId: "en_warm_female",
       }),
       [],
+    );
+  });
+
+  it("rejects providerVoice and voice_id smuggling", () => {
+    assert.ok(
+      findForbiddenUpsertVisualPreferencesKeys({
+        allowedModes: ["generic_avatar"],
+        providerVoice: "vendor-voice",
+      }).includes("providerVoice"),
+    );
+    assert.ok(
+      findForbiddenUpsertVisualPreferencesKeys({
+        allowedModes: ["generic_avatar"],
+        voice_id: "en_warm_female",
+      }).includes("voice_id"),
     );
   });
 });
@@ -328,6 +344,7 @@ describe("mapVisualPreferencesRow / upsert result DTO", () => {
         allowed_modes: ["generic_avatar"],
         faceless_style: null,
         generic_avatar_id: null,
+        voice_id: null,
         rules: { must_disclose_not_owner: true },
         updated_at: "2026-08-29T21:41:00.000Z",
       },
@@ -339,6 +356,7 @@ describe("mapVisualPreferencesRow / upsert result DTO", () => {
         allowed_modes: mapped.allowedModes,
         faceless_style: mapped.facelessStyle,
         generic_avatar_id: null,
+        voice_id: mapped.voiceId,
         rules: mapped.rules,
         updated_at: mapped.updatedAt,
       });
@@ -351,6 +369,7 @@ describe("mapVisualPreferencesRow / upsert result DTO", () => {
         allowedModes: ["generic_avatar"],
         facelessStyle: null,
         genericAvatarId: null,
+        voiceId: null,
         rules: { must_disclose_not_owner: true },
         updatedAt: "2026-08-29T21:41:00.000Z",
       });
@@ -364,6 +383,7 @@ describe("mapVisualPreferencesRow / upsert result DTO", () => {
         allowed_modes: ["generic_avatar"],
         faceless_style: null,
         generic_avatar_id: null,
+        voice_id: null,
         rules: { must_disclose_not_owner: false },
         updated_at: "2026-08-29T21:41:00.000Z",
       },
@@ -454,6 +474,7 @@ describe("happy-path result schema matches CONTRACT fixture", () => {
       allowedModes: ["generic_avatar", "faceless"] as const,
       facelessStyle: FACELESS_STYLE,
       genericAvatarId: null,
+      voiceId: "en_warm_female" as const,
       rules: { must_disclose_not_owner: true },
       updatedAt: "2026-08-29T21:40:00.000Z",
     };

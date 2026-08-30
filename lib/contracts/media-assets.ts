@@ -14,6 +14,9 @@ export const MEDIA_ASSET_TYPE_AVATAR_REFERENCE = "avatar_reference" as const;
 /** Operator manual / provider output video asset type (US-8.3 / US-8.4 enum). */
 export const MEDIA_ASSET_TYPE_GENERATED_VIDEO = "generated_video" as const;
 
+/** TTS voiceover asset type (US-9.3 enum). */
+export const MEDIA_ASSET_TYPE_VOICEOVER = "voiceover" as const;
+
 /** Shared upload validator asset type union (US-3.3 + US-8.3). */
 export const mediaUploadAssetTypeSchema = z.enum([
   "avatar_reference",
@@ -24,10 +27,14 @@ export type MediaUploadAssetType = z.infer<typeof mediaUploadAssetTypeSchema>;
 
 /**
  * Server-generated storage_key shape (CONTRACT).
- * UUID v4 + safe extension from detected MIME only.
+ * UUID v4 + safe extension from detected MIME only (legacy flat keys).
  */
 export const STORAGE_KEY_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|jpeg|png|webp|mp4|mov)$/;
+
+/** US-9.3 voiceover path keys: neuramark/{clientId}/{reelScriptId}/{uuid}.mp3|wav|m4a */
+export const VOICEOVER_STORAGE_KEY_REGEX =
+  /^neuramark\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(mp3|wav|m4a)$/;
 
 /** Display hints only — server enforces via magic bytes + env limits. */
 export const AVATAR_REFERENCE_HINT_MAX_IMAGE_MIB = 10 as const;
@@ -72,6 +79,38 @@ export const generatedVideoAssetMetadataSchema = z
 
 export type GeneratedVideoAssetMetadata = z.infer<
   typeof generatedVideoAssetMetadataSchema
+>;
+
+export const voiceoverDetectedMimeSchema = z.enum([
+  "audio/mpeg",
+  "audio/wav",
+  "audio/mp4",
+]);
+
+export type VoiceoverDetectedMime = z.infer<typeof voiceoverDetectedMimeSchema>;
+
+/** Metadata persisted on voiceover rows (TTS synthesize). */
+export const voiceoverAssetMetadataSchema = z
+  .object({
+    originalFilename: z.string().max(255),
+    detectedMime: voiceoverDetectedMimeSchema,
+    sizeBytes: z.number().int().positive(),
+    durationSec: z.number().positive().optional(),
+    source: z.literal("tts_synthesize"),
+    reelScriptId: z.string().uuid(),
+    voiceId: z.enum([
+      "en_warm_female",
+      "en_professional_male",
+      "es_warm_female",
+      "es_professional_male",
+    ]),
+    providerKey: z.string().min(1),
+    supersedesAssetId: z.string().uuid().optional(),
+  })
+  .strict();
+
+export type VoiceoverAssetMetadata = z.infer<
+  typeof voiceoverAssetMetadataSchema
 >;
 
 export const avatarReferenceAssetItemSchema = z
