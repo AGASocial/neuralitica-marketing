@@ -729,17 +729,17 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 
 | Owner | Work |
 |-------|------|
-| **FE** | Cost column on production list; estimated vs actual |
-| **BE** | On job complete: persist `actual_cost_cents`, provider, duration |
-| **DB** | `video_jobs.estimated_cost_cents`, `actual_cost_cents` |
+| **FE** | Estimated vs actual on `/operator/scripts` (Phase A); US-8.4 production-list column deferred |
+| **BE** | On LLM job complete: persist `actual_cost_cents` on spend ledger via `finalizeGenerationCost`; async seam for US-8.x |
+| **DB** | `neuramark_reel_spend_events.actual_cost_cents`, `actual_cost_unavailable_reason` (canonical V1 store; `video_jobs.*` with US-8.2+) |
 
-**Acceptance criteria**
-- [ ] Every completed job has actual or `null` with failure reason
-- [ ] Dashboard aggregate cost per client per week (simple sum)
-- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403) — cost data is margin-sensitive and never served to client sessions
-- [ ] [SEC] `actual_cost_cents` is written only by the server-side job-completion handler from provider responses; no client-facing endpoint can set or edit recorded costs
+**Acceptance criteria** *(Phase A CLOSED — LLM spend events; Phase B video/TTS + US-8.4 production list deferred)*
+- [x] Every completed job has actual or `null` with failure reason — Phase A: LLM script/caption jobs on `neuramark_reel_spend_events`; video/TTS async backfill deferred to US-8.x / US-9.3
+- [x] Dashboard aggregate cost per client per week (simple sum) — `/operator/scripts` weekly footer (Phase A)
+- [x] Operator-only: endpoint/action rejects non-operator sessions server-side (403) — cost data is margin-sensitive and never served to client sessions
+- [x] [SEC] `actual_cost_cents` is written only by the server-side job-completion handler from provider responses; no client-facing endpoint can set or edit recorded costs
 
-**Depends on:** US-7.2, US-8.4
+**Depends on:** US-7.2, US-8.4 *(Phase A: US-8.4 soft — LLM path only)*
 
 ---
 

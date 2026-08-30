@@ -1,6 +1,6 @@
 # US-7.3 — Track actual cost per generation job
 
-**Status:** PREP — story folder + TASKS ready for gates.
+**Status:** CLOSED — Phase A (2026-08-29). VALIDATION PASS WITH NOTES (4/4 AC Phase A); QA APPROVE WITH NOTES after H1 fix `f60579d`. BE `030d85f` · FE `02b399b`/`ddca524` · fix `f60579d`. **Phase B** (video/TTS async actuals, `/operator/production` cost column) deferred to US-8.4 / US-9.3.
 
 **As an** Operator, **I want** real API cost recorded per Reel, **so that** we learn true unit economics.
 
@@ -77,11 +77,11 @@ _Evitar:_ exposing raw provider pricing or budget caps to Cliente; client-editab
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend — **Reviewed by FE** before BUILD)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] SPEC-REVIEW.md (spec-guardian — GAPS)
+- [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
+- [x] CONTRACT.md (nextjs-backend — frozen `f6038e9`; **Reviewed by FE** before BUILD)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend — Phase A LLM)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES)
+- [x] QA.md (qa-engineer — APPROVE WITH NOTES after `f60579d`)
 
-**Status:** PREP. **Next gate:** SPEC-REVIEW → SECURITY → CONTRACT.
+**Status:** CLOSED (Phase A). **Next:** Phase B when US-8.4 / US-9.3 land, or **US-7.4** Reel cost roll-up.

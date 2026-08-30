@@ -169,20 +169,20 @@ Concrete BE consumers: **`getReelCostSummaryForWeek`** (or cost block on **`getR
 
 Concrete FE consumers: production list column · weekly footer.
 
-- [ ] **Migration (if needed):** `actual_cost_unavailable_reason` nullable text + CHECK enum on **`neuramark_reel_spend_events`** (CONTRACT freezes values).
-- [ ] **`lib/contracts/cost-policy.ts`** — Zod for `ActualCostUnavailableReason`, `ReelSlotCostSummary`, `ReelWeekCostSummary`, extended `recordReelSpendEvent` params.
-- [ ] **`computeLlmActualCost(input)`** — catalog-driven token math; fail with reason when usage missing.
-- [ ] **Fix `SiliconFlowLlmAdapter.complete`** — compute `actualCostCents` from usage + catalog (replace placeholder `0`).
-- [ ] **Extend `recordReelSpendEvent`** — accept `actualCostCents` + `actualCostUnavailableReason`; remove `actualCostCents?: null` restriction.
-- [ ] **`updateReelSpendEventActual(params)`** — server-only UPDATE by `spendEventId`; export for US-8.x; **not called** in V1 BUILD except tests.
-- [ ] **`sumReelActualCostCents(reelScriptId)`** — SUM where not null; handle all-null → null aggregate.
+- [x] **Migration (if needed):** `actual_cost_unavailable_reason` nullable text + CHECK enum on **`neuramark_reel_spend_events`** (CONTRACT freezes values).
+- [x] **`lib/contracts/cost-policy.ts`** — Zod for `ActualCostUnavailableReason`, `ReelSlotCostSummary`, `ReelWeekCostSummary`, extended `recordReelSpendEvent` params.
+- [x] **`computeLlmActualCost(input)`** — catalog-driven token math; fail with reason when usage missing.
+- [x] **Fix `SiliconFlowLlmAdapter.complete`** — compute `actualCostCents` from usage + catalog (replace placeholder `0`).
+- [x] **Extend `recordReelSpendEvent`** — accept `actualCostCents` + `actualCostUnavailableReason`; remove `actualCostCents?: null` restriction.
+- [x] **`updateReelSpendEventActual(params)`** — server-only UPDATE by `spendEventId`; export for US-8.x; **not called** in V1 BUILD except tests.
+- [x] **`sumReelActualCostCents(reelScriptId)`** — inlined in `getReelCostSummaryForWeek` (standalone helper deferred — see QA L1).
 - [x] **`getReelCostSummaryForWeek({ clientId, weekStart })`** — operator-gated; join spend events to week's scripts by `reel_script_id`; return `ReelWeekCostSummary`.
-- [ ] **Wire orchestrators** — pass LLM `inputTokens`/`outputTokens`/`actualCostCents` through to `computeLlmActualCost` + `recordReelSpendEvent`.
+- [x] **Wire orchestrators** — pass LLM `inputTokens`/`outputTokens`/`actualCostCents` through to `finalizeGenerationCost` → `computeLlmActualCost` + `recordReelSpendEvent`.
 - [x] **Extend `getReelScriptsForWeek`** (or companion loader) — attach cost summary to Operator response only.
 - [x] **[SEC] Forbidden fields** — reject `actualCostCents`, `actual_cost_cents` on generate/regenerate actions.
 - [x] **[SEC] Operator-only** — `requireOperator()` on cost summary reads; strip cost from any Cliente code path.
-- [ ] **Export seam** — document **`updateReelSpendEventActual`** in CONTRACT for US-8.2+ job completion handler.
-- [ ] **Automated tests:** `computeLlmActualCost` token math; spend INSERT with actual; null+reason when usage missing; forbidden client `actualCostCents`; operator-only summary; weekly SUM; `updateReelSpendEventActual` unit test (seam). **Read path:** `get-reel-cost-summary-for-week.test.ts` + forbidden-key tests in `cost-policy.test.ts` ✅
+- [x] **Export seam** — document **`updateReelSpendEventActual`** in CONTRACT for US-8.2+ job completion handler.
+- [x] **Automated tests:** `computeLlmActualCost` token math; spend INSERT with actual; null+reason when usage missing; forbidden client `actualCostCents`; operator-only summary; weekly SUM; `updateReelSpendEventActual` unit test (seam). **Read path:** `get-reel-cost-summary-for-week.test.ts` + forbidden-key tests in `cost-policy.test.ts` ✅
 
 ---
 
@@ -190,23 +190,23 @@ Concrete FE consumers: production list column · weekly footer.
 
 All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
-- [ ] **ALTER** **`neuramark_reel_spend_events`** — add **`actual_cost_unavailable_reason`** nullable (CONTRACT freezes enum CHECK) if column not present.
-- [ ] **No CREATE** **`neuramark_video_jobs`** — deferred to US-8.2.
-- [ ] RLS deny-by-default unchanged; service-role Node only.
-- [ ] Index: consider `(client_id, created_at)` for weekly SUM if list query needs it (CONTRACT decides — may reuse existing indexes).
+- [x] **ALTER** **`neuramark_reel_spend_events`** — add **`actual_cost_unavailable_reason`** nullable (CONTRACT freezes enum CHECK) if column not present.
+- [x] **No CREATE** **`neuramark_video_jobs`** — deferred to US-8.2.
+- [x] RLS deny-by-default unchanged; service-role Node only.
+- [x] Index: `(client_id, created_at)` for weekly SUM — `neuramark_reel_spend_events_client_created_at_idx`.
 
 ---
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [x] CONTRACT.md authored (nextjs-backend — **Reviewed by FE** before BUILD)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] SPEC-REVIEW.md (spec-guardian — GAPS)
+- [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
+- [x] CONTRACT.md authored (nextjs-backend — frozen `f6038e9`; **Reviewed by FE** before BUILD)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend — Phase A LLM)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES)
+- [x] QA.md (qa-engineer — APPROVE WITH NOTES after `f60579d`)
 
-**Status:** CONTRACT frozen — awaiting FE signoff. **Next gate:** BUILD (Phase A LLM-first).
+**Status:** CLOSED (2026-08-29). Phase A complete; 4/4 AC checked in `plan/USER_STORIES.md`. **Next:** **US-7.4** Report real total cost per Reel (Phase B video/TTS actuals when US-8.4 / US-9.3 land).
 
 ---
 
