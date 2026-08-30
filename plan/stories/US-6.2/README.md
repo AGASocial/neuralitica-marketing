@@ -1,6 +1,6 @@
 # US-6.2 — CTA variants for caption testing
 
-**Status:** PREP — story folder created; gates not started.
+**Status:** CLOSED — VALIDATE PASS WITH NOTES; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 4 Low; CLOSE yes). Build BE `146479c` · FE `f82ba33`.
 
 **As an** Operator, **I want** multiple CTA variants with a selectable winner, **so that** the client can pick the best conversion line in Approval Flow.
 
@@ -8,13 +8,28 @@ Ship **CTA variant selection on the existing Operator Scripts Caption tab**: rep
 
 **Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-6.2 (checked on CLOSE).
 
-**This folder:** [`plan/stories/US-6.2/`](./) — `README.md` · `TASKS.md` · *(SPEC-REVIEW, SECURITY, CONTRACT, VALIDATION, QA — pending gates)*.
+**This folder:** [`plan/stories/US-6.2/`](./) — `README.md` · `TASKS.md` · `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
 
 **Branch:** `feature/US-6.2-cta-selection`
 
 **Depends on:** [US-6.1](../US-6.1/) ✅ `neuramark_reel_captions` · `cta_variants` jsonb (2–4) · Caption tab on `/operator/scripts` · `lib/contracts/reel-caption.ts` · `getReelScriptsForWeek` · [US-14.5](../US-14.5/) ✅ `requireOperator()`.
 
 **Unblocks:** [US-11.1](../../USER_STORIES.md) (Cliente approval package reads `selectedCtaText`) · [US-11.3](../../USER_STORIES.md) (export/download includes chosen CTA line).
+
+---
+
+## Close verdicts
+
+| Gate | Verdict |
+|------|---------|
+| SPEC-REVIEW | GAPS resolved in CONTRACT |
+| SECURITY | APPROVE WITH CONDITIONS |
+| CONTRACT | Frozen 2026-08-29; Reviewed by FE (BUILD `f82ba33`) |
+| BUILD | BE `146479c` · FE `f82ba33` |
+| VALIDATION | PASS WITH NOTES (`258773c`) |
+| QA | APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 4 Low; CLOSE yes) |
+
+**QA handoff (non-blocking, post-CLOSE):** L1 — IDOR/cross-tenant select path not automated; L2 — forbidden `caption` key on select lacks integration test; L3 — plain-text preview regression manual-only; L4 — re-selecting active radio triggers redundant persist. **Next:** Sprint 4 — **US-7.1** Configure max budget per Reel; downstream **US-11.1** consumes `selectedCtaText`.
 
 ---
 
@@ -78,11 +93,11 @@ _Evitar:_ generic "post copy", multichannel CTA, A/B test dashboard.
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend — extend US-6.1 contract; **Reviewed by FE** before BUILD)
-- [ ] BUILD (nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] SPEC-REVIEW.md (spec-guardian — 2026-08-29 GAPS resolved in CONTRACT)
+- [x] SECURITY.md (security-architect — 2026-08-29 APPROVE WITH CONDITIONS; reconciled in CONTRACT)
+- [x] CONTRACT.md (nextjs-backend — 2026-08-29 frozen; **Reviewed by FE** before BUILD)
+- [x] BUILD (nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md
+- [x] QA.md — APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 4 Low; CLOSE yes)
 
-**Status:** PREP. **Next gate:** spec-guardian SPEC-REVIEW → security-architect SECURITY.md → nextjs-backend CONTRACT.md.
+**Status:** CLOSED (2026-08-29). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** Sprint 4 — **US-7.1** Configure max budget per Reel.

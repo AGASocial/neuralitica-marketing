@@ -147,14 +147,14 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect — index-only mutation; bounds validation; no free-text substitution)
-- [ ] CONTRACT.md authored (nextjs-backend — extend US-6.1; **Reviewed by FE** required before BUILD)
-- [ ] BUILD (nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md
-- [ ] QA.md
+- [x] SPEC-REVIEW.md (spec-guardian — 2026-08-29 GAPS resolved in CONTRACT)
+- [x] SECURITY.md (security-architect — 2026-08-29 APPROVE WITH CONDITIONS; reconciled in CONTRACT)
+- [x] CONTRACT.md authored (nextjs-backend — 2026-08-29 frozen; **Reviewed by FE** required before BUILD)
+- [x] BUILD (nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md
+- [x] QA.md — APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 4 Low; CLOSE yes)
 
-**Status:** PREP. **Next gate:** spec-guardian SPEC-REVIEW → security-architect SECURITY.md → nextjs-backend CONTRACT.md.
+**Status:** CLOSED (2026-08-29). All gates complete; AC checked in `plan/USER_STORIES.md`. **Next:** Sprint 4 — **US-7.1** Configure max budget per Reel.
 
 ---
 
