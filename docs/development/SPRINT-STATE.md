@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-8.4
-story_status: QA
+story_status: BUILD
 feature_branch: feature/US-8.4-video-jobs
 last_completed_story: US-8.2
 phase_status: in_progress
-blocked_reason: null
-updated_at: 2026-08-30T05:05:00Z
+blocked_reason: QA P1 — override consume order + HMAC secret (9637142)
+updated_at: 2026-08-30T05:15:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -30,7 +30,7 @@ updated_at: 2026-08-30T05:05:00Z
 | US-7.4 Report real total cost per Reel | done | BE `5c9abb4` · FE `8735be2` · fix `5b3e9d7` · VALIDATION `a678ac4` · QA `746a563` · CLOSE Phase A `f0ca5a0` |
 | US-8.1 Provider adapter interface | done | BE `a11d4ae` · fix `4193a1e` · VALIDATION `7367929` · QA `7f34bdb` · CLOSE `3ac3304` |
 | US-8.2 SadTalker adapter | done (Phase A) | BE `fba526c` · fix `8a781fd` · VALIDATION `52b2e98` · QA `0448f65` · CLOSE Phase A `258fcef`; Phase B → US-8.4 |
-| US-8.4 Job status and failure UI | QA | VALIDATION PASS WITH NOTES `4e36fbc` |
+| US-8.4 Job status and failure UI | BUILD (QA fix) | QA APPROVE WITH CONDITIONS `9637142` |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
