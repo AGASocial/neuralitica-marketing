@@ -1,4 +1,7 @@
-import { FORBIDDEN_BUDGET_SPEND_KEYS } from "@/lib/contracts/cost-policy";
+import {
+  FORBIDDEN_BUDGET_SPEND_KEYS,
+  FORBIDDEN_REEL_COST_ROLLUP_KEYS,
+} from "@/lib/contracts/cost-policy";
 import { FORBIDDEN_PROVIDER_AUTHORITY_KEYS } from "@/lib/contracts/provider-decisions";
 
 const FORBIDDEN_REEL_SCRIPT_KEYS = new Set([
@@ -43,6 +46,7 @@ const FORBIDDEN_REEL_SCRIPT_KEYS = new Set([
   "voWarnOverRatio",
   "voWarnUnderRatio",
   ...FORBIDDEN_BUDGET_SPEND_KEYS,
+  ...FORBIDDEN_REEL_COST_ROLLUP_KEYS,
   ...FORBIDDEN_PROVIDER_AUTHORITY_KEYS,
 ]);
 

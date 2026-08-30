@@ -94,18 +94,21 @@ describe("getReelCostSummaryForWeek (US-7.3)", () => {
     const restore = installSpendSummaryMocks([
       {
         reel_script_id: REEL_SCRIPT_A,
+        asset_role: "llm",
         estimated_cost_cents: 12,
         actual_cost_cents: 2,
         actual_cost_unavailable_reason: null,
       },
       {
         reel_script_id: REEL_SCRIPT_A,
+        asset_role: "llm",
         estimated_cost_cents: 12,
         actual_cost_cents: 1,
         actual_cost_unavailable_reason: null,
       },
       {
         reel_script_id: REEL_SCRIPT_B,
+        asset_role: "llm",
         estimated_cost_cents: 8,
         actual_cost_cents: null,
         actual_cost_unavailable_reason: "usage_missing",
@@ -150,6 +153,7 @@ describe("getReelCostSummaryForWeek (US-7.3)", () => {
     const restore = installSpendSummaryMocks([
       {
         reel_script_id: REEL_SCRIPT_A,
+        asset_role: "llm",
         estimated_cost_cents: 5,
         actual_cost_cents: null,
         actual_cost_unavailable_reason: null,

@@ -14,7 +14,9 @@ import {
 } from "@/lib/reel-scripts/errors";
 import { findForbiddenReelScriptKeys } from "@/lib/reel-scripts/find-forbidden-keys";
 import { emptyWeekCostSummary } from "@/lib/cost-policy/empty-week-cost-summary";
+import { getReelCostRollupForScript } from "@/lib/cost-policy/get-reel-cost-rollup-for-script";
 import { getReelCostSummaryForWeek } from "@/lib/cost-policy/get-reel-cost-summary-for-week";
+import type { ReelCostRollupsMap } from "@/lib/contracts/actual-cost";
 import { buildReelScriptListForStrategy } from "@/lib/reel-scripts/list-reel-scripts-for-week";
 import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved-strategy-for-week";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
@@ -92,6 +94,29 @@ export async function getReelScriptsForWeek(
       })),
     });
 
+    const reelCostRollups: ReelCostRollupsMap = {};
+    const rollupScriptIds = [
+      ...new Set(
+        items
+          .map((item) => item.scriptId)
+          .filter((scriptId): scriptId is string => scriptId !== null),
+      ),
+    ];
+
+    await Promise.all(
+      rollupScriptIds.map(async (reelScriptId) => {
+        const rollup = await getReelCostRollupForScript({
+          clientId,
+          reelScriptId,
+          weekStart,
+          eventScope: "week",
+        });
+        if (rollup !== null) {
+          reelCostRollups[reelScriptId] = rollup;
+        }
+      }),
+    );
+
     return {
       ok: true,
       weekStart,
@@ -103,7 +128,7 @@ export async function getReelScriptsForWeek(
       strategyVersionChanged,
       items,
       costSummary,
-      reelCostRollups: {},
+      reelCostRollups,
     };
   } catch (error) {
     if (isAuthGuardError(error)) {

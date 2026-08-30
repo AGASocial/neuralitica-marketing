@@ -149,16 +149,16 @@ Concrete BE consumers: **`getReelCostDetailForScript`** or **`reelCostDetails`**
 
 Concrete FE consumers: **`ReelCostSection`** · optional consistency check with list cost column.
 
-- [ ] **`lib/contracts/actual-cost.ts`** — add `reelCostRoleBreakdownSchema`, `reelCostDetailSchema`, input schema.
-- [ ] **`getReelCostDetailForScript({ clientId, reelScriptId })`** — server-only; parameterized tenant scope; return null when script not found or tenant mismatch.
-- [ ] **Aggregation** — SUM estimated/actual per `asset_role`; compute totals, variance, `hasPendingActual`, `eventCount`.
-- [ ] **`maxCostCents`** — load via **`getCostPolicyForClient(clientId)`**; compute **`isOverBudget`** per PO rules.
-- [ ] **Attach to list load** — extend **`getReelScriptsForWeek`** with **`reelCostDetails: Record<uuid, ReelCostDetail>`** for slots with `reelScriptId` (PO lean) **or** export gated Server Action for expand (CONTRACT picks).
-- [ ] **Reconciliation** — detail totals **match** `costSummary.slots[slotIndex]` for same script (same aggregation rules as US-7.3 per-slot SUM).
-- [ ] **[SEC] Operator-only** — `requireOperator()` before any cost detail read; 403 for non-operator.
-- [ ] **[SEC] Tenancy** — query always filters `client_id`; foreign `reelScriptId` → empty/null, never leak other tenant rows.
-- [ ] **[SEC] Response-shape** — cost detail DTO **only** on Operator serializers; strip from any shared/Cliente code path.
-- [ ] **Automated tests:** per-role breakdown; totals; over-budget true/false; null actual total; tenant isolation; reconciliation with `getReelCostSummaryForWeek` fixture; forbidden keys on Cliente-facing loaders.
+- [x] **`lib/contracts/actual-cost.ts`** — add `reelCostRoleBreakdownSchema`, `reelCostDetailSchema`, input schema.
+- [x] **`getReelCostDetailForScript({ clientId, reelScriptId })`** — server-only; parameterized tenant scope; return null when script not found or tenant mismatch.
+- [x] **Aggregation** — SUM estimated/actual per `asset_role`; compute totals, variance, `hasPendingActual`, `eventCount`.
+- [x] **`maxCostCents`** — load via **`getCostPolicyForClient(clientId)`**; compute **`isOverBudget`** per PO rules.
+- [x] **Attach to list load** — extend **`getReelScriptsForWeek`** with **`reelCostDetails: Record<uuid, ReelCostDetail>`** for slots with `reelScriptId` (PO lean) **or** export gated Server Action for expand (CONTRACT picks).
+- [x] **Reconciliation** — detail totals **match** `costSummary.slots[slotIndex]` for same script (same aggregation rules as US-7.3 per-slot SUM).
+- [x] **[SEC] Operator-only** — `requireOperator()` before any cost detail read; 403 for non-operator.
+- [x] **[SEC] Tenancy** — query always filters `client_id`; foreign `reelScriptId` → empty/null, never leak other tenant rows.
+- [x] **[SEC] Response-shape** — cost detail DTO **only** on Operator serializers; strip from any shared/Cliente code path.
+- [x] **Automated tests:** per-role breakdown; totals; over-budget true/false; null actual total; tenant isolation; reconciliation with `getReelCostSummaryForWeek` fixture; forbidden keys on Cliente-facing loaders.
 
 ---
 
@@ -166,9 +166,9 @@ Concrete FE consumers: **`ReelCostSection`** · optional consistency check with 
 
 All objects keep `neuramark_` prefix. **No migration required** unless CONTRACT adds index for `(client_id, reel_script_id, asset_role)` — evaluate in CONTRACT.
 
-- [ ] **No CREATE tables** — query existing **`neuramark_reel_spend_events`**.
-- [ ] **Optional index** — `(client_id, reel_script_id)` already exists (`neuramark_reel_spend_events_client_reel_idx`); confirm EXPLAIN in CONTRACT if needed.
-- [ ] RLS deny-by-default unchanged; service-role Node only.
+- [x] **No CREATE tables** — query existing **`neuramark_reel_spend_events`**.
+- [x] **Optional index** — `(client_id, reel_script_id)` already exists (`neuramark_reel_spend_events_client_reel_idx`); confirm EXPLAIN in CONTRACT if needed.
+- [x] RLS deny-by-default unchanged; service-role Node only.
 
 ---
 
