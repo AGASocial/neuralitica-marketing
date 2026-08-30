@@ -748,19 +748,19 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 
 | Owner | Work |
 |-------|------|
-| **FE** | "Cost" section on Reel detail: estimated vs actual total, breakdown by component (video, B-roll, voiceover); over-budget highlight; EN/ES labels |
-| **BE** | Aggregation: sum `actual_cost_cents` across all jobs linked to a `reel_script_id` (all attempts and asset roles); expose to Reel detail and weekly dashboard sum |
-| **DB** | No new tables; query over `video_jobs` + TTS asset costs (add `media_assets.cost_cents` for voiceover if missing) |
+| **FE** | "Cost" section on Reel detail expand row (`/operator/scripts`): estimated vs actual total, breakdown by component; over-budget highlight; EN/ES labels (Phase A) |
+| **BE** | Aggregation over `neuramark_reel_spend_events` by `reel_script_id` + `asset_role`; batch `reelCostRollups` on `getReelScriptsForWeek`; reconcile with US-7.3 weekly/slot sums |
+| **DB** | No new tables; query **`neuramark_reel_spend_events`** only (canonical per US-7.3; `video_jobs` / `media_assets.cost_cents` deferred) |
 
-**Acceptance criteria**
-- [ ] Every Reel shows one total actual cost including failed attempts and all asset roles (talking_head, broll, tts, llm where tracked)
-- [ ] Estimated vs actual variance visible per Reel
-- [ ] Weekly per-client cost sum (US-7.3) reconciles with the sum of per-Reel totals
-- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403) — cost data is margin-sensitive and never served to client sessions
-- [ ] [SEC] Cost roll-up queries are parameterized and scoped to the requested client's Reels; cost data for other clients is never included in a response (multi-tenancy readiness)
-- [ ] [SEC] Cost exclusion is enforced at the response-shape level, not by UI hiding: shared payloads that client sessions can receive (Reel detail, dashboard, approval package) contain NO cost fields (`estimated_cost_cents`, `actual_cost_cents`, provider pricing, budget caps); cost fields appear only in operator-gated endpoints/serializers, so a client session cannot obtain cost data from any endpoint in the system
+**Acceptance criteria** *(Phase A CLOSED — spend-ledger roll-up, LLM breakdown; Phase B video/TTS/B-roll lines when US-8.x / US-9.3 land)*
+- [x] Every Reel shows one total actual cost including failed attempts and all asset roles (talking_head, broll, tts, llm where tracked) — Phase A: LLM on spend ledger; video/voiceover/B-roll lines appear when upstream writers INSERT rows; failed attempts without spend rows excluded (US-7.3 PO lean)
+- [x] Estimated vs actual variance visible per Reel — `ReelCostRollupPanel` on expand row; `varianceCents` from server DTO
+- [x] Weekly per-client cost sum (US-7.3) reconciles with the sum of per-Reel totals — shared aggregator + automated reconciliation tests (week-scoped slot totals)
+- [x] Operator-only: endpoint/action rejects non-operator sessions server-side (403) — cost data is margin-sensitive and never served to client sessions
+- [x] [SEC] Cost roll-up queries are parameterized and scoped to the requested client's Reels; cost data for other clients is never included in a response (multi-tenancy readiness)
+- [x] [SEC] Cost exclusion is enforced at the response-shape level, not by UI hiding: shared payloads that client sessions can receive (Reel detail, dashboard, approval package) contain NO cost fields (`estimated_cost_cents`, `actual_cost_cents`, provider pricing, budget caps); cost fields appear only in operator-gated endpoints/serializers, so a client session cannot obtain cost data from any endpoint in the system
 
-**Depends on:** US-7.3, US-9.3
+**Depends on:** US-7.3, US-9.3 *(Phase A: US-9.3 soft — LLM roll-up only)*
 
 ---
 

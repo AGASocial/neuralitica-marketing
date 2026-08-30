@@ -174,14 +174,14 @@ All objects keep `neuramark_` prefix. **No migration required** unless CONTRACT 
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md authored (nextjs-backend — **Reviewed by FE** before BUILD)
-- [ ] BUILD (nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] SPEC-REVIEW.md (spec-guardian — GAPS)
+- [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
+- [x] CONTRACT.md authored (nextjs-backend — frozen `08b4131`; **Reviewed by FE** before BUILD)
+- [x] BUILD (nextjs-backend + nextjs-frontend — Phase A spend-ledger roll-up)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES)
+- [x] QA.md (qa-engineer — APPROVE WITH CONDITIONS after `5b3e9d7`)
 
-**Status:** PREP (2026-08-29). **Next:** spec-guardian → security-architect → CONTRACT.
+**Status:** CLOSED (2026-08-30). Phase A complete; 6/6 AC checked in `plan/USER_STORIES.md`. **Next:** Phase B video/TTS/B-roll breakdown when US-8.x / US-9.3 land, or **SELECT** next story.
 
 ---
 

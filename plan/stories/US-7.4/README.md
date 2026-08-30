@@ -1,6 +1,6 @@
 # US-7.4 — Report real total cost per Reel
 
-**Status:** PREP — story folder + PO freeze (2026-08-29). Gates pending.
+**Status:** CLOSED — Phase A (2026-08-30). VALIDATION PASS WITH NOTES (6/6 AC Phase A); QA APPROVE WITH CONDITIONS after H1 fix `5b3e9d7`. BE `5c9abb4` · FE `8735be2` · fix `5b3e9d7`. **Phase B** (video/TTS/B-roll component lines when US-8.x / US-9.3 land) deferred.
 
 **As an** Operator, **I want** the full actual cost of each Reel (video jobs, retries, B-roll, TTS) rolled up in one place, **so that** we know true unit economics per piece, not just per API call.
 
@@ -75,11 +75,11 @@ _Evitar:_ exposing raw provider pricing or budget caps to Cliente; client-editab
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend — **Reviewed by FE** before BUILD)
-- [ ] BUILD (nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] SPEC-REVIEW.md (spec-guardian — GAPS)
+- [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
+- [x] CONTRACT.md (nextjs-backend — frozen `08b4131`; **Reviewed by FE** before BUILD)
+- [x] BUILD (nextjs-backend + nextjs-frontend — Phase A spend-ledger roll-up)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES)
+- [x] QA.md (qa-engineer — APPROVE WITH CONDITIONS after `5b3e9d7`)
 
-**Status:** PREP. **Next:** spec-guardian SPEC-REVIEW → security-architect SECURITY → nextjs-backend CONTRACT.
+**Status:** CLOSED (Phase A). **Next:** Phase B when US-8.x / US-9.3 land, or **SELECT** next Phase 3 story.
