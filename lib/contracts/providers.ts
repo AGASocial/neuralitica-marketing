@@ -111,6 +111,31 @@ export const COST_POLICY_ROW_INVALID = "COST_POLICY_ROW_INVALID" as const;
 export const COST_POLICY_GLOBAL_MISSING = "COST_POLICY_GLOBAL_MISSING" as const;
 export const COST_POLICY_LOAD_FAILED = "COST_POLICY_LOAD_FAILED" as const;
 export const PROVIDER_NOT_FOUND = "PROVIDER_NOT_FOUND" as const;
+export const PROVIDER_ADAPTER_NOT_FOUND =
+  "PROVIDER_ADAPTER_NOT_FOUND" as const;
+
+/** Opaque vendor correlation id — not a path, not client authority (US-8.1). */
+export const EXTERNAL_JOB_ID_MAX_LENGTH = 512 as const;
+
+export const externalJobIdSchema = z
+  .string()
+  .min(1)
+  .max(EXTERNAL_JOB_ID_MAX_LENGTH)
+  .regex(
+    /^[A-Za-z0-9_\-:.]+$/,
+    "externalJobId must be opaque alphanumeric (no path separators)",
+  )
+  .refine(
+    (id) =>
+      !id.includes("..") &&
+      !id.includes("/") &&
+      !id.includes("\\") &&
+      !id.includes("%2e") &&
+      !id.includes("\0"),
+    "externalJobId must not contain path traversal sequences",
+  );
+
+export type ExternalJobId = z.infer<typeof externalJobIdSchema>;
 
 /** Client/handler request — provider assigned by policy engine (US-7.2). */
 export const createVideoJobRequestSchema = z
@@ -144,8 +169,15 @@ export const resolvedCreateVideoJobInputSchema = z.object({
 /** @deprecated Use createVideoJobRequestSchema at boundaries; resolvedCreateVideoJobInputSchema internally. */
 export const createVideoJobInputSchema = resolvedCreateVideoJobInputSchema;
 
+export const costEstimateSchema = z.object({
+  estimatedCostCents: z.number().int().nonnegative(),
+  currency: z.literal("USD"),
+  providerKey: z.string().min(1),
+  breakdown: z.record(z.string(), z.number()).optional(),
+});
+
 export const createVideoJobResultSchema = z.object({
-  externalJobId: z.string().min(1),
+  externalJobId: externalJobIdSchema,
   status: videoJobStatusSchema,
   estimatedCostCents: z.number().int().nonnegative(),
 });
@@ -155,6 +187,11 @@ export const videoJobStatusResultSchema = z.object({
   progressPercent: z.number().min(0).max(100).optional(),
   sanitizedErrorMessage: z.string().max(2000).optional(),
   rawOutputUrl: z.string().url().optional(),
+});
+
+/** DB / API shape — rawOutputUrl is server-transient only (US-8.1). */
+export const persistedVideoJobStatusSchema = videoJobStatusResultSchema.omit({
+  rawOutputUrl: true,
 });
 
 export const storedMediaAssetSchema = z.object({
@@ -230,6 +267,9 @@ export type ResolvedSynthesizeSpeechInput = z.infer<
   typeof resolvedSynthesizeSpeechInputSchema
 >;
 export type CreateVideoJobResult = z.infer<typeof createVideoJobResultSchema>;
+export type PersistedVideoJobStatus = z.infer<
+  typeof persistedVideoJobStatusSchema
+>;
 export type StoredMediaAsset = z.infer<typeof storedMediaAssetSchema>;
 
 /** Default V1 low-tier catalog seed keys (US-X.4). */
