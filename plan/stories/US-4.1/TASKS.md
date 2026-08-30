@@ -83,17 +83,17 @@ Concrete BE consumers: generate Server Action; RSC loader for latest draft brief
 
 Concrete FE consumers: Operator Strategy page; future US-4.2/US-5.1 via strategy row id + brief jsonb.
 
-- [ ] **Migration** `neuramark_content_strategies` per PO table (CONTRACT freezes indexes, FK, enum type name).
-- [ ] **Zod schemas** in `lib/contracts/content-strategy.ts`: brief, slot, generate input, persisted row, agent output.
-- [ ] **`generateContentStrategy({ clientId, weekStart })`** Server Action — `requireOperator("handler")`; rate limit; delegates to agent runner.
-- [ ] **Agent job** `runContentStrategyAgent` (CONTRACT name): loads helpers; builds prompt; calls LLM adapter for resolved provider; parses + validates output; validates slot refs; **INSERT** new version row `status = draft`.
-- [ ] **`loadLatestStrategyDraft(clientId, weekStart)`** for Operator RSC (CONTRACT name) — latest version only; `requireOperator` at page/action boundary.
-- [ ] **[SEC] Server-side Zod** on brief before INSERT; reject unknown playbook/trend slugs and disallowed modalidad.
-- [ ] **[SEC] Rate limit** per `client_id` on generate (PO: 60s window).
-- [ ] **[SEC] LLM keys** server env only; never log prompts with secrets; never return raw LLM errors with key material.
-- [ ] **[SEC] `clientId`** validated UUID + client exists; Operator-only — no Cliente-triggered generate.
-- [ ] `revalidatePath` for Operator Strategy route after successful generate.
-- [ ] Automated tests: happy path brief persisted; ≥3 slots; regenerate bumps version without deleting v1; rate limit blocks second call; non-operator 403; invalid slug rejected; modalidad outside allowlist rejected; uses profile helper not raw interview.
+- [x] **Migration** `neuramark_content_strategies` per PO table (CONTRACT freezes indexes, FK, enum type name).
+- [x] **Zod schemas** in `lib/contracts/content-strategy.ts`: brief, slot, generate input, persisted row, agent output.
+- [x] **`generateContentStrategy({ weekStart })`** Server Action — `requireOperator("handler")`; rate limit; delegates to `generateContentStrategyForClient`.
+- [x] **Agent job** `generateWeeklyContentStrategy` (`lib/agents/content/generate-weekly-strategy.ts`): loads helpers via orchestrator; builds prompt; calls LLM adapter; parses + validates output; validates slot refs; **INSERT** new version row `status = draft`.
+- [x] **`getLatestContentStrategy({ weekStart })`** Server Action — latest version only; `requireOperator` at action boundary.
+- [x] **[SEC] Server-side Zod** on brief before INSERT; reject unknown playbook/trend slugs and disallowed modalidad.
+- [x] **[SEC] Rate limit** per `client_id` on generate (CONTRACT: 3/60min + in-flight).
+- [x] **[SEC] LLM keys** server env only; never log prompts with secrets; never return raw LLM errors with key material.
+- [x] **[SEC] `clientId`** server-resolved from operator session; Operator-only — no Cliente-triggered generate.
+- [x] `revalidatePath` for Operator Strategy route after successful generate.
+- [x] Automated tests: `lib/content-strategy/content-strategy.test.ts` (32/32 pass).
 
 ---
 
