@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { RadioButton } from "primereact/radiobutton";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
 import { Column } from "primereact/column";
@@ -18,6 +19,7 @@ import type {
   ContentStrategySlotGoal,
 } from "@/lib/contracts/content-strategy";
 import {
+  buildEffectiveInstagramCaption,
   IG_CAPTION_MAX_CHARS,
   IG_HASHTAG_WARN_MAX,
   type ReelCaptionErrorCode,
@@ -29,6 +31,7 @@ import type {
 } from "@/lib/contracts/reel-script";
 import { generateReelCaptions } from "@/lib/reel-captions/actions/generate-reel-captions";
 import { regenerateReelCaption } from "@/lib/reel-captions/actions/regenerate-reel-caption";
+import { selectReelCaptionCta } from "@/lib/reel-captions/actions/select-reel-caption-cta";
 import type {
   ReelScriptReadability,
   ReelScriptReadabilityBeatLine,
@@ -152,6 +155,18 @@ type ScriptsPageCopy = {
       scriptPending: string;
       internal: string;
     };
+    ctaSelect: {
+      selectLabel: string;
+      previewHeading: string;
+      unselectedHint: string;
+      selectionSaved: string;
+      clearedOnRegen: string;
+      effectiveLengthWarn: string;
+      errors: {
+        indexOutOfBounds: string;
+        captionNotFound: string;
+      };
+    };
   };
 };
 
@@ -208,15 +223,26 @@ function messageForCode(
 
 function messageForCaptionCode(
   code: ReelCaptionErrorCode,
+  messageKey: string | undefined,
   copy: ScriptsPageCopy,
 ): string {
+  if (messageKey === "scripts.caption.ctaSelect.errors.indexOutOfBounds") {
+    return copy.caption.ctaSelect.errors.indexOutOfBounds;
+  }
+  if (messageKey === "scripts.caption.ctaSelect.errors.captionNotFound") {
+    return copy.caption.ctaSelect.errors.captionNotFound;
+  }
+
   switch (code) {
     case "VALIDATION_ERROR":
       return copy.caption.errors.validation;
     case "FORBIDDEN_FIELDS":
       return copy.caption.errors.forbiddenFields;
     case "NOT_FOUND":
-      return copy.caption.errors.notFound;
+    case "CAPTION_NOT_FOUND":
+      return copy.caption.ctaSelect.errors.captionNotFound;
+    case "CTA_INDEX_OUT_OF_BOUNDS":
+      return copy.caption.ctaSelect.errors.indexOutOfBounds;
     case "RATE_LIMITED":
       return copy.caption.errors.rateLimited;
     case "GENERATION_IN_FLIGHT":
@@ -279,6 +305,7 @@ export function ScriptsPageView({
   const [captionRegeneratingSlot, setCaptionRegeneratingSlot] = useState<number | null>(
     null,
   );
+  const [captionSelectingSlot, setCaptionSelectingSlot] = useState<number | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<ReelScriptListItem[]>([]);
 
@@ -288,7 +315,8 @@ export function ScriptsPageView({
     batchPending ||
     captionBatchPending ||
     regeneratingSlot !== null ||
-    captionRegeneratingSlot !== null;
+    captionRegeneratingSlot !== null ||
+    captionSelectingSlot !== null;
   const hasApprovedStrategy = data.approvedStrategy !== null;
   const hasAnyGenerated = data.items.some((item) => item.status === "generated");
   const hasAnyCaptionGenerated = data.items.some(
@@ -385,11 +413,46 @@ export function ScriptsPageView({
         return;
       }
 
-      setBanner(messageForCaptionCode(result.error.code, copy));
+      setBanner(messageForCaptionCode(result.error.code, result.error.messageKey, copy));
     } catch {
       setBanner(copy.caption.errors.internal);
     } finally {
       setCaptionBatchPending(false);
+    }
+  }
+
+  async function handleSelectCaptionCta(slotIndex: number, selectedCtaIndex: number) {
+    if (isBusy) {
+      return;
+    }
+
+    setCaptionSelectingSlot(slotIndex);
+    setBanner(null);
+
+    try {
+      const result = await selectReelCaptionCta({
+        weekStart,
+        slotIndex,
+        selectedCtaIndex,
+      });
+
+      if (result.ok) {
+        toastRef.current?.show({
+          severity: "success",
+          summary: copy.caption.ctaSelect.selectionSaved,
+          life: 4000,
+        });
+        router.refresh();
+        return;
+      }
+
+      setBanner(
+        messageForCaptionCode(result.error.code, result.error.messageKey, copy),
+      );
+    } catch {
+      setBanner(copy.caption.errors.internal);
+    } finally {
+      setCaptionSelectingSlot(null);
     }
   }
 
@@ -408,13 +471,14 @@ export function ScriptsPageView({
         toastRef.current?.show({
           severity: "success",
           summary: copy.caption.toastRegenerateSuccess,
-          life: 4000,
+          detail: copy.caption.ctaSelect.clearedOnRegen,
+          life: 5000,
         });
         router.refresh();
         return;
       }
 
-      setBanner(messageForCaptionCode(result.error.code, copy));
+      setBanner(messageForCaptionCode(result.error.code, result.error.messageKey, copy));
     } catch {
       setBanner(copy.caption.errors.internal);
     } finally {
@@ -577,7 +641,11 @@ export function ScriptsPageView({
                 copy={copy}
                 onCopy={copyToClipboard}
                 onRegenerateCaption={(slotIndex) => void handleRegenerateCaption(slotIndex)}
+                onSelectCaptionCta={(slotIndex, selectedCtaIndex) =>
+                  void handleSelectCaptionCta(slotIndex, selectedCtaIndex)
+                }
                 captionRegeneratingSlot={captionRegeneratingSlot}
+                captionSelectingSlot={captionSelectingSlot}
                 isBusy={isBusy}
               />
             )}
@@ -675,7 +743,9 @@ type ReelDetailPanelProps = {
   copy: ScriptsPageCopy;
   onCopy: (text: string) => void;
   onRegenerateCaption: (slotIndex: number) => void;
+  onSelectCaptionCta: (slotIndex: number, selectedCtaIndex: number) => void;
   captionRegeneratingSlot: number | null;
+  captionSelectingSlot: number | null;
   isBusy: boolean;
 };
 
@@ -684,7 +754,9 @@ function ReelDetailPanel({
   copy,
   onCopy,
   onRegenerateCaption,
+  onSelectCaptionCta,
   captionRegeneratingSlot,
+  captionSelectingSlot,
   isBusy,
 }: ReelDetailPanelProps) {
   return (
@@ -698,7 +770,11 @@ function ReelDetailPanel({
           copy={copy}
           onCopy={onCopy}
           onRegenerate={() => onRegenerateCaption(row.slotIndex)}
+          onSelectCta={(selectedCtaIndex) =>
+            onSelectCaptionCta(row.slotIndex, selectedCtaIndex)
+          }
           isRegenerating={captionRegeneratingSlot === row.slotIndex}
+          isSelecting={captionSelectingSlot === row.slotIndex}
           isBusy={isBusy}
         />
       </TabPanel>
@@ -803,7 +879,9 @@ type CaptionDetailPanelProps = {
   copy: ScriptsPageCopy;
   onCopy: (text: string) => void;
   onRegenerate: () => void;
+  onSelectCta: (selectedCtaIndex: number) => void;
   isRegenerating: boolean;
+  isSelecting: boolean;
   isBusy: boolean;
 };
 
@@ -812,7 +890,9 @@ function CaptionDetailPanel({
   copy,
   onCopy,
   onRegenerate,
+  onSelectCta,
   isRegenerating,
+  isSelecting,
   isBusy,
 }: CaptionDetailPanelProps) {
   if (row.status !== "generated") {
@@ -845,6 +925,14 @@ function CaptionDetailPanel({
   const hashtagWarn =
     record.hashtagsOverConfiguredMax || record.hashtagCount > IG_HASHTAG_WARN_MAX;
   const hashtagBlock = record.hashtags.join(" ");
+  const hasSelectedCta = caption.selectedCtaIndex !== null;
+  const effectivePreview = hasSelectedCta
+    ? buildEffectiveInstagramCaption({
+        caption: record.caption,
+        selectedCtaText: caption.selectedCtaText,
+      })
+    : null;
+  const ctaGroupId = `cta-select-${row.slotIndex}`;
 
   return (
     <div style={{ display: "grid", gap: "1rem" }}>
@@ -980,6 +1068,7 @@ function CaptionDetailPanel({
 
       <div>
         <span
+          id={ctaGroupId}
           style={{
             display: "block",
             fontWeight: 600,
@@ -988,28 +1077,123 @@ function CaptionDetailPanel({
             marginBottom: "0.5rem",
           }}
         >
-          {copy.caption.ctaVariantsLabel}
+          {copy.caption.ctaSelect.selectLabel}
         </span>
-        <div style={{ display: "grid", gap: "0.5rem" }}>
-          {record.ctaVariants.map((variant, index) => (
+        <div
+          role="radiogroup"
+          aria-labelledby={ctaGroupId}
+          style={{ display: "grid", gap: "0.5rem" }}
+        >
+          {record.ctaVariants.map((variant, index) => {
+            const inputId = `cta-${row.slotIndex}-${index}`;
+            const isSelected = caption.selectedCtaIndex === index;
+
+            return (
+              <label
+                key={`${index}-${variant}`}
+                htmlFor={inputId}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "0.65rem",
+                  padding: "0.65rem 0.85rem",
+                  borderRadius: "0.375rem",
+                  border: isSelected ? "1px solid #6366f1" : "1px solid #e5e7eb",
+                  background: isSelected ? "#eef2ff" : "#f9fafb",
+                  fontSize: "0.9rem",
+                  color: "#111827",
+                  cursor: isBusy ? "not-allowed" : "pointer",
+                }}
+              >
+                <RadioButton
+                  inputId={inputId}
+                  name={`cta-${row.slotIndex}`}
+                  value={index}
+                  checked={isSelected}
+                  disabled={isBusy || isSelecting}
+                  onChange={() => onSelectCta(index)}
+                />
+                <span style={{ flex: 1, lineHeight: 1.5 }}>
+                  {formatTemplate(copy.caption.ctaVariantLine, {
+                    index: index + 1,
+                    text: variant,
+                  })}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+        {!hasSelectedCta ? (
+          <p
+            style={{
+              margin: "0.5rem 0 0",
+              fontSize: "0.8125rem",
+              color: "#6b7280",
+            }}
+          >
+            {copy.caption.ctaSelect.unselectedHint}
+          </p>
+        ) : null}
+      </div>
+
+      <div>
+        <span
+          style={{
+            display: "block",
+            fontWeight: 600,
+            fontSize: "0.875rem",
+            color: "#374151",
+            marginBottom: "0.35rem",
+          }}
+        >
+          {copy.caption.ctaSelect.previewHeading}
+        </span>
+        {effectivePreview ? (
+          <>
             <div
-              key={`${index}-${variant}`}
               style={{
-                padding: "0.65rem 0.85rem",
-                borderRadius: "0.375rem",
-                border: "1px solid #e5e7eb",
-                background: "#f9fafb",
-                fontSize: "0.9rem",
+                padding: "0.75rem 1rem",
+                borderRadius: "0.5rem",
+                background: caption.effectiveCaptionOverLimit ? "#fffbeb" : "#f9fafb",
+                border: caption.effectiveCaptionOverLimit
+                  ? "1px solid #fcd34d"
+                  : "1px solid #e5e7eb",
+                fontSize: "0.95rem",
+                lineHeight: 1.5,
                 color: "#111827",
+                whiteSpace: "pre-wrap",
               }}
             >
-              {formatTemplate(copy.caption.ctaVariantLine, {
-                index: index + 1,
-                text: variant,
-              })}
+              {effectivePreview}
             </div>
-          ))}
-        </div>
+            {caption.effectiveCaptionOverLimit ? (
+              <p
+                style={{
+                  margin: "0.35rem 0 0",
+                  fontSize: "0.8125rem",
+                  color: "#b45309",
+                  fontWeight: 600,
+                }}
+              >
+                {formatTemplate(copy.caption.ctaSelect.effectiveLengthWarn, {
+                  count: caption.effectiveCaptionCharCount,
+                  max: IG_CAPTION_MAX_CHARS,
+                })}
+              </p>
+            ) : null}
+          </>
+        ) : (
+          <p
+            style={{
+              margin: 0,
+              fontSize: "0.875rem",
+              color: "#6b7280",
+              fontStyle: "italic",
+            }}
+          >
+            {copy.caption.ctaSelect.unselectedHint}
+          </p>
+        )}
       </div>
 
       <Button
@@ -1017,7 +1201,7 @@ function CaptionDetailPanel({
         label={isRegenerating ? copy.caption.regenerating : copy.caption.regenerate}
         icon="pi pi-refresh"
         severity="secondary"
-        loading={isRegenerating}
+        loading={isRegenerating || isSelecting}
         disabled={isBusy}
         onClick={onRegenerate}
       />

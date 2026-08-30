@@ -911,6 +911,18 @@
         "scriptNotFound": "Genera el paquete de guion de este Reel antes de crear el caption.",
         "scriptPending": "El paquete de guion de este Reel sigue pendiente.",
         "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
+      },
+      "ctaSelect": {
+        "selectLabel": "Variante CTA para aprobación",
+        "previewHeading": "Vista previa en contexto",
+        "unselectedHint": "Selecciona una variante CTA para previsualizar el caption con CTA para aprobación.",
+        "selectionSaved": "Variante CTA guardada.",
+        "clearedOnRegen": "La selección de CTA se borró porque el caption se regeneró.",
+        "effectiveLengthWarn": "Caption + CTA tiene {count} caracteres — supera el límite de Instagram ({max}).",
+        "errors": {
+          "indexOutOfBounds": "Esa variante CTA no está disponible para este caption.",
+          "captionNotFound": "No se encontró caption para este Reel."
+        }
       }
     }
   }

@@ -911,6 +911,18 @@
         "scriptNotFound": "Generate the script package for this Reel before creating a caption.",
         "scriptPending": "Script package is still pending for this Reel.",
         "internal": "Something went wrong. Please try again later."
+      },
+      "ctaSelect": {
+        "selectLabel": "CTA variant for approval",
+        "previewHeading": "Preview in context",
+        "unselectedHint": "Select a CTA variant to preview the caption with CTA for approval.",
+        "selectionSaved": "CTA variant saved.",
+        "clearedOnRegen": "CTA selection was cleared because the caption was regenerated.",
+        "effectiveLengthWarn": "Caption + CTA is {count} characters — over the {max} Instagram limit.",
+        "errors": {
+          "indexOutOfBounds": "That CTA variant is not available for this caption.",
+          "captionNotFound": "Caption not found for this Reel."
+        }
       }
     }
   }

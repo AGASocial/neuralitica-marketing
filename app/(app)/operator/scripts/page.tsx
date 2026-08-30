@@ -159,6 +159,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
           toastRegenerateSuccess: t.scripts.caption.toastRegenerateSuccess,
           status: t.scripts.caption.status,
           errors: t.scripts.caption.errors,
+          ctaSelect: t.scripts.caption.ctaSelect,
         },
       }}
     />
