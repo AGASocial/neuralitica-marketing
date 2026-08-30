@@ -40,7 +40,6 @@ import { getTrendSnapshotForWeek } from "@/lib/trend/get-trend-snapshot-for-week
 import { assertReelBudgetAllowsSpend } from "@/lib/cost-policy/assert-reel-budget-allows-spend";
 import { logProviderDecision } from "@/lib/cost-policy/log-provider-decision";
 import { recordReelSpendEvent } from "@/lib/cost-policy/record-reel-spend-event";
-import { logProviderDecision } from "@/lib/cost-policy/log-provider-decision";
 import { resolveReelScriptBudgetContext } from "@/lib/cost-policy/resolve-reel-script-for-budget";
 import { getProviderCatalog } from "@/lib/providers/get-provider-catalog";
 import {
@@ -419,18 +418,6 @@ export async function generateReelScriptsForClient(
         providerKey: item.gate.providerKey,
         estimatedCostCents: item.gate.estimatedCostCents,
         rationaleKey: item.gate.rationaleKey,
-        operatorClientId,
-      });
-
-      await logProviderDecision({
-        clientId,
-        reelScriptId: persisted.scriptId,
-        jobKind: spendJobKind,
-        assetRole: "llm",
-        providerTier: llmDecision.providerTier,
-        providerKey: llmDecision.providerKey,
-        estimatedCostCents: llmDecision.estimatedCostCents,
-        rationaleKey: llmDecision.rationaleKey,
         operatorClientId,
       });
     }

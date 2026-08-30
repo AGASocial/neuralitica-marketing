@@ -293,7 +293,9 @@ type MockOptions = {
   getCostPolicyForClient?: (clientId: string) => Promise<unknown>;
   assertReelBudgetAllowsSpend?: (input: unknown) => Promise<unknown>;
   recordReelSpendEvent?: (params: unknown) => Promise<void>;
+  logProviderDecision?: (params: unknown) => Promise<void>;
   generateReelCaptionForScript?: (params: unknown) => Promise<unknown>;
+  resolveProviderForJob?: (input: unknown) => Promise<unknown>;
   resolveProvider?: (...args: unknown[]) => unknown;
   createSiliconFlowLlmAdapter?: (key: string, env: string) => unknown | null;
   loadApprovedStrategyForScriptJob?: (params: unknown) => Promise<unknown>;
@@ -443,6 +445,7 @@ function installReelCaptionMocks(options: MockOptions) {
             maxCostCents: 5000,
             providerTier: "low",
             providerKey: "siliconflow_deepseek_flash",
+            rationaleKey: "llm_variant_default",
             didOverride: false,
           })),
       };
@@ -450,6 +453,28 @@ function installReelCaptionMocks(options: MockOptions) {
     if (String(request).includes("lib/cost-policy/record-reel-spend-event")) {
       return {
         recordReelSpendEvent: options.recordReelSpendEvent ?? (async () => {}),
+      };
+    }
+    if (String(request).includes("lib/cost-policy/log-provider-decision")) {
+      return {
+        logProviderDecision: options.logProviderDecision ?? (async () => {}),
+      };
+    }
+    if (
+      request === "@/lib/providers/resolve-provider-for-job" ||
+      String(request).includes("resolve-provider-for-job")
+    ) {
+      const actual = originalLoad(request, parent, isMain) as Record<
+        string,
+        unknown
+      >;
+      return {
+        ...actual,
+        resolveProviderForJob:
+          options.resolveProviderForJob ??
+          (actual.resolveProviderForJob as (
+            input: unknown,
+          ) => Promise<unknown>),
       };
     }
     if (
@@ -502,6 +527,10 @@ function installReelCaptionMocks(options: MockOptions) {
           (() => ({
             providerKey: "siliconflow_deepseek_flash",
             complete: async () => ({ content: "{}" }),
+            estimateCost: async () => ({
+              estimatedCostCents: 1,
+              currency: "USD" as const,
+            }),
           })),
       };
     }
@@ -1009,19 +1038,21 @@ describe("reel caption mutations (US-6.1)", () => {
     }
   });
 
-  it("resolveProvider called with llmVariant default", async () => {
+  it("resolveProviderForJob called with llmVariant default", async () => {
     let resolveArgs: unknown;
     const restore = installReelCaptionMocks({
-      resolveProvider: (_catalog: unknown, ctx: unknown) => {
-        resolveArgs = ctx;
+      resolveProviderForJob: async (input: unknown) => {
+        resolveArgs = input;
         return {
-          key: "siliconflow_deepseek_flash",
-          assetRole: "llm",
-          tier: "low",
-          active: true,
-          capabilities: {},
-          costModel: { billingUnit: "per_1m_tokens", unitCostCents: 14 },
-          envKeyName: "SILICONFLOW_API_KEY",
+          ok: true,
+          decision: {
+            providerKey: "siliconflow_deepseek_flash",
+            providerTier: "low",
+            assetRole: "llm",
+            estimatedCostCents: 1,
+            displayLabel: "DeepSeek Flash",
+            rationaleKey: "llm_variant_default",
+          },
         };
       },
       from: defaultCaptionFrom([SCRIPT_ROW_0]),
@@ -1031,8 +1062,8 @@ describe("reel caption mutations (US-6.1)", () => {
       const { generateReelCaptions } = require("./actions/generate-reel-captions.ts");
       await generateReelCaptions({ weekStart: WEEK_START });
       assert.deepEqual(resolveArgs, {
+        clientId: OPERATOR_ID,
         assetRole: "llm",
-        tier: "low",
         llmVariant: "default",
       });
     } finally {
@@ -1204,7 +1235,8 @@ describe("reel caption helpers (US-6.1)", () => {
         mode: "batch",
       });
       assert.equal(counts.profile, 1);
-      assert.equal(counts.catalog, 1);
+      // Orchestrator + resolveProviderForJob each load catalog once per batch.
+      assert.equal(counts.catalog, 2);
       assert.equal(counts.policy, 1);
       // Orchestrator + per-script loadReelScriptForCaptionJob verification
       assert.equal(counts.strategy, 2);

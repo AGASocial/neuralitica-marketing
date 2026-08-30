@@ -26,7 +26,6 @@ import {
   PROVIDER_NOT_FOUND,
 } from "../contracts/providers";
 import { rankCatalogCandidatesByCost } from "./rank-catalog-candidates-by-cost";
-import { rankCatalogCandidatesByCost } from "./rank-catalog-candidates-by-cost";
 
 export type {
   AssetRole,

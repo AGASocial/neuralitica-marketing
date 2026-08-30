@@ -242,8 +242,10 @@ type MockOptions = {
   getCostPolicyForClient?: (clientId: string) => Promise<unknown>;
   assertReelBudgetAllowsSpend?: (input: unknown) => Promise<unknown>;
   recordReelSpendEvent?: (params: unknown) => Promise<void>;
+  logProviderDecision?: (params: unknown) => Promise<void>;
   resolveReelScriptBudgetContext?: (params: unknown) => Promise<unknown>;
   generateReelScriptForSlot?: (params: unknown) => Promise<unknown>;
+  resolveProviderForJob?: (input: unknown) => Promise<unknown>;
   resolveProvider?: (...args: unknown[]) => unknown;
   createSiliconFlowLlmAdapter?: (key: string, env: string) => unknown | null;
   revalidatePath?: (p: string) => void;
@@ -417,6 +419,7 @@ function installReelScriptMocks(options: MockOptions) {
             maxCostCents: 5000,
             providerTier: "low",
             providerKey: "siliconflow_qwen",
+            rationaleKey: "llm_variant_fallback",
             didOverride: false,
           })),
       };
@@ -424,6 +427,11 @@ function installReelScriptMocks(options: MockOptions) {
     if (String(request).includes("lib/cost-policy/record-reel-spend-event")) {
       return {
         recordReelSpendEvent: options.recordReelSpendEvent ?? (async () => {}),
+      };
+    }
+    if (String(request).includes("lib/cost-policy/log-provider-decision")) {
+      return {
+        logProviderDecision: options.logProviderDecision ?? (async () => {}),
       };
     }
     if (String(request).includes("lib/cost-policy/resolve-reel-script-for-budget")) {
@@ -434,6 +442,23 @@ function installReelScriptMocks(options: MockOptions) {
             reelScriptId: "11111111-1111-4111-8111-111111111111",
             persisted: false,
           })),
+      };
+    }
+    if (
+      request === "@/lib/providers/resolve-provider-for-job" ||
+      String(request).includes("resolve-provider-for-job")
+    ) {
+      const actual = originalLoad(request, parent, isMain) as Record<
+        string,
+        unknown
+      >;
+      return {
+        ...actual,
+        resolveProviderForJob:
+          options.resolveProviderForJob ??
+          (actual.resolveProviderForJob as (
+            input: unknown,
+          ) => Promise<unknown>),
       };
     }
     if (
@@ -470,6 +495,10 @@ function installReelScriptMocks(options: MockOptions) {
           (() => ({
             providerKey: "siliconflow_qwen",
             complete: async () => ({ content: "{}" }),
+            estimateCost: async () => ({
+              estimatedCostCents: 1,
+              currency: "USD" as const,
+            }),
           })),
       };
     }
@@ -1043,19 +1072,21 @@ describe("reel script mutations (US-5.1)", () => {
     }
   });
 
-  it("resolveProvider called with llmVariant fallback", async () => {
+  it("resolveProviderForJob called with llmVariant fallback", async () => {
     let resolveArgs: unknown;
     const restore = installReelScriptMocks({
-      resolveProvider: (_catalog: unknown, ctx: unknown) => {
-        resolveArgs = ctx;
+      resolveProviderForJob: async (input: unknown) => {
+        resolveArgs = input;
         return {
-          key: "siliconflow_qwen",
-          assetRole: "llm",
-          tier: "low",
-          active: true,
-          capabilities: {},
-          costModel: { billingUnit: "per_1m_tokens", unitCostCents: 14 },
-          envKeyName: "SILICONFLOW_API_KEY",
+          ok: true,
+          decision: {
+            providerKey: "siliconflow_qwen",
+            providerTier: "low",
+            assetRole: "llm",
+            estimatedCostCents: 1,
+            displayLabel: "Qwen",
+            rationaleKey: "llm_variant_fallback",
+          },
         };
       },
       from: (table: string) => {
@@ -1091,8 +1122,8 @@ describe("reel script mutations (US-5.1)", () => {
         slotIndex: 0,
       });
       assert.deepEqual(resolveArgs, {
+        clientId: OPERATOR_ID,
         assetRole: "llm",
-        tier: "low",
         llmVariant: "fallback",
       });
     } finally {
@@ -1510,7 +1541,8 @@ describe("reel script agent (US-5.1)", () => {
       assert.equal(counts.profile, 1);
       assert.equal(counts.playbook, 1);
       assert.equal(counts.trend, 1);
-      assert.equal(counts.catalog, 1);
+      // Orchestrator + resolveProviderForJob each load catalog once per batch.
+      assert.equal(counts.catalog, 2);
       assert.equal(counts.policy, 1);
     } finally {
       restore();

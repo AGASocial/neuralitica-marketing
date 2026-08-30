@@ -40,7 +40,6 @@ import { getBusinessProfileForAgents } from "@/lib/profile/get-business-profile-
 import { assertReelBudgetAllowsSpend } from "@/lib/cost-policy/assert-reel-budget-allows-spend";
 import { logProviderDecision } from "@/lib/cost-policy/log-provider-decision";
 import { recordReelSpendEvent } from "@/lib/cost-policy/record-reel-spend-event";
-import { logProviderDecision } from "@/lib/cost-policy/log-provider-decision";
 import { getProviderCatalog } from "@/lib/providers/get-provider-catalog";
 import {
   resolveCatalogRowForDecision,
@@ -426,18 +425,6 @@ export async function generateReelCaptionsForClient(
         providerKey: gate.providerKey,
         estimatedCostCents: gate.estimatedCostCents,
         rationaleKey: gate.rationaleKey,
-        operatorClientId,
-      });
-
-      await logProviderDecision({
-        clientId,
-        reelScriptId: verified.reelScriptId,
-        jobKind: spendJobKind,
-        assetRole: "llm",
-        providerTier: llmDecision.providerTier,
-        providerKey: llmDecision.providerKey,
-        estimatedCostCents: llmDecision.estimatedCostCents,
-        rationaleKey: llmDecision.rationaleKey,
         operatorClientId,
       });
 
