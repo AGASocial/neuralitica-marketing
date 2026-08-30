@@ -277,6 +277,7 @@ export type ResolvedSynthesizeSpeechInput = z.infer<
   typeof resolvedSynthesizeSpeechInputSchema
 >;
 export type CreateVideoJobResult = z.infer<typeof createVideoJobResultSchema>;
+export type VideoJobStatusResult = z.infer<typeof videoJobStatusResultSchema>;
 export type PersistedVideoJobStatus = z.infer<
   typeof persistedVideoJobStatusSchema
 >;
