@@ -67,6 +67,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
       items: [],
       costSummary: emptyWeekCostSummary(weekStart, clientId),
       reelCostRollups: {},
+      videoJobsByReelScriptId: {},
     };
   }
 
@@ -84,6 +85,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
         items: [],
         costSummary: emptyWeekCostSummary(weekStart, clientId),
         reelCostRollups: {},
+        videoJobsByReelScriptId: {},
       };
 
   return (
