@@ -686,7 +686,9 @@ export const FORBIDDEN_PROVIDER_AUTHORITY_KEYS = [
 
 ## FE signoff
 
-- [ ] **Reviewed by FE** — _pending_
+- [x] **Reviewed by FE** — expand-row recommendation panel on `/operator/scripts`; `ReelBudgetConfirmDialog` LLM block via optional `llmRecommendation`; `getReelProviderRecommendations` + EN/ES `scripts.providerRecommendation.*`.
+
+**Reviewed by FE:** yes — 2026-08-29 — nextjs-frontend. **Panel:** add read-only **recomendación de proveedor** block inside existing expand-row `ReelDetailPanel` (`DataTable` `rowExpansionTemplate` — PO expand-row layout); lazy-fetch per slot via `getReelProviderRecommendations({ weekStart, slotIndex })` on expand (or batch without `slotIndex` on page load — map `items` by `slotIndex`); render `components[]` with asset-role label (i18n), `displayLabel`, tier badge, `estimatedCostCents` (`formatCentsForDisplay`), `rationaleKey` → `scripts.providerRecommendation.rationale.*`; `projectedTotalCents` labeled projected; `manualFallbackNoteKey` footnote; loading / empty / `PROVIDER_UNAVAILABLE` / `STRATEGY_NOT_APPROVED` / `SLOT_NOT_FOUND` states; `reelScriptId: null` supported for pending slots. **Confirm dialog:** extend `ReelBudgetConfirmDialog` / `BudgetMetrics` with optional `llmRecommendation` (`displayLabel`, `providerTier`, `estimatedCostCents`, `rationaleKey`) above existing budget rows — complements `resolvedLlmProviderLabel`; batch preview shows per-slot LLM line when present. **Action boundary:** mirror `getReelBudgetPreview` — Server Action derives `clientId` from `requireOperator().id`; FE passes only `weekStart` + optional `slotIndex` (do not add `clientId` to `ScriptsPageView` props). **i18n:** `scripts.providerRecommendation.*` EN + ES (role labels, rationale keys, projected total, manual note). Types from `lib/contracts/provider-decisions.ts` + extended `reelBudgetPreviewSchema`; no client provider math; no `providerKey` in UI.
 
 ---
 
