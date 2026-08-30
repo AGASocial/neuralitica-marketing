@@ -163,14 +163,14 @@ All objects keep `neuramark_` prefix.
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md authored (nextjs-backend — extends US-8.2 Phase B; **Reviewed by FE** before BUILD)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md (requirements-validator — US-8.4 + US-8.2 Phase B AC)
-- [ ] QA.md (qa-engineer)
+- [x] SPEC-REVIEW.md (spec-guardian)
+- [x] SECURITY.md (security-architect)
+- [x] CONTRACT.md authored (nextjs-backend — extends US-8.2 Phase B; **Reviewed by FE** before BUILD)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md (requirements-validator — US-8.4 + US-8.2 Phase B AC — PASS WITH NOTES @ `ad4d514`)
+- [x] QA.md (qa-engineer — APPROVE WITH CONDITIONS @ `9b24c48`; P1 resolved @ `77142b9`)
 
-**Status:** PREP — TASKS.md ready. **Next:** SECURITY.md → CONTRACT.md on `feature/US-8.4-video-jobs`.
+**Status:** CLOSED — PO checked USER_STORIES AC (2026-08-29). **Branch:** `feature/US-8.4-video-jobs` @ `9b24c48`. **Follow-up (P2, non-blocking):** concurrency hardening on override consume; extended SECURITY.md test matrix; optional webhook handler.
 
 ---
 

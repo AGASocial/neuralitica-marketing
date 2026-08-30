@@ -796,16 +796,16 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | SadTalker adapter (e.g. Replicate): portrait asset + TTS audio → poll → store MP4; `provider_key` `sadtalker_low`; env API key |
 | **DB** | `video_jobs` (reel_script_id, provider_key, asset_role `primary`, external_job_id, status, output_url, provider_tier) |
 
-**Acceptance criteria**
-- [ ] Default talking-head provider when `provider_tier = low` and visual mode is `own_avatar` or `generic_avatar`
-- [ ] Inputs: one approved reference image (own avatar) or generic loop still + voiceover audio from US-9.3
-- [ ] Successful job returns playable video stored as `media_assets` (not a long-lived third-party URL)
-- [ ] Failures capture provider error message; retries configurable with max attempts
-- [ ] Estimated cost uses flat per-run model from `provider_catalog` (~$0.10/Reel at research baseline)
-- [ ] [SEC] Job creation re-verifies active avatar consent (US-3.2) when mode is `own_avatar`, and budget (US-7.1) server-side immediately before submit
-- [ ] [SEC] Job status is updated only by the server-side poller; no client-callable endpoint can set status or `output_url`
-- [ ] [SEC] Output video is downloaded server-side; provider URLs are validated (https, expected host) before fetch
-- [ ] [SEC] Status polling from the browser is scoped to jobs owned by the current client; foreign job IDs return 404
+**Acceptance criteria** *(Phase B CLOSED via US-8.4 — `feature/US-8.4-video-jobs` @ `9b24c48`)*
+- [x] Default talking-head provider when `provider_tier = low` and visual mode is `own_avatar` or `generic_avatar`
+- [x] Inputs: one approved reference image (own avatar) or generic loop still + voiceover audio from US-9.3
+- [x] Successful job returns playable video stored as `media_assets` (not a long-lived third-party URL)
+- [x] Failures capture provider error message; retries configurable with max attempts
+- [x] Estimated cost uses flat per-run model from `provider_catalog` (~$0.10/Reel at research baseline)
+- [x] [SEC] Job creation re-verifies active avatar consent (US-3.2) when mode is `own_avatar`, and budget (US-7.1) server-side immediately before submit
+- [x] [SEC] Job status is updated only by the server-side poller; no client-callable endpoint can set status or `output_url`
+- [x] [SEC] Output video is downloaded server-side; provider URLs are validated (https, expected host) before fetch
+- [x] [SEC] Status polling from the browser is scoped to jobs owned by the current client; foreign job IDs return 404
 
 **Depends on:** US-8.1, US-3.3 (own avatar), US-5.1, US-9.3, US-X.4
 
@@ -842,15 +842,15 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | Poll/webhook status updates; retry creates new job with lineage; count regenerations |
 | **DB** | `video_jobs.parent_job_id`, `attempt` |
 
-**Acceptance criteria**
-- [ ] Stale jobs timeout to `failed`
-- [ ] Retry requires explicit confirmation showing new estimate
-- [ ] Regeneration count visible (margin risk from roadmap)
-- [ ] Retries beyond a configurable max per Reel are blocked until an operator explicitly overrides
-- [ ] Operator-only: retry and retry-override endpoints/actions reject non-operator sessions server-side (403)
-- [ ] [SEC] Retry limit and cumulative-budget check (US-7.1) are enforced in the server-side retry handler; disabling the retry button is UI convenience only
-- [ ] [SEC] If a webhook endpoint is used for status updates, it verifies request authenticity (provider signature or shared secret) and matches `external_job_id` + `provider_key` against an existing job before writing; unmatched or unsigned callbacks are rejected and logged
-- [ ] [SEC] Retry override is recorded (user, reason, timestamp) in the same audit pattern as QA overrides (US-10.2)
+**Acceptance criteria** *(CLOSED — `feature/US-8.4-video-jobs` @ `9b24c48`; VALIDATION PASS WITH NOTES · QA APPROVE WITH CONDITIONS)*
+- [x] Stale jobs timeout to `failed`
+- [x] Retry requires explicit confirmation showing new estimate
+- [x] Regeneration count visible (margin risk from roadmap)
+- [x] Retries beyond a configurable max per Reel are blocked until an operator explicitly overrides
+- [x] Operator-only: retry and retry-override endpoints/actions reject non-operator sessions server-side (403)
+- [x] [SEC] Retry limit and cumulative-budget check (US-7.1) are enforced in the server-side retry handler; disabling the retry button is UI convenience only
+- [x] [SEC] If a webhook endpoint is used for status updates, it verifies request authenticity (provider signature or shared secret) and matches `external_job_id` + `provider_key` against an existing job before writing; unmatched or unsigned callbacks are rejected and logged *(poll-only V1 — webhook deferred per CONTRACT; poller-authority AC satisfied)*
+- [x] [SEC] Retry override is recorded (user, reason, timestamp) in the same audit pattern as QA overrides (US-10.2)
 
 **Depends on:** US-8.2, US-8.3, or US-8.6
 

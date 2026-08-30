@@ -1,6 +1,6 @@
 # US-8.4 — Job status and failure handling UI (closes US-8.2 Phase B)
 
-**Status:** PREP — story folder opened (2026-08-29). **Phase B** orchestration + Operator UI; closes remaining **US-8.2** USER_STORIES AC.
+**Status:** CLOSED (2026-08-29) — VALIDATION PASS WITH NOTES · QA APPROVE WITH CONDITIONS · PO AC check-off on `feature/US-8.4-video-jobs` @ `9b24c48`. Closes **US-8.4** and **US-8.2 Phase B** USER_STORIES AC. Poll-only V1 (webhook deferred per CONTRACT). P2 follow-ups tracked in QA.md (override concurrency, extended security tests).
 
 **As an** Operator, **I want** to see generation progress and retry failed jobs, **so that** I control regenerations and cost.
 
@@ -8,7 +8,7 @@ Ship **video job orchestration + Operator status surfaces** for talking-head gen
 
 **Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.4 (+ **US-8.2 Phase B closure** table below).
 
-**This folder:** [`plan/stories/US-8.4/`](./) — `README.md` · `TASKS.md` (gates pending: `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`).
+**This folder:** [`plan/stories/US-8.4/`](./) — `README.md` · `TASKS.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` · `SPEC-REVIEW.md`.
 
 **Branch:** `feature/US-8.4-video-jobs`
 
@@ -79,18 +79,18 @@ _Evitar:_ long-lived third-party URLs as canonical output; client-supplied `prov
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 S3.M9)
-- [ ] SECURITY.md (security-architect — poller authority, IDOR, retry audit, webhook)
-- [ ] CONTRACT.md (nextjs-backend — DDL, routes, DTOs, poller seam; **Reviewed by FE** before BUILD)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md (requirements-validator — US-8.4 + US-8.2 Phase B AC)
-- [ ] QA.md (qa-engineer)
+- [x] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 S3.M9)
+- [x] SECURITY.md (security-architect — poller authority, IDOR, retry audit, webhook)
+- [x] CONTRACT.md (nextjs-backend — DDL, routes, DTOs, poller seam; **Reviewed by FE** before BUILD)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES @ `ad4d514`)
+- [x] QA.md (qa-engineer — APPROVE WITH CONDITIONS @ `9b24c48`)
 
-**Status:** PREP. **Next:** SECURITY.md → CONTRACT.md → BUILD on `feature/US-8.4-video-jobs`.
+**Status:** CLOSED. **Commit:** `9b24c48` on `feature/US-8.4-video-jobs`.
 
 ---
 
-## US-8.2 Phase B closure (do not check US-8.2 until US-8.4 VALIDATION)
+## US-8.2 Phase B closure (checked off in USER_STORIES via US-8.4 VALIDATION)
 
 | USER_STORIES § US-8.2 AC | US-8.4 deliverable |
 |--------------------------|-------------------|
