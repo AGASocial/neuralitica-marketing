@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-9.2
-story_status: CONTRACT
+story_status: SIGNOFF
 feature_branch: feature/US-9.2-subtitles-logo-cover
 last_completed_story: US-9.1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T18:15:00Z
+updated_at: 2026-08-30T18:20:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
