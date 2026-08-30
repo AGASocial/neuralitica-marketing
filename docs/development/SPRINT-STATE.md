@@ -4,10 +4,10 @@
 
 ```yaml
 current_phase: 3
-current_story: US-7.1
-story_status: CONTRACT
-feature_branch: feature/US-7.1-cost-policy
-last_completed_story: US-6.2
+current_story: US-7.2
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-7.1
 phase_status: in_progress
 blocked_reason: null
 updated_at: 2026-08-30T01:45:00Z
@@ -24,7 +24,8 @@ updated_at: 2026-08-30T01:45:00Z
 | US-5.2 Preview script readability | done | BE `b503241` · FE `b68d2ee` · VALIDATION `8ba616e` · CLOSE 2/2 AC |
 | US-6.1 Generate Instagram caption per Reel | done | agents `c385372` · FE `d075781` · BE `1f45244` · VALIDATION `2cebd89` · CLOSE 5/5 AC |
 | US-6.2 CTA variants for caption testing | done | BE `146479c` · FE `f82ba33` · VALIDATION `258773c` · QA `fc0f4b2` · CLOSE `72723c5` |
-| US-7.1 Configure max budget per Reel | CONTRACT | PREP + SPEC-REVIEW + SECURITY + CONTRACT frozen; branch `feature/US-7.1-cost-policy` |
+| US-7.1 Configure max budget per Reel | done | BE `3bdc709` · FE `bb19e4d` · fix `69d274f` · VALIDATION `13531f8` · QA `f8ac2a7` · CLOSE `d68b71a` |
+| US-7.2 Select provider by economics | SELECT | Next story — policy engine ranking |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
