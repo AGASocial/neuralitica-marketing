@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-9.2
-story_status: VALIDATE
+story_status: BUILD
 feature_branch: feature/US-9.2-subtitles-logo-cover
 last_completed_story: US-9.1
 phase_status: in_progress
-blocked_reason: null
-updated_at: 2026-08-30T18:30:00Z
+blocked_reason: applyBrandingForAssembly Server Action stub — VALIDATE FAIL
+updated_at: 2026-08-30T18:32:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
