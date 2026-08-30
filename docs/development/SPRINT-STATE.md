@@ -4,21 +4,21 @@
 
 ```yaml
 current_phase: 3
-current_story: US-X.4
-feature_branch: feature/US-X.4-provider-catalog
-story_status: VALIDATION complete
-last_completed_story: US-16.2
+current_story: US-4.1
+feature_branch: null
+story_status: SELECT
+last_completed_story: US-X.4
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T01:15:00Z
+updated_at: 2026-08-30T02:00:00Z
 ```
 
-## Fase 3 — Content Strategy + Provider catalog (Sprint 3 start)
+## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
 | Story | Status | Notes |
 |-------|--------|-------|
-| US-X.4 Provider catalog + resolveProvider | VALIDATION complete | `plan/stories/US-X.4/VALIDATION.md` — PASS WITH NOTES (0 blockers); BE `5ba9876`; next: QA |
-| US-4.1 Content Strategy agent | pending | Depends on US-X.4 |
+| US-X.4 Provider catalog + resolveProvider | done | BE `5ba9876` · CLOSE `291313b` |
+| US-4.1 Content Strategy agent | SELECT | Depends on US-2.3, US-3.1, US-16.1, US-16.2, US-X.4 ✅ |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -30,10 +30,7 @@ updated_at: 2026-08-30T01:15:00Z
 
 ## Historial reciente
 
-- 2026-08-29 · US-X.4 VALIDATION complete: PASS WITH NOTES (0 blockers, 26/26 tests); `plan/stories/US-X.4/VALIDATION.md`; next QA.
-- 2026-08-29 · US-X.4 BUILD: provider catalog migrations + server helpers + resolveProvider `llmVariant` routing on `feature/US-X.4-provider-catalog`.
-- 2026-08-29 · US-X.4 CONTRACT frozen: `plan/stories/US-X.4/CONTRACT.md` (migrations, seed, `getProviderCatalog`, `getDefaultCostPolicy`, `llmVariant` routing).
-- 2026-08-29 · US-X.4 PREP: story folder + TASKS.md created (`plan/stories/US-X.4/`).
-- 2026-08-29 · Idle tick: Fase 2 PHASE_INTEGRATION → CONNECTED. Phase 3 SELECT → US-X.4.
-- 2026-08-29 · Idle tick: US-16.2 CLOSE. Fase 2 stories complete → PHASE_INTEGRATION.
-- 2026-08-29 · US-16.2 BUILD → VALIDATE → QA → CLOSE.
+- 2026-08-29 · US-X.4 CLOSE + FF-merge to main (`291313b`). Phase 3 → SELECT US-4.1.
+- 2026-08-29 · US-X.4 QA: APPROVE WITH NOTES (0 Critical/High, 26/26 tests).
+- 2026-08-29 · US-X.4 VALIDATION: PASS WITH NOTES (0 blockers).
+- 2026-08-29 · US-X.4 BUILD: catalog migrations + `getProviderCatalog()` + `llmVariant` routing (`5ba9876`).
