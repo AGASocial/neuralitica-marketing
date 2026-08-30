@@ -100,6 +100,7 @@ export async function createTalkingHeadVideoJob(
         hasReferenceLoop,
         needsBroll: false,
         targetDurationSec: input.targetDurationSec ?? script.package.targetDurationSec,
+        brollClipCount: 0,
         ttsCharCount: script.package.voiceoverText.length,
       },
     });

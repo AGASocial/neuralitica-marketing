@@ -3,10 +3,8 @@ import "server-only";
 import { DEFAULT_LOW_TIER_PROVIDER_KEYS } from "@/lib/contracts/providers";
 import type { ExternalJobId } from "@/lib/contracts/providers";
 import { getProviderCatalog } from "@/lib/providers/get-provider-catalog";
-import {
-  initializeProviderRegistryFromCatalog,
-  type ProviderRegistry,
-} from "@/lib/providers/create-provider-registry";
+import { initializeProviderRegistryFromCatalog } from "@/lib/providers/create-provider-registry";
+import type { ProviderRegistry } from "@/lib/providers/provider-adapters";
 import { createSadtalkerLowAdapter } from "@/lib/providers/video/sadtalker-low-adapter";
 import type { VideoProviderAdapter } from "@/lib/providers/provider-adapters";
 

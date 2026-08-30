@@ -18,10 +18,11 @@ import { loadReelScriptForVideoJob } from "../load-reel-script-for-video-job";
 import { loadVideoJobScoped } from "../load-video-job";
 import {
   consumeRetryOverride,
-  getVideoJobRegenerationStats,
-  hasConsumableRetryOverride,
-  isRetryLimitExceeded,
-} from "../video-job-retry";
+  evaluateRetryEligibility,
+  findUnconsumedRetryOverride,
+  getMaxAttemptForReel,
+} from "../retry-eligibility";
+import { getVideoMaxRetriesPerReel } from "../video-job-config";
 
 export async function previewRetryVideoJobEstimate(
   rawInput: unknown,
@@ -62,22 +63,20 @@ export async function previewRetryVideoJobEstimate(
     };
   }
 
-  const stats = await getVideoJobRegenerationStats({
+  const retryState = await evaluateRetryEligibility({
     clientId: failedJob.clientId,
     reelScriptId: failedJob.reelScriptId,
-  });
-  const hasOverride = await hasConsumableRetryOverride({
-    clientId: failedJob.clientId,
-    reelScriptId: failedJob.reelScriptId,
-    failedJobId: failedJob.id,
+    jobId: failedJob.id,
+    status: failedJob.status,
+    attempt: failedJob.attempt,
   });
 
-  if (isRetryLimitExceeded(stats.maxAttempt) && !hasOverride) {
+  if (!retryState.canRetry) {
     return {
       ok: true,
       estimatedCostCents: failedJob.estimatedCostCents,
       canRetry: false,
-      retryBlockedReasonKey: "scripts.videoJob.retry.limitExceeded",
+      retryBlockedReasonKey: retryState.retryBlockedReasonKey ?? undefined,
     };
   }
 
@@ -98,6 +97,8 @@ export async function previewRetryVideoJobEstimate(
       hasReferenceLoop: script.hasReferenceLoop,
       needsBroll: false,
       targetDurationSec: script.package.targetDurationSec,
+      brollClipCount: 0,
+      ttsCharCount: script.package.voiceoverText.length,
     },
   });
   if (!providerResult.ok) {
@@ -161,17 +162,17 @@ export async function retryVideoJob(
     return videoJobMutationError("JOB_NOT_RETRYABLE");
   }
 
-  const stats = await getVideoJobRegenerationStats({
+  const maxAttempt = await getMaxAttemptForReel({
     clientId: failedJob.clientId,
     reelScriptId: failedJob.reelScriptId,
   });
-  const hasOverride = await hasConsumableRetryOverride({
+  const override = await findUnconsumedRetryOverride({
     clientId: failedJob.clientId,
     reelScriptId: failedJob.reelScriptId,
     failedJobId: failedJob.id,
   });
 
-  if (isRetryLimitExceeded(stats.maxAttempt) && !hasOverride) {
+  if (maxAttempt >= getVideoMaxRetriesPerReel() && !override) {
     return videoJobMutationError("RETRY_LIMIT_EXCEEDED", {
       messageKey: "scripts.videoJob.retry.limitExceeded",
     });
@@ -223,11 +224,8 @@ export async function retryVideoJob(
     }
   }
 
-  if (hasOverride) {
-    await consumeRetryOverride({
-      clientId: failedJob.clientId,
-      failedJobId: failedJob.id,
-    });
+  if (override) {
+    await consumeRetryOverride(override.id);
   }
 
   return createTalkingHeadVideoJob(

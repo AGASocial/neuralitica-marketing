@@ -129,22 +129,22 @@ Concrete consumers: **`/operator/scripts`** · retry confirm dialog · optional 
 
 Concrete consumers: FE badges · retry actions · Fly worker · dev in-process poller.
 
-- [ ] **Migration** — `neuramark_video_jobs` per US-8.2 CONTRACT DDL + RLS deny-by-default.
-- [ ] **`createTalkingHeadVideoJob()`** — full gate order; INSERT job; `recordReelSpendEvent`; enqueue poll.
-- [ ] **`pollVideoJobUntilTerminal(jobId)`** — load row → adapter `getJobStatus` loop → terminal handling.
-- [ ] **`fetchAsset` context (L1)** — pass `clientId`, `reelScriptId` from job row into adapter factory / download path.
-- [ ] **Terminal complete** — INSERT `neuramark_media_assets`; UPDATE job; `finalizeGenerationCost` async_update.
-- [ ] **Terminal failed** — UPDATE `status`, `failure_reason` (sanitized only).
-- [ ] **Stale sweeper** — cron or poller pre-check marks old `queued`/`processing` as `failed`.
-- [ ] **`GET /api/video-jobs/[jobId]`** — `requireOperator()`; client-scoped; 404 foreign; frozen DTO.
-- [ ] **`retryVideoJob` Server Action** — operator-only; lineage; budget + max-attempt gates; override audit.
-- [ ] **M1 route** — `app/api/media/provider-assets/[assetId]/route.ts` (HMAC, exp, tenant).
+- [x] **Migration** — `neuramark_video_jobs` per US-8.2 CONTRACT DDL + RLS deny-by-default.
+- [x] **`createTalkingHeadVideoJob()`** — full gate order; INSERT job; `recordReelSpendEvent`; enqueue poll.
+- [x] **`pollVideoJobUntilTerminal(jobId)`** — load row → adapter `getJobStatus` loop → terminal handling.
+- [x] **`fetchAsset` context (L1)** — pass `clientId`, `reelScriptId` from job row into adapter factory / download path.
+- [x] **Terminal complete** — INSERT `neuramark_media_assets`; UPDATE job; `finalizeGenerationCost` async_update.
+- [x] **Terminal failed** — UPDATE `status`, `failure_reason` (sanitized only).
+- [x] **Stale sweeper** — cron or poller pre-check marks old `queued`/`processing` as `failed`.
+- [x] **`GET /api/video-jobs/[jobId]`** — `requireOperator()`; client-scoped; 404 foreign; frozen DTO.
+- [x] **`retryVideoJob` Server Action** — operator-only; lineage; budget + max-attempt gates; override audit.
+- [x] **M1 route** — `app/api/media/provider-assets/[assetId]/route.ts` (HMAC, exp, tenant).
 - [ ] **Optional webhook** — signature verify + `external_job_id` match (if shipped).
-- [ ] **`initializeProviderRegistryFromCatalog()`** on first video job path.
-- [ ] **[SEC] No client endpoint** sets `status`, `output_url`, or `external_job_id`.
-- [ ] **[SEC] Poller-only** status writes.
-- [ ] **[SEC] Retry budget** enforced server-side in retry handler (not UI-only).
-- [ ] **Tests** — orchestrator gate order (consent/budget mocked); IDOR 404 on status GET; retry lineage; stale timeout; M1 route HMAC; poller mocked HTTP (no live Replicate in CI).
+- [x] **`initializeProviderRegistryFromCatalog()`** on first video job path.
+- [x] **[SEC] No client endpoint** sets `status`, `output_url`, or `external_job_id`.
+- [x] **[SEC] Poller-only** status writes.
+- [x] **[SEC] Retry budget** enforced server-side in retry handler (not UI-only).
+- [x] **Tests** — orchestrator gate order (consent/budget mocked); IDOR 404 on status GET; retry lineage; stale timeout; M1 route HMAC; poller mocked HTTP (no live Replicate in CI).
 
 ---
 
@@ -152,12 +152,12 @@ Concrete consumers: FE badges · retry actions · Fly worker · dev in-process p
 
 All objects keep `neuramark_` prefix.
 
-- [ ] **CREATE `neuramark_video_jobs`** — columns per CONTRACT; indexes `client_reel`, `status_updated`.
-- [ ] **`parent_job_id`** self-FK + **`attempt`** CHECK `>= 1`.
-- [ ] **`output_media_asset_id`** FK → `neuramark_media_assets` — no canonical provider URL column.
-- [ ] **UNIQUE** `(client_id, provider_key, external_job_id)`.
-- [ ] **RLS** deny-by-default; service-role Node only.
-- [ ] **No** changes to `sadtalker_low` catalog seed (US-X.4).
+- [x] **CREATE `neuramark_video_jobs`** — columns per CONTRACT; indexes `client_reel`, `status_updated`.
+- [x] **`parent_job_id`** self-FK + **`attempt`** CHECK `>= 1`.
+- [x] **`output_media_asset_id`** FK → `neuramark_media_assets` — no canonical provider URL column.
+- [x] **UNIQUE** `(client_id, provider_key, external_job_id)`.
+- [x] **RLS** deny-by-default; service-role Node only.
+- [x] **No** changes to `sadtalker_low` catalog seed (US-X.4).
 
 ---
 
