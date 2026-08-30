@@ -11,6 +11,7 @@ import {
   type ProviderRegistry,
 } from "@/lib/providers/provider-adapters";
 import { createHeygenHighStubAdapter } from "@/lib/providers/video/heygen-high-stub-adapter";
+import { createMusetalkLowAdapter } from "@/lib/providers/video/musetalk-low-adapter";
 import { createSadtalkerLowAdapter } from "@/lib/providers/video/sadtalker-low-adapter";
 import { createSiliconflowWan21TurboStubAdapter } from "@/lib/providers/video/siliconflow-wan21-turbo-stub-adapter";
 
@@ -77,6 +78,15 @@ function buildBootstrapCatalog(): ProviderCatalogRow[] {
       envKeyName: "REPLICATE_API_TOKEN",
     },
     {
+      key: "musetalk_low",
+      assetRole: "talking_head",
+      tier: "low",
+      active: true,
+      costModel: { billingUnit: "per_run", unitCostCents: 19 },
+      envKeyName: "REPLICATE_API_TOKEN",
+      capabilities: { prefersReferenceLoop: true },
+    },
+    {
       key: "siliconflow_wan21_turbo",
       assetRole: "broll",
       tier: "low",
@@ -126,6 +136,19 @@ export function createProviderRegistry(
     }
 
     registry.registerVideo(adapter);
+  }
+
+  if (catalogKeys.has(DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHeadLoop)) {
+    const musetalkEstimateCents = estimateCentsFromCatalog(
+      catalog,
+      DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHeadLoop,
+      19,
+    );
+    registry.registerVideo(
+      createMusetalkLowAdapter({
+        defaultEstimateCents: musetalkEstimateCents,
+      }),
+    );
   }
 
   registry.freeze();

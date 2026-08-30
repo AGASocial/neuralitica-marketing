@@ -84,11 +84,13 @@ function row(
 ): ProviderCatalogRow {
   const defaults: Record<string, ProviderCatalogRow["costModel"]> = {
     sadtalker_low: { billingUnit: "per_run", unitCostCents: 10 },
+    musetalk_low: { billingUnit: "per_run", unitCostCents: 19 },
     siliconflow_wan21_turbo: { billingUnit: "per_clip", unitCostCents: 21 },
     heygen_high: { billingUnit: "per_second", unitCostCents: 7 },
   };
   const envKeys: Record<string, string> = {
     sadtalker_low: "REPLICATE_API_TOKEN",
+    musetalk_low: "REPLICATE_API_TOKEN",
     siliconflow_wan21_turbo: "SILICONFLOW_API_KEY",
     heygen_high: "HEYGEN_API_KEY",
   };
@@ -107,6 +109,7 @@ function row(
 function buildStubCatalog(): ProviderCatalogRow[] {
   return [
     row("sadtalker_low", "talking_head", "low", true),
+    row("musetalk_low", "talking_head", "low", true),
     row("siliconflow_wan21_turbo", "broll", "low", true),
     row("heygen_high", "talking_head", "high", false),
   ];
@@ -283,6 +286,46 @@ describe("US-8.1 provider registry", () => {
       }
     }
   });
+
+  it("5c — musetalk registry adapter is real (no stub prefix)", async () => {
+    const { getProviderRegistry, resetProviderRegistryForTests } =
+      loadRegistryModule();
+    resetProviderRegistryForTests();
+
+    const adapter = getProviderRegistry().getVideoAdapter("musetalk_low");
+    assert.equal(adapter.providerKey, "musetalk_low");
+    assert.equal(adapter.videoAssetRole, "primary");
+
+    const previousToken = process.env.REPLICATE_API_TOKEN;
+    delete process.env.REPLICATE_API_TOKEN;
+
+    try {
+      await assert.rejects(
+        () =>
+          adapter.createJob({
+            reelScriptId: "00000000-0000-4000-8000-000000000001",
+            clientId: "00000000-0000-4000-8000-000000000002",
+            providerKey: "musetalk_low",
+            providerTier: "low",
+            assetRole: "primary",
+            targetDurationSec: 30,
+            referenceVideoAssetId: "33333333-3333-4333-8333-333333333333",
+            voiceoverAssetId: "44444444-4444-4444-8444-444444444444",
+          }),
+        (err: unknown) => {
+          assert.ok(err instanceof Error);
+          assert.equal((err as { code?: string }).code, "PROVIDER_CONFIG_MISSING");
+          return true;
+        },
+      );
+    } finally {
+      if (previousToken === undefined) {
+        delete process.env.REPLICATE_API_TOKEN;
+      } else {
+        process.env.REPLICATE_API_TOKEN = previousToken;
+      }
+    }
+  });
 });
 
 describe("US-8.1 response normalization", () => {
@@ -392,6 +435,9 @@ describe("US-8.1 module boundaries", () => {
       for (const file of files) {
         const normalized = file.replace(/\\/g, "/");
         if (normalized.endsWith("/lib/contracts/sadtalker-low.ts")) {
+          continue;
+        }
+        if (normalized.endsWith("/lib/contracts/musetalk-low.ts")) {
           continue;
         }
         assert.match(
