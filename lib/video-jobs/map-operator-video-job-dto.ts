@@ -27,6 +27,7 @@ export async function mapOperatorVideoJobStatusDto(
     jobId: job.id,
     status: job.status,
     attempt: job.attempt,
+    providerKey: job.providerKey,
     estimatedCostCents:
       job.status === "failed" ? job.estimatedCostCents : undefined,
     operatorClientId: options?.operatorClientId,

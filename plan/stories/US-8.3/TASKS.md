@@ -145,22 +145,22 @@ Concrete consumers: **`/operator/scripts`** expand-row **`ReelDetailPanel`** · 
 
 Concrete consumers: FE upload dialog · US-9.1 assembly (output asset id) · US-7.4 roll-up (zero actual).
 
-- [ ] **`createManualUploadAdapter()`** — register **`manual`** in **`createProviderRegistry`**; bootstrap catalog includes **`manual`** row.
-- [ ] **`uploadManualVideoJob()`** — full gate order; sync complete; no poller enqueue.
-- [ ] **Extend upload validator** — **`generated_video`** asset type: video MIME magic bytes only; size cap; **duration probe**; server UUID storage key; no avatar-reference consent/count gates.
-- [ ] **`MediaStorage.put`** — store validated buffer; root outside **`public/`**.
-- [ ] **INSERT `neuramark_media_assets`** — `asset_type = generated_video`; metadata per README PO #9.
-- [ ] **INSERT `neuramark_video_jobs`** — completed row shape matches API jobs; **`operator_client_id`** set.
-- [ ] **Migration** — `operator_client_id uuid REFERENCES neuramark_clients(id)` nullable; app/DB rule: required for **`provider_key = manual`**.
-- [ ] **Update `insertGeneratedVideoMediaAsset`** — use **`generated_video`** (remove `avatar_reference` + `generatedVideo` hack).
-- [ ] **`finalizeGenerationCost` sync_insert** — `manualActualCostCents: 0`, `actualCostCents: 0`, `providerKey: manual`.
-- [ ] **`uploadManualVideoJob` Server Action** — `requireOperator()`; forbidden-field strip; multipart handling per CONTRACT.
-- [ ] **Consent gate** — `assertActiveAvatarConsentForJobs` when **`own_avatar`**.
-- [ ] **Budget** — manual path with **0 estimate** must succeed even when cumulative API spend at cap (explicit test).
-- [ ] **IDOR** — foreign `reelScriptId` / `clientId` mismatch → **404** / validation error (no cross-tenant upload).
-- [ ] **[SEC] No client endpoint** sets job `status`, `output_media_asset_id`, or `provider_key`.
-- [ ] **[SEC] Attribution** — manual jobs queryable with **`operator_client_id`** for audit.
-- [ ] **Tests** — validator (MIME, oversize, duration); orchestrator (gates, row shape, spend 0); operator 403; foreign reel 404; registry **`getVideoAdapter('manual')`**.
+- [x] **`createManualUploadAdapter()`** — register **`manual`** in **`createProviderRegistry`**; bootstrap catalog includes **`manual`** row.
+- [x] **`uploadManualVideoJob()`** — full gate order; sync complete; no poller enqueue.
+- [x] **Extend upload validator** — **`generated_video`** asset type: video MIME magic bytes only; size cap; **duration probe**; server UUID storage key; no avatar-reference consent/count gates.
+- [x] **`MediaStorage.put`** — store validated buffer; root outside **`public/`**.
+- [x] **INSERT `neuramark_media_assets`** — `asset_type = generated_video`; metadata per README PO #9.
+- [x] **INSERT `neuramark_video_jobs`** — completed row shape matches API jobs; **`operator_client_id`** set.
+- [x] **Migration** — `operator_client_id uuid REFERENCES neuramark_clients(id)` nullable; app/DB rule: required for **`provider_key = manual`**.
+- [x] **Update `insertGeneratedVideoMediaAsset`** — use **`generated_video`** (remove `avatar_reference` + `generatedVideo` hack).
+- [x] **`finalizeGenerationCost` sync_insert** — `manualActualCostCents: 0`, `actualCostCents: 0`, `providerKey: manual`.
+- [x] **`uploadManualVideoJob` Server Action** — `requireOperator()`; forbidden-field strip; multipart handling per CONTRACT.
+- [x] **Consent gate** — `assertActiveAvatarConsentForJobs` when **`own_avatar`**.
+- [x] **Budget** — manual path with **0 estimate** must succeed even when cumulative API spend at cap (explicit test).
+- [x] **IDOR** — foreign `reelScriptId` / `clientId` mismatch → **404** / validation error (no cross-tenant upload).
+- [x] **[SEC] No client endpoint** sets job `status`, `output_media_asset_id`, or `provider_key`.
+- [x] **[SEC] Attribution** — manual jobs queryable with **`operator_client_id`** for audit.
+- [x] **Tests** — validator (MIME, oversize, duration); orchestrator (gates, row shape, spend 0); operator 403; foreign reel 404; registry **`getVideoAdapter('manual')`**.
 
 ---
 
@@ -168,11 +168,11 @@ Concrete consumers: FE upload dialog · US-9.1 assembly (output asset id) · US-
 
 All objects keep `neuramark_` prefix.
 
-- [ ] **ALTER `neuramark_video_jobs`** — add **`operator_client_id uuid REFERENCES neuramark_clients(id)`** (nullable; manual rows non-null).
-- [ ] **Reuse `neuramark_media_assets`** — `generated_video` enum value (already in US-8.4 migration).
-- [ ] **No new tables** — job + media reuse only.
-- [ ] **RLS** — deny-by-default unchanged; service-role Node only.
-- [ ] **No catalog seed change** — `manual` row from US-X.4.
+- [x] **ALTER `neuramark_video_jobs`** — add **`operator_client_id uuid REFERENCES neuramark_clients(id)`** (nullable; manual rows non-null).
+- [x] **Reuse `neuramark_media_assets`** — `generated_video` enum value (already in US-8.4 migration).
+- [x] **No new tables** — job + media reuse only.
+- [x] **RLS** — deny-by-default unchanged; service-role Node only.
+- [x] **No catalog seed change** — `manual` row from US-X.4.
 
 ---
 

@@ -6,6 +6,7 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
 
+import { MANUAL_PROVIDER_KEY } from "@/lib/contracts/manual-video-upload";
 import { assertVideoJobBudgetAllowsSpend } from "./assert-video-job-budget";
 import { readVideoMaxRetriesPerReel } from "./video-job-config-readers";
 import { VIDEO_JOBS_TABLE, VIDEO_JOB_RETRY_OVERRIDES_TABLE } from "./video-job-row";
@@ -123,9 +124,14 @@ export async function evaluateRetryEligibility(params: {
   jobId: string;
   status: VideoJobStatus;
   attempt: number;
+  providerKey?: string;
   estimatedCostCents?: number;
   operatorClientId?: string;
 }): Promise<RetryEligibility> {
+  if (params.providerKey === MANUAL_PROVIDER_KEY) {
+    return { canRetry: false, retryBlockedReasonKey: null };
+  }
+
   if (params.status !== "failed") {
     return { canRetry: false, retryBlockedReasonKey: null };
   }

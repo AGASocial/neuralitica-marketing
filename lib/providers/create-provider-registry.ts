@@ -11,6 +11,7 @@ import {
   type ProviderRegistry,
 } from "@/lib/providers/provider-adapters";
 import { createHeygenHighStubAdapter } from "@/lib/providers/video/heygen-high-stub-adapter";
+import { createManualUploadAdapter } from "@/lib/providers/video/manual-upload-adapter";
 import { createMusetalkLowAdapter } from "@/lib/providers/video/musetalk-low-adapter";
 import { createSadtalkerLowAdapter } from "@/lib/providers/video/sadtalker-low-adapter";
 import { createSiliconflowWan21TurboStubAdapter } from "@/lib/providers/video/siliconflow-wan21-turbo-stub-adapter";
@@ -102,6 +103,15 @@ function buildBootstrapCatalog(): ProviderCatalogRow[] {
       costModel: { billingUnit: "per_second", unitCostCents: 7 },
       envKeyName: "HEYGEN_API_KEY",
     },
+    {
+      key: "manual",
+      assetRole: "talking_head",
+      tier: "low",
+      active: true,
+      costModel: { billingUnit: "per_run", unitCostCents: 0 },
+      envKeyName: "NEURAMARK_MANUAL_FALLBACK",
+      capabilities: { manualFallback: true },
+    },
   ];
 
   return rows.map((row) =>
@@ -149,6 +159,10 @@ export function createProviderRegistry(
         defaultEstimateCents: musetalkEstimateCents,
       }),
     );
+  }
+
+  if (catalogKeys.has(DEFAULT_LOW_TIER_PROVIDER_KEYS.manual)) {
+    registry.registerVideo(createManualUploadAdapter());
   }
 
   registry.freeze();

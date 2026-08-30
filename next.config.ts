@@ -1,8 +1,14 @@
 import type { NextConfig } from "next";
+import { MANUAL_UPLOAD_SERVER_ACTION_BODY_LIMIT } from "@/lib/contracts/manual-video-upload";
 
 const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: MANUAL_UPLOAD_SERVER_ACTION_BODY_LIMIT,
+    },
   },
   async headers() {
     return [

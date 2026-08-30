@@ -89,6 +89,12 @@ function htmlBuffer(): Buffer {
   return Buffer.from("<!DOCTYPE html><html><body>x</body></html>");
 }
 
+function mp4MagicBuffer(size = 512): Buffer {
+  const buf = Buffer.alloc(size, 0);
+  buf.write("ftypisom", 4, "ascii");
+  return buf;
+}
+
 function clearMediaModuleCache() {
   for (const key of Object.keys(require.cache)) {
     const normalized = key.replace(/\\/g, "/");
@@ -145,6 +151,7 @@ function chainableQuery(terminal: {
 
 type InstallOptions = {
   requireActive?: () => Promise<unknown>;
+  requireOperator?: () => Promise<unknown>;
   isAuthGuardError?: (error: unknown) => boolean;
   hasActiveAvatarConsent?: (clientId: string) => Promise<boolean>;
   from?: (table: string) => unknown;
@@ -193,6 +200,16 @@ function installMediaMocks(options: InstallOptions) {
             displayName: "Gabriel Vega",
             preferredLocale: "en",
             role: "client",
+            active: true,
+          })),
+        requireOperator:
+          options.requireOperator ??
+          (async () => ({
+            id: CLIENT_ID,
+            email: "gaveho@gmail.com",
+            displayName: "Gabriel Vega",
+            preferredLocale: "en",
+            role: "operator",
             active: true,
           })),
         authGuardResponse: (error: { status: number; envelope: unknown }) =>
@@ -762,7 +779,7 @@ describe("getAvatarReferenceAssetsForClient", () => {
 });
 
 describe("GET serve route", () => {
-  it("returns 404 for foreign asset; 200 with private no-store for own", async () => {
+  it("returns 404 for foreign asset; 200 with private no-store for own avatar_reference", async () => {
     const tmp = mkdtempSync(path.join(tmpdir(), "neuramark-serve-"));
     const key = "d4e5f6a7-b8c9-4012-8345-6789abcdef01.jpg";
     await new LocalDiskStorage(tmp).put(key, jpegBuffer(80), {
@@ -775,21 +792,19 @@ describe("GET serve route", () => {
       from: () => ({
         select: () => ({
           eq: () => ({
-            eq: () => ({
-              eq: () => ({
-                maybeSingle: async () => ({
-                  data: {
-                    id: ASSET_ID,
-                    storage_key: key,
-                    metadata: {
-                      originalFilename: "portrait.jpg",
-                      detectedMime: "image/jpeg",
-                      sizeBytes: 80,
-                    },
-                  },
-                  error: null,
-                }),
-              }),
+            maybeSingle: async () => ({
+              data: {
+                id: ASSET_ID,
+                client_id: CLIENT_ID,
+                asset_type: "avatar_reference",
+                storage_key: key,
+                metadata: {
+                  originalFilename: "portrait.jpg",
+                  detectedMime: "image/jpeg",
+                  sizeBytes: 80,
+                },
+              },
+              error: null,
             }),
           }),
         }),
@@ -816,10 +831,19 @@ describe("GET serve route", () => {
       from: () => ({
         select: () => ({
           eq: () => ({
-            eq: () => ({
-              eq: () => ({
-                maybeSingle: async () => ({ data: null, error: null }),
-              }),
+            maybeSingle: async () => ({
+              data: {
+                id: VICTIM_ID,
+                client_id: VICTIM_ID,
+                asset_type: "avatar_reference",
+                storage_key: key,
+                metadata: {
+                  originalFilename: "portrait.jpg",
+                  detectedMime: "image/jpeg",
+                  sizeBytes: 80,
+                },
+              },
+              error: null,
             }),
           }),
         }),
@@ -836,6 +860,56 @@ describe("GET serve route", () => {
       assert.equal(res.status, 404);
     } finally {
       restoreForeign();
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("serves generated_video for operator-owned asset", async () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), "neuramark-gen-serve-"));
+    const key = "e5f6a7b8-c9d0-4123-9456-789abcdef012.mp4";
+    await new LocalDiskStorage(tmp).put(key, mp4MagicBuffer(80), {
+      contentType: "video/mp4",
+      sizeBytes: 80,
+    });
+
+    const restore = installMediaMocks({
+      mediaRoot: tmp,
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({
+              data: {
+                id: ASSET_ID,
+                client_id: CLIENT_ID,
+                asset_type: "generated_video",
+                storage_key: key,
+                metadata: {
+                  originalFilename: "manual.mp4",
+                  detectedMime: "video/mp4",
+                  sizeBytes: 80,
+                  durationSec: 5,
+                  source: "manual_upload",
+                },
+              },
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    });
+
+    try {
+      const { resetMediaStorageCacheForTests } = loadMediaModule("./storage/get-media-storage.ts");
+      resetMediaStorageCacheForTests();
+      const { GET } = loadMediaModule("../../app/api/media/assets/[assetId]/route.ts");
+      const res = await GET(new Request("http://localhost/api/media/assets/" + ASSET_ID), {
+        params: Promise.resolve({ assetId: ASSET_ID }),
+      });
+      assert.equal(res.status, 200);
+      assert.equal(res.headers.get("Content-Type"), "video/mp4");
+      assert.equal(res.headers.get("Cache-Control"), "private, no-store");
+    } finally {
+      restore();
       rmSync(tmp, { recursive: true, force: true });
     }
   });
