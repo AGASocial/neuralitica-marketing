@@ -128,22 +128,22 @@
 
 ## BE checklist
 
-- [ ] Migration `neuramark_qa_overrides` (`neuramark_` prefix, RLS zero policies, CHECK on reason length)
-- [ ] Zod `.strict()` request: `{ qaReportId, checkKey, reason }` only; forbidden-key helper
-- [ ] Server Action `overrideQaCheck` (CONTRACT name): `requireOperator` first; tenancy 404; blocking → 403; INSERT only
-- [ ] Import severity from `lib/qa/check-catalog.ts` — do not trust body severity
-- [ ] Do **not** UPDATE `neuramark_qa_reports.status` / `checks` on override
-- [ ] Extend `getQaGateStatusForAssembledReel` per PO gate freeze (replace Phase A `isQaReportReadyPhaseA`-only path)
-- [ ] Load overrides for Operator detail / week map DTO (and gate optional key lists)
-- [ ] Rate limit lean (`qa_override`) if CONTRACT keeps PO lean
-- [ ] Automated tests: Cliente 403; blocking 403; foreign report 404; empty reason reject; override-all / forbidden fields; gate ready after full coverage; gate not ready if one overridable uncovered; `blocked` never ready via overrides; append-only (no update/delete route)
+- [x] Migration `neuramark_qa_overrides` (`neuramark_` prefix, RLS zero policies, CHECK on reason length)
+- [x] Zod `.strict()` request: `{ qaReportId, checkKey, reason }` only; forbidden-key helper
+- [x] Server Action `overrideQaCheck` (CONTRACT name): `requireOperator` first; tenancy 404; blocking → 403; INSERT only
+- [x] Import severity from `lib/qa/check-catalog.ts` — do not trust body severity
+- [x] Do **not** UPDATE `neuramark_qa_reports.status` / `checks` on override
+- [x] Extend `getQaGateStatusForAssembledReel` per PO gate freeze (replace Phase A `isQaReportReadyPhaseA`-only path)
+- [x] Load overrides for Operator detail / week map DTO (and gate optional key lists)
+- [x] Rate limit lean (`qa_override`) if CONTRACT keeps PO lean
+- [x] Automated tests: Cliente 403; blocking 403; foreign report 404; empty reason reject; override-all / forbidden fields; gate ready after full coverage; gate not ready if one overridable uncovered; `blocked` never ready via overrides; append-only (no update/delete route)
 
 ## DB checklist
 
-- [ ] `neuramark_qa_overrides` as sketched; FKs + indexes
-- [ ] RLS enabled, zero policies
-- [ ] No triggers that UPDATE/DELETE override rows from app paths
-- [ ] ON DELETE CASCADE from `qa_report_id` (report gone → overrides gone)
+- [x] `neuramark_qa_overrides` as sketched; FKs + indexes
+- [x] RLS enabled, zero policies
+- [x] No triggers that UPDATE/DELETE override rows from app paths
+- [x] ON DELETE CASCADE from `qa_report_id` (report gone → overrides gone)
 
 ---
 

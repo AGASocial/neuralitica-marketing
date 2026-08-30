@@ -1,6 +1,7 @@
 import "server-only";
 
 import type {
+  OperatorQaOverrideDto,
   OperatorQaReportDetailDto,
   QaCheckResult,
   QaReportStatus,
@@ -73,14 +74,14 @@ export function mapQaReportRow(
 
 export function toOperatorQaReportDetailDto(
   row: QaReportRow,
+  overrides: OperatorQaOverrideDto[] = [],
 ): OperatorQaReportDetailDto {
   return {
     qaReportId: row.id,
     assembledReelId: row.assembledReelId,
     status: row.status,
     checks: row.checks,
-    // US-10.2 BUILD batch-loads ledger; empty until override attach ships.
-    overrides: [],
+    overrides,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -116,6 +117,30 @@ export async function loadQaReportForAssembledReel(params: {
     .from(QA_REPORTS_TABLE)
     .select("*")
     .eq("assembled_reel_id", params.assembledReelId)
+    .eq("client_id", params.clientId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return mapQaReportRow(data as Record<string, unknown>);
+}
+
+/** Tenancy-scoped load by report id (US-10.2 override path). Foreign → null. */
+export async function loadQaReportById(params: {
+  qaReportId: string;
+  clientId: string;
+}): Promise<QaReportRow | null> {
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from(QA_REPORTS_TABLE)
+    .select("*")
+    .eq("id", params.qaReportId)
     .eq("client_id", params.clientId)
     .maybeSingle();
 

@@ -9,13 +9,18 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
 import {
+  loadQaOverridesForReports,
+  toOperatorQaOverrideDtos,
+} from "@/lib/qa/persist-qa-override";
+import {
   mapQaReportRow,
   toOperatorQaReportDetailDto,
   QA_REPORTS_TABLE,
 } from "@/lib/qa/persist-qa-report";
 
 /**
- * Batch-load QA detail DTOs for week Operator scripts payload (US-10.1).
+ * Batch-load QA detail DTOs for week Operator scripts payload (US-10.1 / US-10.2).
+ * Attaches chronological overrides[] per report.
  */
 export async function getQaReportsForAssembledReels(params: {
   clientId: string;
@@ -41,10 +46,24 @@ export async function getQaReportsForAssembledReels(params: {
     return result;
   }
 
+  const rows = [];
   for (const raw of data) {
     const row = mapQaReportRow(raw as Record<string, unknown>);
-    if (!row) continue;
-    const dto: OperatorQaReportDetailDto = toOperatorQaReportDetailDto(row);
+    if (row) rows.push(row);
+  }
+
+  const overridesByReport = await loadQaOverridesForReports({
+    clientId: params.clientId,
+    qaReportIds: rows.map((r) => r.id),
+  });
+
+  for (const row of rows) {
+    const overrideRows = overridesByReport.get(row.id) ?? [];
+    const overrides = await toOperatorQaOverrideDtos(overrideRows);
+    const dto: OperatorQaReportDetailDto = toOperatorQaReportDetailDto(
+      row,
+      overrides,
+    );
     result[row.assembledReelId] = dto;
   }
 
