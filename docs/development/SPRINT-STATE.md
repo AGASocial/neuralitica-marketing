@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-5.1
-story_status: SELECT
-feature_branch: null
+story_status: CONTRACT
+feature_branch: feature/US-5.1-reel-scripts
 last_completed_story: US-4.2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T02:00:00Z
+updated_at: 2026-08-30T12:00:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -20,7 +20,7 @@ updated_at: 2026-08-30T02:00:00Z
 | US-X.4 Provider catalog + resolveProvider | done | BE `5ba9876` · CLOSE `291313b` |
 | US-4.1 Content Strategy agent | done | BE `af998d9` · FE `dcbd15a` · agents `bbd159d` · CLOSE |
 | US-4.2 Review and approve strategy | done | BE `ba57bac` · FE `4367287` · CLOSE 5/5 AC |
-| US-5.1 Reel script package per slot | SELECT | Next story — depends on US-4.2 ✅ |
+| US-5.1 Reel script package per slot | CONTRACT | `plan/stories/US-5.1/CONTRACT.md` frozen; awaiting FE signoff; branch `feature/US-5.1-reel-scripts` |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -32,6 +32,8 @@ updated_at: 2026-08-30T02:00:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-5.1 CONTRACT: `plan/stories/US-5.1/CONTRACT.md` frozen; SPEC-REVIEW gaps closed; story_status CONTRACT; branch `feature/US-5.1-reel-scripts`.
+- 2026-08-30 · US-5.1 PREP: `plan/stories/US-5.1/README.md` + `TASKS.md`; PO decisions frozen; story_status PREP.
 - 2026-08-30 · US-4.2 CLOSE: 5/5 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 3 Low); BE `ba57bac` · FE `4367287`; Phase 3 → SELECT US-5.1.
 - 2026-08-30 · US-4.2 QA: APPROVE WITH NOTES (0 Critical, 0 High, 3 Low); `plan/stories/US-4.2/QA.md`; 74/74 tests; CLOSE recommended yes; BE `ba57bac` · FE `4367287` · VALIDATION `dd7eff5`; story_status QA.
 - 2026-08-30 · US-4.2 VALIDATION: PASS WITH NOTES (0 blockers, 74/74 tests); `plan/stories/US-4.2/VALIDATION.md`; BE `ba57bac` · FE `4367287`; story_status VALIDATION.
