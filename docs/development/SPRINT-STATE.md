@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-8.4
-story_status: VALIDATION
+story_status: BUILD
 feature_branch: feature/US-8.4-video-jobs
 last_completed_story: US-8.2
 phase_status: in_progress
-blocked_reason: null
-updated_at: 2026-08-30T04:35:00Z
+blocked_reason: VALIDATION FAIL — fix tests + budget soft-disable (442b31a)
+updated_at: 2026-08-30T04:45:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
