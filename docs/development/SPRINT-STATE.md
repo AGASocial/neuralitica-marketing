@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: US-10.2
-story_status: QA
-feature_branch: feature/US-10.2-qa-override
-last_completed_story: US-10.1
+current_story: SELECT
+story_status: DONE
+feature_branch: null
+last_completed_story: US-10.2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T22:40:00Z
+updated_at: 2026-08-30T22:45:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -37,7 +37,7 @@ updated_at: 2026-08-30T22:40:00Z
 | US-9.1 Assemble final 9:16 Reel | done | Phase A `4853871` · worker `f74570f`/`153b73a` · BE `7189f4b` · FE `9e7142c` · VALIDATION `03dff73` · QA `5c0ec7e` · CLOSE 5/5 AC (faceless B-roll Phase B defer) |
 | US-9.2 Add subtitles, logo, and cover | done | worker `7518bc5` · BE `36e9dd3`+fix `757da6a` · FE `a15921b` · VALIDATION `4378c65` · QA `c0d6f66` · CLOSE `92b196a` |
 | US-10.1 Run automated QA | done | agents `0b56c9e`/`75802d6` · BE `5e50115` · FE `b5e0941` · VALIDATION `d95555d` · QA `a6ba923` · CLOSE `b7a3bb9` (6/6 AC; override → US-10.2) |
-| US-10.2 Operator override with reason | QA | VALIDATION PASS WITH NOTES `d7e3cd5` (22/22) |
+| US-10.2 Operator override with reason | done | BE `a9cc533` · FE `0c6bfb0` · VALIDATION `d7e3cd5` · QA `3da5547` · CLOSE `c9b97e5` (7/7 AC; approval render → US-11.1) |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -49,6 +49,7 @@ updated_at: 2026-08-30T22:40:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-10.2 CLOSE Phase A: 7/7 AC checked; VALIDATION PASS WITH NOTES `d7e3cd5` (22/22); QA APPROVE WITH CONDITIONS `3da5547`; FF-merge `c9b97e5` to main; Phase 3 → SELECT **US-11.1** (recommended) or US-8.5.
 - 2026-08-30 · US-10.2 SELECT → PREP. Branch `feature/US-10.2-qa-override` from main; deps US-10.1 ✅.
 - 2026-08-30 · US-10.1 CLOSE Phase A: 6/6 AC checked; VALIDATION PASS WITH NOTES `d95555d` (42/42); QA APPROVE WITH CONDITIONS `a6ba923`; FF-merge `b7a3bb9` to main; Phase 3 → SELECT **US-10.2** (recommended) or US-8.5 or US-11.1 (deps allow).
 - 2026-08-30 · US-10.1 SPEC GAPS `ab28e78` · SECURITY APPROVE WITH CONDITIONS `8a96c33`; story_status CONTRACT.
