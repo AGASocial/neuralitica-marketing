@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-8.6
-story_status: VALIDATION
+story_status: QA
 feature_branch: feature/US-8.6-musetalk-adapter
 last_completed_story: US-8.4
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T16:00:00Z
+updated_at: 2026-08-30T16:10:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -31,7 +31,7 @@ updated_at: 2026-08-30T16:00:00Z
 | US-8.1 Provider adapter interface | done | BE `a11d4ae` · fix `4193a1e` · VALIDATION `7367929` · QA `7f34bdb` · CLOSE `3ac3304` |
 | US-8.2 SadTalker adapter | done | Phase A `258fcef` · Phase B closed via US-8.4 `35a433d` |
 | US-8.4 Job status and failure UI | done | BE `689d8c6`/`77142b9` · FE `25737db` · VALIDATION `4e36fbc` · QA `9b24c48` · CLOSE `35a433d` |
-| US-8.6 MuseTalk adapter | VALIDATION | Phase A `dbc9ce2` · Phase B `bdfaaf2` |
+| US-8.6 MuseTalk adapter | QA | VALIDATION PASS WITH NOTES `798635e` |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
