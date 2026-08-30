@@ -19,11 +19,6 @@ import { findForbiddenUploadFormKeys } from "@/lib/media/media-helpers";
 import { getMediaStorage } from "@/lib/media/storage/get-media-storage";
 import { validateAndPrepareMediaUpload } from "@/lib/media/upload-validation";
 import {
-  brandingJobForbiddenError,
-  brandingJobInternalError,
-  brandingJobUnauthenticatedError,
-} from "@/lib/assembly/branding-errors";
-import {
   createServerSupabaseClient,
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
@@ -35,9 +30,9 @@ function authGuardEnvelope(error: {
   status: 401 | 403;
 }): UploadClientLogoResult {
   if (error.status === 401) {
-    return mediaUploadUnauthenticatedError() as UploadClientLogoResult;
+    return mediaUploadUnauthenticatedError();
   }
-  return brandingJobForbiddenError();
+  return mediaUploadForbiddenError();
 }
 
 async function deletePriorLogo(params: {
@@ -87,21 +82,21 @@ export async function uploadClientLogo(
     }
 
     if (findForbiddenUploadFormKeys(formData).length > 0) {
-      return mediaUploadForbiddenFieldsError() as UploadClientLogoResult;
+      return mediaUploadForbiddenFieldsError();
     }
 
     const fileEntry = formData.get("file");
     if (!fileEntry || typeof fileEntry === "string") {
-      return mediaUploadMissingFileError() as UploadClientLogoResult;
+      return mediaUploadMissingFileError();
     }
 
     const file = fileEntry as File;
     if (typeof file.arrayBuffer !== "function") {
-      return mediaUploadMissingFileError() as UploadClientLogoResult;
+      return mediaUploadMissingFileError();
     }
 
     if (!isSupabaseConfigured()) {
-      return brandingJobInternalError();
+      return mediaUploadInternalError();
     }
 
     const supabase = createServerSupabaseClient();
@@ -132,15 +127,15 @@ export async function uploadClientLogo(
     if (!validated.ok) {
       switch (validated.error.code) {
         case "FILE_TOO_LARGE":
-          return mediaUploadFileTooLargeError() as UploadClientLogoResult;
+          return mediaUploadFileTooLargeError();
         case "INVALID_FILE_TYPE":
-          return mediaUploadInvalidFileTypeError() as UploadClientLogoResult;
+          return mediaUploadInvalidFileTypeError();
         case "VALIDATION_ERROR":
           return mediaUploadValidationError({
             file: ["invalid"],
-          }) as UploadClientLogoResult;
+          });
         default:
-          return brandingJobInternalError();
+          return mediaUploadInternalError();
       }
     }
 
@@ -153,7 +148,7 @@ export async function uploadClientLogo(
         sizeBytes: prepared.sizeBytes,
       });
     } catch {
-      return brandingJobInternalError();
+      return mediaUploadInternalError();
     }
 
     if (priorLogoId) {
@@ -177,7 +172,7 @@ export async function uploadClientLogo(
       } catch {
         console.error("[profile] compensating logo delete failed");
       }
-      return brandingJobInternalError();
+      return mediaUploadInternalError();
     }
 
     const logoAssetId = (inserted as { id: string }).id;
@@ -189,7 +184,7 @@ export async function uploadClientLogo(
     if (updateError) {
       await supabase.from(MEDIA_TABLE).delete().eq("id", logoAssetId);
       await storage.delete(prepared.storageKey);
-      return brandingJobInternalError();
+      return mediaUploadInternalError();
     }
 
     revalidatePath("/profile");
@@ -201,11 +196,9 @@ export async function uploadClientLogo(
     };
   } catch (error) {
     if (isAuthGuardError(error)) {
-      return error.status === 401
-        ? brandingJobUnauthenticatedError()
-        : brandingJobForbiddenError();
+      return authGuardEnvelope(error);
     }
     console.error("[profile] upload logo unexpected error");
-    return brandingJobInternalError();
+    return mediaUploadInternalError();
   }
 }

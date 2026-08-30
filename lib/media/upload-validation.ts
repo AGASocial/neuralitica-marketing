@@ -10,12 +10,13 @@ import { randomUUID } from "node:crypto";
 
 import type { MediaUploadAssetType } from "@/lib/contracts/media-assets";
 import type { MediaUploadErrorCode } from "@/lib/contracts/media-assets";
-import { STORAGE_KEY_REGEX } from "@/lib/contracts/media-assets";
+import { CLIENT_LOGO_STORAGE_KEY_REGEX, STORAGE_KEY_REGEX } from "@/lib/contracts/media-assets";
 import {
   ALLOWED_DETECTED_MIMES,
   MIME_TO_EXTENSION,
   getMaxAvatarReferences,
   getMaxImageBytes,
+  getMaxLogoBytes,
   getMaxVideoBytes,
   getMaxVideoDurationSec,
   isImageMime,
@@ -170,6 +171,65 @@ async function validateGeneratedVideoUpload(input: {
   };
 }
 
+async function validateClientLogoUpload(input: {
+  userId: string;
+  file: File | Buffer;
+  originalFilename: string;
+  afterValidate?: AfterValidateHook;
+}): Promise<ValidateMediaUploadResult> {
+  const maxBytes = getMaxLogoBytes();
+  const read = await readFileToBuffer(input.file, maxBytes);
+  if (!read.ok) {
+    return fail("FILE_TOO_LARGE");
+  }
+
+  const buffer = read.buffer;
+  if (buffer.byteLength === 0) {
+    return fail("INVALID_FILE_TYPE");
+  }
+
+  const { fileTypeFromBuffer } = await import("file-type");
+  const detected = await fileTypeFromBuffer(buffer);
+  const logoMimes = new Set(["image/jpeg", "image/png", "image/webp"]);
+  if (!detected || !logoMimes.has(detected.mime)) {
+    return fail("INVALID_FILE_TYPE");
+  }
+
+  const detectedMime = detected.mime;
+  if (buffer.byteLength > maxBytes) {
+    return fail("FILE_TOO_LARGE");
+  }
+
+  const ext = MIME_TO_EXTENSION[detectedMime];
+  if (!ext) {
+    return fail("INVALID_FILE_TYPE");
+  }
+
+  const storageKey = `neuramark/${input.userId}/logo-${randomUUID()}.${ext}`;
+  if (!CLIENT_LOGO_STORAGE_KEY_REGEX.test(storageKey)) {
+    return fail("INTERNAL_ERROR");
+  }
+
+  if (input.afterValidate) {
+    await input.afterValidate(buffer);
+  }
+
+  return {
+    ok: true,
+    prepared: {
+      detectedMime,
+      sizeBytes: buffer.byteLength,
+      storageKey,
+      metadata: {
+        originalFilename: sanitizeOriginalFilename(input.originalFilename),
+        detectedMime,
+        sizeBytes: buffer.byteLength,
+      },
+      buffer,
+    },
+  };
+}
+
 async function validateAvatarReferenceUpload(input: {
   userId: string;
   file: File | Buffer;
@@ -294,6 +354,15 @@ export async function validateAndPrepareMediaUpload(input: {
 }): Promise<ValidateMediaUploadResult> {
   if (input.assetType === "generated_video") {
     return validateGeneratedVideoUpload({
+      file: input.file,
+      originalFilename: input.originalFilename,
+      afterValidate: input.afterValidate,
+    });
+  }
+
+  if (input.assetType === "client_logo") {
+    return validateClientLogoUpload({
+      userId: input.userId,
       file: input.file,
       originalFilename: input.originalFilename,
       afterValidate: input.afterValidate,

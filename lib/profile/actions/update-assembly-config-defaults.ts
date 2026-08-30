@@ -5,13 +5,6 @@ import { revalidatePath } from "next/cache";
 import type { UpdateAssemblyConfigDefaultsResult } from "@/lib/contracts/branding-job";
 import { assemblyConfigSchema } from "@/lib/contracts/branding-job";
 import { isAuthGuardError, requireActive } from "@/lib/auth/require-user";
-import {
-  brandingJobForbiddenError,
-  brandingJobInternalError,
-  brandingJobNotFoundError,
-  brandingJobUnauthenticatedError,
-  brandingJobValidationError,
-} from "@/lib/assembly/branding-errors";
 import { findForbiddenBrandingKeys } from "@/lib/assembly/find-forbidden-branding-keys";
 import {
   createServerSupabaseClient,
@@ -19,6 +12,15 @@ import {
 } from "@/lib/supabase/server";
 
 const PROFILE_TABLE = "neuramark_business_profiles";
+
+function authGuardEnvelope(error: {
+  status: 401 | 403;
+}): UpdateAssemblyConfigDefaultsResult {
+  if (error.status === 401) {
+    return { ok: false, error: { code: "UNAUTHENTICATED" } };
+  }
+  return { ok: false, error: { code: "FORBIDDEN" } };
+}
 
 /**
  * Persist Cliente default branding toggles on Ficha viva (US-9.2).
@@ -32,24 +34,22 @@ export async function updateAssemblyConfigDefaults(
       user = await requireActive("handler");
     } catch (error) {
       if (isAuthGuardError(error)) {
-        return error.status === 401
-          ? brandingJobUnauthenticatedError()
-          : brandingJobForbiddenError();
+        return authGuardEnvelope(error);
       }
       throw error;
     }
 
     if (findForbiddenBrandingKeys(rawInput).length > 0) {
-      return brandingJobValidationError();
+      return { ok: false, error: { code: "FORBIDDEN_FIELDS" } };
     }
 
     const parsed = assemblyConfigSchema.safeParse(rawInput);
     if (!parsed.success) {
-      return brandingJobValidationError();
+      return { ok: false, error: { code: "VALIDATION_ERROR" } };
     }
 
     if (!isSupabaseConfigured()) {
-      return brandingJobInternalError();
+      return { ok: false, error: { code: "INTERNAL_ERROR" } };
     }
 
     const supabase = createServerSupabaseClient();
@@ -61,11 +61,11 @@ export async function updateAssemblyConfigDefaults(
       .maybeSingle();
 
     if (error) {
-      return brandingJobInternalError();
+      return { ok: false, error: { code: "INTERNAL_ERROR" } };
     }
 
     if (!data) {
-      return brandingJobNotFoundError();
+      return { ok: false, error: { code: "INTERNAL_ERROR" } };
     }
 
     revalidatePath("/profile");
@@ -76,11 +76,9 @@ export async function updateAssemblyConfigDefaults(
     };
   } catch (error) {
     if (isAuthGuardError(error)) {
-      return error.status === 401
-        ? brandingJobUnauthenticatedError()
-        : brandingJobForbiddenError();
+      return authGuardEnvelope(error);
     }
     console.error("[profile] update assembly config unexpected error");
-    return brandingJobInternalError();
+    return { ok: false, error: { code: "INTERNAL_ERROR" } };
   }
 }

@@ -146,19 +146,19 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 
 **Concrete consumers:** Ficha logo section · Operator assembly/branding panel · media serve route · Fly worker.
 
-- [ ] Migration: `neuramark_business_profiles.logo_asset_id`, `assembly_config jsonb`; assembly row branding columns; enum values `client_logo`, `cover_frame`; storage_key CHECK extensions.
-- [ ] Extend `lib/contracts/media-assets.ts`: asset types, upload union, storage regexes (`logo-`, `cover-`, `branded-` patterns).
-- [ ] Extend `validateAndPrepareMediaUpload` for **`client_logo`** (image-only, 2 MiB, no consent gate).
-- [ ] **`uploadClientLogo`** / **`removeClientLogo`** Server Actions — `requireActive`; replace prior logo asset; update `logo_asset_id`.
-- [ ] **`updateAssemblyConfigDefaults`** Server Action — `requireActive`; strict Zod; write `assembly_config`.
-- [ ] **`applyBrandingForAssembly`** Server Action — `requireOperator`; validate assembly row tenancy + `status = completed` base; merge toggles into `branding_config`; enqueue worker.
-- [ ] **`createBrandingJobForAssembly`** orchestrator — called from auto-chain + manual action; idempotency check; set `branding_status = queued`.
-- [ ] Subtitle beat resolver + sanitizer module (`lib/assembly/subtitle-beats.ts` or equivalent).
-- [ ] Extend `getReelScriptsForWeek` / assembly batch DTO: `brandingStatus`, `brandingConfig`, `coverMediaAssetId`, `canApplyBranding`, `canRebrand`.
-- [ ] Extend **`GET /api/media/assets/[assetId]`** for new asset types + Cliente ownership where appropriate.
-- [ ] Auto-chain hook in assembly completion path (`applyAssemblyJobUpdate` when → `completed`).
-- [ ] Forbidden keys helper for branding actions (no `onScreenText`, `logoAssetId`, `storageKey`, etc.).
-- [ ] Unit tests: beat resolver, sanitizer, fingerprint, forbidden keys, idempotency, logo upload validation.
+- [x] Migration: `neuramark_business_profiles.logo_asset_id`, `assembly_config jsonb`; assembly row branding columns; enum values `client_logo`, `cover_frame`; storage_key CHECK extensions.
+- [x] Extend `lib/contracts/media-assets.ts`: asset types, upload union, storage regexes (`logo-`, `cover-`, `branded-` patterns).
+- [x] Extend `validateAndPrepareMediaUpload` for **`client_logo`** (image-only, 2 MiB, no consent gate).
+- [x] **`uploadClientLogo`** / **`removeClientLogo`** Server Actions — `requireActive`; replace prior logo asset; update `logo_asset_id`.
+- [x] **`updateAssemblyConfigDefaults`** Server Action — `requireActive`; strict Zod; write `assembly_config`.
+- [x] **`applyBrandingForAssembly`** Server Action — `requireOperator`; validate assembly row tenancy + `status = completed` base; merge toggles into `branding_config`; enqueue worker.
+- [x] **`createBrandingJobForAssembly`** orchestrator — called from auto-chain + manual action; idempotency check; set `branding_status = queued`.
+- [x] Subtitle beat resolver + sanitizer module (`lib/branding/sanitize-subtitle-beats.ts` + `resolve-subtitle-beats.ts`).
+- [x] Extend `getReelScriptsForWeek` / assembly batch DTO: `brandingStatus`, `brandingConfig`, `coverMediaAssetId`, `canApplyBranding`, `canRebrand`.
+- [x] Extend **`GET /api/media/assets/[assetId]`** for new asset types + Cliente ownership where appropriate.
+- [x] Auto-chain hook in assembly completion path (`applyAssemblyJobUpdate` when → `completed`).
+- [x] Forbidden keys helper for branding actions (no `onScreenText`, `logoAssetId`, `storageKey`, etc.).
+- [x] Unit tests: beat resolver, sanitizer, fingerprint, forbidden keys, idempotency, logo upload validation.
 
 **Out of scope BE:** QA agent · approval package serializer (US-11.1) · cron.
 
@@ -166,12 +166,12 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 
 ## Database (nextjs-backend)
 
-- [ ] **`neuramark_business_profiles`**: nullable **`logo_asset_id uuid`** FK → `neuramark_media_assets(id)` ON DELETE SET NULL; **`assembly_config jsonb`** DEFAULT NULL.
-- [ ] **`neuramark_media_assets.asset_type`**: add **`client_logo`**, **`cover_frame`**.
-- [ ] **`neuramark_assembled_reels`**: **`branding_status text`** CHECK; **`branding_config jsonb`**; **`cover_media_asset_id uuid`** FK; **`pre_branding_output_media_asset_id uuid`** FK; optional **`branding_fingerprint text`** for idempotency index.
-- [ ] Storage key CHECK: logo, cover, branded MP4 patterns (CONTRACT verbatim SQL).
-- [ ] RLS deny-by-default unchanged; service-role Node + Fly worker only.
-- [ ] Partial unique index on completed branding fingerprint (CONTRACT freezes).
+- [x] **`neuramark_business_profiles`**: nullable **`logo_asset_id uuid`** FK → `neuramark_media_assets(id)` ON DELETE SET NULL; **`assembly_config jsonb`** DEFAULT NULL.
+- [x] **`neuramark_media_assets.asset_type`**: add **`client_logo`**, **`cover_frame`**.
+- [x] **`neuramark_assembled_reels`**: **`branding_status text`** CHECK; **`branding_config jsonb`**; **`cover_media_asset_id uuid`** FK; **`pre_branding_output_media_asset_id uuid`** FK; optional **`branding_fingerprint text`** for idempotency index.
+- [x] Storage key CHECK: logo, cover, branded MP4 patterns (CONTRACT verbatim SQL).
+- [x] RLS deny-by-default unchanged; service-role Node + Fly worker only.
+- [x] Partial unique index on completed branding fingerprint (CONTRACT freezes).
 
 ---
 

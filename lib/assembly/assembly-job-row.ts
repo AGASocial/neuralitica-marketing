@@ -2,6 +2,11 @@ import "server-only";
 
 import type { AssemblyJobStatus } from "@/lib/contracts/assembly-job";
 import { ASSEMBLY_TEMPLATE_REEL_V1_BASIC } from "@/lib/contracts/assembly-job";
+import type {
+  BrandingConfigSnapshot,
+  BrandingJobStatus,
+} from "@/lib/contracts/branding-job";
+import { brandingConfigSnapshotSchema } from "@/lib/contracts/branding-job";
 
 export type AssemblyJobRow = {
   id: string;
@@ -17,12 +22,17 @@ export type AssemblyJobRow = {
   targetDurationSec: number;
   actualDurationSec: number | null;
   failureReason: string | null;
+  brandingStatus: BrandingJobStatus | null;
+  brandingConfig: BrandingConfigSnapshot | null;
+  brandingFingerprint: string | null;
+  preBrandingOutputMediaAssetId: string | null;
+  coverMediaAssetId: string | null;
   createdAt: string;
   updatedAt: string;
 };
 
 const ASSEMBLY_JOB_SELECT =
-  "id, client_id, reel_script_id, template_id, status, primary_video_asset_id, voiceover_asset_id, output_media_asset_id, script_updated_at, input_fingerprint, target_duration_sec, actual_duration_sec, failure_reason, created_at, updated_at";
+  "id, client_id, reel_script_id, template_id, status, primary_video_asset_id, voiceover_asset_id, output_media_asset_id, script_updated_at, input_fingerprint, target_duration_sec, actual_duration_sec, failure_reason, branding_status, branding_config, branding_fingerprint, pre_branding_output_media_asset_id, cover_media_asset_id, created_at, updated_at";
 
 export const ASSEMBLY_JOB_SELECT_COLUMNS = ASSEMBLY_JOB_SELECT;
 
@@ -51,6 +61,20 @@ export function mapAssemblyJobRow(
     return null;
   }
 
+  let brandingConfig: BrandingConfigSnapshot | null = null;
+  if (raw.branding_config != null) {
+    const parsed = brandingConfigSnapshotSchema.safeParse(raw.branding_config);
+    if (parsed.success) {
+      brandingConfig = parsed.data;
+    }
+  }
+
+  const brandingStatusRaw = raw.branding_status;
+  const brandingStatus =
+    typeof brandingStatusRaw === "string"
+      ? (brandingStatusRaw as BrandingJobStatus)
+      : null;
+
   return {
     id: raw.id,
     clientId: raw.client_id,
@@ -75,6 +99,20 @@ export function mapAssemblyJobRow(
         : null,
     failureReason:
       typeof raw.failure_reason === "string" ? raw.failure_reason : null,
+    brandingStatus,
+    brandingConfig,
+    brandingFingerprint:
+      typeof raw.branding_fingerprint === "string"
+        ? raw.branding_fingerprint
+        : null,
+    preBrandingOutputMediaAssetId:
+      typeof raw.pre_branding_output_media_asset_id === "string"
+        ? raw.pre_branding_output_media_asset_id
+        : null,
+    coverMediaAssetId:
+      typeof raw.cover_media_asset_id === "string"
+        ? raw.cover_media_asset_id
+        : null,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
   };

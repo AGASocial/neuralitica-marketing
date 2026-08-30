@@ -316,6 +316,11 @@ describe("applyAssemblyJobUpdate transitions", () => {
               targetDurationSec: 30,
               actualDurationSec: 29.5,
               failureReason: null,
+              brandingStatus: null,
+              brandingConfig: null,
+              brandingFingerprint: null,
+              preBrandingOutputMediaAssetId: null,
+              coverMediaAssetId: null,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             }),
@@ -394,7 +399,7 @@ describe("assembly security grep guards", () => {
           continue;
         }
         const normalized = full.replace(/\\/g, "/");
-        if (normalized.includes("/lib/assembly/")) {
+        if (normalized.includes("/lib/assembly/") || normalized.includes("/lib/branding/")) {
           continue;
         }
         const content = readFileSync(full, "utf8");

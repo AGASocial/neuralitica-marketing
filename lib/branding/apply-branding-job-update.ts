@@ -142,3 +142,49 @@ export async function applyBrandingJobUpdate(
     idempotent: false,
   };
 }
+
+/** Orchestrator-only queued write (US-9.2 createBrandingJobForAssembly step 12). */
+export async function writeBrandingQueuedState(params: {
+  assemblyJobId: string;
+  brandingConfig: Record<string, unknown>;
+  brandingFingerprint: string;
+}): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    throw new Error("Supabase not configured for branding enqueue");
+  }
+
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from(BRANDING_JOBS_TABLE)
+    .update({
+      branding_status: "queued",
+      branding_config: params.brandingConfig,
+      branding_fingerprint: params.brandingFingerprint,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", params.assemblyJobId);
+
+  if (error) {
+    throw new Error("Failed to enqueue branding job");
+  }
+}
+
+/** Auto-chain sanitize failure path — sets branding failed without worker spawn. */
+export async function markBrandingFailed(params: {
+  assemblyJobId: string;
+  failureReason: string;
+}): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    return;
+  }
+
+  const supabase = createServerSupabaseClient();
+  await supabase
+    .from(BRANDING_JOBS_TABLE)
+    .update({
+      branding_status: "failed",
+      failure_reason: params.failureReason,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", params.assemblyJobId);
+}

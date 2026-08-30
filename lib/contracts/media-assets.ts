@@ -20,14 +20,33 @@ export const MEDIA_ASSET_TYPE_VOICEOVER = "voiceover" as const;
 /** FFmpeg assembled Reel output (US-9.1 enum). */
 export const MEDIA_ASSET_TYPE_ASSEMBLED_REEL = "assembled_reel" as const;
 
+/** Cliente brand logo (US-9.2 enum). */
+export const MEDIA_ASSET_TYPE_CLIENT_LOGO = "client_logo" as const;
+
+/** Cover frame JPEG from branded output (US-9.2 enum). */
+export const MEDIA_ASSET_TYPE_COVER_FRAME = "cover_frame" as const;
+
 /** US-9.1 assembled output keys */
 export const ASSEMBLED_REEL_STORAGE_KEY_REGEX =
   /^neuramark\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/assembled-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.mp4$/;
 
-/** Shared upload validator asset type union (US-3.3 + US-8.3). */
+/** US-9.2 branded reel output keys */
+export const BRANDED_REEL_STORAGE_KEY_REGEX =
+  /^neuramark\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/branded-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.mp4$/;
+
+/** US-9.2 client logo keys */
+export const CLIENT_LOGO_STORAGE_KEY_REGEX =
+  /^neuramark\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/logo-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|jpeg|png|webp)$/;
+
+/** US-9.2 cover frame keys */
+export const COVER_FRAME_STORAGE_KEY_REGEX =
+  /^neuramark\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/cover-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.jpg$/;
+
+/** Shared upload validator asset type union (US-3.3 + US-8.3 + US-9.2). */
 export const mediaUploadAssetTypeSchema = z.enum([
   "avatar_reference",
   "generated_video",
+  "client_logo",
 ]);
 
 export type MediaUploadAssetType = z.infer<typeof mediaUploadAssetTypeSchema>;
@@ -136,6 +155,34 @@ export const assembledReelAssetMetadataSchema = z
 
 export type AssembledReelAssetMetadata = z.infer<
   typeof assembledReelAssetMetadataSchema
+>;
+
+/** Metadata persisted on client_logo rows (US-9.2). */
+export const clientLogoAssetMetadataSchema = z
+  .object({
+    originalFilename: z.string().max(255),
+    detectedMime: z.enum(["image/jpeg", "image/png", "image/webp"]),
+    sizeBytes: z.number().int().positive(),
+  })
+  .strict();
+
+export type ClientLogoAssetMetadata = z.infer<
+  typeof clientLogoAssetMetadataSchema
+>;
+
+/** Metadata persisted on cover_frame rows (US-9.2). */
+export const coverFrameAssetMetadataSchema = z
+  .object({
+    detectedMime: z.literal("image/jpeg"),
+    sizeBytes: z.number().int().positive(),
+    source: z.literal("branding_cover_extract"),
+    assemblyJobId: z.string().uuid(),
+    coverFrameSec: z.number().min(0).max(45),
+  })
+  .strict();
+
+export type CoverFrameAssetMetadata = z.infer<
+  typeof coverFrameAssetMetadataSchema
 >;
 
 export const avatarReferenceAssetItemSchema = z

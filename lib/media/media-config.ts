@@ -58,6 +58,16 @@ export function getMaxVideoDurationSec(): number {
   return Number.isFinite(n) && n > 0 ? n : DEFAULT_MAX_VIDEO_DURATION_SEC;
 }
 
+/** Default client logo cap — 2 MiB (US-9.2). */
+export const DEFAULT_MAX_LOGO_BYTES = 2 * 1024 * 1024;
+
+export function getMaxLogoBytes(): number {
+  const raw = process.env.NEURAMARK_MEDIA_MAX_LOGO_BYTES;
+  if (!raw) return DEFAULT_MAX_LOGO_BYTES;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_MAX_LOGO_BYTES;
+}
+
 /**
  * Resolve LocalDiskStorage root. Must not be under public/ (asserted at storage init).
  */

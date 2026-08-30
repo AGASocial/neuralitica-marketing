@@ -30,7 +30,7 @@ export async function loadBrandingJobByIdUnscoped(
     return null;
   }
 
-  return mapBrandingJobRow(data as Record<string, unknown>);
+  return mapBrandingJobRow(data as unknown as Record<string, unknown>);
 }
 
 export async function loadClientLogoAssetId(

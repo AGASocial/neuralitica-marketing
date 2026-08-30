@@ -5,12 +5,6 @@ import { revalidatePath } from "next/cache";
 import type { RemoveClientLogoResult } from "@/lib/contracts/branding-job";
 import { MEDIA_ASSET_TYPE_CLIENT_LOGO } from "@/lib/contracts/media-assets";
 import { isAuthGuardError, requireActive } from "@/lib/auth/require-user";
-import {
-  brandingJobForbiddenError,
-  brandingJobInternalError,
-  brandingJobNotFoundError,
-  brandingJobUnauthenticatedError,
-} from "@/lib/assembly/branding-errors";
 import { getMediaStorage } from "@/lib/media/storage/get-media-storage";
 import {
   createServerSupabaseClient,
@@ -19,6 +13,15 @@ import {
 
 const MEDIA_TABLE = "neuramark_media_assets";
 const PROFILE_TABLE = "neuramark_business_profiles";
+
+function authGuardEnvelope(error: {
+  status: 401 | 403;
+}): RemoveClientLogoResult {
+  if (error.status === 401) {
+    return { ok: false, error: { code: "UNAUTHENTICATED" } };
+  }
+  return { ok: false, error: { code: "FORBIDDEN" } };
+}
 
 /**
  * Remove client logo from Ficha viva (US-9.2).
@@ -30,15 +33,13 @@ export async function removeClientLogo(): Promise<RemoveClientLogoResult> {
       user = await requireActive("handler");
     } catch (error) {
       if (isAuthGuardError(error)) {
-        return error.status === 401
-          ? brandingJobUnauthenticatedError()
-          : brandingJobForbiddenError();
+        return authGuardEnvelope(error);
       }
       throw error;
     }
 
     if (!isSupabaseConfigured()) {
-      return brandingJobInternalError();
+      return { ok: false, error: { code: "INTERNAL_ERROR" } };
     }
 
     const supabase = createServerSupabaseClient();
@@ -56,7 +57,7 @@ export async function removeClientLogo(): Promise<RemoveClientLogoResult> {
         : null;
 
     if (!logoAssetId) {
-      return brandingJobNotFoundError();
+      return { ok: false, error: { code: "NOT_FOUND" } };
     }
 
     const { data: asset } = await supabase
@@ -96,11 +97,9 @@ export async function removeClientLogo(): Promise<RemoveClientLogoResult> {
     return { ok: true };
   } catch (error) {
     if (isAuthGuardError(error)) {
-      return error.status === 401
-        ? brandingJobUnauthenticatedError()
-        : brandingJobForbiddenError();
+      return authGuardEnvelope(error);
     }
     console.error("[profile] remove logo unexpected error");
-    return brandingJobInternalError();
+    return { ok: false, error: { code: "INTERNAL_ERROR" } };
   }
 }

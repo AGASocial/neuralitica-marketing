@@ -89,9 +89,21 @@ describe("mapBusinessProfileRow outcomes", () => {
       assert.equal(result.version, 1);
       assert.equal(result.updatedAt, "2026-08-29T16:00:00.000Z");
     }
-    assert.equal(businessProfileViewSchema.safeParse(result).success, true);
+    const withBranding = {
+      ...(result as { exists: true }),
+      branding: {
+        logoAssetId: null,
+        logoPreviewUrl: null,
+        assemblyConfig: {
+          subtitlesEnabled: true,
+          logoEnabled: true,
+          coverFrameSec: 1.0,
+        },
+      },
+    };
+    assert.equal(businessProfileViewSchema.safeParse(withBranding).success, true);
 
-    const serialized = JSON.stringify(result);
+    const serialized = JSON.stringify(withBranding);
     assert.equal(serialized.includes("client_id"), false);
     assert.equal(serialized.includes("source_interview_id"), false);
     assert.equal(serialized.includes('"id"'), false);

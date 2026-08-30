@@ -29,6 +29,7 @@ export type BrandingJobRow = {
   targetDurationSec: number;
   brandingStatus: BrandingStatus | null;
   brandingConfig: BrandingConfigSnapshot | null;
+  brandingFingerprint: string | null;
   brandingFailureReason: string | null;
   coverMediaAssetId: string | null;
   updatedAt: string;
@@ -44,6 +45,7 @@ const BRANDING_JOB_SELECT = [
   "target_duration_sec",
   "branding_status",
   "branding_config",
+  "branding_fingerprint",
   "failure_reason",
   "cover_media_asset_id",
   "updated_at",
@@ -114,6 +116,10 @@ export function mapBrandingJobRow(
     targetDurationSec: raw.target_duration_sec,
     brandingStatus,
     brandingConfig: parseBrandingConfig(raw.branding_config),
+    brandingFingerprint:
+      typeof raw.branding_fingerprint === "string"
+        ? raw.branding_fingerprint
+        : null,
     brandingFailureReason:
       typeof raw.failure_reason === "string" ? raw.failure_reason : null,
     coverMediaAssetId:

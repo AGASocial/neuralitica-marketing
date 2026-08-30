@@ -9,26 +9,20 @@ import {
   interviewAnswersCompleteSchema,
   type InterviewAnswersComplete,
 } from "@/lib/contracts/interview";
-import { assemblyConfigSchema } from "@/lib/contracts/branding-job";
+import {
+  businessProfileBrandingSchema,
+  type BusinessProfileBranding,
+} from "@/lib/contracts/branding-job";
 import { visualModeSummarySchema } from "@/lib/contracts/visual-preferences";
+
+export type { BusinessProfileBranding };
+export { businessProfileBrandingSchema };
 
 /** Ficha viva fields jsonb — 1:1 with complete interview answers (V1). */
 export type BusinessProfileFields = InterviewAnswersComplete;
 
 /** Trusted job-context clientId for getBusinessProfileForAgents. */
 export const agentClientIdSchema = z.string().uuid();
-
-export const businessProfileBrandingSchema = z
-  .object({
-    logoAssetId: z.string().uuid().nullable(),
-    logoPreviewUrl: z.string().regex(/^\/api\/media\/assets\/[0-9a-f-]{36}$/).nullable(),
-    assemblyConfig: assemblyConfigSchema,
-  })
-  .strict();
-
-export type BusinessProfileBranding = z.infer<
-  typeof businessProfileBrandingSchema
->;
 
 export const businessProfileViewSchema = z
   .object({

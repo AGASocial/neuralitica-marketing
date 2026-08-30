@@ -113,6 +113,11 @@ export async function applyAssemblyJobUpdate(
     throw new Error("Failed to update assembly job status");
   }
 
+  if (nextStatus === "completed" && input.patch.status === "completed") {
+    const { onAssemblyJobCompleted } = await import("./on-assembly-job-completed");
+    await onAssemblyJobCompleted({ assemblyJobId: job.id });
+  }
+
   return {
     ok: true,
     jobId: job.id,

@@ -47,7 +47,10 @@ export type BrandingConfigSnapshot = z.infer<
 export const businessProfileBrandingSchema = z
   .object({
     logoAssetId: z.string().uuid().nullable(),
-    logoPreviewUrl: z.string().nullable(),
+    logoPreviewUrl: z
+      .string()
+      .regex(/^\/api\/media\/assets\/[0-9a-f-]{36}$/)
+      .nullable(),
     assemblyConfig: assemblyConfigSchema,
   })
   .strict();
@@ -178,3 +181,44 @@ export type UpdateAssemblyConfigDefaultsResult =
         fields?: Record<string, string[]>;
       };
     };
+
+export const FORBIDDEN_BRANDING_AUTHORITY_KEYS = [
+  "onScreenText",
+  "on_screen_text",
+  "logoAssetId",
+  "logo_asset_id",
+  "coverFrameSec",
+  "cover_frame_sec",
+  "coverMediaAssetId",
+  "cover_media_asset_id",
+  "preBrandingOutputMediaAssetId",
+  "pre_branding_output_media_asset_id",
+  "brandingConfig",
+  "branding_config",
+  "brandingFingerprint",
+  "branding_fingerprint",
+  "brandingStatus",
+  "branding_status",
+  "clientId",
+  "client_id",
+  "status",
+  "outputMediaAssetId",
+  "output_media_asset_id",
+  "fontPath",
+  "font",
+  "beatText",
+  "subtitleBeats",
+  "subtitle_beats",
+  "force",
+  "skipIdempotency",
+  "skip_idempotency",
+  "baseVideoUrl",
+  "logoUrl",
+  "assetUrl",
+] as const;
+
+export type BrandingJobMutationError = z.infer<
+  typeof applyBrandingForAssemblyErrorEnvelopeSchema
+>;
+
+export type CreateBrandingJobForAssemblyResult = ApplyBrandingForAssemblyResult;

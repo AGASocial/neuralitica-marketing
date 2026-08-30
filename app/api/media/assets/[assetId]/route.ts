@@ -9,12 +9,16 @@ import {
 import {
   MEDIA_ASSET_TYPE_ASSEMBLED_REEL,
   MEDIA_ASSET_TYPE_AVATAR_REFERENCE,
+  MEDIA_ASSET_TYPE_CLIENT_LOGO,
+  MEDIA_ASSET_TYPE_COVER_FRAME,
   MEDIA_ASSET_TYPE_GENERATED_VIDEO,
   MEDIA_ASSET_TYPE_VOICEOVER,
 } from "@/lib/contracts/media-assets";
 import {
   assembledReelAssetMetadataSchema,
   avatarReferenceAssetMetadataSchema,
+  clientLogoAssetMetadataSchema,
+  coverFrameAssetMetadataSchema,
   generatedVideoAssetMetadataSchema,
   voiceoverAssetMetadataSchema,
 } from "@/lib/contracts/media-assets";
@@ -121,6 +125,49 @@ export async function GET(
     if (metaParsed.success) {
       contentType = metaParsed.data.detectedMime;
       originalFilename = metaParsed.data.originalFilename;
+    }
+  } else if (row.asset_type === MEDIA_ASSET_TYPE_CLIENT_LOGO) {
+    let user;
+    try {
+      user = await requireActive("handler");
+    } catch (authError) {
+      if (isAuthGuardError(authError)) {
+        return authGuardResponse(authError);
+      }
+      throw authError;
+    }
+
+    if (row.client_id !== user.id) {
+      return notFoundResponse();
+    }
+
+    const metaParsed = clientLogoAssetMetadataSchema.safeParse(
+      row.metadata ?? {},
+    );
+    if (metaParsed.success) {
+      contentType = metaParsed.data.detectedMime;
+      originalFilename = metaParsed.data.originalFilename;
+    }
+  } else if (row.asset_type === MEDIA_ASSET_TYPE_COVER_FRAME) {
+    let user;
+    try {
+      user = await requireActive("handler");
+    } catch (authError) {
+      if (isAuthGuardError(authError)) {
+        return authGuardResponse(authError);
+      }
+      throw authError;
+    }
+
+    if (row.client_id !== user.id) {
+      return notFoundResponse();
+    }
+
+    const metaParsed = coverFrameAssetMetadataSchema.safeParse(row.metadata ?? {});
+    contentType = "image/jpeg";
+    originalFilename = "cover.jpg";
+    if (metaParsed.success) {
+      contentType = metaParsed.data.detectedMime;
     }
   } else if (row.asset_type === MEDIA_ASSET_TYPE_GENERATED_VIDEO) {
     let operator;
