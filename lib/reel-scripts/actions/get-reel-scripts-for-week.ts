@@ -69,6 +69,7 @@ export async function getReelScriptsForWeek(
         strategyVersionChanged: false,
         items: [],
         costSummary: emptyWeekCostSummary(weekStart, clientId),
+        reelCostRollups: {},
       };
     }
 
@@ -102,6 +103,7 @@ export async function getReelScriptsForWeek(
       strategyVersionChanged,
       items,
       costSummary,
+      reelCostRollups: {},
     };
   } catch (error) {
     if (isAuthGuardError(error)) {

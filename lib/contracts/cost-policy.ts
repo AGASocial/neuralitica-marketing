@@ -104,6 +104,26 @@ export const FORBIDDEN_BUDGET_SPEND_KEYS = [
   "manualActualCostCents",
 ] as const;
 
+/** US-7.4 — rejected on rollup read paths (batch list has no client input). */
+export const FORBIDDEN_REEL_COST_ROLLUP_KEYS = [
+  "reelCostRollups",
+  "reelCostRollup",
+  "costRollup",
+  "cost_rollup",
+  "components",
+  "varianceCents",
+  "variance_cents",
+  "isOverBudget",
+  "is_over_budget",
+  "totalActualCostCents",
+  "total_actual_cost_cents",
+  "totalEstimatedCostCents",
+  "total_estimated_cost_cents",
+  "compareTotalCents",
+  "eventScope",
+  "event_scope",
+] as const;
+
 export const updateGlobalCostPolicyInputSchema = z
   .object({
     maxCostCents: z.number().int().min(1).max(MAX_COST_CENTS_CEILING),

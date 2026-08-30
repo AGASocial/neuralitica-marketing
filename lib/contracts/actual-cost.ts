@@ -239,3 +239,109 @@ export type OperatorProductionJobCostStatus = z.infer<
 export type OperatorProductionJobCostDto = z.infer<
   typeof operatorProductionJobCostDtoSchema
 >;
+
+// --- US-7.4 Reel cost roll-up (Operator-only) ---
+
+export const reelCostRollupAssetRoleSchema = z.enum([
+  "llm",
+  "talking_head",
+  "broll",
+  "tts",
+]);
+
+export type ReelCostRollupAssetRole = z.infer<
+  typeof reelCostRollupAssetRoleSchema
+>;
+
+export const reelCostRollupComponentSchema = z
+  .object({
+    assetRole: reelCostRollupAssetRoleSchema,
+    estimatedCostCents: z.number().int().nonnegative(),
+    actualCostCents: z.number().int().nonnegative().nullable(),
+    eventCount: z.number().int().nonnegative(),
+    hasPendingActual: z.boolean(),
+    unavailableReasonKeys: z.array(actualCostUnavailableReasonSchema),
+  })
+  .strict();
+
+export const reelCostRollupDtoSchema = z
+  .object({
+    reelScriptId: z.string().uuid(),
+    clientId: z.string().uuid(),
+    weekStart: trendWeekStartSchema,
+    eventScope: z.literal("week"),
+    estimatedTotalCents: z.number().int().nonnegative(),
+    actualTotalCents: z.number().int().nonnegative().nullable(),
+    varianceCents: z.number().int().nullable(),
+    hasPendingActual: z.boolean(),
+    maxCostCents: z.number().int().positive(),
+    isOverBudget: z.boolean(),
+    components: z.array(reelCostRollupComponentSchema),
+  })
+  .strict();
+
+export const reelCostRollupsMapSchema = z.record(
+  z.string().uuid(),
+  reelCostRollupDtoSchema,
+);
+
+/** Internal helper input — not exposed to browser actions in Phase A. */
+export const getReelCostRollupForScriptInputSchema = z
+  .object({
+    clientId: z.string().uuid(),
+    reelScriptId: z.string().uuid(),
+    weekStart: trendWeekStartSchema,
+    eventScope: z.literal("week"),
+  })
+  .strict();
+
+/** Optional lazy Server Action input (Phase B+); Phase A uses batch attach only. */
+export const getReelCostRollupForScriptActionInputSchema = z
+  .object({
+    reelScriptId: z.string().uuid(),
+    weekStart: trendWeekStartSchema.optional(),
+  })
+  .strict();
+
+export type ReelCostRollupComponent = z.infer<
+  typeof reelCostRollupComponentSchema
+>;
+export type ReelCostRollupDto = z.infer<typeof reelCostRollupDtoSchema>;
+export type ReelCostRollupsMap = z.infer<typeof reelCostRollupsMapSchema>;
+export type GetReelCostRollupForScriptInput = z.infer<
+  typeof getReelCostRollupForScriptInputSchema
+>;
+export type GetReelCostRollupForScriptActionInput = z.infer<
+  typeof getReelCostRollupForScriptActionInputSchema
+>;
+
+/** actualTotal - estimatedTotal when actual known; else null. */
+export function computeReelCostVarianceCents(
+  estimatedTotalCents: number,
+  actualTotalCents: number | null,
+): number | null {
+  if (actualTotalCents === null) {
+    return null;
+  }
+  return actualTotalCents - estimatedTotalCents;
+}
+
+/** Total used for over-budget comparison: actual when recorded, else estimate. */
+export function computeReelCostCompareTotalCents(
+  estimatedTotalCents: number,
+  actualTotalCents: number | null,
+): number {
+  return actualTotalCents !== null ? actualTotalCents : estimatedTotalCents;
+}
+
+/** Reporting-only — does NOT affect US-7.1 budget gate. */
+export function computeReelCostIsOverBudget(
+  estimatedTotalCents: number,
+  actualTotalCents: number | null,
+  maxCostCents: number,
+): boolean {
+  return (
+    computeReelCostCompareTotalCents(estimatedTotalCents, actualTotalCents) >
+    maxCostCents
+  );
+}

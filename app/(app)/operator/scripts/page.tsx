@@ -66,6 +66,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
       strategyVersionChanged: false,
       items: [],
       costSummary: emptyWeekCostSummary(weekStart, clientId),
+      reelCostRollups: {},
     };
   }
 
@@ -82,6 +83,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
         strategyVersionChanged: false,
         items: [],
         costSummary: emptyWeekCostSummary(weekStart, clientId),
+        reelCostRollups: {},
       };
 
   return (
