@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-6.2
-story_status: SELECT
-feature_branch: null
+story_status: CONTRACT
+feature_branch: feature/US-6.2-cta-selection
 last_completed_story: US-6.1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T23:45:00Z
+updated_at: 2026-08-30T01:35:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -23,7 +23,7 @@ updated_at: 2026-08-30T23:45:00Z
 | US-5.1 Reel script package per slot | done | agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e` · CLOSE 6/6 AC |
 | US-5.2 Preview script readability | done | BE `b503241` · FE `b68d2ee` · VALIDATION `8ba616e` · CLOSE 2/2 AC |
 | US-6.1 Generate Instagram caption per Reel | done | agents `c385372` · FE `d075781` · BE `1f45244` · VALIDATION `2cebd89` · CLOSE 5/5 AC |
-| US-6.2 CTA variants for caption testing | SELECT | Next story — depends on US-6.1 ✅ |
+| US-6.2 CTA variants for caption testing | CONTRACT | PREP + SPEC-REVIEW (GAPS→closed) + SECURITY + CONTRACT frozen; FE signoff; branch `feature/US-6.2-cta-selection` |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -35,6 +35,8 @@ updated_at: 2026-08-30T23:45:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-6.2 CONTRACT: `plan/stories/US-6.2/CONTRACT.md` frozen; FE signoff; 7 SPEC gaps closed; SECURITY APPROVE WITH CONDITIONS; branch `feature/US-6.2-cta-selection`; story_status CONTRACT → BUILD next.
+- 2026-08-30 · US-6.2 PREP: `plan/stories/US-6.2/README.md` + `TASKS.md` + `SPEC-REVIEW.md` + `SECURITY.md`; PO decisions frozen; story_status PREP → CONTRACT.
 - 2026-08-30 · US-6.1 CLOSE: 5/5 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 1 Low); agents `c385372` · FE `d075781` · BE `1f45244` · VALIDATION `2cebd89`; Phase 3 → SELECT US-6.2.
 - 2026-08-30 · US-6.1 QA: APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 1 Low); `plan/stories/US-6.1/QA.md`; 48/48 caption tests; CLOSE recommended yes; agents `c385372` · FE `d075781` · BE `1f45244` · VALIDATION `2cebd89`; story_status QA.
 - 2026-08-30 · US-6.1 VALIDATION: PASS WITH NOTES (0 blockers, 45/48 tests); `plan/stories/US-6.1/VALIDATION.md`; agents `c385372` · FE `d075781` · BE `1f45244`; 3 agent prompt-fixture assertion failures documented; story_status VALIDATION.
