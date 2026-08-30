@@ -2,6 +2,7 @@ import "server-only";
 
 import type { ContentStrategyBrief } from "@/lib/contracts/content-strategy";
 import type { ReelScriptListItem } from "@/lib/contracts/reel-script";
+import { computeScriptReadabilityMetrics } from "@/lib/reel-scripts/compute-script-readability";
 import {
   hasOrphanedScriptsForWeek,
   listReelScriptsForStrategy,
@@ -36,6 +37,7 @@ export async function buildReelScriptListForStrategy(params: {
         status: "pending" as const,
         package: null,
         mustDiscloseNotOwner: null,
+        readability: null,
       };
     }
 
@@ -51,6 +53,7 @@ export async function buildReelScriptListForStrategy(params: {
       status: "generated" as const,
       package: script.package,
       mustDiscloseNotOwner: script.mustDiscloseNotOwner,
+      readability: computeScriptReadabilityMetrics(script.package),
     };
   });
 

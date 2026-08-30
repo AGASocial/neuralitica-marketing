@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-5.2
-story_status: SELECT
-feature_branch: null
+story_status: CONTRACT
+feature_branch: feature/US-5.2-script-readability
 last_completed_story: US-5.1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T02:30:00Z
+updated_at: 2026-08-30T04:00:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -21,7 +21,7 @@ updated_at: 2026-08-30T02:30:00Z
 | US-4.1 Content Strategy agent | done | BE `af998d9` · FE `dcbd15a` · agents `bbd159d` · CLOSE |
 | US-4.2 Review and approve strategy | done | BE `ba57bac` · FE `4367287` · CLOSE 5/5 AC |
 | US-5.1 Reel script package per slot | done | agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e` · CLOSE 6/6 AC |
-| US-5.2 Preview script readability | SELECT | Next story — depends on US-5.1 ✅ |
+| US-5.2 Preview script readability | CONTRACT | `plan/stories/US-5.2/CONTRACT.md` frozen; branch `feature/US-5.2-script-readability`; await FE signoff |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -33,6 +33,8 @@ updated_at: 2026-08-30T02:30:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-5.2 CONTRACT: `plan/stories/US-5.2/CONTRACT.md` frozen; `lib/contracts/reel-script-readability.ts`; SPEC gaps closed (40 chars/beat, parse rules, read-only DTO); story_status CONTRACT; branch `feature/US-5.2-script-readability`.
+- 2026-08-30 · US-5.2 PREP: `plan/stories/US-5.2/README.md` + `TASKS.md`; PO decisions frozen; story_status PREP.
 - 2026-08-30 · US-5.1 CLOSE: 6/6 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 3 Medium, 3 Low); agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e`; Phase 3 → SELECT US-5.2.
 - 2026-08-30 · US-5.1 QA: APPROVE WITH NOTES (0 Critical, 0 High, 3 Medium, 3 Low); `plan/stories/US-5.1/QA.md`; 47/47 story tests; CLOSE recommended yes; agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e` · VALIDATION `f387659`; story_status QA.
 - 2026-08-30 · US-5.1 VALIDATION: PASS WITH NOTES (0 blockers, 109/109 tests); `plan/stories/US-5.1/VALIDATION.md`; agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e`; story_status VALIDATION.

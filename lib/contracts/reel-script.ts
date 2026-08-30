@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 
+import { reelScriptReadabilitySchema } from "@/lib/contracts/reel-script-readability";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
 import { visualModalitySchema } from "@/lib/contracts/visual-preferences";
 
@@ -64,6 +65,8 @@ export const reelScriptListItemSchema = z
     status: z.enum(["pending", "generated"]),
     package: reelScriptPackageSchema.nullable(),
     mustDiscloseNotOwner: z.boolean().nullable(),
+    /** US-5.2: null when pending; server-computed when package present. */
+    readability: reelScriptReadabilitySchema.nullable(),
   })
   .strict();
 
