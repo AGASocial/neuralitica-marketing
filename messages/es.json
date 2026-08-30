@@ -358,6 +358,22 @@
         "mixed": "Mixto"
       }
     },
+    "voice": {
+      "title": "Voz IA predeterminada",
+      "hiddenNoAiVoice": "La selección de voz no está disponible porque tus preferencias no incluyen una ruta de voz en off con IA.",
+      "sampleLabel": "Muestra",
+      "aiOnlyNote": "Solo voz generada por IA — nunca te pediremos grabar audio.",
+      "enWarmFemale": "Inglés — voz femenina cálida",
+      "enProfessionalMale": "Inglés — voz masculina profesional",
+      "esWarmFemale": "Español — voz femenina cálida",
+      "esProfessionalMale": "Español — voz masculina profesional",
+      "labels": {
+        "en_warm_female": "Inglés — voz femenina cálida",
+        "en_professional_male": "Inglés — voz masculina profesional",
+        "es_warm_female": "Español — voz femenina cálida",
+        "es_professional_male": "Español — voz masculina profesional"
+      }
+    },
     "error": {
       "body": "No pudimos cargar tus preferencias de producción visual. Actualiza la página para intentarlo de nuevo.",
       "ctaDashboard": "Volver al panel"
@@ -1092,6 +1108,47 @@
           "slotCompletedJobExists": "Ya existe un job de video completado para este Reel.",
           "internal": "Algo salió mal. Inténtalo más tarde."
         }
+      }
+    },
+    "voiceover": {
+      "title": "Voz en off",
+      "aiOnlyNote": "Solo voz generada por IA — sintetizada a partir del texto de voz en off del guion.",
+      "status": {
+        "missing": "Pendiente",
+        "ready": "Lista"
+      },
+      "generate": "Generar voz en off",
+      "regenerate": "Regenerar voz en off",
+      "generating": "Generando voz en off…",
+      "assetIdLabel": "ID de activo de voz en off",
+      "voiceLabel": "Voz",
+      "toastSuccess": "Voz en off generada.",
+      "voiceNames": {
+        "en_warm_female": "Inglés — voz femenina cálida",
+        "en_professional_male": "Inglés — voz masculina profesional",
+        "es_warm_female": "Español — voz femenina cálida",
+        "es_professional_male": "Español — voz masculina profesional"
+      },
+      "error": {
+        "validation": "Revisa la solicitud e inténtalo de nuevo.",
+        "forbiddenFields": "Solicitud de voz en off no válida.",
+        "emptyVoiceoverText": "El texto de voz en off está vacío para este Reel.",
+        "budgetExceeded": "Voz en off bloqueada — superaría el presupuesto del Reel.",
+        "costPolicyUnavailable": "La política de costo no está disponible. Inténtalo más tarde.",
+        "providerUnavailable": "El proveedor TTS no está disponible temporalmente.",
+        "internal": "Algo salió mal. Inténtalo más tarde."
+      },
+      "errors": {
+        "unauthenticated": "Inicia sesión para continuar.",
+        "forbidden": "No tienes acceso a la síntesis de voz en off.",
+        "notFound": "No se encontró ese guion de Reel.",
+        "validation": "Revisa la solicitud e inténtalo de nuevo.",
+        "forbiddenFields": "Solicitud de voz en off no válida.",
+        "emptyVoiceoverText": "El texto de voz en off está vacío para este Reel.",
+        "budgetExceeded": "Voz en off bloqueada — superaría el presupuesto del Reel.",
+        "costPolicyUnavailable": "La política de costo no está disponible. Inténtalo más tarde.",
+        "providerUnavailable": "El proveedor TTS no está disponible temporalmente.",
+        "internal": "Algo salió mal. Inténtalo más tarde."
       }
     },
     "providerRecommendation": {

@@ -107,6 +107,7 @@ export default async function PreferencesPage() {
         ownAvatarAssetsNote: t.preferences.ownAvatarAssetsNote,
         modes: t.preferences.modes,
         facelessStyle: t.preferences.facelessStyle,
+        voice: t.preferences.voice,
         errors: {
           ...t.preferences.errors,
           unauthenticated: t.auth.errors.unauthenticated,

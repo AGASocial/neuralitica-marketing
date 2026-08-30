@@ -7,6 +7,7 @@ import { Message } from "primereact/message";
 
 import type { AvatarConsentCopy } from "@/components/preferences/AvatarConsentSection";
 import type { AvatarReferencesCopy } from "@/components/preferences/AvatarReferencesSection";
+import type { VoicePickerCopy } from "@/components/preferences/VoicePickerSection";
 import {
   PreferencesEditor,
   type PreferencesFormInitial,
@@ -15,9 +16,12 @@ import type { AvatarConsentForClientResult } from "@/lib/contracts/avatar-consen
 import type { AvatarReferenceAssetsPageResult } from "@/lib/contracts/media-assets";
 import type {
   FacelessStyle,
+  TtsVoiceId,
+  TtsVoiceOptionDto,
   VisualModality,
   VisualPreferencesForClientResult,
 } from "@/lib/contracts/visual-preferences";
+import { TTS_VOICE_OPTIONS_FE } from "@/lib/contracts/tts-voiceover";
 
 type ModeCopy = {
   label: string;
@@ -49,6 +53,7 @@ type PreferencesCopy = {
     onScreenTextOptions: Record<FacelessStyle["onScreenText"], string>;
     brollOptions: Record<FacelessStyle["broll"], string>;
   };
+  voice: VoicePickerCopy;
   errors: {
     validation: string;
     forbiddenFields: string;
@@ -111,6 +116,9 @@ export function PreferencesView({
           updatedAt: result.updatedAt,
           rules: result.rules,
           ownAvatarConsentActive: result.ownAvatarConsentActive,
+          voiceId: result.voiceId,
+          availableVoices: result.availableVoices,
+          voicePickerVisible: result.voicePickerVisible,
         }
       : {
           allowedModes: [],
@@ -118,6 +126,13 @@ export function PreferencesView({
           updatedAt: null,
           rules: null,
           ownAvatarConsentActive: Boolean(result.ownAvatarConsentActive),
+          voiceId: null,
+          availableVoices:
+            "availableVoices" in result
+              ? result.availableVoices
+              : TTS_VOICE_OPTIONS_FE,
+          voicePickerVisible:
+            "voicePickerVisible" in result ? result.voicePickerVisible : false,
         };
 
   return (
@@ -144,6 +159,7 @@ export function PreferencesView({
         ownAvatarAssetsNote: copy.ownAvatarAssetsNote,
         modes: copy.modes,
         facelessStyle: copy.facelessStyle,
+        voice: copy.voice,
         errors: copy.errors,
       }}
     />

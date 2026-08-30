@@ -358,6 +358,22 @@
         "mixed": "Mixed"
       }
     },
+    "voice": {
+      "title": "Default AI voice",
+      "hiddenNoAiVoice": "Voice selection is unavailable because your preferences do not include an AI voiceover path.",
+      "sampleLabel": "Sample",
+      "aiOnlyNote": "AI-generated voice only — we never ask you to record audio.",
+      "enWarmFemale": "English — warm female",
+      "enProfessionalMale": "English — professional male",
+      "esWarmFemale": "Spanish — warm female",
+      "esProfessionalMale": "Spanish — professional male",
+      "labels": {
+        "en_warm_female": "English — warm female",
+        "en_professional_male": "English — professional male",
+        "es_warm_female": "Spanish — warm female",
+        "es_professional_male": "Spanish — professional male"
+      }
+    },
     "error": {
       "body": "We could not load your visual production preferences. Refresh the page to try again.",
       "ctaDashboard": "Back to dashboard"
@@ -1092,6 +1108,47 @@
           "slotCompletedJobExists": "A completed video job already exists for this Reel.",
           "internal": "Something went wrong. Please try again later."
         }
+      }
+    },
+    "voiceover": {
+      "title": "Voiceover",
+      "aiOnlyNote": "AI-generated voice only — synthesized from the script voiceover text.",
+      "status": {
+        "missing": "Missing",
+        "ready": "Ready"
+      },
+      "generate": "Generate voiceover",
+      "regenerate": "Regenerate voiceover",
+      "generating": "Generating voiceover…",
+      "assetIdLabel": "Voiceover asset ID",
+      "voiceLabel": "Voice",
+      "toastSuccess": "Voiceover generated.",
+      "voiceNames": {
+        "en_warm_female": "English — warm female",
+        "en_professional_male": "English — professional male",
+        "es_warm_female": "Spanish — warm female",
+        "es_professional_male": "Spanish — professional male"
+      },
+      "error": {
+        "validation": "Please check the request and try again.",
+        "forbiddenFields": "Invalid voiceover request.",
+        "emptyVoiceoverText": "Voiceover text is empty for this Reel.",
+        "budgetExceeded": "Voiceover blocked — would exceed Reel budget.",
+        "costPolicyUnavailable": "Cost policy is unavailable. Try again later.",
+        "providerUnavailable": "TTS provider is temporarily unavailable.",
+        "internal": "Something went wrong. Please try again later."
+      },
+      "errors": {
+        "unauthenticated": "Please log in to continue.",
+        "forbidden": "You do not have access to voiceover synthesis.",
+        "notFound": "That Reel script was not found.",
+        "validation": "Please check the request and try again.",
+        "forbiddenFields": "Invalid voiceover request.",
+        "emptyVoiceoverText": "Voiceover text is empty for this Reel.",
+        "budgetExceeded": "Voiceover blocked — would exceed Reel budget.",
+        "costPolicyUnavailable": "Cost policy is unavailable. Try again later.",
+        "providerUnavailable": "TTS provider is temporarily unavailable.",
+        "internal": "Something went wrong. Please try again later."
       }
     },
     "providerRecommendation": {

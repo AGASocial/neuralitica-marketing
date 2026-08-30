@@ -68,6 +68,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
       costSummary: emptyWeekCostSummary(weekStart, clientId),
       reelCostRollups: {},
       videoJobsByReelScriptId: {},
+      voiceoverByReelScriptId: {},
     };
   }
 
@@ -86,6 +87,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
         costSummary: emptyWeekCostSummary(weekStart, clientId),
         reelCostRollups: {},
         videoJobsByReelScriptId: {},
+        voiceoverByReelScriptId: {},
       };
 
   return (
@@ -162,6 +164,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
           toastRetrySuccess: t.scripts.videoJob.toastRetrySuccess,
           toastOverrideSuccess: t.scripts.videoJob.toastOverrideSuccess,
         },
+        voiceover: t.scripts.voiceover,
         cost: {
           actual: t.scripts.cost.actual,
           rollup: {

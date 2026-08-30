@@ -23,6 +23,10 @@ import {
   type ProviderRecommendationCopy,
 } from "@/components/scripts/ProviderRecommendationPanel";
 import {
+  OperatorVoiceoverPanel,
+  type OperatorVoiceoverCopy,
+} from "@/components/scripts/OperatorVoiceoverPanel";
+import {
   ManualVideoUploadControl,
   type ManualVideoUploadCopy,
 } from "@/components/scripts/ManualVideoUploadDialog";
@@ -59,6 +63,11 @@ import {
   IG_HASHTAG_WARN_MAX,
   type ReelCaptionErrorCode,
 } from "@/lib/contracts/reel-caption";
+import type {
+  SynthesizeVoiceoverForReelScriptSuccess,
+  VoiceoverSummaryByReelMap,
+  VoiceoverSummaryDto,
+} from "@/lib/contracts/tts-voiceover";
 import type {
   GetReelScriptsForWeekSuccess,
   ReelScriptErrorCode,
@@ -183,6 +192,7 @@ type ScriptsPageCopy = {
     toastRetrySuccess: string;
     toastOverrideSuccess: string;
   };
+  voiceover: OperatorVoiceoverCopy;
   caption: {
     tabs: {
       script: string;
@@ -481,10 +491,16 @@ export function ScriptsPageView({
   const [videoJobOverrides, setVideoJobOverrides] = useState<OperatorVideoJobsByReelMap>(
     {},
   );
+  const [voiceoverOverrides, setVoiceoverOverrides] =
+    useState<VoiceoverSummaryByReelMap>({});
 
   useEffect(() => {
     setVideoJobOverrides({});
   }, [data.videoJobsByReelScriptId]);
+
+  useEffect(() => {
+    setVoiceoverOverrides({});
+  }, [data.voiceoverByReelScriptId]);
 
   const videoJobsByReelScriptId = useMemo(
     () => ({
@@ -492,6 +508,14 @@ export function ScriptsPageView({
       ...videoJobOverrides,
     }),
     [data.videoJobsByReelScriptId, videoJobOverrides],
+  );
+
+  const voiceoverByReelScriptId = useMemo(
+    () => ({
+      ...data.voiceoverByReelScriptId,
+      ...voiceoverOverrides,
+    }),
+    [data.voiceoverByReelScriptId, voiceoverOverrides],
   );
 
   const weekDate = weekStartToDate(weekStart);
@@ -875,6 +899,40 @@ export function ScriptsPageView({
     router.refresh();
   }
 
+  function handleVoiceoverSuccess(
+    reelScriptId: string,
+    result: SynthesizeVoiceoverForReelScriptSuccess,
+  ) {
+    const nextSummary: VoiceoverSummaryDto = {
+      voiceoverAssetId: result.voiceoverAssetId,
+      voiceId: result.voiceId,
+      createdAt: new Date().toISOString(),
+      canSynthesize: true,
+      canRegenerate: true,
+    };
+    setVoiceoverOverrides((prev) => ({
+      ...prev,
+      [reelScriptId]: nextSummary,
+    }));
+    router.refresh();
+  }
+
+  function handleVoiceoverToastSuccess(summary: string) {
+    toastRef.current?.show({
+      severity: "success",
+      summary,
+      life: 4000,
+    });
+  }
+
+  function handleVoiceoverError(message: string) {
+    toastRef.current?.show({
+      severity: "error",
+      summary: message,
+      life: 6000,
+    });
+  }
+
   function handleVideoJobMutationError(message: string) {
     setBanner(message);
   }
@@ -1080,6 +1138,7 @@ export function ScriptsPageView({
                 copy={copy}
                 reelCostRollups={reelCostRollups}
                 videoJobsByReelScriptId={videoJobsByReelScriptId}
+                voiceoverByReelScriptId={voiceoverByReelScriptId}
                 showCostRollup={showCostSummary}
                 onCopy={copyToClipboard}
                 onRegenerateCaption={(slotIndex) => void handleRegenerateCaption(slotIndex)}
@@ -1093,6 +1152,13 @@ export function ScriptsPageView({
                     handleManualUploadSuccess(row.scriptId, job);
                   }
                 }}
+                onVoiceoverSuccess={(result) => {
+                  if (row.scriptId) {
+                    handleVoiceoverSuccess(row.scriptId, result);
+                  }
+                }}
+                onVoiceoverToastSuccess={handleVoiceoverToastSuccess}
+                onVoiceoverError={handleVoiceoverError}
                 captionRegeneratingSlot={captionRegeneratingSlot}
                 captionSelectingSlot={captionSelectingSlot}
                 isBusy={isBusy}
@@ -1235,6 +1301,7 @@ type ReelDetailPanelProps = {
   copy: ScriptsPageCopy;
   reelCostRollups: ReelCostRollupsMap;
   videoJobsByReelScriptId: OperatorVideoJobsByReelMap;
+  voiceoverByReelScriptId: VoiceoverSummaryByReelMap;
   showCostRollup: boolean;
   onCopy: (text: string) => void;
   onRegenerateCaption: (slotIndex: number) => void;
@@ -1242,6 +1309,9 @@ type ReelDetailPanelProps = {
   onRequestVideoJobRetry: (failedJobId: string) => void;
   onRequestVideoJobOverride: (failedJobId: string) => void;
   onManualUploadSuccess: (job: OperatorVideoJobSummaryDto) => void;
+  onVoiceoverSuccess: (result: SynthesizeVoiceoverForReelScriptSuccess) => void;
+  onVoiceoverToastSuccess: (summary: string) => void;
+  onVoiceoverError: (message: string) => void;
   captionRegeneratingSlot: number | null;
   captionSelectingSlot: number | null;
   isBusy: boolean;
@@ -1255,6 +1325,7 @@ function ReelDetailPanel({
   copy,
   reelCostRollups,
   videoJobsByReelScriptId,
+  voiceoverByReelScriptId,
   showCostRollup,
   onCopy,
   onRegenerateCaption,
@@ -1262,6 +1333,9 @@ function ReelDetailPanel({
   onRequestVideoJobRetry,
   onRequestVideoJobOverride,
   onManualUploadSuccess,
+  onVoiceoverSuccess,
+  onVoiceoverToastSuccess,
+  onVoiceoverError,
   captionRegeneratingSlot,
   captionSelectingSlot,
   isBusy,
@@ -1270,6 +1344,8 @@ function ReelDetailPanel({
     row.scriptId !== null ? reelCostRollups[row.scriptId] : undefined;
   const videoJob =
     row.scriptId !== null ? videoJobsByReelScriptId[row.scriptId] : null;
+  const voiceoverSummary =
+    row.scriptId !== null ? voiceoverByReelScriptId[row.scriptId] : null;
 
   return (
     <div>
@@ -1294,6 +1370,17 @@ function ReelDetailPanel({
           copy={copy.videoJob.manualUpload}
           disabled={isBusy}
           onSuccess={onManualUploadSuccess}
+        />
+      ) : null}
+      {row.scriptId ? (
+        <OperatorVoiceoverPanel
+          reelScriptId={row.scriptId}
+          summary={voiceoverSummary}
+          copy={copy.voiceover}
+          disabled={isBusy}
+          onSuccess={onVoiceoverSuccess}
+          onError={onVoiceoverError}
+          onToastSuccess={onVoiceoverToastSuccess}
         />
       ) : null}
       <OperatorVideoJobSummaryPanel

@@ -15,17 +15,24 @@ import {
   AvatarReferencesSection,
   type AvatarReferencesCopy,
 } from "@/components/preferences/AvatarReferencesSection";
+import {
+  VoicePickerSection,
+  type VoicePickerCopy,
+} from "@/components/preferences/VoicePickerSection";
 import { GenericAvatarDisclosurePreview } from "@/components/preferences/GenericAvatarDisclosurePreview";
 import type { AvatarConsentForClientResult } from "@/lib/contracts/avatar-consent";
 import type { AvatarReferenceAssetsPageResult } from "@/lib/contracts/media-assets";
 import {
   FACELESS_STYLE_DEFAULT,
   type FacelessStyle,
+  type TtsVoiceId,
+  type TtsVoiceOptionDto,
   type UpsertVisualPreferencesErrorCode,
   type UpsertVisualPreferencesResult,
   type VisualModality,
   type VisualPreferencesRules,
 } from "@/lib/contracts/visual-preferences";
+import { computeVoicePickerVisible } from "@/lib/preferences/compute-voice-picker-visible";
 import { upsertVisualPreferences } from "@/lib/visual-preferences/upsert-visual-preferences";
 
 const MODALITY_ORDER: VisualModality[] = [
@@ -62,6 +69,7 @@ type PreferencesEditorCopy = {
     onScreenTextOptions: Record<FacelessStyle["onScreenText"], string>;
     brollOptions: Record<FacelessStyle["broll"], string>;
   };
+  voice: VoicePickerCopy;
   errors: {
     validation: string;
     forbiddenFields: string;
@@ -81,6 +89,9 @@ export type PreferencesFormInitial = {
   updatedAt: string | null;
   rules: VisualPreferencesRules | null;
   ownAvatarConsentActive: boolean;
+  voiceId: TtsVoiceId | null;
+  availableVoices: TtsVoiceOptionDto[];
+  voicePickerVisible: boolean;
 };
 
 type FormSnapshot = {
@@ -88,6 +99,7 @@ type FormSnapshot = {
   facelessStyle: FacelessStyle | null;
   updatedAt: string | null;
   rules: VisualPreferencesRules | null;
+  voiceId: TtsVoiceId | null;
 };
 
 type PreferencesEditorProps = {
@@ -116,6 +128,7 @@ function snapshotFromInitial(initial: PreferencesFormInitial): FormSnapshot {
     facelessStyle: cloneStyle(initial.facelessStyle),
     updatedAt: initial.updatedAt,
     rules: initial.rules,
+    voiceId: initial.voiceId,
   };
 }
 
@@ -157,6 +170,9 @@ export function PreferencesEditor({
   const [draftStyle, setDraftStyle] = useState(() =>
     cloneStyle(initial.facelessStyle),
   );
+  const [draftVoiceId, setDraftVoiceId] = useState<TtsVoiceId | null>(
+    () => initial.voiceId,
+  );
   const [pending, setPending] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
 
@@ -168,10 +184,17 @@ export function PreferencesEditor({
     draftModes.includes("generic_avatar");
   const genericInDraft = draftModes.includes("generic_avatar");
   const disclosureSeverity: "warn" | "info" = genericInDraft ? "warn" : "info";
+  const draftVoicePickerVisible = computeVoicePickerVisible(
+    draftModes,
+    draftModes.includes("faceless")
+      ? (draftStyle ?? FACELESS_STYLE_DEFAULT)
+      : null,
+  );
   const dirty =
     JSON.stringify(sortModes(draftModes)) !==
       JSON.stringify(sortModes(server.allowedModes)) ||
-    JSON.stringify(draftStyle) !== JSON.stringify(server.facelessStyle);
+    JSON.stringify(draftStyle) !== JSON.stringify(server.facelessStyle) ||
+    draftVoiceId !== server.voiceId;
 
   const updatedLabel =
     server.updatedAt != null
@@ -188,6 +211,7 @@ export function PreferencesEditor({
   function cancelEdit() {
     setDraftModes(cloneModes(server.allowedModes));
     setDraftStyle(cloneStyle(server.facelessStyle));
+    setDraftVoiceId(server.voiceId);
     clearFeedback();
   }
 
@@ -265,16 +289,22 @@ export function PreferencesEditor({
       return;
     }
 
+    const voicePickerVisible = computeVoicePickerVisible(modes, style);
+    const upsertPayload: Parameters<typeof upsertVisualPreferences>[0] = {
+      allowedModes: modes,
+      facelessStyle: style,
+      genericAvatarId: null,
+    };
+    if (voicePickerVisible && draftVoiceId != null) {
+      upsertPayload.voiceId = draftVoiceId;
+    }
+
     setPending(true);
     clearFeedback();
 
     try {
       const result: UpsertVisualPreferencesResult =
-        await upsertVisualPreferences({
-          allowedModes: modes,
-          facelessStyle: style,
-          genericAvatarId: null,
-        });
+        await upsertVisualPreferences(upsertPayload);
 
       if (result.ok) {
         const next: FormSnapshot = {
@@ -282,10 +312,12 @@ export function PreferencesEditor({
           facelessStyle: cloneStyle(result.facelessStyle),
           updatedAt: result.updatedAt,
           rules: result.rules,
+          voiceId: result.voiceId,
         };
         setServer(next);
         setDraftModes(cloneModes(result.allowedModes));
         setDraftStyle(cloneStyle(result.facelessStyle));
+        setDraftVoiceId(result.voiceId);
         toastRef.current?.show({
           severity: "success",
           summary: copy.toastSuccess,
@@ -522,6 +554,18 @@ export function PreferencesEditor({
           </label>
         </section>
       ) : null}
+
+      <VoicePickerSection
+        availableVoices={initial.availableVoices}
+        selectedVoiceId={draftVoiceId}
+        visible={draftVoicePickerVisible}
+        pending={pending}
+        copy={copy.voice}
+        onSelect={(voiceId) => {
+          clearFeedback();
+          setDraftVoiceId(voiceId);
+        }}
+      />
 
       {showGenericDisclosure ? (
         <Message

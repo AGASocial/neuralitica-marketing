@@ -142,14 +142,14 @@ ALTER TABLE public.neuramark_visual_preferences
 
 Concrete BE consumers: extended Preferencias loader; `upsertVisualPreferences` with `voiceId`; `synthesizeVoiceoverForReelScript` action; `GET /api/media/assets/[assetId]` for synthesized playback.
 
-- [ ] **Voice picker** on `/settings/preferences`: list catalog voices (label from i18n keys); locale grouping or filter optional.
-- [ ] **Play sample** per voice — `<audio controls>` or PrimeReact button + hidden audio; sample URL from server DTO (`/tts-samples/{id}.mp3` or equivalent).
-- [ ] **Save `voiceId`** with Preferencias form; show current selection after load.
-- [ ] **Hide picker** when faceless-only with **`faceless_style.voice === "music_only"`** (no AI voiceover path).
-- [ ] **Operator scripts** expand row: voiceover generation status (missing / ready); **Generate voiceover** / **Regenerate** with pending/error states.
-- [ ] **No recording UX** — copy reinforces AI voice only (CONTEXT).
-- [ ] EN + ES: **`settings.preferences.voice.*`**, **`scripts.voiceover.*`**.
-- [ ] No Supabase in Client Components; no raw vendor voice ids in UI.
+- [x] **Voice picker** on `/settings/preferences`: list catalog voices (label from i18n keys); locale grouping or filter optional.
+- [x] **Play sample** per voice — `<audio controls>` or PrimeReact button + hidden audio; sample URL from server DTO (`/tts-samples/{id}.mp3` or equivalent).
+- [x] **Save `voiceId`** with Preferencias form; show current selection after load.
+- [x] **Hide picker** when faceless-only with **`faceless_style.voice === "music_only"`** (no AI voiceover path).
+- [x] **Operator scripts** expand row: voiceover generation status (missing / ready); **Generate voiceover** / **Regenerate** with pending/error states.
+- [x] **No recording UX** — copy reinforces AI voice only (CONTEXT).
+- [x] EN + ES: **`settings.preferences.voice.*`**, **`scripts.voiceover.*`**.
+- [x] No Supabase in Client Components; no raw vendor voice ids in UI.
 
 ---
 
