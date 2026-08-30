@@ -156,7 +156,7 @@
 ## BE checklist
 
 - [ ] Migration `neuramark_approvals` per PO DDL (+ RLS zero policies).
-- [ ] Zod + types in `lib/contracts/approval.ts` (CONTRACT freezes names).
+- [x] Zod + types in `lib/contracts/approval.ts` (CONTRACT freezes names).
 - [ ] `ensureApprovalPackageForAssembledReel` — gate + branding + CTA; idempotent INSERT.
 - [ ] `listPendingApprovals` / `getApprovalPackage` — Cliente-scoped; 404 foreign.
 - [ ] `decideApproval` — approve/reject only; gate re-check; state machine; actor from session.
@@ -178,8 +178,8 @@
 
 ## Sequence
 
-1. SECURITY design review → `SECURITY.md`
-2. BE authors `CONTRACT.md` (freeze Zod, action names, error codes, media matrix)
+1. ~~SECURITY design review → `SECURITY.md`~~ ✅
+2. ~~BE authors `CONTRACT.md` (freeze Zod, action names, error codes, media matrix)~~ ✅ Frozen — Zod `lib/contracts/approval.ts`
 3. FE reviews CONTRACT → “Reviewed by FE”
 4. Parallel BUILD: BE (DDL + actions + media) ‖ FE (pages + i18n)
 5. VALIDATION → QA → CLOSE (AC checkoff only after validator / user)

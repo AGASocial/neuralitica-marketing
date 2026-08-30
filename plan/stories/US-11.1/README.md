@@ -1,6 +1,6 @@
 # US-11.1 — Present Reel package for client approval
 
-**Status:** PREP (2026-08-30) — PO decisions frozen; next SPEC-REVIEW → SECURITY → CONTRACT. Do **not** check off AC in `plan/USER_STORIES.md`.
+**Status:** CONTRACT frozen (2026-08-30) — FE Reviewed by pending; next BUILD after FE signoff. Do **not** check off AC in `plan/USER_STORIES.md`.
 
 **As a** Client, **I want** to preview video, caption, and CTA together, **so that** I can approve what will represent my business.
 
@@ -112,13 +112,14 @@ _Evitar:_ “approval decision” as product noun; admin/staff; exposing Operato
 
 ## Gates (orchestrator)
 
-- [x] PREP — README + TASKS + PO freezes (this commit)
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend) + FE Reviewed by
+- [x] PREP — README + TASKS + PO freezes
+- [x] SPEC-REVIEW.md (spec-guardian) — ALIGNED `1270732`
+- [x] SECURITY.md (security-architect) — APPROVE WITH CONDITIONS `b790328`
+- [x] CONTRACT.md (nextjs-backend) — Frozen; Zod `lib/contracts/approval.ts`
+- [ ] FE Reviewed by (CONTRACT signoff)
 - [ ] BUILD · VALIDATION · QA · CLOSE
 
-**Next:** SPEC-REVIEW → SECURITY → CONTRACT (no code in PREP).
+**Next:** FE reviews CONTRACT → parallel BUILD (BE ‖ FE).
 
 ---
 
