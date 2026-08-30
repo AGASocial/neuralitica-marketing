@@ -726,6 +726,10 @@
       "generate": "Generar estrategia",
       "regenerate": "Regenerar estrategia",
       "generating": "El agente de estrategia está trabajando…",
+      "save": "Guardar cambios",
+      "saving": "Guardando…",
+      "approve": "Aprobar estrategia",
+      "approving": "Aprobando…",
       "clientLabel": "Cliente",
       "clientSessionHint": "En V1 la generación usa tu sesión actual. La selección multi-cliente llegará en una historia posterior.",
       "weekLabel": "Semana",
@@ -733,7 +737,16 @@
       "loadError": "No pudimos cargar la estrategia de esta semana. Actualiza la página e inténtalo de nuevo.",
       "backDashboard": "Volver al panel",
       "versionLabel": "Borrador v{version} — regenerado",
+      "versionLabelApproved": "Aprobada v{version}",
       "toastGenerateSuccess": "Borrador de estrategia generado.",
+      "toastSaveSuccess": "Cambios de estrategia guardados.",
+      "toastApproveSuccess": "Estrategia aprobada.",
+      "approvedLockedHint": "Esta estrategia está aprobada y bloqueada. Regenera para crear un nuevo borrador si necesitas cambios.",
+      "approvalCaption": "Aprobada por {name} el {date}",
+      "status": {
+        "draft": "Borrador",
+        "approved": "Aprobada"
+      },
       "sections": {
         "pillars": "Pilares de contenido",
         "themes": "Temas semanales",
@@ -746,7 +759,13 @@
         "tactica": "Táctica de tendencia",
         "goal": "Objetivo",
         "day": "Día sugerido",
-        "slotNumber": "Slot"
+        "slotNumber": "Slot",
+        "angle": "Ángulo",
+        "ctaHint": "Pista de CTA"
+      },
+      "themes": {
+        "add": "Añadir tema",
+        "remove": "Eliminar tema"
       },
       "goals": {
         "trust": "Confianza",
@@ -774,6 +793,9 @@
       "agentOutputInvalid": "El agente de estrategia devolvió un brief inválido. Inténtalo de nuevo o contacta soporte.",
       "providerUnavailable": "El servicio de estrategia no está disponible temporalmente. Inténtalo más tarde.",
       "notMonday": "El inicio de semana debe ser un lunes ISO.",
+      "notDraft": "Solo los borradores pueden editarse o aprobarse.",
+      "invalidTransition": "Esta estrategia ya no puede aprobarse. Actualiza e inténtalo de nuevo.",
+      "locked": "Esta estrategia está bloqueada porque ya existen guiones.",
       "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
     }
   }

@@ -682,12 +682,12 @@ COMMENT ON COLUMN public.neuramark_content_strategies.approved_at IS
 
 ## FE signoff checklist
 
-- [ ] Extend `/operator/strategy` — no new route
-- [ ] `updateContentStrategyBrief({ strategyId, weekStart, editable })` — partial patch, not full brief
-- [ ] `approveContentStrategy({ strategyId, weekStart })` — separate CTA; disabled while dirty
-- [ ] Extended `getLatestContentStrategy` — status badge, approval caption, `isEditable`
-- [ ] Editable: themes, angle, ctaHint per slot only; rest read-only
-- [ ] Error codes + `messageKey` in EN/ES
-- [ ] No Cliente route; no Supabase in Client Components
+- [x] Extend `/operator/strategy` — no new route
+- [x] `updateContentStrategyBrief({ strategyId, weekStart, editable })` — partial patch, not full brief
+- [x] `approveContentStrategy({ strategyId, weekStart })` — separate CTA; disabled while dirty
+- [x] Extended `getLatestContentStrategy` — status badge, approval caption, `isEditable`
+- [x] Editable: themes, angle, ctaHint per slot only; rest read-only
+- [x] Error codes + `messageKey` in EN/ES
+- [x] No Cliente route; no Supabase in Client Components
 
-**Reviewed by FE:** *(pending — required before BUILD)*
+**Reviewed by FE:** 2026-08-30 — inline edit on `/operator/strategy`; partial `editable` patch; approve disabled while dirty; `ContentStrategyView` + status/approval caption.

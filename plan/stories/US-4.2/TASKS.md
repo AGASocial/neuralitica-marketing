@@ -68,18 +68,18 @@
 
 Concrete BE consumers: `updateContentStrategyBrief` Server Action; `approveContentStrategy` Server Action; extended `getLatestContentStrategy` response.
 
-- [ ] **Status badge** on brief header: `draft` vs `approved`.
-- [ ] **Approval caption** when `status = 'approved'`: operator display name + localized date/time from `approvedAt`.
-- [ ] **Editable themes** list (add/remove/edit theme strings within schema max).
-- [ ] **Per-slot editable fields** when draft: `angle`, `ctaHint` (text inputs).
-- [ ] **Read-only display** for pillars, tema, formato, modalidad, tactica, goal, day (unchanged from US-4.1 cards).
-- [ ] **Save changes** button (draft only); pending/disabled while saving; surfaces field errors from server.
-- [ ] **Approve strategy** primary/secondary CTA (draft only); confirm dialog optional — PO lean: direct approve with toast success.
-- [ ] **Disable edit + approve** when latest row is `approved`; show regenerate hint if Operator needs new draft.
-- [ ] **No edit controls** when no strategy row (empty state unchanged).
-- [ ] **EN + ES strings** in `messages/en.json` / `es.json` (save, approve, status labels, approval caption, new errors).
-- [ ] **No Supabase in Client Components**; mutations via Server Actions only.
-- [ ] **No Cliente** strategy route.
+- [x] **Status badge** on brief header: `draft` vs `approved`.
+- [x] **Approval caption** when `status = 'approved'`: operator display name + localized date/time from `approvedAt`.
+- [x] **Editable themes** list (add/remove/edit theme strings within schema max).
+- [x] **Per-slot editable fields** when draft: `angle`, `ctaHint` (text inputs).
+- [x] **Read-only display** for pillars, tema, formato, modalidad, tactica, goal, day (unchanged from US-4.1 cards).
+- [x] **Save changes** button (draft only); pending/disabled while saving; surfaces field errors from server.
+- [x] **Approve strategy** primary/secondary CTA (draft only); confirm dialog optional — PO lean: direct approve with toast success.
+- [x] **Disable edit + approve** when latest row is `approved`; show regenerate hint if Operator needs new draft.
+- [x] **No edit controls** when no strategy row (empty state unchanged).
+- [x] **EN + ES strings** in `messages/en.json` / `es.json` (save, approve, status labels, approval caption, new errors).
+- [x] **No Supabase in Client Components**; mutations via Server Actions only.
+- [x] **No Cliente** strategy route.
 
 ---
 

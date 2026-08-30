@@ -726,6 +726,10 @@
       "generate": "Generate strategy",
       "regenerate": "Regenerate strategy",
       "generating": "Strategy agent running…",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "approve": "Approve strategy",
+      "approving": "Approving…",
       "clientLabel": "Cliente",
       "clientSessionHint": "V1 generates for your signed-in session. Multi-client selection arrives in a later story.",
       "weekLabel": "Week",
@@ -733,7 +737,16 @@
       "loadError": "We could not load the strategy for this week. Refresh the page to try again.",
       "backDashboard": "Back to dashboard",
       "versionLabel": "Draft v{version} — regenerated",
+      "versionLabelApproved": "Approved v{version}",
       "toastGenerateSuccess": "Strategy draft generated.",
+      "toastSaveSuccess": "Strategy changes saved.",
+      "toastApproveSuccess": "Strategy approved.",
+      "approvedLockedHint": "This strategy is approved and locked. Regenerate to create a new draft if you need changes.",
+      "approvalCaption": "Approved by {name} on {date}",
+      "status": {
+        "draft": "Draft",
+        "approved": "Approved"
+      },
       "sections": {
         "pillars": "Content pillars",
         "themes": "Weekly themes",
@@ -746,7 +759,13 @@
         "tactica": "Trend tactic",
         "goal": "Goal",
         "day": "Suggested day",
-        "slotNumber": "Slot"
+        "slotNumber": "Slot",
+        "angle": "Angle",
+        "ctaHint": "CTA hint"
+      },
+      "themes": {
+        "add": "Add theme",
+        "remove": "Remove theme"
       },
       "goals": {
         "trust": "Trust",
@@ -774,6 +793,9 @@
       "agentOutputInvalid": "The strategy agent returned an invalid brief. Try again or contact support.",
       "providerUnavailable": "The strategy service is temporarily unavailable. Try again later.",
       "notMonday": "Week start must be an ISO Monday.",
+      "notDraft": "Only draft strategies can be edited or approved.",
+      "invalidTransition": "This strategy can no longer be approved. Refresh and try again.",
+      "locked": "This strategy is locked because scripts already exist.",
       "internal": "Something went wrong. Please try again later."
     }
   }

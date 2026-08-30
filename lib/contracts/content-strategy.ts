@@ -105,6 +105,120 @@ export const contentStrategyDraftViewSchema = z
   })
   .strict();
 
+export const contentStrategySlotEditableSchema = z
+  .object({
+    slotIndex: z.number().int().min(0).max(6),
+    angle: z.string().trim().min(1).max(300).optional(),
+    ctaHint: z.string().trim().min(1).max(200).optional(),
+  })
+  .strict();
+
+export type ContentStrategySlotEditable = z.infer<
+  typeof contentStrategySlotEditableSchema
+>;
+
+export const contentStrategyBriefEditableSchema = z
+  .object({
+    themes: z.array(z.string().trim().min(1).max(200)).min(1).max(8),
+    slots: z.array(contentStrategySlotEditableSchema).min(1).max(7),
+  })
+  .strict()
+  .superRefine((editable, ctx) => {
+    const indices = editable.slots.map((s) => s.slotIndex);
+    if (new Set(indices).size !== indices.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Duplicate slotIndex in editable patch",
+        path: ["slots"],
+      });
+    }
+  });
+
+export type ContentStrategyBriefEditable = z.infer<
+  typeof contentStrategyBriefEditableSchema
+>;
+
+export const contentStrategyApproverSchema = z
+  .object({
+    id: z.string().uuid(),
+    displayName: z.string().min(1).max(120),
+  })
+  .strict();
+
+export type ContentStrategyApprover = z.infer<
+  typeof contentStrategyApproverSchema
+>;
+
+export const contentStrategyViewSchema = contentStrategyDraftViewSchema
+  .extend({
+    approvedBy: contentStrategyApproverSchema.optional(),
+    approvedAt: z.string().datetime({ offset: true }).optional(),
+    isEditable: z.boolean(),
+  })
+  .strict();
+
+export const updateContentStrategyBriefInputSchema = z
+  .object({
+    strategyId: z.string().uuid(),
+    weekStart: trendWeekStartSchema,
+    editable: contentStrategyBriefEditableSchema,
+  })
+  .strict();
+
+export type UpdateContentStrategyBriefInput = z.infer<
+  typeof updateContentStrategyBriefInputSchema
+>;
+
+export const approveContentStrategyInputSchema = z
+  .object({
+    strategyId: z.string().uuid(),
+    weekStart: trendWeekStartSchema,
+  })
+  .strict();
+
+export type ApproveContentStrategyInput = z.infer<
+  typeof approveContentStrategyInputSchema
+>;
+
+export const updateContentStrategyBriefSuccessSchema = z
+  .object({
+    ok: z.literal(true),
+    strategyId: z.string().uuid(),
+    weekStart: trendWeekStartSchema,
+    version: z.number().int().positive(),
+    status: z.literal("draft"),
+    updatedAt: z.string().datetime({ offset: true }),
+  })
+  .strict();
+
+export const approveContentStrategySuccessSchema = z
+  .object({
+    ok: z.literal(true),
+    strategyId: z.string().uuid(),
+    weekStart: trendWeekStartSchema,
+    version: z.number().int().positive(),
+    status: z.literal("approved"),
+    approvedBy: contentStrategyApproverSchema,
+    approvedAt: z.string().datetime({ offset: true }),
+  })
+  .strict();
+
+export type UpdateContentStrategyBriefSuccess = z.infer<
+  typeof updateContentStrategyBriefSuccessSchema
+>;
+
+export type ApproveContentStrategySuccess = z.infer<
+  typeof approveContentStrategySuccessSchema
+>;
+
+export type UpdateContentStrategyBriefResult =
+  | UpdateContentStrategyBriefSuccess
+  | ContentStrategyMutationError;
+
+export type ApproveContentStrategyResult =
+  | ApproveContentStrategySuccess
+  | ContentStrategyMutationError;
+
 export const getLatestContentStrategyInputSchema = z
   .object({
     weekStart: trendWeekStartSchema,
@@ -114,7 +228,7 @@ export const getLatestContentStrategyInputSchema = z
 export const getLatestContentStrategyFoundSchema = z
   .object({
     ok: z.literal(true),
-    strategy: contentStrategyDraftViewSchema,
+    strategy: contentStrategyViewSchema,
     playbookLabels: z.record(playbookSlugSchema, z.string().max(120)).optional(),
   })
   .strict();
@@ -133,6 +247,8 @@ export type GenerateContentStrategySuccess = z.infer<
 export type ContentStrategyDraftView = z.infer<
   typeof contentStrategyDraftViewSchema
 >;
+
+export type ContentStrategyView = z.infer<typeof contentStrategyViewSchema>;
 
 export type GetLatestContentStrategyInput = z.infer<
   typeof getLatestContentStrategyInputSchema
@@ -165,6 +281,9 @@ export const contentStrategyErrorCodeSchema = z.enum([
   "PROVIDER_UNAVAILABLE",
   "FORBIDDEN_FIELDS",
   "INTERNAL_ERROR",
+  "STRATEGY_NOT_DRAFT",
+  "INVALID_STATE_TRANSITION",
+  "STRATEGY_LOCKED",
 ]);
 
 export type ContentStrategyErrorCode = z.infer<
