@@ -45,7 +45,7 @@ updated_at: 2026-08-30T18:30:00Z
 
 ## Historial reciente
 
-- 2026-08-30 · US-9.3 SIGNOFF: FE yes `dbb5103`; story_status BUILD → parallel media-pipeline + BE + FE.
+- 2026-08-30 · US-9.3 BUILD: adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813`; story_status VALIDATE next.
 - 2026-08-30 · US-9.3 CONTRACT: frozen `fb620ef`; story_status SIGNOFF.
 - 2026-08-30 · US-8.3 CLOSE: 7/7 AC; QA APPROVE WITH CONDITIONS `a58faeb`; FF-merge `d8baafb` to main; Phase 3 → SELECT US-9.3.
 - 2026-08-30 · US-8.6 CLOSE: 4/5 AC V1; QA APPROVE WITH CONDITIONS `82bde3d`; FF-merge `2fb7573` to main; Phase 3 → SELECT US-8.3.
