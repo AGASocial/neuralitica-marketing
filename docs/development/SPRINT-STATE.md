@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: US-6.2
-story_status: CONTRACT
-feature_branch: feature/US-6.2-cta-selection
-last_completed_story: US-6.1
+current_story: US-7.1
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-6.2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T01:35:00Z
+updated_at: 2026-08-30T01:45:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -23,7 +23,8 @@ updated_at: 2026-08-30T01:35:00Z
 | US-5.1 Reel script package per slot | done | agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e` · CLOSE 6/6 AC |
 | US-5.2 Preview script readability | done | BE `b503241` · FE `b68d2ee` · VALIDATION `8ba616e` · CLOSE 2/2 AC |
 | US-6.1 Generate Instagram caption per Reel | done | agents `c385372` · FE `d075781` · BE `1f45244` · VALIDATION `2cebd89` · CLOSE 5/5 AC |
-| US-6.2 CTA variants for caption testing | CONTRACT | PREP + SPEC-REVIEW (GAPS→closed) + SECURITY + CONTRACT frozen; FE signoff; branch `feature/US-6.2-cta-selection` |
+| US-6.2 CTA variants for caption testing | done | BE `146479c` · FE `f82ba33` · VALIDATION `258773c` · QA `fc0f4b2` · CLOSE `72723c5` |
+| US-7.1 Configure max budget per Reel | SELECT | Next story — Sprint 4 Cost Policy |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -35,6 +36,8 @@ updated_at: 2026-08-30T01:35:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-6.2 CLOSE: 3/3 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 4 Low); BE `146479c` · FE `f82ba33` · VALIDATION `258773c` · QA `fc0f4b2` · CLOSE `72723c5`; Phase 3 → SELECT US-7.1.
+- 2026-08-30 · US-6.2 BUILD: BE `146479c` · FE `f82ba33`; VALIDATION PASS WITH NOTES `258773c`; QA APPROVE WITH NOTES `fc0f4b2`.
 - 2026-08-30 · US-6.2 CONTRACT: `plan/stories/US-6.2/CONTRACT.md` frozen; FE signoff; 7 SPEC gaps closed; SECURITY APPROVE WITH CONDITIONS; branch `feature/US-6.2-cta-selection`; story_status CONTRACT → BUILD next.
 - 2026-08-30 · US-6.2 PREP: `plan/stories/US-6.2/README.md` + `TASKS.md` + `SPEC-REVIEW.md` + `SECURITY.md`; PO decisions frozen; story_status PREP → CONTRACT.
 - 2026-08-30 · US-6.1 CLOSE: 5/5 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 1 Low); agents `c385372` · FE `d075781` · BE `1f45244` · VALIDATION `2cebd89`; Phase 3 → SELECT US-6.2.
