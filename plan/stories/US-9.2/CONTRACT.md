@@ -1,9 +1,9 @@
-Reviewed by FE: pending
+Reviewed by FE: yes — 2026-08-30 — nextjs-frontend.
 
 # API Contract — US-9.2 Add subtitles, logo, and cover
 
 **Story:** US-9.2  
-**Status:** Frozen — 2026-08-30 (Reviewed by FE: pending)  
+**Status:** Frozen — 2026-08-30 (Reviewed by FE: yes — 2026-08-30 — nextjs-frontend)  
 **Security:** `plan/stories/US-9.2/SECURITY.md` (APPROVE WITH CONDITIONS — reconciled below)  
 **Spec review:** `plan/stories/US-9.2/SPEC-REVIEW.md` (GAPS — resolved by this contract)  
 **Pattern:** `plan/stories/US-9.1/CONTRACT.md` (extends assembly pipeline; second-pass branding on Fly worker)  
@@ -946,15 +946,20 @@ Logo upload errors reuse `mediaUploadErrorCodeSchema` from US-3.3 where applicab
 
 ## Reviewed by FE
 
-**Reviewed by FE:** pending — nextjs-frontend signoff required before BUILD.
+**Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend.
 
-Expected FE implementation notes (for signoff):
+**Verdict:** Accept — DTOs, Server Actions, poll extension, and surface routing are implementable against existing `/profile` and `/operator/scripts` patterns.
 
-- **Cliente `/profile`:** Brand section with logo upload/remove + `InputSwitch` defaults; calls `uploadClientLogo`, `removeClientLogo`, `updateAssemblyConfigDefaults`; preview via `logoPreviewUrl`.
-- **Operator `/operator/scripts`:** Extend US-9.1 assembly panel with branding badge, toggles, Apply/Re-brand, cover download link, preview rules § Batch DTO.
-- **Poll:** Extend assembly job GET or batch reload at 3000 ms while branding `queued`/`processing`.
-- **i18n:** `profile.branding.*`, `scripts.branding.*` EN + ES.
+**BUILD notes (FE):**
+
+- **Cliente `/profile`:** Add **Marca / Brand** section below interview sections in `LivingProfileView` / new `ProfileBrandingSection` client component — **outside** Ficha edit/save chrome (immediate mutations like `AvatarReferencesSection`). Hidden `<input type="file">` + Button upload; `FormData` → `uploadClientLogo`; `removeClientLogo` with `ConfirmDialog`; `InputSwitch` toggles call `updateAssemblyConfigDefaults` on change. Logo preview via `branding.logoPreviewUrl`. Render only when `result.exists === true`. Do **not** expose `coverFrameSec` in Cliente UI (Phase A — server default only).
+- **Operator `/operator/scripts`:** Extend `OperatorAssemblyPanel` (or sibling block in same expand row) with branding status `Tag`, `Checkbox` toggles seeded from `job.brandingConfig ?? { subtitlesEnabled: true, logoEnabled: true }`, **Apply branding** / **Re-brand** via `applyBrandingForAssembly({ assemblyJobId, subtitlesEnabled, logoEnabled })`, Re-brand confirm dialog mirroring `AssemblyReassembleConfirmDialog`. Preview `<video>` src rules per § Batch DTO; pending banner when assembly `completed` and branding null/queued. **Download cover** as link to `/api/media/assets/{coverMediaAssetId}` when set.
+- **Poll:** Extend `operatorAssemblyJobStatusDtoSchema` + `mergePolledStatus` in `OperatorAssemblyPanel`; poll while assembly **or** branding in-flight (`queued`/`processing`); reuse `ASSEMBLY_JOB_POLL_INTERVAL_MS_DEFAULT`.
+- **Types:** Import from `lib/contracts/profile` (`branding` block), `lib/contracts/assembly-job` (extended DTO), `lib/contracts/branding-job` (`assemblyConfigSchema` for toggle types only).
+- **i18n:** `profile.branding.*`, `scripts.branding.*` EN + ES; map `brandingFailureReason` messageKeys (e.g. `scripts.branding.failure.subtitleSanitize`) like assembly failure reasons.
 - **Out of scope:** Cliente branded video player; FFmpeg details; storage keys in UI.
+
+**Disputes:** None blocking BUILD.
 
 ---
 
