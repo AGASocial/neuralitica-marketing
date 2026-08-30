@@ -85,7 +85,7 @@ _Evitar:_ client-supplied `provider_key`; treating manual upload as Cliente self
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 upload manual)
+- [x] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 upload manual) — **GAPS** @ `418acaa` PREP
 - [ ] SECURITY.md (security-architect — operator gate, validation stack, attribution)
 - [ ] CONTRACT.md (nextjs-backend — upload action, validator extension, migration, DTOs; **Reviewed by FE** before BUILD)
 - [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
