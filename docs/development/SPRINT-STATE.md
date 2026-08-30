@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-9.1
-story_status: VALIDATE
+story_status: QA
 feature_branch: feature/US-9.1-assemble-reel
 last_completed_story: US-9.3
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T18:10:00Z
+updated_at: 2026-08-30T18:15:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
