@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-4.2
-story_status: CONTRACT
+story_status: BUILD
 feature_branch: feature/US-4.2-strategy-approve
 last_completed_story: US-4.1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T23:30:00Z
+updated_at: 2026-08-30T23:45:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -19,7 +19,7 @@ updated_at: 2026-08-30T23:30:00Z
 |-------|--------|-------|
 | US-X.4 Provider catalog + resolveProvider | done | BE `5ba9876` · CLOSE `291313b` |
 | US-4.1 Content Strategy agent | done | BE `af998d9` · FE `dcbd15a` · agents `bbd159d` · CLOSE |
-| US-4.2 Review and approve strategy | CONTRACT | CONTRACT frozen; awaiting FE signoff |
+| US-4.2 Review and approve strategy | BUILD | BE slice complete; FE in progress |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 

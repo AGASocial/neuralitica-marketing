@@ -15,7 +15,8 @@ import {
   getLatestContentStrategyUnauthenticatedResult,
 } from "@/lib/content-strategy/errors";
 import { findForbiddenContentStrategyKeys } from "@/lib/content-strategy/find-forbidden-keys";
-import { loadLatestStrategyRow } from "@/lib/content-strategy/load-latest-strategy-row";
+import { loadLatestStrategyRowWithApproval } from "@/lib/content-strategy/load-latest-strategy-row-with-approval";
+import { toContentStrategyView } from "@/lib/content-strategy/to-strategy-view";
 import { getPlaybookForAgents } from "@/lib/playbook/get-playbook-for-agents";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
 
@@ -29,7 +30,7 @@ function authGuardEnvelope(error: {
 }
 
 /**
- * Operator read of latest draft strategy for a week (US-4.1).
+ * Operator read of latest strategy for a week (US-4.1 + US-4.2 approval metadata).
  * Frontend consumer: `/operator/strategy` — initial load / week picker.
  */
 export async function getLatestContentStrategy(
@@ -57,14 +58,16 @@ export async function getLatestContentStrategy(
       );
     }
 
-    const strategy = await loadLatestStrategyRow({
+    const row = await loadLatestStrategyRowWithApproval({
       clientId: operator.id,
       weekStart: parsed.data.weekStart,
     });
 
-    if (!strategy) {
+    if (!row) {
       return { ok: true, strategy: null };
     }
+
+    const strategy = await toContentStrategyView(row);
 
     const playbook = await getPlaybookForAgents();
     const playbookLabels: Record<string, string> = {};

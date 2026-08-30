@@ -9,12 +9,16 @@ import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import {
+  contentStrategyBriefEditableSchema,
   contentStrategyBriefSchema,
+  contentStrategyErrorCodeSchema,
+  contentStrategySlotEditableSchema,
   contentStrategySlotSchema,
   generateContentStrategyInputSchema,
   validateBriefAgainstAllowlists,
   allowlistViolationsToFields,
 } from "../contracts/content-strategy";
+import { mergeEditableBriefFields } from "./merge-editable-brief-fields";
 import { isPublicPath } from "../auth/public-routes";
 
 const WEEK_START = "2026-01-05";
@@ -207,6 +211,7 @@ type MockOptions = {
   ) => unknown | null;
   revalidatePath?: (p: string) => void;
   envKey?: string;
+  strategyHasScripts?: (strategyId: string) => Promise<boolean>;
 };
 
 function installStrategyMocks(options: MockOptions) {
@@ -354,6 +359,16 @@ function installStrategyMocks(options: MockOptions) {
             providerKey: "siliconflow_deepseek_flash",
             complete: async () => ({ content: "{}" }),
           })),
+      };
+    }
+    if (
+      request === "@/lib/content-strategy/strategy-has-scripts" ||
+      String(request).includes("strategy-has-scripts")
+    ) {
+      return {
+        strategyHasScripts:
+          options.strategyHasScripts ?? (async () => false),
+        isStrategyLockAfterScriptsEnabled: () => true,
       };
     }
     return originalLoad(request, parent, isMain);
@@ -1210,8 +1225,725 @@ describe("migration posture (US-4.1)", () => {
   });
 });
 
+const EDITABLE_PATCH = {
+  themes: ["Invierno: mantenimiento preventivo", "Confianza antes del frío"],
+  slots: [
+    { slotIndex: 0, angle: "Enfoque en ahorro energético" },
+    { slotIndex: 2, ctaHint: "Escríbenos por DM hoy" },
+  ],
+};
+
+function draftStrategyRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: STRATEGY_ID,
+    client_id: OPERATOR_ID,
+    week_start: WEEK_START,
+    version: 2,
+    status: "draft",
+    brief: VALID_BRIEF,
+    created_at: "2026-08-30T18:00:00.000Z",
+    updated_at: "2026-08-30T18:00:00.000Z",
+    approved_by: null,
+    approved_at: null,
+    ...overrides,
+  };
+}
+
+function strategyTableMock(
+  row: Record<string, unknown> | null,
+  handlers?: {
+    onUpdate?: (payload: Record<string, unknown>) => void;
+  },
+) {
+  return {
+    select: () =>
+      chainableQuery({
+        maybeSingle: async () => ({ data: row, error: null }),
+      }),
+    update: (payload: Record<string, unknown>) => {
+      handlers?.onUpdate?.(payload);
+      return chainableQuery({
+        maybeSingle: async () => ({
+          data: {
+            version: row?.version ?? 2,
+            updated_at: "2026-08-30T20:15:00.000Z",
+            approved_at: "2026-08-30T20:20:00.000Z",
+          },
+          error: null,
+        }),
+      });
+    },
+  };
+}
+
 describe("route surface", () => {
   it("/operator/strategy is not a public path", () => {
     assert.equal(isPublicPath("/operator/strategy"), false);
+  });
+});
+
+describe("US-4.2 editable schema", () => {
+  it("accepts valid patch with themes + slot angles", () => {
+    assert.equal(
+      contentStrategyBriefEditableSchema.safeParse(EDITABLE_PATCH).success,
+      true,
+    );
+  });
+
+  it("rejects tema in editable slot", () => {
+    assert.equal(
+      contentStrategyBriefEditableSchema.safeParse({
+        ...EDITABLE_PATCH,
+        slots: [{ slotIndex: 0, tema: "smuggled" }],
+      }).success,
+      false,
+    );
+  });
+
+  it("rejects duplicate slotIndex in patch", () => {
+    assert.equal(
+      contentStrategyBriefEditableSchema.safeParse({
+        themes: EDITABLE_PATCH.themes,
+        slots: [
+          { slotIndex: 0, angle: "A" },
+          { slotIndex: 0, ctaHint: "B" },
+        ],
+      }).success,
+      false,
+    );
+  });
+
+  it("rejects unknown keys on slot editable schema", () => {
+    assert.equal(
+      contentStrategySlotEditableSchema.safeParse({
+        slotIndex: 0,
+        goal: "trust",
+      }).success,
+      false,
+    );
+  });
+});
+
+describe("mergeEditableBriefFields", () => {
+  it("updates themes only; pillars and locked slot fields unchanged", () => {
+    const result = mergeEditableBriefFields(VALID_BRIEF, {
+      themes: ["Nuevo tema"],
+      slots: [{ slotIndex: 0 }],
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.deepEqual(result.brief.themes, ["Nuevo tema"]);
+      assert.deepEqual(result.brief.pillars, VALID_BRIEF.pillars);
+      assert.equal(result.brief.slots[0]!.tema, VALID_BRIEF.slots[0]!.tema);
+      assert.equal(
+        result.brief.slots[0]!.formatoPlaybookSlug,
+        VALID_BRIEF.slots[0]!.formatoPlaybookSlug,
+      );
+    }
+  });
+
+  it("updates angle for slotIndex 1", () => {
+    const result = mergeEditableBriefFields(VALID_BRIEF, {
+      themes: VALID_BRIEF.themes,
+      slots: [{ slotIndex: 1, angle: "Nuevo ángulo" }],
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.brief.slots[1]!.angle, "Nuevo ángulo");
+      assert.equal(result.brief.slots[0]!.angle, VALID_BRIEF.slots[0]!.angle);
+    }
+  });
+
+  it("returns validation error for unknown slotIndex", () => {
+    const result = mergeEditableBriefFields(VALID_BRIEF, {
+      themes: VALID_BRIEF.themes,
+      slots: [{ slotIndex: 99, angle: "x" }],
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.ok(result.fields["slots.99.slotIndex"]);
+    }
+  });
+});
+
+describe("updateContentStrategyBrief action (US-4.2)", () => {
+  it("non-operator returns FORBIDDEN without UPDATE", async () => {
+    let updateCalled = false;
+    const restore = installStrategyMocks({
+      requireOperator: async () => {
+        throw Object.assign(new Error("forbidden"), { status: 403 });
+      },
+      from: () => ({
+        update: () => {
+          updateCalled = true;
+          return chainableQuery({});
+        },
+      }),
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { updateContentStrategyBrief } = require("./actions/update-content-strategy-brief.ts");
+      const result = await updateContentStrategyBrief({
+        strategyId: STRATEGY_ID,
+        weekStart: WEEK_START,
+        editable: EDITABLE_PATCH,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "FORBIDDEN");
+      assert.equal(updateCalled, false);
+    } finally {
+      restore();
+    }
+  });
+
+  it("smuggled status returns FORBIDDEN_FIELDS", async () => {
+    const restore = installStrategyMocks({});
+    try {
+      clearStrategyModuleCache();
+      const { updateContentStrategyBrief } = require("./actions/update-content-strategy-brief.ts");
+      const result = await updateContentStrategyBrief({
+        strategyId: STRATEGY_ID,
+        weekStart: WEEK_START,
+        editable: EDITABLE_PATCH,
+        status: "approved",
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "FORBIDDEN_FIELDS");
+    } finally {
+      restore();
+    }
+  });
+
+  it("smuggled top-level brief returns FORBIDDEN_FIELDS", async () => {
+    const restore = installStrategyMocks({});
+    try {
+      clearStrategyModuleCache();
+      const { updateContentStrategyBrief } = require("./actions/update-content-strategy-brief.ts");
+      const result = await updateContentStrategyBrief({
+        strategyId: STRATEGY_ID,
+        weekStart: WEEK_START,
+        editable: EDITABLE_PATCH,
+        brief: VALID_BRIEF,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "FORBIDDEN_FIELDS");
+    } finally {
+      restore();
+    }
+  });
+
+  it("foreign strategyId returns NOT_FOUND", async () => {
+    const restore = installStrategyMocks({
+      from: () =>
+        strategyTableMock(null),
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { updateContentStrategyBrief } = require("./actions/update-content-strategy-brief.ts");
+      const result = await updateContentStrategyBrief({
+        strategyId: STRATEGY_ID,
+        weekStart: WEEK_START,
+        editable: EDITABLE_PATCH,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "NOT_FOUND");
+    } finally {
+      restore();
+    }
+  });
+
+  it("weekStart mismatch returns NOT_FOUND", async () => {
+    const restore = installStrategyMocks({
+      from: () => strategyTableMock(draftStrategyRow()),
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { updateContentStrategyBrief } = require("./actions/update-content-strategy-brief.ts");
+      const result = await updateContentStrategyBrief({
+        strategyId: STRATEGY_ID,
+        weekStart: "2026-01-12",
+        editable: EDITABLE_PATCH,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "NOT_FOUND");
+    } finally {
+      restore();
+    }
+  });
+
+  it("happy path UPDATEs draft keeping same version", async () => {
+    let updatePayload: Record<string, unknown> | null = null;
+    const restore = installStrategyMocks({
+      from: () =>
+        strategyTableMock(draftStrategyRow(), {
+          onUpdate: (payload) => {
+            updatePayload = payload;
+          },
+        }),
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { updateContentStrategyBrief } = require("./actions/update-content-strategy-brief.ts");
+      const result = await updateContentStrategyBrief({
+        strategyId: STRATEGY_ID,
+        weekStart: WEEK_START,
+        editable: EDITABLE_PATCH,
+      });
+      assert.equal(result.ok, true);
+      if (result.ok) {
+        assert.equal(result.version, 2);
+        assert.equal(result.status, "draft");
+      }
+      assert.ok(updatePayload?.brief);
+    } finally {
+      restore();
+    }
+  });
+
+  it("save on approved row returns STRATEGY_NOT_DRAFT", async () => {
+    let updateCalled = false;
+    const restore = installStrategyMocks({
+      from: () =>
+        strategyTableMock(
+          draftStrategyRow({ status: "approved", approved_by: OPERATOR_ID, approved_at: "2026-08-30T20:00:00.000Z" }),
+          {
+            onUpdate: () => {
+              updateCalled = true;
+            },
+          },
+        ),
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { updateContentStrategyBrief } = require("./actions/update-content-strategy-brief.ts");
+      const result = await updateContentStrategyBrief({
+        strategyId: STRATEGY_ID,
+        weekStart: WEEK_START,
+        editable: EDITABLE_PATCH,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "STRATEGY_NOT_DRAFT");
+      assert.equal(updateCalled, false);
+    } finally {
+      restore();
+    }
+  });
+
+  it("allowlist violation returns AGENT_OUTPUT_INVALID", async () => {
+    const restore = installStrategyMocks({
+      from: () => strategyTableMock(draftStrategyRow()),
+      getPlaybookForAgents: async () => ({ formats: [] }),
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { updateContentStrategyBrief } = require("./actions/update-content-strategy-brief.ts");
+      const result = await updateContentStrategyBrief({
+        strategyId: STRATEGY_ID,
+        weekStart: WEEK_START,
+        editable: EDITABLE_PATCH,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "AGENT_OUTPUT_INVALID");
+    } finally {
+      restore();
+    }
+  });
+
+  it("strategyHasScripts true returns STRATEGY_LOCKED", async () => {
+    let updateCalled = false;
+    const restore = installStrategyMocks({
+      strategyHasScripts: async () => true,
+      from: () =>
+        strategyTableMock(draftStrategyRow(), {
+          onUpdate: () => {
+            updateCalled = true;
+          },
+        }),
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { updateContentStrategyBrief } = require("./actions/update-content-strategy-brief.ts");
+      const result = await updateContentStrategyBrief({
+        strategyId: STRATEGY_ID,
+        weekStart: WEEK_START,
+        editable: EDITABLE_PATCH,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "STRATEGY_LOCKED");
+      assert.equal(updateCalled, false);
+    } finally {
+      restore();
+    }
+  });
+});
+
+describe("approveContentStrategy action (US-4.2)", () => {
+  it("non-operator returns FORBIDDEN without UPDATE", async () => {
+    let updateCalled = false;
+    const restore = installStrategyMocks({
+      requireOperator: async () => {
+        throw Object.assign(new Error("forbidden"), { status: 403 });
+      },
+      from: () => ({
+        update: () => {
+          updateCalled = true;
+          return chainableQuery({});
+        },
+      }),
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { approveContentStrategy } = require("./actions/approve-content-strategy.ts");
+      const result = await approveContentStrategy({
+        strategyId: STRATEGY_ID,
+        weekStart: WEEK_START,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "FORBIDDEN");
+      assert.equal(updateCalled, false);
+    } finally {
+      restore();
+    }
+  });
+
+  it("smuggled approved_by returns FORBIDDEN_FIELDS", async () => {
+    const restore = installStrategyMocks({});
+    try {
+      clearStrategyModuleCache();
+      const { approveContentStrategy } = require("./actions/approve-content-strategy.ts");
+      const result = await approveContentStrategy({
+        strategyId: STRATEGY_ID,
+        weekStart: WEEK_START,
+        approved_by: OPERATOR_ID,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "FORBIDDEN_FIELDS");
+    } finally {
+      restore();
+    }
+  });
+
+  it("happy path approves draft with audit metadata", async () => {
+    let updatePayload: Record<string, unknown> | null = null;
+    const restore = installStrategyMocks({
+      from: () =>
+        strategyTableMock(draftStrategyRow(), {
+          onUpdate: (payload) => {
+            updatePayload = payload;
+          },
+        }),
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { approveContentStrategy } = require("./actions/approve-content-strategy.ts");
+      const result = await approveContentStrategy({
+        strategyId: STRATEGY_ID,
+        weekStart: WEEK_START,
+      });
+      assert.equal(result.ok, true);
+      if (result.ok) {
+        assert.equal(result.status, "approved");
+        assert.equal(result.approvedBy.id, OPERATOR_ID);
+        assert.ok(result.approvedAt);
+      }
+      assert.equal(updatePayload?.status, "approved");
+      assert.equal(updatePayload?.approved_by, OPERATOR_ID);
+    } finally {
+      restore();
+    }
+  });
+
+  it("double approve returns INVALID_STATE_TRANSITION", async () => {
+    let selectCount = 0;
+    const restore = installStrategyMocks({
+      from: () => ({
+        select: () =>
+          chainableQuery({
+            maybeSingle: async () => {
+              selectCount += 1;
+              if (selectCount === 1) {
+                return { data: draftStrategyRow(), error: null };
+              }
+              return {
+                data: draftStrategyRow({
+                  status: "approved",
+                  approved_by: OPERATOR_ID,
+                  approved_at: "2026-08-30T20:00:00.000Z",
+                }),
+                error: null,
+              };
+            },
+          }),
+        update: () =>
+          chainableQuery({
+            maybeSingle: async () => ({ data: null, error: null }),
+          }),
+      }),
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { approveContentStrategy } = require("./actions/approve-content-strategy.ts");
+      const first = await approveContentStrategy({
+        strategyId: STRATEGY_ID,
+        weekStart: WEEK_START,
+      });
+      assert.equal(first.ok, false);
+      if (!first.ok) assert.equal(first.error.code, "INVALID_STATE_TRANSITION");
+
+      const second = await approveContentStrategy({
+        strategyId: STRATEGY_ID,
+        weekStart: WEEK_START,
+      });
+      assert.equal(second.ok, false);
+      if (!second.ok) assert.equal(second.error.code, "STRATEGY_NOT_DRAFT");
+    } finally {
+      restore();
+    }
+  });
+
+  it("invalid stored brief returns AGENT_OUTPUT_INVALID", async () => {
+    const restore = installStrategyMocks({
+      from: () =>
+        strategyTableMock(
+          draftStrategyRow({
+            brief: { pillars: ["x"], themes: ["y"], slots: [] },
+          }),
+        ),
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { approveContentStrategy } = require("./actions/approve-content-strategy.ts");
+      const result = await approveContentStrategy({
+        strategyId: STRATEGY_ID,
+        weekStart: WEEK_START,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "AGENT_OUTPUT_INVALID");
+    } finally {
+      restore();
+    }
+  });
+});
+
+describe("getLatestContentStrategy extended read (US-4.2)", () => {
+  it("draft row includes isEditable true", async () => {
+    const restore = installStrategyMocks({
+      from: (table: string) => {
+        if (table === "neuramark_content_strategies") {
+          return strategyTableMock(draftStrategyRow());
+        }
+        throw new Error(`unexpected table ${table}`);
+      },
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { getLatestContentStrategy } = require("./actions/get-latest-content-strategy.ts");
+      const result = await getLatestContentStrategy({ weekStart: WEEK_START });
+      assert.equal(result.ok, true);
+      if (result.ok && result.strategy) {
+        assert.equal(result.strategy.isEditable, true);
+      }
+    } finally {
+      restore();
+    }
+  });
+
+  it("approved row includes approval metadata and isEditable false", async () => {
+    const restore = installStrategyMocks({
+      from: (table: string) => {
+        if (table === "neuramark_content_strategies") {
+          return strategyTableMock(
+            draftStrategyRow({
+              status: "approved",
+              approved_by: OPERATOR_ID,
+              approved_at: "2026-08-30T20:20:00.000Z",
+            }),
+          );
+        }
+        if (table === "neuramark_clients") {
+          return {
+            select: () =>
+              chainableQuery({
+                maybeSingle: async () => ({
+                  data: {
+                    display_name: "Gabriel Vega",
+                    email: "operator@example.com",
+                  },
+                  error: null,
+                }),
+              }),
+          };
+        }
+        throw new Error(`unexpected table ${table}`);
+      },
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { getLatestContentStrategy } = require("./actions/get-latest-content-strategy.ts");
+      const result = await getLatestContentStrategy({ weekStart: WEEK_START });
+      assert.equal(result.ok, true);
+      if (result.ok && result.strategy) {
+        assert.equal(result.strategy.status, "approved");
+        assert.equal(result.strategy.isEditable, false);
+        assert.equal(result.strategy.approvedBy?.displayName, "Gabriel Vega");
+        assert.equal(result.strategy.approvedAt, "2026-08-30T20:20:00.000Z");
+      }
+    } finally {
+      restore();
+    }
+  });
+});
+
+describe("US-4.2 helpers", () => {
+  it("getLatestDraftStrategy returns highest draft version", async () => {
+    const restore = installStrategyMocks({
+      from: (table: string) => {
+        if (table === "neuramark_content_strategies") {
+          return {
+            select: () =>
+              chainableQuery({
+                maybeSingle: async () => ({
+                  data: draftStrategyRow({ version: 3, status: "draft" }),
+                  error: null,
+                }),
+              }),
+          };
+        }
+        throw new Error(`unexpected table ${table}`);
+      },
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { getLatestDraftStrategy } = require("./load-latest-draft-strategy-row.ts");
+      const row = await getLatestDraftStrategy({
+        clientId: OPERATOR_ID,
+        weekStart: WEEK_START,
+      });
+      assert.ok(row);
+      assert.equal(row?.version, 3);
+      assert.equal(row?.status, "draft");
+    } finally {
+      restore();
+    }
+  });
+
+  it("getApprovedStrategyForWeek returns highest approved after v2 draft exists", async () => {
+    const restore = installStrategyMocks({
+      from: (table: string) => {
+        if (table === "neuramark_content_strategies") {
+          return {
+            select: () =>
+              chainableQuery({
+                maybeSingle: async () => ({
+                  data: draftStrategyRow({
+                    version: 1,
+                    status: "approved",
+                    approved_by: OPERATOR_ID,
+                    approved_at: "2026-08-30T19:00:00.000Z",
+                  }),
+                  error: null,
+                }),
+              }),
+          };
+        }
+        throw new Error(`unexpected table ${table}`);
+      },
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { getApprovedStrategyForWeek } = require("./load-approved-strategy-for-week.ts");
+      const row = await getApprovedStrategyForWeek({
+        clientId: OPERATOR_ID,
+        weekStart: WEEK_START,
+      });
+      assert.ok(row);
+      assert.equal(row?.version, 1);
+      assert.equal(row?.status, "approved");
+    } finally {
+      restore();
+    }
+  });
+
+  it("getApprovedStrategyForWeek returns null when no approved row", async () => {
+    const restore = installStrategyMocks({
+      from: () =>
+        strategyTableMock(null),
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { getApprovedStrategyForWeek } = require("./load-approved-strategy-for-week.ts");
+      const row = await getApprovedStrategyForWeek({
+        clientId: OPERATOR_ID,
+        weekStart: WEEK_START,
+      });
+      assert.equal(row, null);
+    } finally {
+      restore();
+    }
+  });
+
+  it("strategyHasScripts stub returns false", async () => {
+    const restore = installStrategyMocks({});
+    try {
+      clearStrategyModuleCache();
+      const { strategyHasScripts } = require("./strategy-has-scripts.ts");
+      assert.equal(await strategyHasScripts(STRATEGY_ID), false);
+    } finally {
+      restore();
+    }
+  });
+
+  it("loadStrategyRowForOperator returns null for cross-tenant id", async () => {
+    const restore = installStrategyMocks({
+      from: () => strategyTableMock(null),
+    });
+
+    try {
+      clearStrategyModuleCache();
+      const { loadStrategyRowForOperator } = require("./load-strategy-row-for-operator.ts");
+      const row = await loadStrategyRowForOperator({
+        strategyId: STRATEGY_ID,
+        clientId: "99999999-9999-4999-8999-999999999999",
+      });
+      assert.equal(row, null);
+    } finally {
+      restore();
+    }
+  });
+
+  it("new error codes are in enum", () => {
+    assert.ok(contentStrategyErrorCodeSchema.safeParse("STRATEGY_NOT_DRAFT").success);
+    assert.ok(contentStrategyErrorCodeSchema.safeParse("INVALID_STATE_TRANSITION").success);
+    assert.ok(contentStrategyErrorCodeSchema.safeParse("STRATEGY_LOCKED").success);
+  });
+});
+
+describe("US-4.2 migration posture", () => {
+  it("approval migration adds approved_by FK RESTRICT", () => {
+    const migrationPath = path.join(
+      repoRoot,
+      "supabase/migrations/20260830200000_neuramark_content_strategies_approval.sql",
+    );
+    assert.equal(existsSync(migrationPath), true);
+    const sql = readFileSync(migrationPath, "utf8");
+    assert.match(sql, /approved_by uuid NULL/);
+    assert.match(sql, /ON DELETE RESTRICT/);
+    assert.match(sql, /approved_at timestamptz NULL/);
   });
 });

@@ -10,6 +10,10 @@ const FORBIDDEN_GENERATE_KEYS = new Set([
   "brief",
   "version",
   "approved",
+  "approved_by",
+  "approved_at",
+  "approvedBy",
+  "approvedAt",
   "role",
   "auth_user_id",
 ]);

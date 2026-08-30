@@ -29,12 +29,11 @@ function toDraftView(
   };
 }
 
-export async function loadLatestStrategyRow(params: {
+export async function getLatestDraftStrategy(params: {
   clientId: string;
   weekStart: string;
 }): Promise<ContentStrategyDraftView | null> {
   if (!isSupabaseConfigured()) {
-    console.error("[content-strategy] load unavailable: Supabase not configured");
     return null;
   }
 
@@ -44,48 +43,14 @@ export async function loadLatestStrategyRow(params: {
     .select(STRATEGY_SELECT_COLUMNS)
     .eq("client_id", params.clientId)
     .eq("week_start", params.weekStart)
-    .order("version", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    console.error("[content-strategy] load latest failed", {
-      code: error.code,
-      clientId: params.clientId,
-      weekStart: params.weekStart,
-    });
-    return null;
-  }
-
-  if (!data) {
-    return null;
-  }
-
-  return toDraftView(mapStrategyRow(data));
-}
-
-export async function loadNextStrategyVersion(params: {
-  clientId: string;
-  weekStart: string;
-}): Promise<number> {
-  if (!isSupabaseConfigured()) {
-    return 1;
-  }
-
-  const supabase = createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from("neuramark_content_strategies")
-    .select("version")
-    .eq("client_id", params.clientId)
-    .eq("week_start", params.weekStart)
+    .eq("status", "draft")
     .order("version", { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (error || !data) {
-    return 1;
+    return null;
   }
 
-  const version = (data as { version: number }).version;
-  return typeof version === "number" && version >= 1 ? version + 1 : 1;
+  return toDraftView(mapStrategyRow(data));
 }

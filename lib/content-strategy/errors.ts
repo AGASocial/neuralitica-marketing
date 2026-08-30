@@ -88,3 +88,22 @@ export function getLatestContentStrategyForbiddenResult(): GetLatestContentStrat
 export function getLatestContentStrategyUnauthenticatedResult(): GetLatestContentStrategyResult {
   return contentStrategyUnauthenticatedError() as unknown as GetLatestContentStrategyResult;
 }
+
+export function contentStrategyNotFoundError(): ContentStrategyMutationError {
+  return contentStrategyError("NOT_FOUND", "strategy.errors.notFound");
+}
+
+export function contentStrategyNotDraftError(): ContentStrategyMutationError {
+  return contentStrategyError("STRATEGY_NOT_DRAFT", "strategy.errors.notDraft");
+}
+
+export function contentStrategyInvalidTransitionError(): ContentStrategyMutationError {
+  return contentStrategyError(
+    "INVALID_STATE_TRANSITION",
+    "strategy.errors.invalidTransition",
+  );
+}
+
+export function contentStrategyLockedError(): ContentStrategyMutationError {
+  return contentStrategyError("STRATEGY_LOCKED", "strategy.errors.locked");
+}

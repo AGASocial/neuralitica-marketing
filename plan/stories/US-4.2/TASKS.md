@@ -87,17 +87,17 @@ Concrete BE consumers: `updateContentStrategyBrief` Server Action; `approveConte
 
 Concrete FE consumers: Operator Strategy page save/approve actions; US-5.1 approved-strategy lookup (helper only, tests in 4.2).
 
-- [ ] **Migration** add `approved_by uuid NULL REFERENCES neuramark_clients(id)`, `approved_at timestamptz NULL` to `neuramark_content_strategies`.
-- [ ] **Extend Zod contracts** in `lib/contracts/content-strategy.ts`: update input, approve input, success envelopes, extended draft/approved view with `approvedBy` / `approvedAt`.
-- [ ] **`updateContentStrategyBrief({ strategyId, weekStart, brief })`** — `requireOperator("handler")`; load row; verify `status = 'draft'` and tenancy; merge/validate brief; allowlist check; UPDATE `brief` + `updated_at`.
-- [ ] **`approveContentStrategy({ strategyId, weekStart })`** — `requireOperator("handler")`; verify `draft`; SET `status = 'approved'`, `approved_by`, `approved_at`; reject smuggled status.
-- [ ] **[SEC] State machine** — only server actions perform `draft` → `approved`; no client-settable status.
-- [ ] **[SEC] Full brief validation** on save (Zod strict + allowlists); reject unknown keys.
-- [ ] **[SEC] Tenancy** — `strategyId` must belong to session `clientId` + `weekStart` (V1 session client).
-- [ ] **Extend `getLatestContentStrategy`** — return approval metadata; join or secondary load for approver display name.
-- [ ] **`getApprovedStrategyForWeek({ weekStart })`** (or export from load module) — latest approved row for US-5.1 gate.
-- [ ] `revalidatePath` for Operator Strategy route after save/approve.
-- [ ] **Automated tests** extending `lib/content-strategy/content-strategy.test.ts`: save happy path; save on approved fails; approve happy path; approve twice fails; allowlist rejection on save; non-operator 403.
+- [x] **Migration** add `approved_by uuid NULL REFERENCES neuramark_clients(id)`, `approved_at timestamptz NULL` to `neuramark_content_strategies`.
+- [x] **Extend Zod contracts** in `lib/contracts/content-strategy.ts`: update input, approve input, success envelopes, extended draft/approved view with `approvedBy` / `approvedAt`.
+- [x] **`updateContentStrategyBrief({ strategyId, weekStart, editable })`** — `requireOperator("handler")`; load row; verify `status = 'draft'` and tenancy; merge/validate brief; allowlist check; UPDATE `brief` + `updated_at`.
+- [x] **`approveContentStrategy({ strategyId, weekStart })`** — `requireOperator("handler")`; verify `draft`; SET `status = 'approved'`, `approved_by`, `approved_at`; reject smuggled status.
+- [x] **[SEC] State machine** — only server actions perform `draft` → `approved`; no client-settable status.
+- [x] **[SEC] Full brief validation** on save (Zod strict + allowlists); reject unknown keys.
+- [x] **[SEC] Tenancy** — `strategyId` must belong to session `clientId` + `weekStart` (V1 session client).
+- [x] **Extend `getLatestContentStrategy`** — return approval metadata; join or secondary load for approver display name.
+- [x] **`getApprovedStrategyForWeek({ weekStart })`** (or export from load module) — latest approved row for US-5.1 gate.
+- [x] `revalidatePath` for Operator Strategy route after save/approve.
+- [x] **Automated tests** extending `lib/content-strategy/content-strategy.test.ts`: save happy path; save on approved fails; approve happy path; approve twice fails; allowlist rejection on save; non-operator 403.
 
 ---
 
@@ -105,12 +105,12 @@ Concrete FE consumers: Operator Strategy page save/approve actions; US-5.1 appro
 
 All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
-- [ ] **ALTER** `neuramark_content_strategies` add nullable `approved_by`, `approved_at`.
-- [ ] FK `approved_by` → `neuramark_clients(id)` ON DELETE RESTRICT (or SET NULL — CONTRACT freezes).
+- [x] **ALTER** `neuramark_content_strategies` add nullable `approved_by`, `approved_at`.
+- [x] FK `approved_by` → `neuramark_clients(id)` ON DELETE RESTRICT (or SET NULL — CONTRACT freezes).
 - [ ] Optional CHECK: when `status = 'approved'` then `approved_by IS NOT NULL AND approved_at IS NOT NULL` — CONTRACT/SECURITY decide.
-- [ ] **Do not** change UNIQUE `(client_id, week_start, version)` or versioning semantics.
-- [ ] **Do not** create `neuramark_reel_scripts` (US-5.1).
-- [ ] RLS unchanged: deny-by-default, service-role Node only.
+- [x] **Do not** change UNIQUE `(client_id, week_start, version)` or versioning semantics.
+- [x] **Do not** create `neuramark_reel_scripts` (US-5.1).
+- [x] RLS unchanged: deny-by-default, service-role Node only.
 
 ---
 
