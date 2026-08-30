@@ -127,6 +127,7 @@ Separation of duties: implementers never validate their own work; validators/QA 
 ## 7. Current status
 
 - **Phase 3 (Sprint 4–5)** in progress — content strategy, scripts, captions, cost policy, video adapters, TTS, and assembly pipeline.
+- **US-9.2** CLOSED Phase A (2026-08-30): FFmpeg branding second pass (ASS subtitles + logo overlay + cover frame); Ficha logo/defaults; Operator apply/re-brand panel; auto-chain after assembly. VALIDATION PASS WITH NOTES `4378c65` (fix `757da6a`) · QA APPROVE WITH CONDITIONS `c0d6f66` · 5/5 AC. VO-synced subtitle timing deferred Phase B.
 - **US-9.1** CLOSED Phase A (2026-08-30): Operator-triggered FFmpeg assembly on Fly worker; 9:16 output, duration tolerance, idempotent per script version; talking-head + manual-primary paths. VALIDATION PASS WITH NOTES `03dff73` · QA APPROVE WITH CONDITIONS `5c0ec7e` · 5/5 AC. Faceless B-roll stitch deferred Phase B (US-8.5).
-- **Last completed:** US-9.1 · **Next recommended:** **US-9.2** (subtitles, logo, cover — unblocks QA/approval) or **US-8.5** (Wan B-roll adapter — unblocks faceless Reels + US-9.1 Phase B).
+- **Last completed:** US-9.2 · **Next recommended:** **US-10.1** (automated QA — unblocks approval flow; all deps satisfied) or **US-8.5** (Wan B-roll adapter — unblocks faceless Reels + US-9.1 Phase B).
 - See `docs/development/SPRINT-STATE.md` for orchestrator state and `plan/USER_STORIES.md` for the full backlog.

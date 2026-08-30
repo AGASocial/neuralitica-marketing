@@ -950,12 +950,12 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | Subtitle generation from on-screen text + VO; logo placement; cover frame extract at 1s |
 | **DB** | `business_profiles.logo_asset_id`; assembly config JSON |
 
-**Acceptance criteria**
-- [ ] Subtitles readable on mobile safe zone
-- [ ] Logo optional; default template if missing
-- [ ] Cover image exported for manual IG upload
-- [ ] [SEC] Logo upload uses the shared upload validation stack (US-3.3): size limit, image MIME allowlist via magic bytes, server-generated storage key
-- [ ] [SEC] Subtitle text is escaped/sanitized before being passed to the renderer (subtitle files and FFmpeg drawtext are injection surfaces)
+**Acceptance criteria** *(Phase A CLOSED 2026-08-30 — VO-synced subtitle timing + per-reel `coverFrameSec` override deferred Phase B)*
+- [x] Subtitles readable on mobile safe zone
+- [x] Logo optional; default template if missing
+- [x] Cover image exported for manual IG upload
+- [x] [SEC] Logo upload uses the shared upload validation stack (US-3.3): size limit, image MIME allowlist via magic bytes, server-generated storage key
+- [x] [SEC] Subtitle text is escaped/sanitized before being passed to the renderer (subtitle files and FFmpeg drawtext are injection surfaces)
 
 **Depends on:** US-9.1, US-2.2
 

@@ -1,6 +1,6 @@
 # US-9.2 — Add subtitles, logo, and cover
 
-**Status:** PREP — PO decisions frozen 2026-08-30. Gates: SPEC-REVIEW → SECURITY → CONTRACT → BUILD.
+**Status:** CLOSED Phase A (2026-08-30) — VALIDATION PASS WITH NOTES `4378c65` (fix `757da6a`) · QA APPROVE WITH CONDITIONS `c0d6f66` · 5/5 AC. VO-synced subtitle timing deferred Phase B.
 
 **As a** System, **I want** burned-in subtitles, client logo overlay, and a cover frame export, **so that** Reels match brand and perform on Instagram.
 
