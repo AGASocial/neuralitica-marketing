@@ -14,6 +14,7 @@ import { createHeygenHighStubAdapter } from "@/lib/providers/video/heygen-high-s
 import { createManualUploadAdapter } from "@/lib/providers/video/manual-upload-adapter";
 import { createMusetalkLowAdapter } from "@/lib/providers/video/musetalk-low-adapter";
 import { createSadtalkerLowAdapter } from "@/lib/providers/video/sadtalker-low-adapter";
+import { createSiliconflowCosyvoice2Adapter } from "@/lib/providers/tts/siliconflow-cosyvoice2-adapter";
 import { createSiliconflowWan21TurboStubAdapter } from "@/lib/providers/video/siliconflow-wan21-turbo-stub-adapter";
 
 const STUB_VIDEO_KEYS = [
@@ -86,6 +87,18 @@ function buildBootstrapCatalog(): ProviderCatalogRow[] {
       costModel: { billingUnit: "per_run", unitCostCents: 19 },
       envKeyName: "REPLICATE_API_TOKEN",
       capabilities: { prefersReferenceLoop: true },
+    },
+    {
+      key: DEFAULT_LOW_TIER_PROVIDER_KEYS.tts,
+      assetRole: "tts",
+      tier: "low",
+      active: true,
+      costModel: {
+        billingUnit: "per_1m_chars",
+        unitCostCents: 1,
+        metadata: { model: "cosyvoice2" },
+      },
+      envKeyName: "SILICONFLOW_API_KEY",
     },
     {
       key: "siliconflow_wan21_turbo",
@@ -163,6 +176,26 @@ export function createProviderRegistry(
 
   if (catalogKeys.has(DEFAULT_LOW_TIER_PROVIDER_KEYS.manual)) {
     registry.registerVideo(createManualUploadAdapter());
+  }
+
+  if (catalogKeys.has(DEFAULT_LOW_TIER_PROVIDER_KEYS.tts)) {
+    const ttsUnitCostCents = estimateCentsFromCatalog(
+      catalog,
+      DEFAULT_LOW_TIER_PROVIDER_KEYS.tts,
+      1,
+    );
+    const envKeyName =
+      catalog.find((row) => row.key === DEFAULT_LOW_TIER_PROVIDER_KEYS.tts)
+        ?.envKeyName ?? "SILICONFLOW_API_KEY";
+    const apiKey = process.env[envKeyName];
+    if (apiKey && apiKey.trim().length > 0) {
+      registry.registerTts(
+        createSiliconflowCosyvoice2Adapter({
+          defaultUnitCostCents: ttsUnitCostCents,
+          envKeyName,
+        }),
+      );
+    }
   }
 
   registry.freeze();
