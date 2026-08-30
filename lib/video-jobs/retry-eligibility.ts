@@ -6,8 +6,11 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
 
-import { getVideoMaxRetriesPerReel } from "./video-job-config";
+import { assertVideoJobBudgetAllowsSpend } from "./assert-video-job-budget";
+import { readVideoMaxRetriesPerReel } from "./video-job-config-readers";
 import { VIDEO_JOBS_TABLE, VIDEO_JOB_RETRY_OVERRIDES_TABLE } from "./video-job-row";
+
+const RETRY_BUDGET_BLOCKED_REASON_KEY = "scripts.videoJob.retry.budgetExceeded";
 
 const TERMINAL_STATUSES = new Set<VideoJobStatus>([
   "completed",
@@ -120,33 +123,52 @@ export async function evaluateRetryEligibility(params: {
   jobId: string;
   status: VideoJobStatus;
   attempt: number;
+  estimatedCostCents?: number;
+  operatorClientId?: string;
 }): Promise<RetryEligibility> {
   if (params.status !== "failed") {
     return { canRetry: false, retryBlockedReasonKey: null };
   }
 
-  const maxRetries = getVideoMaxRetriesPerReel();
+  const maxRetries = readVideoMaxRetriesPerReel();
   const maxAttempt = await getMaxAttemptForReel({
     clientId: params.clientId,
     reelScriptId: params.reelScriptId,
   });
 
-  if (maxAttempt < maxRetries) {
-    return { canRetry: true, retryBlockedReasonKey: null };
+  if (maxAttempt >= maxRetries) {
+    const override = await findUnconsumedRetryOverride({
+      clientId: params.clientId,
+      reelScriptId: params.reelScriptId,
+      failedJobId: params.jobId,
+    });
+
+    if (!override) {
+      return {
+        canRetry: false,
+        retryBlockedReasonKey: "scripts.videoJob.retry.limitExceeded",
+      };
+    }
   }
 
-  const override = await findUnconsumedRetryOverride({
-    clientId: params.clientId,
-    reelScriptId: params.reelScriptId,
-    failedJobId: params.jobId,
-  });
+  if (
+    params.estimatedCostCents !== undefined &&
+    params.operatorClientId !== undefined
+  ) {
+    const budgetResult = await assertVideoJobBudgetAllowsSpend({
+      clientId: params.clientId,
+      reelScriptId: params.reelScriptId,
+      operatorClientId: params.operatorClientId,
+      estimatedCostCents: params.estimatedCostCents,
+    });
 
-  if (override) {
-    return { canRetry: true, retryBlockedReasonKey: null };
+    if (!budgetResult.ok && budgetResult.code === "BUDGET_EXCEEDED") {
+      return {
+        canRetry: false,
+        retryBlockedReasonKey: RETRY_BUDGET_BLOCKED_REASON_KEY,
+      };
+    }
   }
 
-  return {
-    canRetry: false,
-    retryBlockedReasonKey: "scripts.videoJob.retry.limitExceeded",
-  };
+  return { canRetry: true, retryBlockedReasonKey: null };
 }

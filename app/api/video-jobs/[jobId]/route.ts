@@ -56,7 +56,9 @@ export async function GET(
     });
   }
 
-  const dto = await mapOperatorVideoJobStatusDto(job);
+  const dto = await mapOperatorVideoJobStatusDto(job, {
+    operatorClientId: operator.id,
+  });
   const parsed = operatorVideoJobStatusDtoSchema.safeParse(dto);
   if (!parsed.success) {
     return new Response(JSON.stringify({ error: "INTERNAL_ERROR" }), {

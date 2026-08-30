@@ -14,6 +14,7 @@ import type { VideoJobRow } from "./video-job-row";
 
 export async function mapOperatorVideoJobStatusDto(
   job: VideoJobRow,
+  options?: { operatorClientId?: string },
 ): Promise<OperatorVideoJobStatusDto> {
   const regenerationCount = await countPrimaryVideoJobsForReel({
     clientId: job.clientId,
@@ -26,6 +27,9 @@ export async function mapOperatorVideoJobStatusDto(
     jobId: job.id,
     status: job.status,
     attempt: job.attempt,
+    estimatedCostCents:
+      job.status === "failed" ? job.estimatedCostCents : undefined,
+    operatorClientId: options?.operatorClientId,
   });
 
   return {
@@ -46,8 +50,9 @@ export async function mapOperatorVideoJobStatusDto(
 
 export async function mapOperatorVideoJobSummaryDto(
   job: VideoJobRow,
+  options?: { operatorClientId?: string },
 ): Promise<OperatorVideoJobSummaryDto> {
-  const statusDto = await mapOperatorVideoJobStatusDto(job);
+  const statusDto = await mapOperatorVideoJobStatusDto(job, options);
   const cost = await buildOperatorProductionJobCostDto(job);
   return {
     ...statusDto,

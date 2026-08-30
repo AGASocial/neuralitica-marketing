@@ -69,6 +69,8 @@ export async function previewRetryVideoJobEstimate(
     jobId: failedJob.id,
     status: failedJob.status,
     attempt: failedJob.attempt,
+    estimatedCostCents: failedJob.estimatedCostCents,
+    operatorClientId: operator.id,
   });
 
   if (!retryState.canRetry) {
@@ -122,6 +124,25 @@ export async function previewRetryVideoJobEstimate(
     voiceoverAssetId: failedJob.voiceoverAssetId ?? undefined,
     portraitAssetId: failedJob.portraitAssetId ?? undefined,
   });
+
+  const budgetRetryState = await evaluateRetryEligibility({
+    clientId: failedJob.clientId,
+    reelScriptId: failedJob.reelScriptId,
+    jobId: failedJob.id,
+    status: failedJob.status,
+    attempt: failedJob.attempt,
+    estimatedCostCents: estimate.estimatedCostCents,
+    operatorClientId: operator.id,
+  });
+
+  if (!budgetRetryState.canRetry) {
+    return {
+      ok: true,
+      estimatedCostCents: estimate.estimatedCostCents,
+      canRetry: false,
+      retryBlockedReasonKey: budgetRetryState.retryBlockedReasonKey ?? undefined,
+    };
+  }
 
   return {
     ok: true,

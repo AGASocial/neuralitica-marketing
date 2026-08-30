@@ -50,7 +50,9 @@ export async function getVideoJobsForReelScripts(params: {
     if (!job) {
       continue;
     }
-    result[reelScriptId] = await mapOperatorVideoJobSummaryDto(job);
+    result[reelScriptId] = await mapOperatorVideoJobSummaryDto(job, {
+      operatorClientId: params.clientId,
+    });
   }
 
   return result;
