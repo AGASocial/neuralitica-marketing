@@ -41,6 +41,9 @@ export const videoJobErrorCodeSchema = z.enum([
   "JOB_NOT_RETRYABLE",
   "PROVIDER_UNAVAILABLE",
   "INTERNAL_ERROR",
+  /** US-8.3 manual upload slot guards */
+  "SLOT_JOB_IN_FLIGHT",
+  "SLOT_COMPLETED_JOB_EXISTS",
 ]);
 
 export type VideoJobErrorCode = z.infer<typeof videoJobErrorCodeSchema>;

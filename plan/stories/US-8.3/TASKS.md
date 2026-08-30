@@ -180,7 +180,7 @@ All objects keep `neuramark_` prefix.
 
 - [x] SPEC-REVIEW.md (spec-guardian) — **GAPS** (intent aligned; CONTRACT/SECURITY freezes required)
 - [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md authored (nextjs-backend — upload action, validator, migration, DTO refresh; **Reviewed by FE** before BUILD)
+- [x] CONTRACT.md authored (nextjs-backend — upload action, validator, migration, DTO refresh; **Reviewed by FE** before BUILD)
 - [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
 - [ ] VALIDATION.md (requirements-validator)
 - [ ] QA.md (qa-engineer)

@@ -11,6 +11,17 @@ export const AVATAR_REFERENCE_MAX_ASSETS = 10 as const;
 /** V1 asset_type enum value (code/DB only). */
 export const MEDIA_ASSET_TYPE_AVATAR_REFERENCE = "avatar_reference" as const;
 
+/** Operator manual / provider output video asset type (US-8.3 / US-8.4 enum). */
+export const MEDIA_ASSET_TYPE_GENERATED_VIDEO = "generated_video" as const;
+
+/** Shared upload validator asset type union (US-3.3 + US-8.3). */
+export const mediaUploadAssetTypeSchema = z.enum([
+  "avatar_reference",
+  "generated_video",
+]);
+
+export type MediaUploadAssetType = z.infer<typeof mediaUploadAssetTypeSchema>;
+
 /**
  * Server-generated storage_key shape (CONTRACT).
  * UUID v4 + safe extension from detected MIME only.
@@ -45,6 +56,22 @@ export const avatarReferenceAssetMetadataSchema = z
 
 export type AvatarReferenceAssetMetadata = z.infer<
   typeof avatarReferenceAssetMetadataSchema
+>;
+
+/** Metadata persisted on generated_video rows (manual upload + API fetchAsset). */
+export const generatedVideoAssetMetadataSchema = z
+  .object({
+    originalFilename: z.string().max(255),
+    detectedMime: z.enum(["video/mp4", "video/quicktime"]),
+    sizeBytes: z.number().int().positive(),
+    durationSec: z.number().positive(),
+    /** Distinguishes manual Operator upload from API provider output. */
+    source: z.enum(["manual_upload", "provider_fetch"]),
+  })
+  .strict();
+
+export type GeneratedVideoAssetMetadata = z.infer<
+  typeof generatedVideoAssetMetadataSchema
 >;
 
 export const avatarReferenceAssetItemSchema = z
