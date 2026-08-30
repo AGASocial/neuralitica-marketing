@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-9.1
-story_status: CONTRACT
+story_status: SIGNOFF
 feature_branch: feature/US-9.1-assemble-reel
 last_completed_story: US-9.3
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-30T17:50:00Z
+updated_at: 2026-08-30T17:55:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
@@ -46,7 +46,8 @@ updated_at: 2026-08-30T17:50:00Z
 
 ## Historial reciente
 
-- 2026-08-30 · US-9.1 SELECT → PREP. Branch `feature/US-9.1-assemble-reel` from main; deps US-8.4 ✅ · US-6.1 ✅ · US-9.3 ✅.
+- 2026-08-30 · US-9.1 SPEC GAPS `8728973` · SECURITY APPROVE WITH CONDITIONS `3b13b66`; story_status CONTRACT.
+- 2026-08-30 · US-9.1 SELECT → PREP `70a312d`. Branch `feature/US-9.1-assemble-reel`.
 - 2026-08-30 · US-9.3 CLOSE Phase A: 5/6 AC checked; QA APPROVE WITH CONDITIONS `e9c1833`; FF-merge `dfdd08b` to main; Phase 3 → SELECT US-9.1 (recommended).
 - 2026-08-30 · US-9.3 VALIDATION: PASS WITH NOTES `1715048` (79/79 tests); story_status QA.
 - 2026-08-30 · US-9.3 BUILD: adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813`.
