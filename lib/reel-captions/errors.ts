@@ -98,3 +98,17 @@ export function reelCaptionScriptNotFoundError(): ReelCaptionMutationError {
     "scripts.caption.errors.scriptNotFound",
   );
 }
+
+export function reelCaptionNotFoundForSelectError(): ReelCaptionMutationError {
+  return reelCaptionError(
+    "CAPTION_NOT_FOUND",
+    "scripts.caption.ctaSelect.errors.captionNotFound",
+  );
+}
+
+export function reelCaptionCtaIndexOutOfBoundsError(): ReelCaptionMutationError {
+  return reelCaptionError(
+    "CTA_INDEX_OUT_OF_BOUNDS",
+    "scripts.caption.ctaSelect.errors.indexOutOfBounds",
+  );
+}

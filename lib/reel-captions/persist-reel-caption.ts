@@ -2,8 +2,12 @@ import "server-only";
 
 import {
   buildReelCaptionRecord,
+  computeEffectiveCaptionCharCount,
+  isEffectiveCaptionOverLimit,
   reelCaptionAgentOutputSchema,
+  resolveSelectedCtaVariant,
   type ReelCaptionRecord,
+  type ReelCaptionSummary,
 } from "@/lib/contracts/reel-caption";
 import {
   createServerSupabaseClient,
@@ -29,6 +33,7 @@ function recordToRow(params: PersistReelCaptionParams) {
     hashtags: record.hashtags,
     keywords: record.keywords,
     cta_variants: record.ctaVariants,
+    selected_cta_index: null,
   };
 }
 
@@ -76,8 +81,19 @@ export type ReelCaptionRow = {
   reelScriptId: string;
   clientId: string;
   record: ReelCaptionRecord;
+  selectedCtaIndex: number | null;
   updatedAt: string;
 };
+
+function parseSelectedCtaIndex(raw: unknown): number | null {
+  if (raw === null || raw === undefined) {
+    return null;
+  }
+  if (typeof raw !== "number" || !Number.isInteger(raw) || raw < 0) {
+    return null;
+  }
+  return raw;
+}
 
 function mapCaptionRow(raw: Record<string, unknown>): ReelCaptionRow | null {
   if (typeof raw.id !== "string" || typeof raw.reel_script_id !== "string") {
@@ -106,8 +122,76 @@ function mapCaptionRow(raw: Record<string, unknown>): ReelCaptionRow | null {
     reelScriptId: raw.reel_script_id,
     clientId: raw.client_id,
     record,
+    selectedCtaIndex: parseSelectedCtaIndex(raw.selected_cta_index),
     updatedAt: raw.updated_at,
   };
+}
+
+export function buildGeneratedReelCaptionSummary(params: {
+  captionRow: ReelCaptionRow;
+  scriptUpdatedAt: string;
+}): ReelCaptionSummary {
+  const { captionRow, scriptUpdatedAt } = params;
+  const rawIndex = captionRow.selectedCtaIndex;
+
+  let selectedCtaIndex: number | null = null;
+  let selectedCtaText: string | null = null;
+
+  if (rawIndex !== null) {
+    const resolved = resolveSelectedCtaVariant(captionRow.record, rawIndex);
+    if (resolved !== null) {
+      selectedCtaIndex = rawIndex;
+      selectedCtaText = resolved;
+    } else {
+      console.warn("[reel-captions] selected_cta_index out of bounds", {
+        captionId: captionRow.id,
+        reelScriptId: captionRow.reelScriptId,
+        selectedCtaIndex: rawIndex,
+      });
+    }
+  }
+
+  const effectiveCaptionCharCount = computeEffectiveCaptionCharCount({
+    caption: captionRow.record.caption,
+    selectedCtaText,
+  });
+
+  return {
+    status: "generated",
+    captionId: captionRow.id,
+    record: captionRow.record,
+    selectedCtaIndex,
+    selectedCtaText,
+    effectiveCaptionCharCount,
+    effectiveCaptionOverLimit: isEffectiveCaptionOverLimit(
+      effectiveCaptionCharCount,
+    ),
+    updatedAt: captionRow.updatedAt,
+    stale: scriptUpdatedAt > captionRow.updatedAt,
+  };
+}
+
+export async function getReelCaptionByScriptId(params: {
+  clientId: string;
+  reelScriptId: string;
+}): Promise<ReelCaptionRow | null> {
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("neuramark_reel_captions")
+    .select("*")
+    .eq("client_id", params.clientId)
+    .eq("reel_script_id", params.reelScriptId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return mapCaptionRow(data as Record<string, unknown>);
 }
 
 export async function listReelCaptionsForStrategy(params: {

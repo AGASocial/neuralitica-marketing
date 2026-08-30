@@ -15,6 +15,7 @@ export const IG_KEYWORD_ENTRY_MAX_CHARS = 80 as const;
 export const CTA_VARIANT_MIN = 2 as const;
 export const CTA_VARIANT_MAX = 4 as const;
 export const CTA_VARIANT_ENTRY_MAX_CHARS = 200 as const;
+export const IG_CTA_SEPARATOR = "\n\n" as const;
 
 export const CAPTION_GENERATE_AGENT_KEY = "caption_generate" as const;
 export const CAPTION_RATE_WINDOW_MS = 60 * 60 * 1000;
@@ -133,11 +134,61 @@ export const reelCaptionRecordSchema = z
 
 export type ReelCaptionRecord = z.infer<typeof reelCaptionRecordSchema>;
 
+/** Resolve selected CTA plain text from persisted record + index. */
+export function resolveSelectedCtaVariant(
+  record: ReelCaptionRecord,
+  selectedCtaIndex: number | null,
+): string | null {
+  if (selectedCtaIndex === null) return null;
+  if (selectedCtaIndex < 0 || selectedCtaIndex >= record.ctaVariants.length) {
+    return null;
+  }
+  return record.ctaVariants[selectedCtaIndex] ?? null;
+}
+
+/** Body + separator + selected CTA — hashtags optional (export/publish seam). */
+export function buildEffectiveInstagramCaption(params: {
+  caption: string;
+  selectedCtaText: string | null;
+  hashtags?: string[];
+  separator?: string;
+}): string {
+  const sep = params.separator ?? IG_CTA_SEPARATOR;
+  const bodyWithCta =
+    params.selectedCtaText != null && params.selectedCtaText.length > 0
+      ? `${params.caption}${sep}${params.selectedCtaText}`
+      : params.caption;
+  if (!params.hashtags?.length) return bodyWithCta;
+  const tagLine = params.hashtags.join(" ");
+  return `${bodyWithCta}${sep}${tagLine}`;
+}
+
+/** Effective IG body length for warn/export policy (caption + separator + CTA only). */
+export function computeEffectiveCaptionCharCount(params: {
+  caption: string;
+  selectedCtaText: string | null;
+  separator?: string;
+}): number {
+  const sep = params.separator ?? IG_CTA_SEPARATOR;
+  if (params.selectedCtaText == null || params.selectedCtaText.length === 0) {
+    return params.caption.length;
+  }
+  return params.caption.length + sep.length + params.selectedCtaText.length;
+}
+
+export function isEffectiveCaptionOverLimit(charCount: number): boolean {
+  return charCount > IG_CAPTION_MAX_CHARS;
+}
+
 export const reelCaptionSummarySchema = z
   .object({
     status: z.enum(["pending", "generated"]),
     captionId: z.string().uuid().nullable(),
     record: reelCaptionRecordSchema.nullable(),
+    selectedCtaIndex: z.number().int().min(0).nullable(),
+    selectedCtaText: reelCaptionCtaVariantSchema.nullable(),
+    effectiveCaptionCharCount: z.number().int().min(0),
+    effectiveCaptionOverLimit: z.boolean(),
     updatedAt: z.string().datetime().nullable(),
     stale: z.boolean(),
   })
@@ -149,6 +200,10 @@ export const PENDING_REEL_CAPTION_SUMMARY: ReelCaptionSummary = {
   status: "pending",
   captionId: null,
   record: null,
+  selectedCtaIndex: null,
+  selectedCtaText: null,
+  effectiveCaptionCharCount: 0,
+  effectiveCaptionOverLimit: false,
   updatedAt: null,
   stale: false,
 };
@@ -163,6 +218,29 @@ export const regenerateReelCaptionInputSchema = z
   .object({
     weekStart: trendWeekStartSchema,
     slotIndex: z.number().int().min(0).max(6),
+  })
+  .strict();
+
+export const selectReelCaptionCtaInputSchema = z
+  .object({
+    weekStart: trendWeekStartSchema,
+    slotIndex: z.number().int().min(0).max(6),
+    selectedCtaIndex: z.number().int().min(0).max(CTA_VARIANT_MAX - 1),
+  })
+  .strict();
+
+export const selectReelCaptionCtaSuccessSchema = z
+  .object({
+    ok: z.literal(true),
+    weekStart: trendWeekStartSchema,
+    slotIndex: z.number().int().min(0).max(6),
+    captionId: z.string().uuid(),
+    reelScriptId: z.string().uuid(),
+    selectedCtaIndex: z.number().int().min(0),
+    selectedCtaText: reelCaptionCtaVariantSchema,
+    effectiveCaptionCharCount: z.number().int().min(0),
+    effectiveCaptionOverLimit: z.boolean(),
+    updatedAt: z.string().datetime(),
   })
   .strict();
 
@@ -222,6 +300,10 @@ export const reelCaptionErrorCodeSchema = z.enum([
   "PROVIDER_UNAVAILABLE",
   "FORBIDDEN_FIELDS",
   "INTERNAL_ERROR",
+  "CTA_INDEX_OUT_OF_BOUNDS",
+  "CAPTION_NOT_FOUND",
+  "CAPTION_CTA_NOT_SELECTED",
+  "EFFECTIVE_CAPTION_TOO_LONG",
 ]);
 
 export type ReelCaptionMutationError = {
@@ -251,4 +333,13 @@ export type RegenerateReelCaptionSuccess = z.infer<
 >;
 export type RegenerateReelCaptionResult =
   | RegenerateReelCaptionSuccess
+  | ReelCaptionMutationError;
+export type SelectReelCaptionCtaInput = z.infer<
+  typeof selectReelCaptionCtaInputSchema
+>;
+export type SelectReelCaptionCtaSuccess = z.infer<
+  typeof selectReelCaptionCtaSuccessSchema
+>;
+export type SelectReelCaptionCtaResult =
+  | SelectReelCaptionCtaSuccess
   | ReelCaptionMutationError;

@@ -9,10 +9,17 @@ import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import {
+  buildEffectiveInstagramCaption,
   buildReelCaptionRecord,
   CAPTION_GENERATE_AGENT_KEY,
+  computeEffectiveCaptionCharCount,
+  IG_CAPTION_MAX_CHARS,
+  IG_CTA_SEPARATOR,
+  isEffectiveCaptionOverLimit,
   normalizeHashtag,
   reelCaptionAgentOutputSchema,
+  resolveSelectedCtaVariant,
+  selectReelCaptionCtaInputSchema,
 } from "../contracts/reel-caption";
 import { VIDEO_SCRIPT_GENERATE_AGENT_KEY } from "../contracts/reel-script";
 
@@ -140,6 +147,7 @@ function clearReelCaptionModuleCache() {
     const normalized = key.replace(/\\/g, "/");
     if (
       normalized.includes("/lib/reel-captions/") ||
+      normalized.includes("/lib/reel-scripts/list-reel-scripts-for-week") ||
       normalized.includes("/lib/agents/content/generate-reel-caption") ||
       normalized.includes("/lib/content-strategy/load-approved-strategy-for-week") ||
       normalized.includes("/lib/reel-scripts/persist-reel-script") ||
@@ -1151,5 +1159,423 @@ describe("reel caption helpers (US-6.1)", () => {
     const sql = readFileSync(migrationPath, "utf8");
     assert.ok(sql.includes("ENABLE ROW LEVEL SECURITY"));
     assert.ok(!sql.includes("CREATE POLICY"));
+  });
+});
+
+const VALID_CAPTION_RECORD = buildReelCaptionRecord(
+  reelCaptionAgentOutputSchema.parse(VALID_CAPTION_OUTPUT),
+);
+
+const CAPTION_ROW_DB = {
+  id: "c1111111-1111-4111-8111-111111111111",
+  client_id: OPERATOR_ID,
+  reel_script_id: SCRIPT_ROW_0.id,
+  caption: VALID_CAPTION_OUTPUT.caption,
+  hashtags: VALID_CAPTION_OUTPUT.hashtags,
+  keywords: VALID_CAPTION_OUTPUT.keywords,
+  cta_variants: VALID_CAPTION_OUTPUT.ctaVariants,
+  selected_cta_index: null as number | null,
+  updated_at: "2026-01-06T11:00:00.000Z",
+};
+
+function captionTableFrom(options?: {
+  captionRow?: typeof CAPTION_ROW_DB | null;
+  onUpdate?: (payload: Record<string, unknown>) => void;
+  onUpsert?: (payload: Record<string, unknown>) => void;
+}) {
+  const row =
+    options && "captionRow" in options ? options.captionRow : CAPTION_ROW_DB;
+  return {
+    select: () =>
+      chainableQuery({
+        then: (
+          onFulfilled: (v: unknown) => unknown,
+          onRejected?: (e: unknown) => unknown,
+        ) =>
+          Promise.resolve({
+            data: row ? [row] : [],
+            error: null,
+          }).then(onFulfilled, onRejected),
+        maybeSingle: async () => ({ data: row, error: null }),
+        single: async () => ({ data: row, error: null }),
+      }),
+    eq: () => chainableQuery({}),
+    in: () => chainableQuery({}),
+    update: (payload: Record<string, unknown>) => {
+      options?.onUpdate?.(payload);
+      return chainableQuery({
+        single: async () => ({
+          data: {
+            updated_at: "2026-01-06T11:30:00.000Z",
+          },
+          error: null,
+        }),
+      });
+    },
+    upsert: (payload: Record<string, unknown>) => {
+      options?.onUpsert?.(payload);
+      return chainableQuery({
+        single: async () => ({
+          data: { id: CAPTION_ROW_DB.id },
+          error: null,
+        }),
+      });
+    },
+  };
+}
+
+function selectCaptionFrom(options?: {
+  captionRow?: typeof CAPTION_ROW_DB | null;
+  onUpdate?: (payload: Record<string, unknown>) => void;
+}) {
+  return (table: string) => {
+    if (table === "neuramark_content_strategies") {
+      return approvedStrategyFrom();
+    }
+    if (table === "neuramark_agent_rate_limits") {
+      return defaultRateLimitFrom();
+    }
+    if (table === "neuramark_reel_scripts") {
+      return scriptsTableFrom([SCRIPT_ROW_0]);
+    }
+    if (table === "neuramark_reel_captions") {
+      return captionTableFrom(options);
+    }
+    throw new Error(`unexpected ${table}`);
+  };
+}
+
+describe("reel caption CTA selection (US-6.2)", () => {
+  it("selectReelCaptionCtaInputSchema accepts valid input", () => {
+    assert.equal(
+      selectReelCaptionCtaInputSchema.safeParse({
+        weekStart: WEEK_START,
+        slotIndex: 0,
+        selectedCtaIndex: 1,
+      }).success,
+      true,
+    );
+  });
+
+  it("selectReelCaptionCtaInputSchema rejects unknown keys", () => {
+    assert.equal(
+      selectReelCaptionCtaInputSchema.safeParse({
+        weekStart: WEEK_START,
+        slotIndex: 0,
+        selectedCtaIndex: 0,
+        extra: true,
+      }).success,
+      false,
+    );
+  });
+
+  it("selectReelCaptionCtaInputSchema rejects float selectedCtaIndex", () => {
+    assert.equal(
+      selectReelCaptionCtaInputSchema.safeParse({
+        weekStart: WEEK_START,
+        slotIndex: 0,
+        selectedCtaIndex: 1.5,
+      }).success,
+      false,
+    );
+  });
+
+  it("resolveSelectedCtaVariant returns correct string for index 1", () => {
+    assert.equal(
+      resolveSelectedCtaVariant(VALID_CAPTION_RECORD, 1),
+      VALID_CAPTION_OUTPUT.ctaVariants[1],
+    );
+  });
+
+  it("resolveSelectedCtaVariant returns null for null index", () => {
+    assert.equal(resolveSelectedCtaVariant(VALID_CAPTION_RECORD, null), null);
+  });
+
+  it("buildEffectiveInstagramCaption joins caption, CTA, and hashtags", () => {
+    const result = buildEffectiveInstagramCaption({
+      caption: VALID_CAPTION_OUTPUT.caption,
+      selectedCtaText: VALID_CAPTION_OUTPUT.ctaVariants[1]!,
+      hashtags: VALID_CAPTION_OUTPUT.hashtags,
+    });
+    assert.equal(
+      result,
+      `${VALID_CAPTION_OUTPUT.caption}${IG_CTA_SEPARATOR}${VALID_CAPTION_OUTPUT.ctaVariants[1]}${IG_CTA_SEPARATOR}${VALID_CAPTION_OUTPUT.hashtags.join(" ")}`,
+    );
+  });
+
+  it("computeEffectiveCaptionCharCount includes separator", () => {
+    const count = computeEffectiveCaptionCharCount({
+      caption: VALID_CAPTION_OUTPUT.caption,
+      selectedCtaText: VALID_CAPTION_OUTPUT.ctaVariants[0]!,
+    });
+    assert.equal(
+      count,
+      VALID_CAPTION_OUTPUT.caption.length +
+        IG_CTA_SEPARATOR.length +
+        VALID_CAPTION_OUTPUT.ctaVariants[0]!.length,
+    );
+  });
+
+  it("isEffectiveCaptionOverLimit is true at 2201", () => {
+    assert.equal(isEffectiveCaptionOverLimit(IG_CAPTION_MAX_CHARS + 1), true);
+    assert.equal(isEffectiveCaptionOverLimit(IG_CAPTION_MAX_CHARS), false);
+  });
+
+  it("findForbiddenSelectReelCaptionCtaKeys rejects selectedCtaText smuggling", async () => {
+    const restore = installReelCaptionMocks({
+      from: selectCaptionFrom(),
+    });
+    try {
+      clearReelCaptionModuleCache();
+      const { selectReelCaptionCta } = require("./actions/select-reel-caption-cta.ts");
+      const result = await selectReelCaptionCta({
+        weekStart: WEEK_START,
+        slotIndex: 0,
+        selectedCtaIndex: 0,
+        selectedCtaText: "Evil CTA",
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "FORBIDDEN_FIELDS");
+    } finally {
+      restore();
+    }
+  });
+
+  it("findForbiddenSelectReelCaptionCtaKeys unit rejects ctaVariants", () => {
+    const { findForbiddenSelectReelCaptionCtaKeys } = require("./find-forbidden-select-keys.ts");
+    const keys = findForbiddenSelectReelCaptionCtaKeys({
+      weekStart: WEEK_START,
+      slotIndex: 0,
+      selectedCtaIndex: 0,
+      ctaVariants: ["evil"],
+    });
+    assert.deepEqual(keys, ["ctaVariants"]);
+  });
+
+  it("non-operator select returns 403 without UPDATE", async () => {
+    let updateCalled = false;
+    const restore = installReelCaptionMocks({
+      requireOperator: async () => {
+        throw Object.assign(new Error("forbidden"), { status: 403 });
+      },
+      from: selectCaptionFrom({
+        onUpdate: () => {
+          updateCalled = true;
+        },
+      }),
+    });
+    try {
+      clearReelCaptionModuleCache();
+      const { selectReelCaptionCta } = require("./actions/select-reel-caption-cta.ts");
+      const result = await selectReelCaptionCta({
+        weekStart: WEEK_START,
+        slotIndex: 0,
+        selectedCtaIndex: 0,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "FORBIDDEN");
+      assert.equal(updateCalled, false);
+    } finally {
+      restore();
+    }
+  });
+
+  it("select with no caption row returns CAPTION_NOT_FOUND", async () => {
+    const restore = installReelCaptionMocks({
+      from: selectCaptionFrom({ captionRow: null }),
+    });
+    try {
+      clearReelCaptionModuleCache();
+      const { selectReelCaptionCta } = require("./actions/select-reel-caption-cta.ts");
+      const result = await selectReelCaptionCta({
+        weekStart: WEEK_START,
+        slotIndex: 0,
+        selectedCtaIndex: 0,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "CAPTION_NOT_FOUND");
+    } finally {
+      restore();
+    }
+  });
+
+  it("select index 99 with 2 variants returns CTA_INDEX_OUT_OF_BOUNDS", async () => {
+    let updateCalled = false;
+    const restore = installReelCaptionMocks({
+      from: selectCaptionFrom({
+        onUpdate: () => {
+          updateCalled = true;
+        },
+      }),
+    });
+    try {
+      clearReelCaptionModuleCache();
+      const { selectReelCaptionCta } = require("./actions/select-reel-caption-cta.ts");
+      const result = await selectReelCaptionCta({
+        weekStart: WEEK_START,
+        slotIndex: 0,
+        selectedCtaIndex: 3,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) {
+        assert.equal(result.error.code, "CTA_INDEX_OUT_OF_BOUNDS");
+      }
+      assert.equal(updateCalled, false);
+    } finally {
+      restore();
+    }
+  });
+
+  it("happy path select index 0 updates index only", async () => {
+    let updatePayload: Record<string, unknown> | undefined;
+    const restore = installReelCaptionMocks({
+      from: selectCaptionFrom({
+        onUpdate: (payload) => {
+          updatePayload = payload;
+        },
+      }),
+    });
+    try {
+      clearReelCaptionModuleCache();
+      const { selectReelCaptionCta } = require("./actions/select-reel-caption-cta.ts");
+      const result = await selectReelCaptionCta({
+        weekStart: WEEK_START,
+        slotIndex: 0,
+        selectedCtaIndex: 0,
+      });
+      assert.equal(result.ok, true);
+      if (result.ok) {
+        assert.equal(result.selectedCtaIndex, 0);
+        assert.equal(
+          result.selectedCtaText,
+          VALID_CAPTION_OUTPUT.ctaVariants[0],
+        );
+        assert.equal(result.effectiveCaptionOverLimit, false);
+      }
+      assert.deepEqual(updatePayload, { selected_cta_index: 0 });
+      assert.equal("caption" in (updatePayload ?? {}), false);
+    } finally {
+      restore();
+    }
+  });
+
+  it("draft strategy select returns STRATEGY_NOT_APPROVED", async () => {
+    const restore = installReelCaptionMocks({
+      getApprovedStrategyForWeek: async () => null,
+      from: selectCaptionFrom(),
+    });
+    try {
+      clearReelCaptionModuleCache();
+      const { selectReelCaptionCta } = require("./actions/select-reel-caption-cta.ts");
+      const result = await selectReelCaptionCta({
+        weekStart: WEEK_START,
+        slotIndex: 0,
+        selectedCtaIndex: 0,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "STRATEGY_NOT_APPROVED");
+    } finally {
+      restore();
+    }
+  });
+
+  it("generate UPSERT resets selected_cta_index to null", async () => {
+    let upsertPayload: Record<string, unknown> | undefined;
+    const restore = installReelCaptionMocks({
+      from: (table: string) => {
+        if (table === "neuramark_reel_captions") {
+          return captionTableFrom({
+            onUpsert: (payload) => {
+              upsertPayload = payload;
+            },
+          });
+        }
+        return defaultCaptionFrom([SCRIPT_ROW_0])(table);
+      },
+    });
+    try {
+      clearReelCaptionModuleCache();
+      const { generateReelCaptions } = require("./actions/generate-reel-captions.ts");
+      await generateReelCaptions({ weekStart: WEEK_START });
+      assert.equal(upsertPayload?.selected_cta_index, null);
+    } finally {
+      restore();
+    }
+  });
+
+  it("regenerate UPSERT resets selected_cta_index to null", async () => {
+    let upsertPayload: Record<string, unknown> | undefined;
+    const restore = installReelCaptionMocks({
+      from: (table: string) => {
+        if (table === "neuramark_reel_captions") {
+          return captionTableFrom({
+            onUpsert: (payload) => {
+              upsertPayload = payload;
+            },
+          });
+        }
+        return defaultCaptionFrom([SCRIPT_ROW_0])(table);
+      },
+    });
+    try {
+      clearReelCaptionModuleCache();
+      const { regenerateReelCaption } = require("./actions/regenerate-reel-caption.ts");
+      await regenerateReelCaption({
+        weekStart: WEEK_START,
+        slotIndex: 0,
+      });
+      assert.equal(upsertPayload?.selected_cta_index, null);
+    } finally {
+      restore();
+    }
+  });
+
+  it("generate still forbids selectedCtaIndex on input", async () => {
+    const restore = installReelCaptionMocks({});
+    try {
+      clearReelCaptionModuleCache();
+      const { generateReelCaptions } = require("./actions/generate-reel-captions.ts");
+      const result = await generateReelCaptions({
+        weekStart: WEEK_START,
+        selectedCtaIndex: 0,
+      });
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.error.code, "FORBIDDEN_FIELDS");
+    } finally {
+      restore();
+    }
+  });
+
+  it("buildGeneratedReelCaptionSummary maps selection fields", async () => {
+    const restore = installReelCaptionMocks({});
+    try {
+      clearReelCaptionModuleCache();
+      const { buildGeneratedReelCaptionSummary } = require("./persist-reel-caption.ts");
+      const summary = buildGeneratedReelCaptionSummary({
+        captionRow: {
+          id: CAPTION_ROW_DB.id,
+          reelScriptId: SCRIPT_ROW_0.id,
+          clientId: OPERATOR_ID,
+          record: VALID_CAPTION_RECORD,
+          selectedCtaIndex: 1,
+          updatedAt: CAPTION_ROW_DB.updated_at,
+        },
+        scriptUpdatedAt: SCRIPT_ROW_0.updated_at,
+      });
+      assert.equal(summary.selectedCtaIndex, 1);
+      assert.equal(summary.selectedCtaText, VALID_CAPTION_OUTPUT.ctaVariants[1]);
+      assert.equal(summary.effectiveCaptionCharCount > 0, true);
+      assert.equal(summary.effectiveCaptionOverLimit, false);
+    } finally {
+      restore();
+    }
+  });
+
+  it("pending caption summary has null selection fields", () => {
+    const { PENDING_REEL_CAPTION_SUMMARY } = require("../contracts/reel-caption.ts");
+    assert.equal(PENDING_REEL_CAPTION_SUMMARY.selectedCtaIndex, null);
+    assert.equal(PENDING_REEL_CAPTION_SUMMARY.selectedCtaText, null);
+    assert.equal(PENDING_REEL_CAPTION_SUMMARY.effectiveCaptionCharCount, 0);
+    assert.equal(PENDING_REEL_CAPTION_SUMMARY.effectiveCaptionOverLimit, false);
   });
 });

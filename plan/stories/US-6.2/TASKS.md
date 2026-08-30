@@ -102,16 +102,16 @@ export const selectReelCaptionCtaInputSchema = z
 
 Concrete BE consumers: **`selectReelCaptionCta`** · extended **`getReelScriptsForWeek`** → `items[].caption.selectedCtaIndex` · `selectedCtaText`.
 
-- [ ] **Replace read-only CTA variant cards** with **radio/select** control bound to `selectedCtaIndex` (one selected at a time).
-- [ ] **Unselected state:** when `selectedCtaIndex === null`, show hint (e.g. "Select a CTA variant for approval preview"); no preview append.
-- [ ] **Preview in context block:** read-only plain-text area showing **`buildCaptionWithCtaPreview(caption, selectedCtaText)`** — label distinct from stored caption field.
-- [ ] **On select:** call **`selectReelCaptionCta({ weekStart, slotIndex, selectedCtaIndex })`**; handle pending/error/success; disable while in-flight.
-- [ ] **Error state** for `CTA_INDEX_OUT_OF_BOUNDS`, `NOT_FOUND`, `FORBIDDEN_FIELDS`.
-- [ ] **Regenerate caption:** after regen success, UI reflects cleared selection (`selectedCtaIndex === null`) per PO reset rule.
-- [ ] **EN + ES strings** in `messages/en.json` / `es.json` (`scripts.caption.ctaSelect.*`).
-- [ ] **No Supabase in Client Components**; render server DTO; **plain text** — no `dangerouslySetInnerHTML`.
-- [ ] **No Cliente** route or approval UI in this story.
-- [ ] **Accessibility:** radio group labeled; selection not color-only.
+- [x] **Replace read-only CTA variant cards** with **radio/select** control bound to `selectedCtaIndex` (one selected at a time).
+- [x] **Unselected state:** when `selectedCtaIndex === null`, show hint (e.g. "Select a CTA variant for approval preview"); no preview append.
+- [x] **Preview in context block:** read-only plain-text area showing **`buildCaptionWithCtaPreview(caption, selectedCtaText)`** — label distinct from stored caption field.
+- [x] **On select:** call **`selectReelCaptionCta({ weekStart, slotIndex, selectedCtaIndex })`**; handle pending/error/success; disable while in-flight.
+- [x] **Error state** for `CTA_INDEX_OUT_OF_BOUNDS`, `NOT_FOUND`, `FORBIDDEN_FIELDS`.
+- [x] **Regenerate caption:** after regen success, UI reflects cleared selection (`selectedCtaIndex === null`) per PO reset rule.
+- [x] **EN + ES strings** in `messages/en.json` / `es.json` (`scripts.caption.ctaSelect.*`).
+- [x] **No Supabase in Client Components**; render server DTO; **plain text** — no `dangerouslySetInnerHTML`.
+- [x] **No Cliente** route or approval UI in this story.
+- [x] **Accessibility:** radio group labeled; selection not color-only.
 
 ---
 
@@ -119,17 +119,17 @@ Concrete BE consumers: **`selectReelCaptionCta`** · extended **`getReelScriptsF
 
 Concrete FE consumers: Caption tab select + preview; future US-11.1 approval package reads list DTO.
 
-- [ ] **Migration** add **`selected_cta_index integer NULL`** to **`neuramark_reel_captions`** (optional CHECK `>= 0` when not null).
-- [ ] **Extend Zod** in `lib/contracts/reel-caption.ts`: `selectReelCaptionCtaInputSchema`, success/error envelopes, extended `reelCaptionSummarySchema`.
-- [ ] **`selectReelCaptionCta({ weekStart, slotIndex, selectedCtaIndex })`** Server Action — `requireOperator("handler")`; resolve caption row; validate index vs `cta_variants.length`.
-- [ ] **[SEC] Bounds check:** reject if `selectedCtaIndex >= cta_variants.length` or `< 0`; no free-text CTA substitution.
-- [ ] **[SEC] Forbidden fields** on select action — index only; reject `ctaText`, `caption`, `ctaVariants`, `clientId`, etc.
-- [ ] **UPDATE** helper sets `selected_cta_index`; bump `updated_at`.
-- [ ] **Extend list mapper** — load `selected_cta_index`; compute **`selectedCtaText`** server-side; attach to `caption` summary.
-- [ ] **Extend `regenerateReelCaption` UPSERT** — set **`selected_cta_index = NULL`** on caption replace (PO lean).
-- [ ] **Export helper** (optional, server-only): `resolveSelectedCtaText(ctaVariants, selectedCtaIndex)` for US-11 reuse — CONTRACT may freeze name.
-- [ ] `revalidatePath("/operator/scripts")` after successful select.
-- [ ] **Automated tests:** `lib/reel-captions/select-reel-caption-cta.test.ts` — bounds reject; happy path; tenancy/IDOR; forbidden fields; null default; regen clears selection.
+- [x] **Migration** add **`selected_cta_index integer NULL`** to **`neuramark_reel_captions`** (optional CHECK `>= 0` when not null).
+- [x] **Extend Zod** in `lib/contracts/reel-caption.ts`: `selectReelCaptionCtaInputSchema`, success/error envelopes, extended `reelCaptionSummarySchema`.
+- [x] **`selectReelCaptionCta({ weekStart, slotIndex, selectedCtaIndex })`** Server Action — `requireOperator("handler")`; resolve caption row; validate index vs `cta_variants.length`.
+- [x] **[SEC] Bounds check:** reject if `selectedCtaIndex >= cta_variants.length` or `< 0`; no free-text CTA substitution.
+- [x] **[SEC] Forbidden fields** on select action — index only; reject `ctaText`, `caption`, `ctaVariants`, `clientId`, etc.
+- [x] **UPDATE** helper sets `selected_cta_index`; bump `updated_at`.
+- [x] **Extend list mapper** — load `selected_cta_index`; compute **`selectedCtaText`** server-side; attach to `caption` summary.
+- [x] **Extend `regenerateReelCaption` UPSERT** — set **`selected_cta_index = NULL`** on caption replace (PO lean).
+- [x] **Export helper** (optional, server-only): `resolveSelectedCtaText(ctaVariants, selectedCtaIndex)` for US-11 reuse — CONTRACT may freeze name.
+- [x] `revalidatePath("/operator/scripts")` after successful select.
+- [x] **Automated tests:** `lib/reel-captions/reel-captions.test.ts` — bounds reject; happy path; tenancy/IDOR; forbidden fields; null default; regen clears selection.
 
 ---
 
@@ -137,8 +137,8 @@ Concrete FE consumers: Caption tab select + preview; future US-11.1 approval pac
 
 All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
-- [ ] **ALTER** **`neuramark_reel_captions`** ADD COLUMN **`selected_cta_index integer NULL`**.
-- [ ] Optional CHECK: **`selected_cta_index IS NULL OR selected_cta_index >= 0`** (upper bound enforced in BE).
+- [x] **ALTER** **`neuramark_reel_captions`** ADD COLUMN **`selected_cta_index integer NULL`**.
+- [x] Optional CHECK: **`selected_cta_index IS NULL OR selected_cta_index >= 0`** (upper bound enforced in BE).
 - [ ] **No change** to `cta_variants` column shape (US-6.1 jsonb string[]).
 - [ ] **No new tables** (`approvals`, export jobs, etc.).
 - [ ] RLS unchanged — deny-by-default; service-role Node only.
