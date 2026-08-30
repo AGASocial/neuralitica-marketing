@@ -74,6 +74,23 @@ describe("forbidden budget keys on generate actions", () => {
     });
     assert.ok(keys.includes("estimatedCostCents"));
   });
+
+  it("rejects actualCostCents on script generate input (US-7.3)", () => {
+    const keys = findForbiddenReelScriptKeys({
+      weekStart: "2026-01-05",
+      actualCostCents: 0,
+    });
+    assert.ok(keys.includes("actualCostCents"));
+  });
+
+  it("rejects durationSec on caption generate input (US-7.3)", () => {
+    const { findForbiddenReelCaptionKeys } = require("../reel-captions/find-forbidden-keys.ts");
+    const keys = findForbiddenReelCaptionKeys({
+      weekStart: "2026-01-05",
+      durationSec: 30,
+    });
+    assert.ok(keys.includes("durationSec"));
+  });
 });
 
 describe("resolveLlmProviderLabel", () => {

@@ -1,3 +1,4 @@
+import { FORBIDDEN_BUDGET_SPEND_KEYS } from "@/lib/contracts/cost-policy";
 import { FORBIDDEN_PROVIDER_AUTHORITY_KEYS } from "@/lib/contracts/provider-decisions";
 
 const FORBIDDEN_REEL_SCRIPT_KEYS = new Set([
@@ -41,25 +42,7 @@ const FORBIDDEN_REEL_SCRIPT_KEYS = new Set([
   "maxLinesPerBeat",
   "voWarnOverRatio",
   "voWarnUnderRatio",
-  // US-7.1: budget authority keys — use budgetOverride / overrideReason only
-  "maxCostCents",
-  "max_cost_cents",
-  "providerTier",
-  "provider_tier",
-  "estimatedCostCents",
-  "estimated_cost_cents",
-  "cumulativeCostCents",
-  "cumulative_cost_cents",
-  "budgetCap",
-  "policyId",
-  "policy_id",
-  "rules",
-  "skipBudgetCheck",
-  "skip_budget_check",
-  "overrideBudget",
-  "override_budget",
-  "confirmGeneration",
-  "confirm_generation",
+  ...FORBIDDEN_BUDGET_SPEND_KEYS,
   ...FORBIDDEN_PROVIDER_AUTHORITY_KEYS,
 ]);
 

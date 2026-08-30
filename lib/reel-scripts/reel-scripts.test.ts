@@ -153,6 +153,7 @@ function clearReelScriptModuleCache() {
     if (
       normalized.includes("/lib/reel-scripts/") ||
       normalized.includes("/lib/reel-captions/") ||
+      normalized.includes("/lib/cost-policy/get-reel-cost-summary-for-week") ||
       normalized.includes("/lib/agents/content/generate-reel-script") ||
       normalized.includes("/lib/content-strategy/load-approved-strategy-for-week") ||
       normalized.includes("/lib/content-strategy/strategy-has-scripts") ||
@@ -185,6 +186,7 @@ function chainableQuery(terminal: {
   builder.neq = self;
   builder.in = self;
   builder.gte = self;
+  builder.lt = self;
   builder.order = self;
   builder.limit = self;
   builder.insert = self;
@@ -230,6 +232,19 @@ function defaultRateLimitFrom() {
   };
 }
 
+const DEFAULT_LLM_USAGE = {
+  inputTokens: 100,
+  outputTokens: 400,
+  adapterReportedCents: 1,
+};
+
+function wrapAgentOutput(output: unknown) {
+  return {
+    output,
+    llmUsage: DEFAULT_LLM_USAGE,
+  };
+}
+
 type MockOptions = {
   requireOperator?: () => Promise<unknown>;
   isAuthGuardError?: (error: unknown) => boolean;
@@ -241,7 +256,7 @@ type MockOptions = {
   getDefaultCostPolicy?: () => Promise<unknown>;
   getCostPolicyForClient?: (clientId: string) => Promise<unknown>;
   assertReelBudgetAllowsSpend?: (input: unknown) => Promise<unknown>;
-  recordReelSpendEvent?: (params: unknown) => Promise<void>;
+  finalizeGenerationCost?: (params: unknown) => Promise<{ ok: true; spendEventId: string }>;
   logProviderDecision?: (params: unknown) => Promise<void>;
   resolveReelScriptBudgetContext?: (params: unknown) => Promise<unknown>;
   generateReelScriptForSlot?: (params: unknown) => Promise<unknown>;
@@ -424,9 +439,11 @@ function installReelScriptMocks(options: MockOptions) {
           })),
       };
     }
-    if (String(request).includes("lib/cost-policy/record-reel-spend-event")) {
+    if (String(request).includes("lib/cost-policy/finalize-generation-cost")) {
       return {
-        recordReelSpendEvent: options.recordReelSpendEvent ?? (async () => {}),
+        finalizeGenerationCost:
+          options.finalizeGenerationCost ??
+          (async () => ({ ok: true as const, spendEventId: "spend-event-id" })),
       };
     }
     if (String(request).includes("lib/cost-policy/log-provider-decision")) {
@@ -482,7 +499,7 @@ function installReelScriptMocks(options: MockOptions) {
       return {
         generateReelScriptForSlot:
           options.generateReelScriptForSlot ??
-          (async () => VALID_SCRIPT_PACKAGE),
+          (async () => wrapAgentOutput(VALID_SCRIPT_PACKAGE)),
       };
     }
     if (
@@ -532,6 +549,19 @@ function approvedStrategyFrom(extra?: {
         };
   return {
     select: () => strategyQueryBuilder(row),
+  };
+}
+
+function spendEventsFrom(rows: unknown[] = []) {
+  return {
+    select: () =>
+      chainableQuery({
+        then: (
+          onFulfilled: (v: unknown) => unknown,
+          onRejected?: (e: unknown) => unknown,
+        ) =>
+          Promise.resolve({ data: rows, error: null }).then(onFulfilled, onRejected),
+      }),
   };
 }
 
@@ -962,6 +992,9 @@ describe("reel script mutations (US-5.1)", () => {
             in: () => chainableQuery({}),
           };
         }
+        if (table === "neuramark_reel_spend_events") {
+          return spendEventsFrom();
+        }
         throw new Error(`unexpected ${table}`);
       },
     });
@@ -974,6 +1007,10 @@ describe("reel script mutations (US-5.1)", () => {
         assert.equal(result.items.length, 3);
         assert.ok(result.items.every((i) => i.status === "pending"));
         assert.ok(result.approvedStrategy);
+        assert.ok(result.costSummary);
+        assert.equal(result.costSummary.weekStart, WEEK_START);
+        assert.equal(result.costSummary.weeklyEstimatedCostCents, 0);
+        assert.equal(result.costSummary.weeklyActualCostCents, null);
       }
     } finally {
       restore();

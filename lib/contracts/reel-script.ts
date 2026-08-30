@@ -90,11 +90,8 @@ export const getReelScriptsForWeekSuccessSchema = z
       .nullable(),
     strategyVersionChanged: z.boolean(),
     items: z.array(reelScriptListItemSchema),
-    /**
-     * US-7.3 — Operator-only cost block for /operator/scripts.
-     * Required on success after BE BUILD; optional in contract stub until wired.
-     */
-    costSummary: reelWeekCostSummarySchema.optional(),
+    /** US-7.3 — Operator-only cost block for /operator/scripts. */
+    costSummary: reelWeekCostSummarySchema,
   })
   .strict();
 

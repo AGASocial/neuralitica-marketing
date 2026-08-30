@@ -13,9 +13,24 @@ import {
   reelScriptValidationError,
 } from "@/lib/reel-scripts/errors";
 import { findForbiddenReelScriptKeys } from "@/lib/reel-scripts/find-forbidden-keys";
+import { getReelCostSummaryForWeek } from "@/lib/cost-policy/get-reel-cost-summary-for-week";
 import { buildReelScriptListForStrategy } from "@/lib/reel-scripts/list-reel-scripts-for-week";
 import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved-strategy-for-week";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
+
+function emptyWeekCostSummary(
+  weekStart: string,
+  clientId: string,
+): Awaited<ReturnType<typeof getReelCostSummaryForWeek>> {
+  return {
+    weekStart,
+    clientId,
+    slots: [],
+    weeklyEstimatedCostCents: 0,
+    weeklyActualCostCents: null,
+    hasPartialActual: false,
+  };
+}
 
 function authGuardEnvelope(error: {
   status: 401 | 403;
@@ -66,6 +81,7 @@ export async function getReelScriptsForWeek(
         approvedStrategy: null,
         strategyVersionChanged: false,
         items: [],
+        costSummary: emptyWeekCostSummary(weekStart, clientId),
       };
     }
 
@@ -79,6 +95,15 @@ export async function getReelScriptsForWeek(
       },
     );
 
+    const costSummary = await getReelCostSummaryForWeek({
+      clientId,
+      weekStart,
+      slotReelScriptIds: items.map((item) => ({
+        slotIndex: item.slotIndex,
+        reelScriptId: item.scriptId,
+      })),
+    });
+
     return {
       ok: true,
       weekStart,
@@ -89,6 +114,7 @@ export async function getReelScriptsForWeek(
       },
       strategyVersionChanged,
       items,
+      costSummary,
     };
   } catch (error) {
     if (isAuthGuardError(error)) {

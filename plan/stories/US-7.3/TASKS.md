@@ -176,13 +176,13 @@ Concrete FE consumers: production list column · weekly footer.
 - [ ] **Extend `recordReelSpendEvent`** — accept `actualCostCents` + `actualCostUnavailableReason`; remove `actualCostCents?: null` restriction.
 - [ ] **`updateReelSpendEventActual(params)`** — server-only UPDATE by `spendEventId`; export for US-8.x; **not called** in V1 BUILD except tests.
 - [ ] **`sumReelActualCostCents(reelScriptId)`** — SUM where not null; handle all-null → null aggregate.
-- [ ] **`getReelCostSummaryForWeek({ clientId, weekStart })`** — operator-gated; join spend events to week's scripts by `reel_script_id`; return `ReelWeekCostSummary`.
+- [x] **`getReelCostSummaryForWeek({ clientId, weekStart })`** — operator-gated; join spend events to week's scripts by `reel_script_id`; return `ReelWeekCostSummary`.
 - [ ] **Wire orchestrators** — pass LLM `inputTokens`/`outputTokens`/`actualCostCents` through to `computeLlmActualCost` + `recordReelSpendEvent`.
-- [ ] **Extend `getReelScriptsForWeek`** (or companion loader) — attach cost summary to Operator response only.
-- [ ] **[SEC] Forbidden fields** — reject `actualCostCents`, `actual_cost_cents` on generate/regenerate actions.
-- [ ] **[SEC] Operator-only** — `requireOperator()` on cost summary reads; strip cost from any Cliente code path.
+- [x] **Extend `getReelScriptsForWeek`** (or companion loader) — attach cost summary to Operator response only.
+- [x] **[SEC] Forbidden fields** — reject `actualCostCents`, `actual_cost_cents` on generate/regenerate actions.
+- [x] **[SEC] Operator-only** — `requireOperator()` on cost summary reads; strip cost from any Cliente code path.
 - [ ] **Export seam** — document **`updateReelSpendEventActual`** in CONTRACT for US-8.2+ job completion handler.
-- [ ] **Automated tests:** `computeLlmActualCost` token math; spend INSERT with actual; null+reason when usage missing; forbidden client `actualCostCents`; operator-only summary; weekly SUM; `updateReelSpendEventActual` unit test (seam).
+- [ ] **Automated tests:** `computeLlmActualCost` token math; spend INSERT with actual; null+reason when usage missing; forbidden client `actualCostCents`; operator-only summary; weekly SUM; `updateReelSpendEventActual` unit test (seam). **Read path:** `get-reel-cost-summary-for-week.test.ts` + forbidden-key tests in `cost-policy.test.ts` ✅
 
 ---
 
