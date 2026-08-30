@@ -526,7 +526,9 @@ Future lazy **`getReelCostRollupForScriptAction`** (optional, not Phase A):
 
 ## Reviewed by FE
 
-_(Pending — nextjs-frontend adds "Reviewed by FE" line after signoff.)_
+**Reviewed by FE** — 2026-08-29 (nextjs-frontend)
+
+Batch `reelCostRollups[scriptId]` on `getReelScriptsForWeek` fits expand-row wiring; no lazy fetch in Phase A. `ReelCostRollupDto` has all display fields (totals, variance, `isOverBudget`, `maxCostCents`, `components[]`); FE display-only — no client-side re-SUM. Placement below `ProviderRecommendationPanel` / above `TabView` matches `ReelDetailPanel`. Week-scoped roll-ups reconcile with list column + `costSummary.slots[]`. Reuse `formatCentsForDisplay`, `Message`, and `scripts.cost.actual.pending` / `unavailable` patterns. Implement as `ReelCostRollupPanel` (TASKS `ReelCostSection` alias OK). i18n under `scripts.cost.rollup.*` as specified.
 
 ---
 

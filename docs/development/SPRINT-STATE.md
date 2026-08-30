@@ -5,8 +5,8 @@
 ```yaml
 current_phase: 3
 current_story: US-7.4
-story_status: SELECT
-feature_branch: null
+story_status: CONTRACT
+feature_branch: feature/US-7.4-reel-cost-rollup
 last_completed_story: US-7.3
 phase_status: in_progress
 blocked_reason: null
@@ -27,7 +27,7 @@ updated_at: 2026-08-30T02:30:00Z
 | US-7.1 Configure max budget per Reel | done | BE `3bdc709` · FE `bb19e4d` · fix `69d274f` · VALIDATION `13531f8` · QA `f8ac2a7` · CLOSE `d68b71a` |
 | US-7.2 Select provider by economics | done | BE `8eab3f7` · FE `2ab482c` · fix `78e6aa1` · VALIDATION `eb03f8e` · QA `4ed7fe9` · CLOSE `fcecce4` |
 | US-7.3 Track actual cost per job | done | BE `030d85f` · FE `02b399b`/`ddca524` · fix `f60579d` · VALIDATION `09656e0` · QA `691f657` · CLOSE Phase A |
-| US-7.4 Report real total cost per Reel | SELECT | Next story |
+| US-7.4 Report real total cost per Reel | CONTRACT | PREP + SPEC-REVIEW + SECURITY + CONTRACT `08b4131`; FE signoff; branch `feature/US-7.4-reel-cost-rollup` |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
