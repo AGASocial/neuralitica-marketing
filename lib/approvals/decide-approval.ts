@@ -122,7 +122,7 @@ export async function decideApprovalForClient(
     ok: true,
     approvalId: updated.id,
     assembledReelId: updated.assembledReelId,
-    status: decision,
+    status: decision as "approved" | "rejected",
     decidedAt: updated.decidedAt ?? new Date().toISOString(),
     summary,
   };

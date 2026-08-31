@@ -1,14 +1,40 @@
 /**
- * Client approval package contract (US-11.1).
+ * Client approval package contract (US-11.1 + US-11.2 extensions).
  * FE imports types + constants; Zod validation stays server-side.
  * Gate readiness authority remains getQaGateStatusForAssembledReel (DB-only).
+ * Revision-round schemas: lib/contracts/approval-revision.ts
  */
 import { z } from "zod";
 
 import {
+  changeRequestInputSchema,
+  lastChangeRequestDtoSchema,
+} from "@/lib/contracts/approval-revision";
+import {
   qaGateStatusSchema,
   qaReportStatusSchema,
 } from "@/lib/contracts/qa-report";
+
+export {
+  APPROVAL_MAX_CLIENT_REVISION_ROUNDS_DEFAULT,
+  APPROVAL_OPERATOR_GRANT_AGENT_KEY,
+  APPROVAL_OPERATOR_GRANT_MAX_PER_WINDOW,
+  approvalChangeTagSchema,
+  changeRequestInputSchema,
+  computeRevisionRoutingPlan,
+  findForbiddenChangeRequestKeys,
+  lastChangeRequestDtoSchema,
+  operatorGrantExtraRevisionInputSchema,
+  revisionContextSchema,
+  UNTRUSTED_CLIENT_CHANGE_REQUEST_TAG,
+} from "@/lib/contracts/approval-revision";
+export type {
+  ApprovalChangeTag,
+  ChangeRequestInput,
+  LastChangeRequestDto,
+  OperatorGrantExtraRevisionInput,
+  RevisionContext,
+} from "@/lib/contracts/approval-revision";
 
 export const APPROVAL_FEEDBACK_MIN_LENGTH = 0 as const;
 export const APPROVAL_FEEDBACK_MAX_LENGTH = 500 as const;
@@ -28,10 +54,23 @@ export const approvalStatusSchema = z.enum([
 
 export type ApprovalStatus = z.infer<typeof approvalStatusSchema>;
 
-/** Phase A decide values only — never changes_requested. */
-export const approvalDecisionSchema = z.enum(["approved", "rejected"]);
+/** Decide wire values — request_changes writes status changes_requested (US-11.2). */
+export const approvalDecisionSchema = z.enum([
+  "approved",
+  "rejected",
+  "request_changes",
+]);
 
 export type ApprovalDecision = z.infer<typeof approvalDecisionSchema>;
+
+/** Terminal decide outcomes persisted on neuramark_approvals.status. */
+export const approvalDecidedStatusSchema = z.enum([
+  "approved",
+  "rejected",
+  "changes_requested",
+]);
+
+export type ApprovalDecidedStatus = z.infer<typeof approvalDecidedStatusSchema>;
 
 export const FORBIDDEN_APPROVAL_AUTHORITY_KEYS = [
   "qaPassed",
@@ -80,7 +119,11 @@ export const FORBIDDEN_APPROVAL_AUTHORITY_KEYS = [
   "estimatedCostCents",
   "changes_requested",
   "revision_count",
+  "revisionCount",
   "change_requests",
+  "changeRequests",
+  "extra_revision_granted",
+  "extraRevisionGranted",
 ] as const;
 
 export type ForbiddenApprovalAuthorityKey =
@@ -148,8 +191,36 @@ export const decideApprovalInputSchema = z
     approvalId: z.string().uuid(),
     decision: approvalDecisionSchema,
     clientFeedback: optionalFeedbackSchema,
+    changeRequest: changeRequestInputSchema.optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((data, ctx) => {
+    if (data.decision === "request_changes") {
+      if (!data.changeRequest) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["changeRequest"],
+          message: "REQUIRED",
+        });
+      }
+      if (data.clientFeedback !== undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["clientFeedback"],
+          message: "FORBIDDEN_FOR_REQUEST_CHANGES",
+        });
+      }
+      return;
+    }
+
+    if (data.changeRequest !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["changeRequest"],
+        message: "FORBIDDEN",
+      });
+    }
+  });
 
 export type DecideApprovalInput = z.infer<typeof decideApprovalInputSchema>;
 
@@ -220,6 +291,13 @@ export const approvalPackageDtoSchema = z
     disclosure: approvalDisclosureDtoSchema,
     qaOverrides: z.array(approvalQaOverrideDtoSchema).default([]),
     gate: approvalGateInfoSchema.optional(),
+    /** US-11.2 — BUILD always populates after migration; optional in Zod until persist layer lands. */
+    revisionCount: z.number().int().nonnegative().optional(),
+    maxRevisionRounds: z.number().int().positive().optional(),
+    revisionsRemaining: z.number().int().nonnegative().optional(),
+    extraRevisionGranted: z.boolean().optional(),
+    lastChangeRequest: lastChangeRequestDtoSchema.optional(),
+    changeRequestHistory: z.array(lastChangeRequestDtoSchema).optional(),
     decidedAt: z.string().datetime({ offset: true }).nullable(),
     createdAt: z.string().datetime({ offset: true }),
     updatedAt: z.string().datetime({ offset: true }),
@@ -255,6 +333,8 @@ export const approvalErrorCodeSchema = z.enum([
   "CAPTION_REQUIRED",
   "CAPTION_CTA_NOT_SELECTED",
   "INVALID_TRANSITION",
+  "REVISION_LIMIT_EXCEEDED",
+  "REVISION_ROUTING_FAILED",
   "RATE_LIMITED",
   "INTERNAL_ERROR",
 ]);
@@ -325,9 +405,11 @@ export const decideApprovalSuccessSchema = z
     ok: z.literal(true),
     approvalId: z.string().uuid(),
     assembledReelId: z.string().uuid(),
-    status: approvalDecisionSchema,
+    status: approvalDecidedStatusSchema,
     decidedAt: z.string().datetime({ offset: true }),
     summary: approvalListItemDtoSchema,
+    revisionCount: z.number().int().nonnegative().optional(),
+    revisionsRemaining: z.number().int().nonnegative().optional(),
   })
   .strict();
 
