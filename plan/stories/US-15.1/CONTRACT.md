@@ -1,7 +1,7 @@
 # API Contract — US-15.1 Weekly cycle cron endpoint and orchestration
 
 **Story:** US-15.1  
-**Status:** Frozen — Phase A — 2026-08-31 · **Phase B:** BE/SEC frozen — 2026-08-31; FE signoff pending
+**Status:** Frozen — Phase A — 2026-08-31 · **Phase B:** BE/SEC/FE frozen — 2026-08-31
 
 **Security:** `plan/stories/US-15.1/SECURITY.md` (Phase A + binding Phase B delta — APPROVE WITH CONDITIONS)
 **Spec review:** `plan/stories/US-15.1/SPEC-REVIEW.md` (ALIGNED — Phase B strategy gate deferred)  
@@ -1089,7 +1089,7 @@ The last step only ensures an idempotent approval package in `pending_client` af
 
 **Phase A:** N/A — backend-only; no FE signoff required.
 
-**Phase B:** **PENDING.** FE must review and explicitly sign off on:
+**Phase B:** **SIGNED OFF — 2026-08-31.** FE reviewed:
 
 1. `triggerWeeklyCycleInputSchema`, its current/next-two-Mondays bound, and non-enumerating errors.
 2. `operatorWeeklyCycleRunDtoSchema`, exactly three slot summaries, sanitized error codes and `canResume` behavior.
@@ -1097,4 +1097,4 @@ The last step only ensures an idempotent approval package in `pending_client` af
 4. EN/ES `operator.cycle.*` labels using **Ciclo semanal automatizado**, **Estrategia semanal**, **cola de Aprobación**, **Cliente**, **Paquete de guion**, and **Ensamblado**.
 5. Confirmation that FE needs no raw `step_log`, provider/job payload, strategy/profile text, costs/policy internals, signed URLs or secrets.
 
-**Reviewed by FE Phase B:** pending — BUILD veto until signed.
+**Reviewed by FE Phase B:** **nextjs-frontend — APPROVED — 2026-08-31.** The frozen inputs are sufficient and appropriately bounded: the server-loaded active/allowlisted client set supplies the selector, while the strict action revalidates `clientId`; `weekStart` is either server-resolved or restricted to the current/next two ISO Mondays. The exact DTO supports the minimal status table with three slot summaries and server-derived `canResume`, without raw `step_log` or sensitive internals. Implement `/operator/cycle/page.tsx` as the server-loaded/authenticated boundary and keep selection, trigger/preview/resume pending behavior, duplicate-control disabling, refresh, and localized error-code mapping in a minimal Client Component. Existing PrimeReact `Dropdown`, `Calendar`, `Button`, `DataTable`, `Tag`, `Message`, `Toast`, and skeleton patterns cover loading, empty, load error, triggering/pending, paused, partial-failure, already-running, and already-completed states. Add matching `operator.cycle.*` EN/ES copy using the canonical terminology above. **No FE CONTRACT dispute; Phase B BUILD veto is cleared.**
