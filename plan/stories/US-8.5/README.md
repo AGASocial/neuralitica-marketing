@@ -1,6 +1,6 @@
 # US-8.5 — Wan B-roll adapter (low tier, P0)
 
-**Status:** PREP (2026-08-31) — README + TASKS frozen; next SPEC-REVIEW → SECURITY → CONTRACT.
+**Status:** PREP (2026-08-31) — README + TASKS frozen; SPEC-REVIEW **GAPS** (next SECURITY → CONTRACT).
 
 **As a** System, **I want** short B-roll clips via Wan API (SiliconFlow), **so that** faceless Reels have cheap supporting visuals without full text-to-video for every piece.
 
@@ -93,7 +93,7 @@ _Evitar:_ client-supplied `provider_key`; long-lived third-party `output_url` as
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 S3.M9 Video Provider / B-roll)
+- [x] SPEC-REVIEW.md (spec-guardian — **GAPS** vs SPEC §3 S3.M9 Video Provider / B-roll; stitch handoff US-9.1 Phase B)
 - [ ] SECURITY.md (security-architect — SiliconFlow SSRF, prompt injection via beats, budget abuse, key redaction, I2V image URL allowlist)
 - [ ] CONTRACT.md (nextjs-backend — freeze endpoints/schemas; **Reviewed by FE: N/A**)
 - [ ] BUILD Phase A (media-pipeline-engineer + nextjs-backend)
@@ -102,7 +102,7 @@ _Evitar:_ client-supplied `provider_key`; long-lived third-party `output_url` as
 - [ ] QA.md (qa-engineer)
 - [ ] CLOSE — AC check-off in USER_STORIES.md (product-owner)
 
-**Status:** PREP. **Next:** SPEC-REVIEW → SECURITY → CONTRACT.
+**Status:** PREP. **Next:** SECURITY → CONTRACT.
 
 ---
 
