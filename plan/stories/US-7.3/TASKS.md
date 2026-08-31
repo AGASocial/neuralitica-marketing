@@ -1,22 +1,31 @@
 # US-7.3 — Track actual cost per generation job
 
 **Priority:** P0  
-**Depends on:** US-7.2 ✅ spend events + policy engine · US-7.1 ✅ `neuramark_reel_spend_events` · US-5.1 ✅ `/operator/scripts` · US-14.5 ✅ `requireOperator()` · US-8.4 ⏳ soft (video UI deferred)  
-**Acceptance criteria:** `plan/USER_STORIES.md` § US-7.3 (source of truth — do **not** redefine; do **not** check off in PREP)  
-**Implementers:** **media-pipeline-engineer** + **nextjs-backend** + **nextjs-frontend** (`docs/development/AGENT-ROSTER.md` Phase 4). DB migrations under BE. **No content-agents-engineer** BUILD slice.  
-**Canonical terms:** **Operator** · **Reel** · **Paquete de guion** · **coste real** · **coste estimado**. Avoid CONTEXT _Evitar_ list in product-facing copy.
+**Depends on:** US-7.2 ✅ · US-7.1 ✅ · US-5.1 ✅ · US-14.5 ✅ · **US-8.4 ✅** · US-8.2/8.6/8.7 ✅ · US-8.5 ✅ · US-8.3 ✅ · US-9.3 ✅ · US-7.4 Phase A ✅ (consumer). Phase A ✅.  
+**Acceptance criteria:** `plan/USER_STORIES.md` § US-7.3 (source of truth — do **not** redefine; do **not** uncheck Phase A AC; Phase B adds **no** new checkboxes)  
+**Implementers (Phase B):** **media-pipeline-engineer** + **nextjs-backend** + thin **nextjs-frontend**. DB: none expected. **No content-agents-engineer.**  
+**Canonical terms:** **Operator** · **Reel** · **Paquete de guion** · **coste real** · **coste estimado**. Avoid CONTEXT _Evitar_ list in product-facing copy.  
+**Phase B doc:** [`PHASE-B.md`](./PHASE-B.md). **Branch:** `feature/US-7.3-phase-b-spend-backfill`. **CONTRACT Phase B amendment required** (do not rewrite Phase A CONTRACT).
 
 ## Out of scope (do not implement here)
 
-- **`neuramark_video_jobs` table / columns** — USER_STORIES DB row references `video_jobs.*`; V1 canonical store is **`neuramark_reel_spend_events`** until US-8.2+.
-- **US-8.4** status badges, retry UI, stale-job timeout — async completion wiring is **seam export only**.
-- **US-8.x** video/TTS/B-roll spend event INSERT + actual backfill on poll/webhook — CONTRACT documents **`updateReelSpendEventActual`**; no adapter I/O in BUILD.
-- **US-7.4** Reel detail cost section, variance highlight, component breakdown.
-- **US-9.3** TTS actual cost persistence.
-- **Cumulative budget gate on actuals** — US-7.1 continues **`SUM(estimated_cost_cents)`** only.
-- **Cliente** routes — no cost fields on shared payloads ([SEC] response-shape exclusion).
-- **Full margin dashboard / charts** — weekly sum on scripts page only in V1.
-- **One-off historical SQL backfill** — optional P1 unless CONTRACT adds lean forward-only scope.
+### Phase B (binding)
+
+- **`/operator/production`** — does not exist; US-8.4 lives on **`/operator/scripts`**.
+- **New USER_STORIES checkboxes** / unchecking Phase A AC.
+- **Rewrite Phase A CONTRACT.md** — amendment section only (BE gate).
+- **US-7.4 BUILD** — roll-up auto-picks new `asset_role` rows.
+- **Migrate TTS** from `recordReelSpendEvent` to `finalizeGenerationCost`.
+- **Failed/cancelled spend UPDATE** / invented billed cost.
+- **`ltx_broll_high`**, ElevenLabs TTS, assembly/branding spend, QA cost rewrite.
+- **B-roll per-clip cost UI** / TTS panel chip (rollup + slot column suffice).
+- **Budget gate on actuals** · **Cliente** cost fields · **new tables**.
+- **Historical SQL backfill**.
+
+### Phase A (historical — still out of Phase A BUILD; several now CLOSED upstream)
+
+- **`neuramark_video_jobs` DDL** — shipped US-8.2+; Phase B does not add reporting columns as canonical store.
+- Phase A deferred video/TTS wiring — **this Phase B checklist** (do not re-open Phase A items).
 
 ## Scope split
 
@@ -135,6 +144,80 @@ export type ReelWeekCostSummary = {
 };
 ```
 
+## Phase B PO freezes (binding — full table in PHASE-B.md)
+
+| Topic | Decision |
+|-------|----------|
+| Story ID | **US-7.3-B** (same story Phase B) |
+| Ledger | **`neuramark_reel_spend_events`** canonical; `video_jobs.actual_cost_cents` **mirror only** |
+| Actual writer | **`finalizeGenerationCost`** for video `async_update` + manual 0; **TTS INSERT exception** stays |
+| Fail path | **No** spend UPDATE on fail/cancel |
+| FE | Existing **`OperatorVideoJobSummaryPanel`**; refresh cost on poll; **no** new production route |
+| US-7.4 | Query **unchanged** |
+| Gate | Estimate-only |
+
+---
+
+## Phase B checklist (PREP — unchecked)
+
+### Frontend (nextjs-frontend) — Phase B
+
+**Surface:** `/operator/scripts` expand — **`OperatorVideoJobSummaryPanel`** (cost labels already exist). **Do not** add `/operator/production`.
+
+- [x] After video job **completes**, panel **actual** updates without requiring a full page reload (today `GET /api/video-jobs/[jobId]` is status-only; `mergePolledStatus` drops `cost`).
+- [x] Consume CONTRACT Phase B poll/summary DTO — **no** client-side cents math; reuse `formatCentsForDisplay` + existing `scripts.videoJob` / `scripts.cost.actual.*` keys.
+- [x] EN + ES only if CONTRACT adds keys; pending / unavailable / `$0` manual still readable.
+- [x] **No** Cliente cost UI. **No** B-roll clip strip. **No** TTS panel chip (rollup is the TTS/B-roll surface).
+- [x] **CONTRACT Phase B Reviewed by FE** line after amendment (gate, not this PREP).
+
+### Backend / API (nextjs-backend) — Phase B
+
+**Concrete consumers:** Operator video panel · weekly slot sum · US-7.4 rollup (read-only).
+
+- [x] **CONTRACT.md Phase B amendment** — call-site table, TTS exception, poll `cost` DTO, duration on `async_update`; **Reviewed by FE** before BUILD (awaiting nextjs-frontend SIGNOFF).
+- [ ] Pass **`durationSec`** into `finalizeGenerationCost({ mode: "async_update" })` when persist/probe has duration; else null.
+- [ ] Completed spend row: actual **or** closed `actualCostUnavailableReason` — never null/null after successful complete.
+- [ ] Missing `spendEventId` on complete: log; **do not** invent a late INSERT of actual-only.
+- [ ] **TTS trusted path:** persist `durationSec` on spend INSERT (Operator path already does).
+- [ ] **Do not** rewrite manual upload `finalizeGenerationCost` (already actual 0).
+- [ ] **Do not** migrate TTS to `finalizeGenerationCost` this slice.
+- [ ] Operator poll route: include **`OperatorProductionJobCostDto`** (or freeze equivalent) — **`requireOperator` already**; **no** cost on Cliente payloads.
+- [ ] Grep/tests: no client request Zod accepts `actualCostCents`; video/TTS forbidden keys still reject.
+- [ ] Tests: poller complete → ledger actual; fail/cancel → estimate-only unchanged; duration set when known; TTS trusted duration; poll DTO Operator-only.
+
+### Worker / media pipeline (media-pipeline-engineer) — Phase B
+
+- [ ] Confirm talking-head / HeyGen / Wan **`fetchAsset.actualCostCents`** reaches `persistVideoJobOutputAsset` → poller `async_update` (adapters already return catalog/estimate cents).
+- [ ] Wan B-roll complete uses the **same** `applyVideoJobStatusUpdate` path (no second writer).
+- [ ] **No** new adapter (`ltx_broll_high` out). **No** FFmpeg / branding spend.
+- [ ] Unit/golden: complete with `spendEventId` updates spend actual; fail does not.
+
+### Database — Phase B
+
+- [ ] **None** — reuse `neuramark_reel_spend_events.duration_sec` / `actual_cost_unavailable_reason` (Phase A migration).
+
+---
+
+## Agent routing summary
+
+### Phase A (CLOSED)
+| Agent | Owns |
+|-------|------|
+| **media-pipeline-engineer** | LLM token math, SiliconFlow actual, `updateReelSpendEventActual` seam |
+| **nextjs-backend** | DDL, `finalizeGenerationCost` sync, weekly summary, forbidden keys |
+| **nextjs-frontend** | `/operator/scripts` cost column + weekly footer |
+
+### Phase B (this PREP)
+| Agent | Owns |
+|-------|------|
+| **media-pipeline-engineer** | Adapter actual → persist → poller; Wan complete path tests |
+| **nextjs-backend** | CONTRACT Phase B; `durationSec` async_update; TTS trusted duration; poll cost DTO |
+| **nextjs-frontend** | Thin: merge/poll cost on `OperatorVideoJobSummaryPanel` |
+| **spec-guardian** | SPEC-REVIEW Phase B |
+| **security-architect** | SECURITY amend (TTS exception, poll cost Operator-only) |
+
+---
+
 ## Carry-forwards / reuse (do not reinvent)
 
 - Spend ledger: `lib/cost-policy/record-reel-spend-event.ts` · migration `20260830510000_neuramark_reel_spend_events.sql`.
@@ -146,6 +229,7 @@ export type ReelWeekCostSummary = {
 - Scripts UI: `components/scripts/ScriptsPageView.tsx`.
 - Operator gate: `requireOperator()` from US-14.5.
 - Forbidden keys: US-7.1 cost-policy action helpers.
+- Phase B reuse: `lib/cost-policy/finalize-generation-cost.ts` · `apply-video-job-status-update.ts` · `build-operator-production-job-cost.ts` · `OperatorVideoJobSummaryPanel.tsx` · TTS `recordReelSpendEvent` · `upload-manual-video-job.ts`.
 
 ---
 
@@ -206,7 +290,18 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 - [x] VALIDATION.md (requirements-validator — PASS WITH NOTES)
 - [x] QA.md (qa-engineer — APPROVE WITH NOTES after `f60579d`)
 
-**Status:** CLOSED (2026-08-29). Phase A complete; 4/4 AC checked in `plan/USER_STORIES.md`. **Next:** **US-7.4** Report real total cost per Reel (Phase B video/TTS actuals when US-8.4 / US-9.3 land).
+**Status:** CLOSED (2026-08-29). Phase A complete; 4/4 AC checked in `plan/USER_STORIES.md`.
+
+### Phase B — PREP 2026-08-31
+- [x] PREP — [`PHASE-B.md`](./PHASE-B.md) + this Phase B checklist
+- [ ] SPEC-REVIEW.md amendment (spec-guardian)
+- [ ] SECURITY.md amendment (security-architect)
+- [ ] CONTRACT.md Phase B + Reviewed by FE (nextjs-backend → nextjs-frontend)
+- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend)
+- [ ] VALIDATION Phase B — Phase A AC stay [x]; re-verify [SEC]
+- [ ] QA Phase B
+
+**Next:** spec-guardian **SPEC-REVIEW** (Phase B).
 
 ---
 
@@ -223,4 +318,4 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 9. **Historical rows (pre-7.3) with null actual?** **PO lean:** show **pending** in UI; optional P1 backfill script out of BUILD scope.
 10. **Fail closed on spend UPDATE failure (US-7.1 M2)?** **PO lean:** propagate INSERT/UPDATE errors from actual persist — do not swallow (inherit US-7.1 QA note).
 
-No SPEC amendment assumed in PREP: SPEC §3 Cost Policy Engine requires learning true unit economics — US-7.3 implements the spend-ledger actual-cost slice for LLM jobs; US-8.x extends to async video/TTS completion.
+**Phase B open questions:** resolved in [`PHASE-B.md`](./PHASE-B.md) (no remaining PO-unleaned items). SPEC-REVIEW Phase B should confirm spend-ledger canonical + `/operator/scripts` surface vs CONTRACT's historical `/operator/production` name.

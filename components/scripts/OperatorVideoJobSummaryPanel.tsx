@@ -164,19 +164,33 @@ function isInFlightStatus(status: VideoJobStatus): boolean {
   return status === "queued" || status === "processing";
 }
 
-function mergePolledStatus(
+function hasPolledCost(
+  polled: OperatorVideoJobStatusDto | OperatorVideoJobSummaryDto,
+): polled is OperatorVideoJobSummaryDto {
+  return "cost" in polled && polled.cost != null;
+}
+
+/** Merge Operator GET poll into panel state. Copy `cost` when present so Costo real updates without a full reload. */
+export function mergePolledStatus(
   current: OperatorVideoJobSummaryDto,
-  polled: OperatorVideoJobStatusDto,
+  polled: OperatorVideoJobStatusDto | OperatorVideoJobSummaryDto,
 ): OperatorVideoJobSummaryDto {
   return {
     ...current,
     status: polled.status,
+    progressPercent: polled.progressPercent ?? current.progressPercent,
+    sanitizedErrorMessage:
+      polled.sanitizedErrorMessage ?? current.sanitizedErrorMessage,
+    jobId: polled.jobId,
+    reelScriptId: polled.reelScriptId,
     attempt: polled.attempt,
     regenerationCount: polled.regenerationCount,
     failureReason: polled.failureReason,
     canRetry: polled.canRetry,
     retryBlockedReasonKey: polled.retryBlockedReasonKey ?? null,
+    createdAt: polled.createdAt ?? current.createdAt,
     updatedAt: polled.updatedAt,
+    cost: hasPolledCost(polled) ? polled.cost : current.cost,
   };
 }
 
@@ -223,7 +237,9 @@ export function OperatorVideoJobSummaryPanel({
           return;
         }
 
-        const polled = (await response.json()) as OperatorVideoJobStatusDto;
+        const polled = (await response.json()) as
+          | OperatorVideoJobSummaryDto
+          | OperatorVideoJobStatusDto;
         if (cancelled) {
           return;
         }
