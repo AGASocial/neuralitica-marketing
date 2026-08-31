@@ -4,12 +4,14 @@ import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { InputTextarea } from "primereact/inputtextarea";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
 
 import { GenericAvatarDisclosurePreview } from "@/components/preferences/GenericAvatarDisclosurePreview";
+import { ReadyToPublishDownloadPanel } from "@/components/ready-to-publish/ReadyToPublishDownloadPanel";
 import { decideApproval } from "@/lib/approvals/actions/decide-approval";
 import {
   APPROVAL_FEEDBACK_MAX_LENGTH,
@@ -36,6 +38,10 @@ export type ApprovalPackageCopy = {
   videoLabel: string;
   approve: string;
   reject: string;
+  confirmApproveHeader: string;
+  confirmApproveMessage: string;
+  confirmApprove: string;
+  cancelApprove: string;
   confirmReject: string;
   cancelReject: string;
   approving: string;
@@ -47,6 +53,14 @@ export type ApprovalPackageCopy = {
   gateNotReadyHint: string;
   toastApproved: string;
   toastRejected: string;
+  readyToPublish: {
+    title: string;
+    subtitle: string;
+    downloadVideo: string;
+    downloadCaption: string;
+    viewDetail: string;
+    downloadHint: string;
+  };
   status: Record<ApprovalStatus, string>;
   revision: {
     requestChanges: string;
@@ -337,8 +351,26 @@ export function ApprovalPackageView({
     });
   }
 
+  function askToApprove() {
+    if (pending || !isPending || gateBlocksApprove) {
+      return;
+    }
+
+    confirmDialog({
+      header: copy.confirmApproveHeader,
+      message: copy.confirmApproveMessage,
+      acceptLabel: copy.confirmApprove,
+      rejectLabel: copy.cancelApprove,
+      icon: "pi pi-check-circle",
+      accept: () => {
+        runDecide("approved");
+      },
+    });
+  }
+
   return (
     <div style={{ maxWidth: "640px", margin: "0 auto" }}>
+      <ConfirmDialog />
       <Toast ref={toastRef} position="top-right" />
 
       <div style={{ marginBottom: "1.25rem" }}>
@@ -554,6 +586,14 @@ export function ApprovalPackageView({
           </ul>
         )}
       </section>
+
+      {pkg.status === "approved" ? (
+        <ReadyToPublishDownloadPanel
+          approvalId={pkg.approvalId}
+          videoAssetId={pkg.video.assetId}
+          copy={copy.readyToPublish}
+        />
+      ) : null}
 
       {isPending ? (
         <section
@@ -829,7 +869,7 @@ export function ApprovalPackageView({
                 type="button"
                 label={pending ? copy.approving : copy.approve}
                 disabled={pending || gateBlocksApprove}
-                onClick={() => runDecide("approved")}
+                onClick={askToApprove}
               />
               <Button
                 type="button"

@@ -121,6 +121,11 @@ export default async function DashboardPage() {
     href: "/approvals",
   };
 
+  const readyToPublishCard: DashboardCard = {
+    ...t.dashboard.readyToPublishCard,
+    href: "/ready-to-publish",
+  };
+
   // When Ficha viva exists: elevate as primary/first card — no hard redirect.
   const cards: DashboardCard[] = profileExists
     ? [
@@ -128,6 +133,7 @@ export default async function DashboardPage() {
         interviewCard,
         preferencesCard,
         approvalsCard,
+        readyToPublishCard,
         t.dashboard.productionCard,
       ]
     : [
@@ -135,6 +141,7 @@ export default async function DashboardPage() {
         profileCard,
         preferencesCard,
         approvalsCard,
+        readyToPublishCard,
         t.dashboard.productionCard,
       ];
 

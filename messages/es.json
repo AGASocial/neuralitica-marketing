@@ -28,6 +28,11 @@
       "body": "Reels en espera de tu revisión antes de publicar.",
       "cta": "Revisar reels"
     },
+    "readyToPublishCard": {
+      "title": "Listo para publicar",
+      "body": "Reels aprobados con descarga de respaldo para publicar manualmente en Instagram.",
+      "cta": "Ver listo para publicar"
+    },
     "productionCard": {
       "title": "Estado de producción",
       "body": "Sigue guiones, trabajos de video y montaje de esta semana.",
@@ -49,6 +54,7 @@
     "nav": {
       "dashboard": "Panel",
       "approvals": "Aprobaciones",
+      "readyToPublish": "Listo para publicar",
       "playbook": "Playbook de formatos",
       "trends": "Snapshots de tendencias",
       "strategy": "Estrategia semanal",
@@ -364,6 +370,10 @@
       "videoLabel": "Video del paquete",
       "approve": "Aprobar",
       "reject": "Rechazar",
+      "confirmApproveHeader": "¿Aprobar este paquete?",
+      "confirmApproveMessage": "Esto marca el Reel como listo para publicar. Puedes descargar el video y el caption de Instagram para publicar manualmente.",
+      "confirmApprove": "Confirmar aprobación",
+      "cancelApprove": "Cancelar",
       "confirmReject": "Confirmar rechazo",
       "cancelReject": "Cancelar",
       "approving": "Aprobando…",
@@ -420,6 +430,53 @@
       "revisionLimitExceeded": "No te quedan rondas de revisión.",
       "rateLimited": "Demasiados intentos. Espera e inténtalo de nuevo más tarde.",
       "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
+    }
+  },
+  "readyToPublish": {
+    "list": {
+      "title": "Listo para publicar",
+      "subtitle": "Reels aprobados con descarga de respaldo para publicar manualmente en Instagram.",
+      "empty": "Aún no hay Reels aprobados listos para publicar.",
+      "loadError": "No pudimos cargar los Reels listos para publicar. Actualiza la página para intentarlo de nuevo.",
+      "loading": "Cargando listo para publicar…",
+      "backDashboard": "Volver al panel",
+      "viewCta": "Ver",
+      "decidedAt": "Aprobado {date}",
+      "disclosureChip": "Disclosure"
+    },
+    "detail": {
+      "title": "Listo para publicar",
+      "backList": "Volver a listo para publicar",
+      "loading": "Cargando paquete…",
+      "loadError": "No pudimos cargar este paquete. Actualiza la página para intentarlo de nuevo.",
+      "caption": "Caption de Instagram",
+      "selectedCta": "Llamado a la acción",
+      "hashtags": "Hashtags",
+      "disclosureTitle": "Disclosure",
+      "videoLabel": "Video del paquete",
+      "decidedAt": "Aprobado {date}",
+      "downloadsTitle": "Descarga de respaldo",
+      "downloadsSubtitle": "Descarga el video y el caption para publicar manualmente en Instagram.",
+      "downloadVideo": "Descargar video",
+      "downloadCaption": "Descargar caption de Instagram",
+      "downloadHint": "Si una descarga falla, inicia sesión de nuevo o abre esta página desde la app. Contacta a soporte si el problema continúa."
+    },
+    "panel": {
+      "title": "Listo para publicar",
+      "subtitle": "Tu Reel está aprobado. Descarga los archivos de respaldo para publicar manualmente en Instagram.",
+      "downloadVideo": "Descargar video",
+      "downloadCaption": "Descargar caption de Instagram",
+      "viewDetail": "Abrir en listo para publicar",
+      "downloadHint": "Si una descarga falla, inicia sesión de nuevo o actualiza esta página."
+    },
+    "status": {
+      "approved": "Listo para publicar"
+    },
+    "errors": {
+      "notFound": "Ese paquete no se encontró o no está listo para publicar.",
+      "unauthenticated": "Inicia sesión para descargar archivos de respaldo.",
+      "forbidden": "No tienes acceso a esa descarga.",
+      "rateLimited": "Demasiados intentos de descarga. Espera un momento e inténtalo de nuevo."
     }
   },
   "legal": {

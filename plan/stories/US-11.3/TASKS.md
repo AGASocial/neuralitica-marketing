@@ -86,18 +86,18 @@ GET /api/media/assets/[assetId]?disposition=attachment
 
 **Consumers:** `/ready-to-publish` · `/ready-to-publish/[approvalId]` · `/approvals/[approvalId]` (confirm + post-approve panel)
 
-- [ ] Add **`app/(app)/ready-to-publish/page.tsx`** — RSC; call `listApprovedApprovals`; empty / loading / error states.
-- [ ] Add **`app/(app)/ready-to-publish/[approvalId]/page.tsx`** — RSC; `getApprovalPackage`; guard redirect/404 if not `approved`.
-- [ ] Add **`app/(app)/ready-to-publish/layout.tsx`** + loading shells (match `/approvals` pattern).
-- [ ] Create **`ReadyToPublishListView`** (or extend list pattern from `ApprovalsListView`) — cards with `captionPreview`, `decidedAt`, link to detail.
-- [ ] Create detail client island or page section: video preview (inline `previewUrl`) + **Download video** (`previewUrl + '?disposition=attachment'`) + **Download caption** (`/api/approvals/{id}/caption.txt`).
-- [ ] **`ApprovalPackageView`**: wrap Approve in **ConfirmDialog** (`approvals.detail.confirmApprove` / cancel copy); no behavior change to `decideApproval` payload.
-- [ ] After approve success: render **ready-to-publish panel** (download links + link to `/ready-to-publish/[approvalId]`); keep read-only package per US-11.1 post-decide freeze.
-- [ ] Wire dashboard **`readyToPublishCard`** → `/ready-to-publish` (`messages/en.json` + `es.json`).
-- [ ] Add header nav **`header.nav.readyToPublish`** (Cliente; EN/ES).
-- [ ] i18n namespace **`readyToPublish.*`**: list title/subtitle/empty/error, detail title, download video/caption labels, back links, status tag `approved`.
-- [ ] Mobile-friendly download CTAs (touch targets; same layout patterns as approvals).
-- [ ] Map export/download errors (404, 401) to user-facing copy — no raw error codes in UI.
+- [x] Add **`app/(app)/ready-to-publish/page.tsx`** — RSC; call `listApprovedApprovals`; empty / loading / error states.
+- [x] Add **`app/(app)/ready-to-publish/[approvalId]/page.tsx`** — RSC; `getApprovalPackage`; guard redirect/404 if not `approved`.
+- [x] Add **`app/(app)/ready-to-publish/layout.tsx`** + loading shells (match `/approvals` pattern).
+- [x] Create **`ReadyToPublishListView`** (or extend list pattern from `ApprovalsListView`) — cards with `captionPreview`, `decidedAt`, link to detail.
+- [x] Create detail client island or page section: video preview (inline `previewUrl`) + **Download video** (`mediaAttachmentDownloadUrl`) + **Download caption** (`captionExportUrl`).
+- [x] **`ApprovalPackageView`**: wrap Approve in **ConfirmDialog** (`approvals.detail.confirmApprove` / cancel copy); no behavior change to `decideApproval` payload.
+- [x] After approve success: render **ready-to-publish panel** (download links + link to `/ready-to-publish/[approvalId]`); keep read-only package per US-11.1 post-decide freeze.
+- [x] Wire dashboard **`readyToPublishCard`** → `/ready-to-publish` (`messages/en.json` + `es.json`).
+- [x] Add header nav **`header.nav.readyToPublish`** (Cliente; EN/ES).
+- [x] i18n namespace **`readyToPublish.*`**: list title/subtitle/empty/error, detail title, download video/caption labels, back links, status tag `approved`.
+- [x] Mobile-friendly download CTAs (touch targets; same layout patterns as approvals).
+- [x] Map export/download errors (404, 401) to user-facing copy — no raw error codes in UI.
 
 ---
 

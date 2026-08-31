@@ -40,6 +40,12 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
           <Link href="/approvals" style={{ color: "#374151", textDecoration: "none" }}>
             {t.header.nav.approvals}
           </Link>
+          <Link
+            href="/ready-to-publish"
+            style={{ color: "#374151", textDecoration: "none" }}
+          >
+            {t.header.nav.readyToPublish}
+          </Link>
           {user.role === "operator" ? (
             <>
               <Link

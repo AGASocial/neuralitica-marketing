@@ -28,6 +28,11 @@
       "body": "Reels waiting for your review before publishing.",
       "cta": "Review reels"
     },
+    "readyToPublishCard": {
+      "title": "Ready to publish",
+      "body": "Approved Reels with backup downloads for manual Instagram posting.",
+      "cta": "View ready to publish"
+    },
     "productionCard": {
       "title": "Production status",
       "body": "Track scripts, video jobs, and assembly for this week.",
@@ -49,6 +54,7 @@
     "nav": {
       "dashboard": "Dashboard",
       "approvals": "Approvals",
+      "readyToPublish": "Ready to publish",
       "playbook": "Format catalog",
       "trends": "Trend snapshots",
       "strategy": "Weekly strategy",
@@ -364,6 +370,10 @@
       "videoLabel": "Package video",
       "approve": "Approve",
       "reject": "Reject",
+      "confirmApproveHeader": "Approve this package?",
+      "confirmApproveMessage": "This marks the Reel as ready to publish. You can download the video and Instagram caption for manual posting.",
+      "confirmApprove": "Confirm approve",
+      "cancelApprove": "Cancel",
       "confirmReject": "Confirm reject",
       "cancelReject": "Cancel",
       "approving": "Approving…",
@@ -420,6 +430,53 @@
       "revisionLimitExceeded": "You have no revision rounds remaining.",
       "rateLimited": "Too many attempts. Please wait and try again later.",
       "internal": "Something went wrong. Please try again later."
+    }
+  },
+  "readyToPublish": {
+    "list": {
+      "title": "Ready to publish",
+      "subtitle": "Approved Reels with backup downloads for manual Instagram posting.",
+      "empty": "No approved Reels ready to publish yet.",
+      "loadError": "We could not load ready-to-publish Reels. Refresh the page to try again.",
+      "loading": "Loading ready to publish…",
+      "backDashboard": "Back to dashboard",
+      "viewCta": "View",
+      "decidedAt": "Approved {date}",
+      "disclosureChip": "Disclosure"
+    },
+    "detail": {
+      "title": "Ready to publish",
+      "backList": "Back to ready to publish",
+      "loading": "Loading package…",
+      "loadError": "We could not load this package. Refresh the page to try again.",
+      "caption": "Instagram caption",
+      "selectedCta": "Call to action",
+      "hashtags": "Hashtags",
+      "disclosureTitle": "Disclosure",
+      "videoLabel": "Package video",
+      "decidedAt": "Approved {date}",
+      "downloadsTitle": "Backup downloads",
+      "downloadsSubtitle": "Download the video and caption to post manually on Instagram.",
+      "downloadVideo": "Download video",
+      "downloadCaption": "Download Instagram caption",
+      "downloadHint": "If a download fails, sign in again or open this page from the app. Contact support if the problem continues."
+    },
+    "panel": {
+      "title": "Ready to publish",
+      "subtitle": "Your Reel is approved. Download the backup files for manual Instagram posting.",
+      "downloadVideo": "Download video",
+      "downloadCaption": "Download Instagram caption",
+      "viewDetail": "Open in ready to publish",
+      "downloadHint": "If a download fails, sign in again or refresh this page."
+    },
+    "status": {
+      "approved": "Ready to publish"
+    },
+    "errors": {
+      "notFound": "That package was not found or is not ready to publish.",
+      "unauthenticated": "Please log in to download backup files.",
+      "forbidden": "You do not have access to that download.",
+      "rateLimited": "Too many download attempts. Please wait and try again later."
     }
   },
   "legal": {
