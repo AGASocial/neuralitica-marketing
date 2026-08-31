@@ -1,9 +1,9 @@
-Reviewed by FE: **pending** — Operator “Generate with HeyGen” surface (Phase B).
+Reviewed by FE: **approved** — 2026-08-31 — nextjs-frontend.
 
 # API Contract — US-8.7 HeyGen adapter (high tier / operator fallback, P1)
 
 **Story:** US-8.7  
-**Status:** Frozen — 2026-08-31 (FE signoff pending)  
+**Status:** Frozen — 2026-08-31 (Reviewed by FE)  
 **Security:** `plan/stories/US-8.7/SECURITY.md` (APPROVE WITH CONDITIONS — reconciled below; **12** conditions)  
 **Spec review:** `plan/stories/US-8.7/SPEC-REVIEW.md` (GAPS — resolved by freezes below)  
 **Depends on:** US-8.1 ✅ adapter interface + registry + normalizers + stub `heygen_high` · US-X.4 ✅ catalog seed · US-8.2 ✅ SadTalker pattern · US-8.4 ✅ jobs + poller + retry · US-8.6 ✅ allowlist extension · US-7.2 ✅ tier floor · US-7.1 ✅ budget · US-3.2 ✅ consent · US-3.3 ✅ avatar assets · US-5.1 ✅ reel script  
@@ -524,7 +524,25 @@ Reuse existing `videoJobMutationErrorSchema` envelope.
 | After success | Existing US-8.4 status badges / poll (provider-agnostic) |
 | States | Loading / error / ineligible covered |
 
-**FE signoff line:** add `Reviewed by FE: <name> — <date>` at top of this file when signed.
+**FE signoff:** approved at top of this file (2026-08-31 — nextjs-frontend).
+
+### Reviewed by FE — BUILD constraints (non-blocking)
+
+**Verdict:** approved. Phase B Operator surface is feasible against existing US-8.4 `/operator/scripts` patterns.
+
+| Concern | FE BUILD constraint |
+|---------|---------------------|
+| Host | Mount on `/operator/scripts` expand row (`ScriptsPageView` / `ReelDetailPanel`) alongside `OperatorVideoJobSummaryPanel` — not a new route. |
+| Confirm UI | Mirror `VideoJobRetryConfirmDialog`: PrimeReact `Dialog` + preview load + estimate display + confirm/cancel (not `confirmDialog()`). |
+| Preview → submit | Call `previewHeygenTalkingHeadEstimate` before enable confirm; submit `createHeygenTalkingHeadVideoJob` with `confirmEstimateCents` from preview only. Never send `provider_key` / `engine` / `tier` / absolute URLs. |
+| Visibility | Drive show/enable from preview `eligibilityPath ∈ { high_tier, operator_fallback }` (call preview on expand or on open). Do **not** invent client-side eligibility from `provider_key` alone. Hide entirely for Cliente (Operator layout already gates page). |
+| Request fields | `reelScriptId`, `clientId`, `targetDurationSec` from existing week-load / script package context; optional `voiceoverAssetId` / `portraitAssetId` when already known — server re-resolves matrix. |
+| i18n | New keys under **`scripts.heygen.*`** (label, confirm title/body, loading, estimated, blocked/ineligible reasons, errors for `HEYGEN_FALLBACK_INELIGIBLE` · `HEYGEN_CONFIG_MISSING` · `BUDGET_EXCEEDED` · `CONSENT_REVOKED` · `PROVIDER_UNAVAILABLE` · `FORBIDDEN` · `VALIDATION_ERROR` · `INTERNAL_ERROR`) — EN + ES. Reuse `scripts.videoJob.status.*` badges after create. |
+| Error mapping | Reuse `videoJobMutationErrorSchema` envelope + `messageForErrorCode` pattern from retry dialog; map new HeyGen codes + optional `blockedReasonKey` / `messageKey`. |
+| Post-success | Refresh / overlay job via existing US-8.4 poll + status tags — provider-agnostic. |
+| States | Loading (preview), error (preview/submit), ineligible (`eligible: false`), pending (submit) — all covered by Dialog pattern. |
+
+No CONTRACT blockers. Soft preference only: if BE later attaches HeyGen eligibility on week-load DTO, FE may use it to avoid an extra preview round-trip for button visibility — not required for V1.
 
 ---
 
@@ -654,3 +672,4 @@ Reuse existing `videoJobMutationErrorSchema` envelope.
 | Date | Change |
 |------|--------|
 | 2026-08-31 | Initial freeze — Phase A HeyGen adapter + Phase B activate/orchestrator/fallback/FE; resolves SPEC-REVIEW High gaps + SECURITY 12 conditions; Zod mirrors in `heygen-high.ts` + `video-job.ts` + `providers.ts`; **Reviewed by FE: pending** |
+| 2026-08-31 | **Reviewed by FE: approved** — nextjs-frontend; Phase B Operator surface feasible vs US-8.4 retry Dialog pattern; BUILD constraints recorded under § FE contract |

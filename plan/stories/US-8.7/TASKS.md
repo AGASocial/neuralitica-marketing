@@ -231,13 +231,13 @@ All objects keep `neuramark_` prefix.
 
 - [x] SPEC-REVIEW.md (spec-guardian)
 - [x] SECURITY.md (security-architect)
-- [x] CONTRACT.md authored (nextjs-backend — frozen 2026-08-31; **Reviewed by FE:** pending)
+- [x] CONTRACT.md authored (nextjs-backend — frozen 2026-08-31; **Reviewed by FE:** approved 2026-08-31)
 - [ ] BUILD Phase A (media-pipeline-engineer + nextjs-backend)
 - [ ] BUILD Phase B (BE + DB + FE)
 - [ ] VALIDATION.md (requirements-validator)
 - [ ] QA.md (qa-engineer)
 
-**Status:** CONTRACT frozen. **Next:** FE Reviewed by FE → BUILD A → BUILD B.
+**Status:** CONTRACT frozen + FE signoff. **Next:** BUILD A → BUILD B.
 
 ---
 
