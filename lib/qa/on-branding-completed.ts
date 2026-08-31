@@ -1,7 +1,7 @@
 import "server-only";
 
 import { runQaForAssembledReelForClient } from "@/lib/qa/run-qa-for-assembled-reel";
-import { loadActiveRevisionForAssembledReel } from "@/lib/approvals/revision/persist-revision-routing";
+import { loadActiveRevisionForAssembledReel } from "@/lib/approvals/load-active-revision-for-assembled-reel";
 import { tryRequeueAfterRevisionForAssembledReel } from "@/lib/approvals/revision/try-requeue-after-revision";
 
 /**

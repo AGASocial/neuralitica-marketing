@@ -132,6 +132,16 @@ export async function applyVideoJobStatusUpdate(
     throw new Error("Failed to update video job status");
   }
 
+  if (nextStatus === "completed") {
+    const { onVideoJobCompletedRevision } = await import(
+      "@/lib/approvals/revision/on-video-job-completed-revision"
+    );
+    await onVideoJobCompletedRevision({
+      reelScriptId: job.reelScriptId,
+      clientId: job.clientId,
+    });
+  }
+
   return {
     ok: true,
     jobId: job.id,

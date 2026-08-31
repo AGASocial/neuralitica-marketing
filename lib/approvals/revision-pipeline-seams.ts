@@ -18,7 +18,6 @@ import { loadAssemblyJobScoped } from "@/lib/assembly/load-assembly-job";
 import { buildRevisionContext } from "@/lib/approvals/build-revision-context";
 import { loadActiveRevisionForAssembledReel } from "@/lib/approvals/load-active-revision-for-assembled-reel";
 import { findClientRevisionRound } from "@/lib/approvals/parse-change-requests";
-import { loadApprovalByAssembledReelScoped } from "@/lib/approvals/persist-approval";
 import { loadReelScriptForQa } from "@/lib/qa/load-reel-script-for-qa";
 import { runQaForAssembledReelForClient } from "@/lib/qa/run-qa-for-assembled-reel";
 import { generateReelCaptionsForClient } from "@/lib/reel-captions/generate-reel-captions-for-client";

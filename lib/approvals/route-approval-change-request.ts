@@ -11,9 +11,11 @@ import {
   type RouteApprovalChangeRequestParams,
 } from "@/lib/contracts/approval-revision";
 import { buildRevisionContext } from "@/lib/approvals/build-revision-context";
-import { loadApprovalByIdScoped } from "@/lib/approvals/persist-approval";
-import { executeRevisionMediaSteps } from "@/lib/approvals/revision/execute-revision-media-steps";
-import { tryMarkRevisionRoutingStarted } from "@/lib/approvals/revision/persist-revision-routing";
+import { findClientRevisionRound } from "@/lib/approvals/parse-change-requests";
+import {
+  loadApprovalByIdScoped,
+  markRevisionRoutingStarted,
+} from "@/lib/approvals/persist-approval";
 import {
   enqueueRevisionPipelineStep,
   getFirstRevisionPipelineStep,
@@ -37,6 +39,20 @@ export async function routeApprovalChangeRequest(
   if (!approval || approval.status !== "changes_requested") {
     return;
   }
+
+  const roundEntry = findClientRevisionRound(
+    approval.changeRequests,
+    input.round,
+  );
+  if (roundEntry?.routingStartedAt) {
+    return;
+  }
+
+  await markRevisionRoutingStarted({
+    approvalId: input.approvalId,
+    clientId: input.clientId,
+    round: input.round,
+  });
 
   const plan = computeRevisionRoutingPlan(input.changeRequest.tags);
   const revisionContext = buildRevisionContext({
@@ -63,36 +79,6 @@ export async function routeApprovalChangeRequest(
     return;
   }
 
-  const started = await tryMarkRevisionRoutingStarted({
-    approvalId: input.approvalId,
-    clientId: input.clientId,
-    round: input.round,
-  });
-  if (!started) {
-    return;
-  }
-
   const firstStep = getFirstRevisionPipelineStep(plan);
-
-  if (firstStep === "assembly" || firstStep === "branding") {
-    const mediaResult = await executeRevisionMediaSteps({
-      approvalId: input.approvalId,
-      assembledReelId: input.assembledReelId,
-      clientId: input.clientId,
-      round: input.round,
-      reelScriptId: ctx.reelScriptId,
-      steps: plan.steps,
-    });
-    if (!mediaResult.ok) {
-      console.error("[approvals] revision media steps failed", {
-        approvalId: input.approvalId,
-        round: input.round,
-        step: mediaResult.step,
-        code: mediaResult.code,
-      });
-    }
-    return;
-  }
-
   await enqueueRevisionPipelineStep(ctx, firstStep);
 }

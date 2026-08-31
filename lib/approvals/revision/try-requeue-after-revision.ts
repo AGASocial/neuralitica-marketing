@@ -2,7 +2,7 @@ import "server-only";
 
 import { requeueApprovalAfterRevision } from "@/lib/approvals/requeue-approval-after-revision";
 
-import { loadActiveRevisionForAssembledReel } from "./persist-revision-routing";
+import { loadActiveRevisionForAssembledReel } from "@/lib/approvals/load-active-revision-for-assembled-reel";
 
 /**
  * Completion hook for caption-only and media revision paths.

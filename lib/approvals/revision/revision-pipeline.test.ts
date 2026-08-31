@@ -53,14 +53,13 @@ describe("US-11.2 revision pipeline wiring", () => {
       path.join(repoRoot, "lib/approvals/revision/index.ts"),
       "utf8",
     );
-    assert.match(indexSrc, /executeRevisionMediaSteps/);
-    assert.match(indexSrc, /enqueueRevisionAssembly/);
-    assert.match(indexSrc, /enqueueRevisionBranding/);
+    assert.match(indexSrc, /enqueueRevisionPipelineStep/);
+    assert.match(indexSrc, /continueRevisionPipelineAfterStep/);
     assert.match(indexSrc, /tryRequeueAfterRevisionForAssembledReel/);
-    assert.match(indexSrc, /tryMarkRevisionRoutingStarted/);
+    assert.match(indexSrc, /onVideoJobCompletedRevision/);
   });
 
-  it("requeueApprovalAfterRevision is server-only and checks gate", () => {
+  it("requeueApprovalAfterRevision checks gate before requeue", () => {
     const src = readFileSync(
       path.join(repoRoot, "lib/approvals/requeue-approval-after-revision.ts"),
       "utf8",
@@ -68,21 +67,20 @@ describe("US-11.2 revision pipeline wiring", () => {
     assert.match(src, /import "server-only"/);
     assert.match(src, /getQaGateStatusForAssembledReel/);
     assert.match(src, /changes_requested/);
-    assert.match(src, /pending_client/);
+    assert.match(src, /requeueApprovalRow/);
     assert.match(src, /revalidatePath\("\/approvals"\)/);
   });
 
-  it("executeRevisionMediaSteps uses idempotency guard before enqueue", () => {
+  it("revision-pipeline-seams wires assembly branding video tts", () => {
     const src = readFileSync(
-      path.join(
-        repoRoot,
-        "lib/approvals/revision/execute-revision-media-steps.ts",
-      ),
+      path.join(repoRoot, "lib/approvals/revision-pipeline-seams.ts"),
       "utf8",
     );
-    assert.match(src, /tryMarkRevisionRoutingStarted/);
     assert.match(src, /createAssemblyJobForClientTrusted/);
     assert.match(src, /source: "revision"/);
+    assert.match(src, /createTalkingHeadVideoJob/);
+    assert.match(src, /synthesizeVoiceoverForClientTrusted/);
+    assert.match(src, /continueRevisionPipelineAfterStep/);
   });
 
   it("onBrandingCompleted chains revision QA and requeue hook", () => {
@@ -91,7 +89,7 @@ describe("US-11.2 revision pipeline wiring", () => {
       "utf8",
     );
     assert.match(src, /loadActiveRevisionForAssembledReel/);
-    assert.match(src, /invokedBy: "revision"/);
+    assert.match(src, /"revision"/);
     assert.match(src, /tryRequeueAfterRevisionForAssembledReel/);
   });
 
@@ -106,6 +104,14 @@ describe("US-11.2 revision pipeline wiring", () => {
     assert.match(src, /invokedBy === "revision"/);
     assert.match(src, /requeueApprovalAfterRevision/);
     assert.match(src, /pathKind: "caption_only"/);
+  });
+
+  it("video job completion chains revision pipeline", () => {
+    const src = readFileSync(
+      path.join(repoRoot, "lib/video-jobs/apply-video-job-status-update.ts"),
+      "utf8",
+    );
+    assert.match(src, /onVideoJobCompletedRevision/);
   });
 
   it("assembly trusted path supports revision invoke", () => {
@@ -125,16 +131,13 @@ describe("US-11.2 revision pipeline wiring", () => {
     assert.match(src, /qaInvokerSchema = z\.enum\(\["operator", "system", "revision"\]\)/);
   });
 
-  it("persists routingStartedAt for in-flight guard", () => {
+  it("router idempotency guard uses routingStartedAt", () => {
     const src = readFileSync(
-      path.join(
-        repoRoot,
-        "lib/approvals/revision/persist-revision-routing.ts",
-      ),
+      path.join(repoRoot, "lib/approvals/route-approval-change-request.ts"),
       "utf8",
     );
     assert.match(src, /routingStartedAt/);
-    assert.match(src, /routingCompletedAt/);
+    assert.match(src, /markRevisionRoutingStarted/);
   });
 
   it("UNTRUSTED_CLIENT_CHANGE_REQUEST_TAG is exported for content-agents", () => {
