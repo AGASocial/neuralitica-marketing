@@ -223,3 +223,130 @@ When `plan/stories/US-15.1/CONTRACT.md` exists, spot-check before BUILD:
 3. **Reuse acquire/idempotency** for live runs — no duplicate spend on retry.
 4. **Approval gate** — Reels reach queue; no auto-approve publish.
 5. **Sequential client processing** retained unless CONTRACT adds explicit concurrency cap with budget policy review.
+
+---
+
+# Binding Phase B Security Delta — Live pipeline + Operator trigger
+
+**Date:** 2026-08-31
+
+**Scope:** Phase B only — live weekly runner, dual-path strategy gate, asynchronous provider/worker handoff, partial failures, Operator manual trigger, and minimal Operator status UI.
+
+**Sources reviewed:** Phase A implementation and tests; this story's README, TASKS, CONTRACT, VALIDATION and QA; ADR-0001/0002/0003; US-4.1/4.2, US-5.1, US-6.1, US-7.1/7.2, US-8.4/8.5/8.7/8.8, US-9.1/9.2/9.3, US-10.1, US-11.1 and US-14.5 contracts/security artifacts.
+**Authority:** This delta is additive to the Phase A review above. Phase A constraints remain binding unless this section explicitly narrows a Phase B transition.
+
+## Phase B Verdict: APPROVE WITH CONDITIONS
+
+Phase B may proceed to CONTRACT freeze, but **must not enter BUILD** until the CONTRACT incorporates every required decision below and receives the required FE signoff. There is no security approval for a generic synchronous “run all steps” loop: ADR-0003 requires Vercel to enqueue/dispatch long-running work and durable callbacks/workers to resume the run.
+
+The secure dual-path choice is **strategy auto-approval by the trusted System runner after full draft validation**, with explicit audit metadata. A broad scripts-side “accept any draft when `invokedBy: system`” bypass is **vetoed** because it weakens the existing approved-strategy invariant for every downstream caller and makes malformed/stale drafts easier to consume.
+
+## Binding Phase B Decisions
+
+### 1. Strategy gate: validated System auto-approval only
+
+- The System path calls the existing server-only strategy generator, validates the persisted draft against the current full strategy schema and verifies exact `client_id` + `week_start` ownership, then performs a dedicated conditional transition `draft -> approved` with `approved_by_actor = system` (or equivalent auditable actor field).
+- The transition must be compare-and-set/idempotent: it cannot overwrite an Operator-edited or already-approved row, approve a stale week, or approve a draft belonging to another tenant.
+- Operator/manual script generation keeps the existing explicit approval requirement. `generateReelScriptsForClient({ invokedBy: "system" })` may consume only the exact strategy id returned by the validated auto-approval step; it must not accept arbitrary drafts.
+
+### 2. Authority and tenant scope
+
+- Every live orchestration module and every callable seam that accepts `invokedBy: "system"` is `import "server-only"`, is not exported from a client-consumed barrel, and has no direct Route Handler or Server Action wrapper other than the weekly runner's trusted entry points.
+- The cron path derives target clients exclusively from server-side eligibility. Request body/query cannot select `clientId`, `weekStart`, provider, tier, budget, consent, retry, or live mode.
+- `triggerWeeklyCycleForClient` calls `await requireOperator("handler")` as its **first await**, then validates an exact input schema. V1 scope is **any active client** for a verified Operator, resolved by server-side lookup; Cliente sessions are forbidden and nonexistent/inactive targets return a non-enumerating not-found/forbidden envelope.
+- Manual `weekStart`, if supported, must be a canonical ISO Monday within a CONTRACT-frozen bounded window. It is never accepted as an arbitrary historical replay key.
+- Minimal UI receives only run/status DTOs from server loaders/actions. It never receives service-role credentials, provider secrets, provider raw payloads, prompts, full strategy/profile content, cost-policy internals, or cross-tenant run lists.
+
+### 3. Live activation and rollback
+
+- Live mode is enabled only by a **server environment allowlist/kill switch** (for example `WEEKLY_CYCLE_LIVE_ENABLED=true`) checked at the runner root after authentication and before acquire/spend. Query parameters, request JSON, cookies, local storage, or UI props cannot enable it.
+- Rollout starts with an explicit server-side client allowlist or a CONTRACT-frozen maximum clients per cron tick. Sequential processing remains the default; no unbounded `Promise.all` provider burst.
+- Disabling the switch prevents **new** live acquisitions/enqueues immediately. It does not mutate or delete existing jobs. In-flight provider/worker callbacks may persist terminal state and owned assets but may not enqueue a new downstream spend step while disabled; the run records `LIVE_DISABLED` / `paused` (exact CONTRACT state).
+- Rollback is forward-safe: no downgrade of the Phase A migration, no deletion of audit/step history, and dry-run remains available. Re-enabling resumes only through the same idempotent resume API.
+
+### 4. Eligibility, budget, consent and active rechecks
+
+- Initial cron enumeration is not sufficient authority. Before **each spend-producing step or retry**, server code rechecks: client still active; exact tenant ownership; current cost policy and cumulative budget; provider eligibility; and current consent/assets required for the selected visual mode.
+- A client becoming inactive pauses/fails the run before the next enqueue. No new LLM/provider/worker job is created.
+- Budget and consent checks occur inside the same trusted job-creation orchestrators used by Operator flows, immediately before provider submission. The weekly runner must not duplicate or bypass those gates.
+- `BUDGET_EXCEEDED`, `CONSENT_REQUIRED`/`CONSENT_REVOKED`, `CLIENT_INACTIVE`, `PROVIDER_UNAVAILABLE`, and policy rejection are explicit per-slot step failures visible to Operator in sanitized form. They are never silent skips and never trigger fallback spend without a fresh gate.
+- System runs cannot set `budgetOverride`, `retryOverride`, provider keys/tiers, estimates, or consent flags. Overrides remain explicit Operator actions with existing audit requirements and do not cause the weekly runner to auto-resume unless CONTRACT freezes an intentional, idempotent resume action.
+
+### 5. Acquire, idempotency and resume semantics
+
+- The existing unique `(client_id, week_start)` ledger remains the single authority for cron and Operator paths. There is no alternate live ledger or “force run” bypass.
+- Phase A outcomes remain additive and exact: malformed JSON returns **`INVALID_JSON`**; acquire returns `replan: "ALLOWED" | "BLOCKED"`; the Phase A planner returns **`RUN_NOT_REPLANNABLE`** when persistence is blocked. Phase B must not collapse these to `INTERNAL_ERROR` at a public/manual boundary or reinterpret `BLOCKED` as permission to start live work.
+- CONTRACT must freeze the one-way conversion of an existing `dry_run` row into a live run. Recommended invariant: a compare-and-set transition on the same row from `dry_run` to `running`; `replan: ALLOWED` permits only dry-run plan replacement before that transition. Once any live step is claimed/enqueued, acquire/resume reports `replan: BLOCKED`.
+- Each spend or enqueue operation has a stable idempotency key derived from `runId + slot + step + attempt` (and is persisted before/with dispatch). A callback or retry with the same key cannot submit a second provider job or duplicate an assembly/approval record.
+- Resume is **state-driven, not caller-directed**: the server loads the run and advances only the next eligible step(s). Clients cannot send `fromStep`, `skipStep`, `markCompleted`, provider job ids, attempt number, or arbitrary step logs.
+- `running`/`pending_provider`/`pending_worker` runs return an already-running/resumable outcome; `completed` returns already-completed; terminal `failed` resumes only through a dedicated Operator-authorized action and only failed/retriable slots. It never reruns successful slots.
+
+### 6. Asynchronous provider and assembly handoff
+
+- The cron Route Handler and manual Server Action enqueue/dispatch work and return promptly. They do not poll providers, download media, execute FFmpeg, or wait for the full weekly cycle.
+- Provider/worker callbacks or pollers authenticate using their existing HMAC/worker contract, resolve job/run identity from server-side persisted linkage, and use conditional transitions. Callback payload `client_id`, status, asset URL, cost, or next step is untrusted until matched to the stored job.
+- A step enters `pending_provider` or `pending_worker` only after durable job linkage is written. The dispatcher uses an outbox/claim token or equivalent retry-safe handoff so a crash between DB write and enqueue is recoverable without duplicate spend.
+- Only a successful terminal step may enqueue its direct successor. Assembly completion may enqueue branding; branding completion may enqueue QA; QA pass may ensure approval. No callback can jump directly to approval or publish.
+- Stale pending jobs are detected by the existing bounded timeout/sweeper contract and recorded as failures; they are not retried forever by the weekly runner.
+
+### 7. Partial failures and safe observability
+
+- State is tracked per slot and step. A failure in one slot may allow independent slots to continue, but dependent steps for the failed slot remain blocked/skipped with a causal code. The aggregate run is `completed` only when all required slots reached approval; otherwise it is a CONTRACT-frozen partial/failed terminal state.
+- `step_log` is append-only or concurrency-safe and uses an allowlisted schema such as `{ slotIndex?, step, status, errorCode?, attempt?, at, jobId? }`. The UI must not accept or write it directly.
+- Persist/return only allowlisted error codes. Never persist or expose stack traces, exception messages, Authorization headers, provider request/response bodies, signed URLs, prompt/profile content, env names/values, or secret-bearing webhook data.
+- Server logs correlate `runId`, `clientId`, slot, step and opaque job id. Provider errors are normalized before logging. Operator responses use minimal codes and localized copy.
+
+### 8. Retry limits
+
+- Automatic dispatch retry is bounded and only for transient pre-acceptance/handoff failures. CONTRACT must freeze the count, backoff and retryable code allowlist; recommended ceiling is **3 attempts per slot+step**, reusing existing job-attempt limits when stricter.
+- Provider regeneration/retry that can spend is never an invisible transport retry: it creates/reuses explicit lineage, rechecks active/budget/consent/policy, uses a new bounded attempt idempotency key, and obeys the existing max-attempt/Operator-override audit contract.
+- Validation, consent, budget, inactive-client, auth, policy, and deterministic schema failures are non-retryable. A retry storm or repeated callback cannot advance the run twice.
+
+### 9. Approval boundary and no automatic Instagram publish
+
+- The terminal weekly-cycle operation is an idempotent **ensure approval queue** action for a QA-passed Reel package. It does not approve on behalf of Cliente and does not invoke Instagram Graph create-container, publish-now, scheduled publish, or any generic publish helper.
+- ADR-0002 remains downstream and separate: publishing requires the existing Cliente approval state plus its own authorized workflow. Neither `invokedBy: "system"` nor Operator manual cycle is a publish authority.
+
+## Phase B Security Acceptance Criteria
+
+- [ ] **[SEC-B]** CONTRACT freezes validated System strategy auto-approval; arbitrary draft-bypass is absent and Operator path still requires explicit strategy approval.
+- [ ] **[SEC-B]** All `invokedBy: "system"` seams are server-only and callable solely from trusted orchestration; no browser-controllable `invokedBy`, live flag, provider, policy, consent, retry, or tenant authority.
+- [ ] **[SEC-B]** Manual trigger runs `requireOperator("handler")` first, validates exact input, scopes to a server-resolved active client, and shares the cron ledger/orchestrator.
+- [ ] **[SEC-B]** Client active state, tenant ownership, current budget/policy and applicable consent are rechecked immediately before every spend/enqueue and every spending retry.
+- [ ] **[SEC-B]** Existing Phase A outcomes remain additive: `INVALID_JSON`; acquire `replan: ALLOWED | BLOCKED`; runner `RUN_NOT_REPLANNABLE`.
+- [ ] **[SEC-B]** Live conversion, acquire and resume use conditional state transitions and stable per-step idempotency keys; successful slots are never rerun.
+- [ ] **[SEC-B]** Vercel only dispatches/enqueues; durable provider/worker callbacks authenticate, validate persisted job linkage and advance one legal transition at a time.
+- [ ] **[SEC-B]** Partial failures are per-slot/per-step, dependency-safe and sanitized; no secrets, raw provider payloads, signed URLs, prompts, profiles or stack traces reach `step_log`, logs or UI.
+- [ ] **[SEC-B]** Automatic retries are bounded, backoff-controlled and limited to transient failures; every spending retry rechecks gates and preserves audited lineage.
+- [ ] **[SEC-B]** Live mode uses a server-only kill switch plus bounded rollout; disable prevents new spend and resume while allowing safe terminal bookkeeping for in-flight jobs.
+- [ ] **[SEC-B]** Weekly cycle terminates at QA-passed approval-queue ensure; no code path invokes Instagram publish or grants approval authority to System/Operator cycle.
+- [ ] **[SEC-B]** Operator UI is minimal, EN/ES, server-loaded and tenant-safe; pending state disables duplicate trigger and sanitized status reveals no sensitive internals.
+
+## Required CONTRACT Freeze Before Phase B BUILD
+
+1. Exact strategy auto-approval helper, audit fields, compare-and-set behavior and error codes.
+2. Exact live ledger state machine, including `dry_run -> running`, partial terminal state, `pending_provider`/`pending_worker`, pause on kill switch, and legal resume transitions.
+3. Exact acquire/live/resume envelopes preserving `INVALID_JSON`, `ALLOWED | BLOCKED`, and `RUN_NOT_REPLANNABLE` additively.
+4. Exact per-step idempotency-key storage, dispatcher/outbox recovery rule, callback authentication/linkage and successor transition ownership.
+5. Exact active/budget/consent/policy gate order for strategy, scripts, captions, primary video, TTS, B-roll and retry paths.
+6. Exact retry ceilings, backoff, transient allowlist, stale timeout and Operator override/resume audit behavior.
+7. Exact `step_log` schema, allowlisted error codes, aggregate partial-failure status and minimal Operator DTO/action input.
+8. Exact live enable/disable env, rollout allowlist/cap and rollback behavior.
+
+## Phase B BUILD Vetoes
+
+| Verdict | Condition |
+|---|---|
+| **VETO** | Scripts accept arbitrary `draft` solely because caller supplies `invokedBy: "system"` |
+| **VETO** | Any browser input enables live mode or controls `clientId`, provider, policy, consent, retry, step state or System actor |
+| **VETO** | Manual trigger omits first-await `requireOperator("handler")`, active-client lookup, or shared idempotency ledger |
+| **VETO** | Live work starts when acquire says `replan: BLOCKED`, or Phase A `INVALID_JSON` / `RUN_NOT_REPLANNABLE` semantics are removed |
+| **VETO** | Cron/Server Action polls providers, downloads media, executes FFmpeg, or waits for complete assembly |
+| **VETO** | Spend/enqueue occurs without fresh active + budget/policy + applicable consent checks |
+| **VETO** | Retry is unbounded, reruns successful slots, or duplicates provider/assembly/approval side effects |
+| **VETO** | Raw errors, provider payloads, signed URLs, secrets, prompts/profiles or stack traces enter logs, ledger DTOs or UI |
+| **VETO** | Weekly cycle calls any Instagram publish surface or bypasses Cliente approval |
+
+## Residual Decisions / Blockers
+
+No additional user choice is required for the security floor. The CONTRACT authors must choose exact state/error names, kill-switch name, rollout cap/allowlist representation, retry/backoff values, stale timeout and callback/outbox mechanism within the constraints above. If product rejects validated System auto-approval and insists on draft-bypass, Phase B returns to **REDESIGN / user decision** because the alternative changes the approved-strategy invariant across stories.
