@@ -955,14 +955,14 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | Wire existing `createBrollVideoJobs` Server Action; add `previewBrollVideoJobsEstimate` Server Action (schemas in `video-job.ts` — extend for LTX high tier); operator-only gates unchanged |
 | **DB** | — (reuse `neuramark_video_jobs`) |
 
-**Acceptance criteria**
+**Acceptance criteria** *(CLOSED 2026-08-31 — VALIDATION PASS WITH NOTES (6/6 AC; 41/41); QA APPROVE (0 Critical/High, 3 Low); FE `4eed5a5` · BE `e8bd0d3`; branch `feature/US-8.9-broll-operator-generate-ui` ready for FF-merge)*
 
-- [ ] Operator-only “Generate B-roll” control visible on `/operator/scripts` when script is faceless, marks `needs_broll`, and policy resolves an active B-roll provider (Wan on `provider_tier = low`, LTX on `provider_tier = high`)
-- [ ] Control hidden when ineligible (non-faceless / no B-roll beats / B-roll jobs already queued or processing / preview returns blocked)
-- [ ] Confirm dialog shows estimated total cost, clip count, and provider label before submit (server preview — never client-computed cost or provider)
-- [ ] Confirm submits only `{ reelScriptId, clientId }` via existing `createBrollVideoJobs` Server Action; success toast + refresh; partial skips (budget, provider unavailable) surfaced with localized messages
-- [ ] EN + ES strings for button, dialog, errors, and success toast (`messages/en.json`, `messages/es.json`)
-- [ ] [SEC] Non-operator sessions receive 403; request body rejects forbidden authority fields (`provider_key`, tier, prompts, `operatorClientId`); no new adapter or orchestrator logic
+- [x] Operator-only “Generate B-roll” control visible on `/operator/scripts` when script is faceless, marks `needs_broll`, and policy resolves an active B-roll provider (Wan on `provider_tier = low`, LTX on `provider_tier = high`)
+- [x] Control hidden when ineligible (non-faceless / no B-roll beats / B-roll jobs already queued or processing / preview returns blocked)
+- [x] Confirm dialog shows estimated total cost, clip count, and provider label before submit (server preview — never client-computed cost or provider)
+- [x] Confirm submits only `{ reelScriptId, clientId }` via existing `createBrollVideoJobs` Server Action; success toast + refresh; partial skips (budget, provider unavailable) surfaced with localized messages
+- [x] EN + ES strings for button, dialog, errors, and success toast (`messages/en.json`, `messages/es.json`)
+- [x] [SEC] Non-operator sessions receive 403; request body rejects forbidden authority fields (`provider_key`, tier, prompts, `operatorClientId`); no new adapter or orchestrator logic
 
 **Depends on:** US-8.5 ✅ (`createBrollVideoJobs`, Wan low tier) · US-8.8 ✅ (LTX high tier) · US-8.4 ✅ (job status UI) · US-8.7 ✅ (HeyGen Operator generate pattern) · US-7.1 ✅ (budget estimate) · US-7.2 ✅ (tier routing)
 
@@ -1317,7 +1317,7 @@ Sprint 4: US-7.1, US-7.2, US-8.1, US-8.2, US-8.6, US-8.3, US-8.4, US-9.3
 Sprint 5: US-8.5, US-9.1, US-9.2, US-7.3, US-7.4, US-10.1, US-10.2
 Sprint 6: US-11.1, US-11.2, US-11.3
 Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, US-8.8 (LTX high-tier B-roll)
-Sprint 8 (P1): US-8.9 (Operator B-roll generate UI)
+Sprint 8 (P1): US-8.9 (Operator B-roll generate UI) — CLOSED 2026-08-31
 ```
 
 Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.

@@ -87,7 +87,7 @@ Concrete consumers: **`BrollGenerateControl`** (preview) · **`BrollGenerateConf
 
 ## DB checklist
 
-- [ ] **None** — reuse existing `neuramark_video_jobs` (`asset_role = broll`).
+- [x] **None** — reuse existing `neuramark_video_jobs` (`asset_role = broll`).
 
 ---
 
@@ -95,11 +95,11 @@ Concrete consumers: **`BrollGenerateControl`** (preview) · **`BrollGenerateConf
 
 - [x] SPEC-REVIEW.md (spec-guardian) — ALIGNED
 - [x] SECURITY.md (security-architect) — APPROVE WITH CONDITIONS
-- [x] CONTRACT.md — frozen 2026-08-31; **Reviewed by FE pending**
-- [ ] BUILD — after FE stamp
-- [ ] VALIDATION.md
-- [ ] QA.md
-- [ ] CLOSE (product-owner — check AC in USER_STORIES.md)
+- [x] CONTRACT.md — frozen 2026-08-31; **Reviewed by FE: approved**
+- [x] BUILD — FE `4eed5a5` · BE `e8bd0d3`
+- [x] VALIDATION.md — PASS WITH NOTES (6/6 AC; 41/41)
+- [x] QA.md — APPROVE (0 Critical/High, 3 Low)
+- [x] CLOSE (product-owner — 6/6 AC checked in USER_STORIES.md)
 
 ---
 

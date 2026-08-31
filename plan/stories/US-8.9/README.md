@@ -1,12 +1,12 @@
 # US-8.9 — Operator B-roll generate UI (P1)
 
-**Status:** CONTRACT frozen (2026-08-31) — SPEC-REVIEW ALIGNED · SECURITY APPROVE WITH CONDITIONS · CONTRACT.md frozen (FE stamp pending); branch `feature/US-8.9-broll-operator-generate-ui`; next FE stamp → BUILD.
+**Status:** CLOSED (2026-08-31) — VALIDATION PASS WITH NOTES (6/6 AC; 41/41) · QA APPROVE (0 Critical/High, 3 Low) · PO AC check-off. FE `4eed5a5` · BE `e8bd0d3` · PREP `a5bfca5`/`978f4e4`. Branch `feature/US-8.9-broll-operator-generate-ui` ready for FF-merge.
 
 **As an** Operator, **I want** to trigger B-roll clip generation from `/operator/scripts` for faceless Reels, **so that** I can produce Wan (low tier) or LTX (high tier) clips without manual backend calls.
 
 Ship **Operator-only B-roll generate control** on `/operator/scripts`: mirror **`HeygenGenerateControl`** / **`HeygenGenerateConfirmDialog`** (US-8.7) — eligibility via server **`previewBrollVideoJobsEstimate`**, confirm shows cost + clip count + provider label, submit calls existing **`createBrollVideoJobs`** Server Action with **`{ reelScriptId, clientId }` only**. Policy selects **Wan (`siliconflow_wan21_turbo`, low)** or **LTX (`ltx_broll_high`, high)** — no client authority fields. **No new adapter or orchestrator work** — backend orchestrator shipped in US-8.5 / US-8.8.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.9 (6 AC — do **not** check off in PREP).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.9 (6/6 AC checked — CLOSED 2026-08-31).
 
 **This folder:** [`plan/stories/US-8.9/`](./) — `README.md` · `TASKS.md` (gates: `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` — create when story enters BUILD).
 
@@ -77,13 +77,13 @@ _Evitar:_ client-supplied `provider_key`; client-computed cost; exposing API key
 
 - [x] SPEC-REVIEW.md (spec-guardian — ALIGNED)
 - [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
-- [x] CONTRACT.md (frozen 2026-08-31 — preview + FE props; **Reviewed by FE pending stamp**)
-- [ ] BUILD (nextjs-frontend + nextjs-backend) — after FE stamp on CONTRACT
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
-- [ ] CLOSE — 6/6 AC checked in USER_STORIES.md (product-owner)
+- [x] CONTRACT.md (frozen 2026-08-31 — preview + FE props; **Reviewed by FE: approved**)
+- [x] BUILD (nextjs-frontend + nextjs-backend) — FE `4eed5a5` · BE `e8bd0d3`
+- [x] VALIDATION.md (requirements-validator) — PASS WITH NOTES (6/6 AC; 41/41)
+- [x] QA.md (qa-engineer) — APPROVE (0 Critical/High, 3 Low)
+- [x] CLOSE — 6/6 AC checked in USER_STORIES.md (product-owner)
 
-**Status:** CONTRACT frozen. **Next:** nextjs-frontend stamps CONTRACT → BUILD.
+**Status:** CLOSED. **Next:** FF-merge `feature/US-8.9-broll-operator-generate-ui` to main; SELECT **Sprint 8 phase integration** (recommended), **PLAN F7 cron**, or QA follow-ups.
 
 ---
 
