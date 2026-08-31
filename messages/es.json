@@ -1557,6 +1557,11 @@
         "subtitles": "Incluir subtítulos",
         "logo": "Incluir logo"
       },
+      "coverFrame": {
+        "label": "Fotograma de portada (segundos)",
+        "help": "Tiempo de búsqueda en el Reel con marca usado para el JPEG de portada (0–45).",
+        "invalid": "El fotograma de portada debe ser un número entre 0 y 45 segundos."
+      },
       "actions": {
         "apply": "Aplicar marca",
         "rebrand": "Re-aplicar marca",
@@ -1579,7 +1584,7 @@
       },
       "rebrandConfirm": {
         "title": "Confirmar re-aplicación de marca",
-        "body": "Esto inicia una nueva ejecución de marca en el Reel ensamblado con las opciones de subtítulos y logo seleccionadas. ¿Continuar?",
+        "body": "Esto inicia una nueva ejecución de marca en el Reel ensamblado con las opciones de subtítulos, logo y fotograma de portada seleccionadas. ¿Continuar?",
         "confirm": "Re-aplicar marca",
         "cancel": "Cancelar",
         "errors": {
@@ -1590,6 +1595,7 @@
           "forbiddenFields": "Solicitud de marca no válida.",
           "baseIncomplete": "El ensamblado debe estar completado antes de aplicar marca.",
           "subtitleSanitize": "No se pudo preparar el texto en pantalla para subtítulos.",
+          "coverFrameInvalid": "El fotograma de portada debe ser un número entre 0 y 45 segundos.",
           "internal": "Algo salió mal. Inténtalo más tarde."
         }
       }

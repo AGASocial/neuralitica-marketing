@@ -24,6 +24,7 @@ export type BrandingRebrandConfirmCopy = {
     forbiddenFields: string;
     baseIncomplete: string;
     subtitleSanitize: string;
+    coverFrameInvalid: string;
     internal: string;
   };
 };
@@ -33,6 +34,7 @@ type BrandingRebrandConfirmDialogProps = {
   assemblyJobId: string | null;
   subtitlesEnabled: boolean;
   logoEnabled: boolean;
+  coverFrameSec: number;
   copy: BrandingRebrandConfirmCopy;
   pending: boolean;
   onHide: () => void;
@@ -41,13 +43,30 @@ type BrandingRebrandConfirmDialogProps = {
   onError: (message: string) => void;
 };
 
+function hasCoverFrameInvalidField(
+  fields: Record<string, string[]> | undefined,
+): boolean {
+  return (
+    fields?.coverFrameSec?.some(
+      (message) =>
+        message === "scripts.branding.coverFrame.invalid" ||
+        message.includes("coverFrame"),
+    ) === true
+  );
+}
+
 function messageForBrandingError(
   code: BrandingJobErrorCode,
   messageKey: string | undefined,
   copy: BrandingRebrandConfirmCopy,
+  fields?: Record<string, string[]>,
 ): string {
   if (messageKey === "scripts.branding.failure.subtitleSanitize") {
     return copy.errors.subtitleSanitize;
+  }
+
+  if (code === "VALIDATION_ERROR" && hasCoverFrameInvalidField(fields)) {
+    return copy.errors.coverFrameInvalid;
   }
 
   switch (code) {
@@ -75,6 +94,7 @@ export function BrandingRebrandConfirmDialog({
   assemblyJobId,
   subtitlesEnabled,
   logoEnabled,
+  coverFrameSec,
   copy,
   pending,
   onHide,
@@ -103,6 +123,7 @@ export function BrandingRebrandConfirmDialog({
         assemblyJobId,
         subtitlesEnabled,
         logoEnabled,
+        coverFrameSec,
       });
 
       if (result.ok) {
@@ -115,6 +136,7 @@ export function BrandingRebrandConfirmDialog({
         result.error.code,
         result.error.messageKey,
         copy,
+        result.error.fields,
       );
       setBanner(message);
       onError(message);

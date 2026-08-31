@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
+import { InputNumber } from "primereact/inputnumber";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
 
@@ -39,6 +40,11 @@ export type OperatorBrandingCopy = {
   toggles: {
     subtitles: string;
     logo: string;
+  };
+  coverFrame: {
+    label: string;
+    help: string;
+    invalid: string;
   };
   actions: {
     apply: string;
@@ -106,7 +112,12 @@ type OperatorAssemblyPanelProps = {
   copy: OperatorAssemblyCopy;
   disabled: boolean;
   onRequestReassemble: (reelScriptId: string) => void;
-  onRequestRebrand: (assemblyJobId: string, subtitlesEnabled: boolean, logoEnabled: boolean) => void;
+  onRequestRebrand: (
+    assemblyJobId: string,
+    subtitlesEnabled: boolean,
+    logoEnabled: boolean,
+    coverFrameSec: number,
+  ) => void;
   onAssembleSuccess: (result: AssembleReelForScriptSuccess) => void;
   onBrandingSuccess: (result: ApplyBrandingForAssemblySuccess) => void;
   onError: (message: string) => void;
@@ -184,6 +195,33 @@ function defaultBrandingToggles(
     subtitlesEnabled: config?.subtitlesEnabled ?? true,
     logoEnabled: config?.logoEnabled ?? true,
   };
+}
+
+const DEFAULT_COVER_FRAME_SEC = 1.0;
+
+function defaultCoverFrameSec(job: OperatorAssemblyJobDto | null): number {
+  const sec = job?.brandingConfig?.coverFrameSec;
+  return typeof sec === "number" && Number.isFinite(sec) ? sec : DEFAULT_COVER_FRAME_SEC;
+}
+
+/** Prefer always pass current InputNumber value when in range (CONTRACT Phase B). */
+function resolveCoverFrameSecForApply(value: number | null): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  return DEFAULT_COVER_FRAME_SEC;
+}
+
+function hasCoverFrameInvalidField(
+  fields: Record<string, string[]> | undefined,
+): boolean {
+  return (
+    fields?.coverFrameSec?.some(
+      (message) =>
+        message === "scripts.branding.coverFrame.invalid" ||
+        message.includes("coverFrame"),
+    ) === true
+  );
 }
 
 function resolveAssemblyFailureReasonText(
@@ -279,9 +317,14 @@ function messageForBrandingError(
   code: BrandingJobErrorCode,
   messageKey: string | undefined,
   copy: OperatorBrandingCopy,
+  fields?: Record<string, string[]>,
 ): string {
   if (messageKey === "scripts.branding.failure.subtitleSanitize") {
     return copy.failure.subtitleSanitize;
+  }
+
+  if (code === "VALIDATION_ERROR" && hasCoverFrameInvalidField(fields)) {
+    return copy.coverFrame.invalid;
   }
 
   switch (code) {
@@ -394,6 +437,9 @@ export function OperatorAssemblyPanel({
   const [logoEnabled, setLogoEnabled] = useState(() =>
     defaultBrandingToggles(initialJob ?? null).logoEnabled,
   );
+  const [coverFrameSec, setCoverFrameSec] = useState<number | null>(() =>
+    defaultCoverFrameSec(initialJob ?? null),
+  );
 
   useEffect(() => {
     setJob(initialJob ?? null);
@@ -401,6 +447,7 @@ export function OperatorAssemblyPanel({
     const toggles = defaultBrandingToggles(initialJob ?? null);
     setSubtitlesEnabled(toggles.subtitlesEnabled);
     setLogoEnabled(toggles.logoEnabled);
+    setCoverFrameSec(defaultCoverFrameSec(initialJob ?? null));
   }, [initialJob]);
 
   const shouldPoll =
@@ -531,6 +578,7 @@ export function OperatorAssemblyPanel({
         assemblyJobId: job.jobId,
         subtitlesEnabled,
         logoEnabled,
+        coverFrameSec: resolveCoverFrameSecForApply(coverFrameSec),
       });
 
       if (result.ok) {
@@ -546,6 +594,7 @@ export function OperatorAssemblyPanel({
         result.error.code,
         result.error.messageKey,
         brandingCopy,
+        result.error.fields,
       );
       setBanner(message);
       onError(message);
@@ -828,6 +877,29 @@ export function OperatorAssemblyPanel({
                 {brandingCopy.toggles.logo}
               </label>
             </div>
+            <div>
+              <label
+                htmlFor={`branding-cover-frame-${job.jobId}`}
+                style={{ display: "block", fontSize: "0.875rem", marginBottom: "0.35rem" }}
+              >
+                {brandingCopy.coverFrame.label}
+              </label>
+              <InputNumber
+                inputId={`branding-cover-frame-${job.jobId}`}
+                value={coverFrameSec}
+                onValueChange={(event) => setCoverFrameSec(event.value ?? null)}
+                min={0}
+                max={45}
+                step={0.1}
+                minFractionDigits={0}
+                maxFractionDigits={1}
+                disabled={panelBusy || brandingInFlight}
+                style={{ width: "8rem" }}
+              />
+              <p style={{ margin: "0.35rem 0 0", fontSize: "0.8125rem", color: "#6b7280" }}>
+                {brandingCopy.coverFrame.help}
+              </p>
+            </div>
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
@@ -856,7 +928,12 @@ export function OperatorAssemblyPanel({
                 outlined
                 disabled={panelBusy}
                 onClick={() =>
-                  onRequestRebrand(job.jobId, subtitlesEnabled, logoEnabled)
+                  onRequestRebrand(
+                    job.jobId,
+                    subtitlesEnabled,
+                    logoEnabled,
+                    resolveCoverFrameSecForApply(coverFrameSec),
+                  )
                 }
               />
             ) : null}

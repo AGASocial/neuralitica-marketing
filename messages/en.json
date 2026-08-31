@@ -1557,6 +1557,11 @@
         "subtitles": "Include subtitles",
         "logo": "Include logo"
       },
+      "coverFrame": {
+        "label": "Cover frame (seconds)",
+        "help": "Seek time in the branded Reel used for the cover JPEG (0–45).",
+        "invalid": "Cover frame must be a number between 0 and 45 seconds."
+      },
       "actions": {
         "apply": "Apply branding",
         "rebrand": "Re-brand",
@@ -1579,7 +1584,7 @@
       },
       "rebrandConfirm": {
         "title": "Confirm re-brand",
-        "body": "This starts a new branding run on the assembled Reel using the selected subtitle and logo options. Continue?",
+        "body": "This starts a new branding run on the assembled Reel using the selected subtitle, logo, and cover frame options. Continue?",
         "confirm": "Re-brand",
         "cancel": "Cancel",
         "errors": {
@@ -1590,6 +1595,7 @@
           "forbiddenFields": "Invalid branding request.",
           "baseIncomplete": "Assembly must be completed before branding.",
           "subtitleSanitize": "On-screen text could not be prepared for subtitles.",
+          "coverFrameInvalid": "Cover frame must be a number between 0 and 45 seconds.",
           "internal": "Something went wrong. Please try again later."
         }
       }

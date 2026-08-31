@@ -556,6 +556,7 @@ export function ScriptsPageView({
   const [rebrandAssemblyJobId, setRebrandAssemblyJobId] = useState<string | null>(null);
   const [rebrandSubtitlesEnabled, setRebrandSubtitlesEnabled] = useState(true);
   const [rebrandLogoEnabled, setRebrandLogoEnabled] = useState(true);
+  const [rebrandCoverFrameSec, setRebrandCoverFrameSec] = useState(1.0);
   const [qaOverrides, setQaOverrides] = useState<OperatorQaReportsByAssembledReelMap>(
     {},
   );
@@ -1053,10 +1054,12 @@ export function ScriptsPageView({
     assemblyJobId: string,
     subtitlesEnabled: boolean,
     logoEnabled: boolean,
+    coverFrameSec: number,
   ) {
     setRebrandAssemblyJobId(assemblyJobId);
     setRebrandSubtitlesEnabled(subtitlesEnabled);
     setRebrandLogoEnabled(logoEnabled);
+    setRebrandCoverFrameSec(coverFrameSec);
     setRebrandDialogVisible(true);
   }
 
@@ -1313,6 +1316,7 @@ export function ScriptsPageView({
         assemblyJobId={rebrandAssemblyJobId}
         subtitlesEnabled={rebrandSubtitlesEnabled}
         logoEnabled={rebrandLogoEnabled}
+        coverFrameSec={rebrandCoverFrameSec}
         copy={copy.assembly.rebrandConfirm}
         pending={assemblyMutationPending}
         onHide={closeRebrandDialog}
@@ -1683,6 +1687,7 @@ type ReelDetailPanelProps = {
     assemblyJobId: string,
     subtitlesEnabled: boolean,
     logoEnabled: boolean,
+    coverFrameSec: number,
   ) => void;
   onAssemblySuccess: (result: AssembleReelForScriptSuccess) => void;
   onBrandingSuccess: (result: ApplyBrandingForAssemblySuccess) => void;

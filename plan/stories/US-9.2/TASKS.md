@@ -143,11 +143,11 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 
 **Surface:** `/operator/scripts` — extend existing `OperatorAssemblyPanel` branding section.
 
-- [ ] **Cover frame `InputNumber`** (seconds, step **0.1**, min 0, max 45) next to subtitle/logo toggles; seed from `job.brandingConfig.coverFrameSec` else client default else **1.0**.
-- [ ] Wire **Apply branding** / **Re-brand** to pass optional **`coverFrameSec`** (with existing `subtitlesEnabled` / `logoEnabled`).
-- [ ] Disable control while branding in-flight / panel busy (same as toggles).
-- [ ] EN/ES under **`scripts.branding.coverFrame*`** (label, hint, validation).
-- [ ] **Do not** rebuild subtitle/logo toggles (Phase A ✅). **No** Cliente Ficha cover control. **No** thumbnail strip.
+- [x] **Cover frame `InputNumber`** (seconds, step **0.1**, min 0, max 45) next to subtitle/logo toggles; seed from `job.brandingConfig.coverFrameSec` else client default else **1.0**.
+- [x] Wire **Apply branding** / **Re-brand** to pass optional **`coverFrameSec`** (with existing `subtitlesEnabled` / `logoEnabled`).
+- [x] Disable control while branding in-flight / panel busy (same as toggles).
+- [x] EN/ES under **`scripts.branding.coverFrame*`** (label, hint, validation).
+- [x] **Do not** rebuild subtitle/logo toggles (Phase A ✅). **No** Cliente Ficha cover control. **No** thumbnail strip.
 
 ### Backend / API (nextjs-backend) — Phase B
 
