@@ -111,31 +111,31 @@ upsertReelMetrics({
 
 **Consumers:** Operator calendar Sidebar (FE above); US-13.2 will aggregate rows later.
 
-- [ ] Migration **`neuramark_reel_metrics`**: `id`, `client_id`, `assembled_reel_id` (UNIQUE FK), five int columns, `recorded_at`, `created_at`, `updated_at`; RLS deny-by-default.
-- [ ] Zod: `upsertReelMetricsInputSchema`, `reelMetricsDtoSchema`, result union in **`lib/contracts/reel-metrics.ts`**.
-- [ ] Constants: `REEL_METRICS_EDIT_WINDOW_DAYS` (default 7), `REEL_METRICS_MAX_VALUE`, forbidden authority keys.
-- [ ] Implement **`upsertReelMetrics`**: `requireOperator("handler")` first → 403; `.strict()` input.
-- [ ] Load `neuramark_assembled_reels` by `assembledReelId`; 404 if missing.
-- [ ] **Published gate:** verify linked calendar slot `publish_status = published`; else `NOT_PUBLISHED`.
-- [ ] **Edit window:** compare `now()` to slot `published_at + REEL_METRICS_EDIT_WINDOW_DAYS`; else `EDIT_WINDOW_EXPIRED`.
-- [ ] Validate counters: non-negative integers ≤ max bound.
-- [ ] UPSERT metrics row; set `client_id` from assembled reel row; bump `recorded_at` on write.
-- [ ] Extend **`getOperatorCalendarForWeek`** mapper: attach `metrics` + `editable` on published slots with `assembledReelId`.
-- [ ] Rate limit (lean 30/hour per operator — match CONTRACT).
-- [ ] Unit/security tests: non-operator 403; non-published reject; expired window reject; bounds validation; happy path upsert + update; ownership via assembled reel; forbidden keys.
+- [x] Migration **`neuramark_reel_metrics`**: `id`, `client_id`, `assembled_reel_id` (UNIQUE FK), five int columns, `recorded_at`, `created_at`, `updated_at`; RLS deny-by-default.
+- [x] Zod: `upsertReelMetricsInputSchema`, `reelMetricsDtoSchema`, result union in **`lib/contracts/reel-metrics.ts`**.
+- [x] Constants: `REEL_METRICS_EDIT_WINDOW_DAYS` (default 7), `REEL_METRICS_MAX_VALUE`, forbidden authority keys.
+- [x] Implement **`upsertReelMetrics`**: `requireOperator("handler")` first → 403; `.strict()` input.
+- [x] Load `neuramark_assembled_reels` by `assembledReelId`; 404 if missing.
+- [x] **Published gate:** verify linked calendar slot `publish_status = published`; else `NOT_PUBLISHED`.
+- [x] **Edit window:** compare `now()` to slot `published_at + REEL_METRICS_EDIT_WINDOW_DAYS`; else `EDIT_WINDOW_EXPIRED`.
+- [x] Validate counters: non-negative integers ≤ max bound.
+- [x] UPSERT metrics row; set `client_id` from assembled reel row; bump `recorded_at` on write.
+- [x] Extend **`getOperatorCalendarForWeek`** mapper: attach `metrics` + `editable` on published slots with `assembledReelId`.
+- [x] Rate limit (lean 30/hour per operator — match CONTRACT).
+- [x] Unit/security tests: non-operator 403; non-published reject; expired window reject; bounds validation; happy path upsert + update; ownership via assembled reel; forbidden keys.
 
 ---
 
 ## Database (nextjs-backend / migrations)
 
-- [ ] New migration file (timestamp after US-12.2 publish-metadata migration): **`CREATE TABLE neuramark_reel_metrics`** only.
-- [ ] Columns: `assembled_reel_id uuid NOT NULL UNIQUE`, `client_id uuid NOT NULL`, `views`, `likes`, `comments`, `saves`, `dms` (integer NOT NULL, ≥ 0), `recorded_at timestamptz NOT NULL`.
-- [ ] FK `assembled_reel_id` → `neuramark_assembled_reels(id)` ON DELETE CASCADE.
-- [ ] FK `client_id` → `neuramark_clients(id)`.
-- [ ] Optional index `neuramark_reel_metrics_client_recorded_idx` on `(client_id, recorded_at DESC)` for US-13.2 lean.
-- [ ] `updated_at` trigger via existing `neuramark_set_updated_at()` pattern.
-- [ ] No RLS policies (deny-by-default / service-role Node only).
-- [ ] Comment on table noting US-13.1 manual metrics + US-13.2 consumer.
+- [x] New migration file (timestamp after US-12.2 publish-metadata migration): **`CREATE TABLE neuramark_reel_metrics`** only.
+- [x] Columns: `assembled_reel_id uuid NOT NULL UNIQUE`, `client_id uuid NOT NULL`, `views`, `likes`, `comments`, `saves`, `dms` (integer NOT NULL, ≥ 0), `recorded_at timestamptz NOT NULL`.
+- [x] FK `assembled_reel_id` → `neuramark_assembled_reels(id)` ON DELETE CASCADE.
+- [x] FK `client_id` → `neuramark_clients(id)`.
+- [x] Optional index `neuramark_reel_metrics_client_recorded_idx` on `(client_id, recorded_at DESC)` for US-13.2 lean.
+- [x] `updated_at` trigger via existing `neuramark_set_updated_at()` pattern.
+- [x] No RLS policies (deny-by-default / service-role Node only).
+- [x] Comment on table noting US-13.1 manual metrics + US-13.2 consumer.
 
 ---
 

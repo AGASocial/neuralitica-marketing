@@ -30,6 +30,11 @@ import {
 import { getQaReportsForAssembledReels } from "@/lib/qa/get-qa-reports-for-assembled-reels";
 import { getVideoJobsForReelScripts } from "@/lib/video-jobs/get-video-jobs-for-reel-scripts";
 import {
+  buildReelMetricsDtoForPublishedReel,
+  loadReelMetricsByAssembledReelIds,
+  type ReelMetricsRow,
+} from "@/lib/metrics/load-reel-metrics";
+import {
   createServerSupabaseClient,
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
@@ -346,6 +351,7 @@ async function buildSlotDetailDtoForRow(
         status: import("@/lib/contracts/approval").ApprovalStatus;
       }
     >;
+    metricsByReel: Map<string, ReelMetricsRow>;
   },
 ): Promise<CalendarSlotDetailDto> {
   const captionSummary =
@@ -386,6 +392,19 @@ async function buildSlotDetailDtoForRow(
     instagramPostUrlRaw: row.instagramPostUrlRaw,
   });
 
+  let metrics: CalendarSlotDetailDto["metrics"] = null;
+  if (
+    derived.pipelineStatus === "published" &&
+    derived.assembledReelId !== null &&
+    row.reelScriptId !== null
+  ) {
+    metrics = await buildReelMetricsDtoForPublishedReel({
+      assembledReelId: derived.assembledReelId,
+      reelScriptId: row.reelScriptId,
+      metricsRow: context.metricsByReel.get(derived.assembledReelId) ?? null,
+    });
+  }
+
   return {
     slotId: row.id,
     clientId: row.clientId,
@@ -405,6 +424,7 @@ async function buildSlotDetailDtoForRow(
     changesRequested: derived.changesRequested,
     publishedAt: publishMetadata.publishedAt,
     instagramPostUrl: publishMetadata.instagramPostUrl,
+    metrics,
   };
 }
 
@@ -461,12 +481,17 @@ async function buildSlotDetailDtos(
       assembledReelIds,
     );
 
+    const metricsByReel = await loadReelMetricsByAssembledReelIds(
+      assembledReelIds,
+    );
+
     const context = {
       captionsByScript,
       videoJobs,
       assemblyJobs,
       qaByReel,
       approvalsByReel,
+      metricsByReel,
     };
 
     for (const row of clientSlots) {
@@ -586,12 +611,17 @@ export async function buildCalendarSlotDetailDtoForRow(
     assembledReelIds,
   );
 
+  const metricsByReel = await loadReelMetricsByAssembledReelIds(
+    assembledReelIds,
+  );
+
   return buildSlotDetailDtoForRow(row, {
     captionsByScript,
     videoJobs,
     assemblyJobs,
     qaByReel,
     approvalsByReel,
+    metricsByReel,
   });
 }
 

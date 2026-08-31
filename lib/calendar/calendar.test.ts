@@ -10,10 +10,12 @@ import { fileURLToPath } from "node:url";
 
 import {
   calendarMediaPreviewPathSchema,
+  calendarSlotDetailDtoSchema,
   findForbiddenCalendarKeys,
   getOperatorCalendarForWeekInputSchema,
   getOperatorCalendarForWeekSuccessSchema,
 } from "@/lib/contracts/calendar";
+import { reelMetricsDtoSchema } from "@/lib/contracts/reel-metrics";
 import { deriveCalendarPipelineStatus } from "@/lib/calendar/derive-calendar-pipeline-status";
 import { mapSlotScheduledDate } from "@/lib/calendar/map-slot-scheduled-date";
 import { PENDING_REEL_CAPTION_SUMMARY } from "@/lib/contracts/reel-caption";
@@ -350,6 +352,7 @@ describe("getOperatorCalendarForWeek action", () => {
               changesRequested: false,
               publishedAt: null,
               instagramPostUrl: null,
+              metrics: null,
             },
           ],
           gapWarnings: [],
@@ -541,6 +544,75 @@ describe("gap warnings", () => {
   });
 });
 
+describe("US-13.1 calendar metrics DTO", () => {
+  it("non-published slot uses metrics null", () => {
+    const parsed = calendarSlotDetailDtoSchema.safeParse({
+      slotId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      clientId: CLIENT_A,
+      clientDisplayName: "Cafe Luna",
+      weekStart: WEEK_START,
+      scheduledDate: WEEK_START,
+      slotIndex: 0,
+      tema: "Promo",
+      reelScriptId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      pipelineStatus: "approved",
+      approvalId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      assembledReelId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      thumbnailPreviewUrl: `/api/media/assets/${ASSET_ID}`,
+      strategyId: STRATEGY_ID,
+      goal: "local_sale",
+      approvalStatus: "approved",
+      changesRequested: false,
+      publishedAt: null,
+      instagramPostUrl: null,
+      metrics: null,
+    });
+    assert.equal(parsed.success, true);
+  });
+
+  it("published slot accepts metrics snapshot with editable", () => {
+    const metrics = {
+      views: 0,
+      likes: 0,
+      comments: 0,
+      saves: 0,
+      dms: 0,
+      recordedAt: null,
+      editable: true,
+    };
+    assert.equal(reelMetricsDtoSchema.safeParse(metrics).success, true);
+
+    const parsed = calendarSlotDetailDtoSchema.safeParse({
+      slotId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      clientId: CLIENT_A,
+      clientDisplayName: "Cafe Luna",
+      weekStart: WEEK_START,
+      scheduledDate: WEEK_START,
+      slotIndex: 0,
+      tema: "Promo",
+      reelScriptId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      pipelineStatus: "published",
+      approvalId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      assembledReelId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      thumbnailPreviewUrl: `/api/media/assets/${ASSET_ID}`,
+      strategyId: STRATEGY_ID,
+      goal: "local_sale",
+      approvalStatus: "approved",
+      changesRequested: false,
+      publishedAt: "2026-08-30T12:00:00.000Z",
+      instagramPostUrl: null,
+      metrics,
+    });
+    assert.equal(parsed.success, true);
+  });
+
+  it("calendar read loader does not UPSERT metrics", () => {
+    const src = readSrc("get-operator-calendar-for-week.ts");
+    assert.equal(src.includes("loadReelMetricsByAssembledReelIds"), true);
+    assert.equal(src.includes(".upsert("), false);
+  });
+});
+
 describe("US-12.1 security grep guards", () => {
   const denylistKeys = [
     "storage_key",
@@ -575,6 +647,7 @@ describe("US-12.1 security grep guards", () => {
           changesRequested: false,
           publishedAt: null,
           instagramPostUrl: null,
+          metrics: null,
         },
       ],
       gapWarnings: [],
