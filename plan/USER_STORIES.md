@@ -907,11 +907,11 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | Reuse `video_jobs` |
 
 **Acceptance criteria**
-- [ ] Never the silent default when `provider_tier = low`
-- [ ] Used when `provider_tier = high`, or when operator explicitly triggers fallback after low-tier failure (override recorded)
-- [ ] Estimated cost uses per-minute model from catalog (standard ~$1/min; Avatar IV priced separately and never auto-selected)
-- [ ] Same consent, budget, download-and-own, webhook/polling security rules as US-8.2
-- [ ] Operator-only for fallback trigger; clients cannot request HeyGen directly
+- [x] Never the silent default when `provider_tier = low`
+- [x] Used when `provider_tier = high`, or when operator explicitly triggers fallback after low-tier failure (override recorded)
+- [x] Estimated cost uses per-minute model from catalog (standard ~$1/min; Avatar IV priced separately and never auto-selected)
+- [x] Same consent, budget, download-and-own, webhook/polling security rules as US-8.2
+- [x] Operator-only for fallback trigger; clients cannot request HeyGen directly
 
 **Depends on:** US-8.1, US-3.3, US-5.1, US-X.4
 

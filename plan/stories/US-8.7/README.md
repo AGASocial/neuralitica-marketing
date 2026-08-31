@@ -1,12 +1,12 @@
 # US-8.7 — HeyGen adapter (high tier / operator fallback, P1)
 
-**Status:** CONTRACT frozen (2026-08-31) — SECURITY ✅ · CONTRACT ✅ (Reviewed by FE) · BUILD pending.
+**Status:** CLOSED (2026-08-31) — VALIDATION PASS WITH NOTES `602995c` (5/5 AC; 22/22 after fix) · QA APPROVE WITH CONDITIONS `fc19d0a` (0 Critical/High; M1/M2 fixed `b3a9377`) · PO AC check-off. FE `a18d4cb` · BE `299d638` · CONTRACT `b539c10`/`390f100`.
 
 **As a** System, **I want** HeyGen API integration, **so that** operators can produce higher-polish avatar Reels or recover when low-tier adapters fail.
 
 Ship **server-only HeyGen `VideoProviderAdapter`** for catalog key **`heygen_high`**: replace **`createHeygenHighStubAdapter`** with a real adapter behind **`HEYGEN_API_KEY`**; wire **`createHeygenHighAdapter`** in **`getProviderRegistry()`** / **`initializeProviderRegistryFromCatalog()`**; implement **`estimateCost`** from catalog **`per_second`** (~$1/min standard); pipe **`createJob` / `getJobStatus` / `fetchAsset`** through US-8.1 normalizers; **activate** catalog row; unlock orchestrator for **high-tier policy** and **operator-only fallback after low-tier failure**; add Operator **“Generate with HeyGen”** action (EN/ES). **Avatar IV never auto-selected.** Cover adapter with **mocked-HTTP unit tests only**.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.7 (unchecked until VALIDATION).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.7 (5/5 checked at CLOSE).
 
 **This folder:** [`plan/stories/US-8.7/`](./) — `README.md` · `TASKS.md` (gates: `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` — create when story enters sprint).
 
@@ -97,12 +97,13 @@ _Evitar:_ client-supplied `provider_key`; long-lived third-party `output_url` as
 - [x] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 S3.M9 Video Provider)
 - [x] SECURITY.md (security-architect — HeyGen SSRF, operator fallback abuse, key redaction, Avatar IV cost footgun)
 - [x] CONTRACT.md (nextjs-backend — frozen 2026-08-31; **Reviewed by FE:** approved 2026-08-31)
-- [ ] BUILD Phase A (media-pipeline-engineer + nextjs-backend)
-- [ ] BUILD Phase B (BE orchestrator + DB activate + FE)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
+- [x] BUILD Phase A (media-pipeline-engineer + nextjs-backend)
+- [x] BUILD Phase B (BE orchestrator + DB activate + FE)
+- [x] VALIDATION.md (requirements-validator) — PASS WITH NOTES `602995c`
+- [x] QA.md (qa-engineer) — APPROVE WITH CONDITIONS `fc19d0a`; M1/M2 `b3a9377`
+- [x] CLOSE — 5/5 AC checked in USER_STORIES.md (product-owner)
 
-**Status:** CONTRACT frozen + FE signoff. **Next:** BUILD A → BUILD B.
+**Status:** CLOSED. **Next:** US-8.5 Wan B-roll (recommended).
 
 ---
 
