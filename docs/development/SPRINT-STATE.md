@@ -5,7 +5,7 @@
 ```yaml
 current_phase: 3
 current_story: US-9.2-B-M2
-story_status: PREP
+story_status: SECURITY
 feature_branch: feature/US-9.2-b-m2-branding-poll-claim
 last_completed_story: US-9.2-B-M1
 phase_status: in_progress
