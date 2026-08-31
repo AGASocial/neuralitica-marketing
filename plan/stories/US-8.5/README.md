@@ -1,12 +1,12 @@
 # US-8.5 — Wan B-roll adapter (low tier, P0)
 
-**Status:** CONTRACT frozen (2026-08-31) — SECURITY APPROVE WITH CONDITIONS · CONTRACT.md + Zod mirrors; **next BUILD Phase A**.
+**Status:** CLOSED (2026-08-31) — VALIDATION PASS WITH NOTES `14a74f5` (6/6 AC; 39/39) · QA APPROVE WITH CONDITIONS `8617ae7` (High H1 + M1 fixed `e75e1b7`) · PO AC check-off. BUILD `f7cf726` · CONTRACT `89cf172` · SECURITY `13bc6d5`.
 
 **As a** System, **I want** short B-roll clips via Wan API (SiliconFlow), **so that** faceless Reels have cheap supporting visuals without full text-to-video for every piece.
 
 Ship **server-only SiliconFlow Wan2.1 I2V Turbo `VideoProviderAdapter`** for catalog key **`siliconflow_wan21_turbo`**: replace **`createSiliconflowWan21TurboStubAdapter`** with a real adapter behind **`SILICONFLOW_API_KEY`**; wire **`createSiliconflowWan21TurboAdapter`** in **`getProviderRegistry()`** / **`initializeProviderRegistryFromCatalog()`**; implement **`estimateCost`** from catalog **`per_clip`** (**21¢** / ~$0.21); pipe **`createJob` / `getJobStatus` / `fetchAsset`** through US-8.1 normalizers; **`videoAssetRole: broll`**; cover with **mocked-HTTP unit tests only**. **Phase B (same story):** unlock **B-roll job orchestrator** (`createBrollVideoJobs` or CONTRACT-exact) so policy-selected low-tier B-roll creates **`neuramark_video_jobs`** rows with **`asset_role = broll`**; budget counting; **graceful degrade** (failed B-roll never blocks talking-head primary); one job per clip beat (capped). **Multi-clip stitch remains US-9.1 Phase B** — this story produces owned clips only. **FE optional preview strip deferred** (no FE AC).
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.5 (6 unchecked — do not check off in PREP).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.5 (6/6 checked at CLOSE; stitch = US-9.1 Phase B handoff).
 
 **This folder:** [`plan/stories/US-8.5/`](./) — `README.md` · `TASKS.md` (gates: `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` — create when story enters sprint).
 
@@ -96,13 +96,13 @@ _Evitar:_ client-supplied `provider_key`; long-lived third-party `output_url` as
 - [x] SPEC-REVIEW.md (spec-guardian — **GAPS** vs SPEC §3 S3.M9 Video Provider / B-roll; stitch handoff US-9.1 Phase B)
 - [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS · 12)
 - [x] CONTRACT.md (nextjs-backend — freeze endpoints/schemas; **Reviewed by FE: N/A**)
-- [ ] BUILD Phase A (media-pipeline-engineer + nextjs-backend)
-- [ ] BUILD Phase B (BE orchestrator + degrade/budget tests)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
-- [ ] CLOSE — AC check-off in USER_STORIES.md (product-owner)
+- [x] BUILD Phase A (media-pipeline-engineer + nextjs-backend)
+- [x] BUILD Phase B (BE orchestrator + degrade/budget tests)
+- [x] VALIDATION.md (requirements-validator) — PASS WITH NOTES `14a74f5` (6/6; 39/39)
+- [x] QA.md (qa-engineer) — APPROVE WITH CONDITIONS `8617ae7`; H1/M1 `e75e1b7`
+- [x] CLOSE — 6/6 AC checked in USER_STORIES.md (product-owner)
 
-**Status:** CONTRACT frozen. **Next:** BUILD Phase A.
+**Status:** CLOSED. **Next:** US-9.1 Phase B faceless B-roll stitch (recommended) — Sprint 7 provider backlog complete.
 
 ---
 

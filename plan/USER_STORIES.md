@@ -865,13 +865,13 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | Wan adapter: image/text prompt → short clip; cost per clip from catalog; only when policy selects `broll` + `provider_tier = low` |
 | **DB** | `video_jobs.asset_role`: `primary` \| `broll`; `provider_tier` on job |
 
-**Acceptance criteria**
-- [ ] Default B-roll provider when `provider_tier = low` and script marks `needs_broll`
-- [ ] Clips max duration per policy (e.g. 3–5s); Wan catalog documents 5s cap
-- [ ] Estimated cost ~$0.21/clip at research baseline (Wan2.1 I2V Turbo)
-- [ ] Failed B-roll does not block talking-head primary (graceful degrade)
-- [ ] Multiple B-roll clips may be stitched in assembly (US-9.1)
-- [ ] [SEC] Wan adapter follows US-8.1 contract: server-only keys, untrusted-response handling, B-roll cost counted against Reel cumulative budget (US-7.1)
+**Acceptance criteria** *(CLOSED 2026-08-31 — stitch handoff US-9.1 Phase B)*
+- [x] Default B-roll provider when `provider_tier = low` and script marks `needs_broll`
+- [x] Clips max duration per policy (e.g. 3–5s); Wan catalog documents 5s cap
+- [x] Estimated cost ~$0.21/clip at research baseline (Wan2.1 I2V Turbo)
+- [x] Failed B-roll does not block talking-head primary (graceful degrade)
+- [x] Multiple B-roll clips may be stitched in assembly (US-9.1) *(produce N `broll` assets; stitch = US-9.1 Phase B)*
+- [x] [SEC] Wan adapter follows US-8.1 contract: server-only keys, untrusted-response handling, B-roll cost counted against Reel cumulative budget (US-7.1)
 
 **Depends on:** US-8.1, US-7.2
 
