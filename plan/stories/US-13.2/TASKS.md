@@ -131,22 +131,22 @@ metricsSummaryForPrompt: Array<{
 
 **Consumers:** Strategy page loader (insights snippet); `generateContentStrategyForClient` (prompt injection).
 
-- [ ] Add **`lib/contracts/strategy-insights.ts`**: constants, Zod DTOs, prompt summary schema, message keys.
-- [ ] Implement **`aggregateReelMetricsByTema`** — server-only SQL/query builder:
-  - [ ] Filter `neuramark_reel_metrics` by `client_id` + `recorded_at` window (28 days, see PO #1).
-  - [ ] Join `neuramark_assembled_reels` → `neuramark_reel_scripts` → `neuramark_content_strategies`.
-  - [ ] Extract slot **`tema`** from `brief` JSON at `slot_index` (camelCase `slots[].tema`).
-  - [ ] Skip rows with missing join or missing `tema`.
-  - [ ] GROUP BY normalized tema; SUM counters; COUNT reels.
-  - [ ] Rank and return top 3.
-- [ ] Implement **`getStrategyPerformanceInsights`** Server Action — `requireOperator("handler")` first.
-  - [ ] Validate `clientId` UUID + active client (mirror strategy generate client validation).
-  - [ ] Validate `weekStart` with `trendWeekStartSchema`.
-  - [ ] Return `{ ok: true, insights: StrategyPerformanceInsightsDto | null }`.
-- [ ] Extend **`generateContentStrategyForClient`**: call aggregator before LLM; pass `metricsSummaryForPrompt` into agent module.
-- [ ] Export pure **`buildMetricsSummaryForPrompt(insights)`** for tests (integer fields only).
-- [ ] Unit tests: empty window → null; single tema; tie-break; excluded orphan join failure; cross-client isolation (`client_id` filter).
-- [ ] Integration test: generate with fixture metrics includes `<TRUSTED_METRICS_SUMMARY>` in prompt (mock LLM adapter).
+- [x] Add **`lib/contracts/strategy-insights.ts`**: constants, Zod DTOs, prompt summary schema, message keys.
+- [x] Implement **`aggregateReelMetricsByTema`** — server-only SQL/query builder:
+  - [x] Filter `neuramark_reel_metrics` by `client_id` + `recorded_at` window (28 days, see PO #1).
+  - [x] Join `neuramark_assembled_reels` → `neuramark_reel_scripts` → `neuramark_content_strategies`.
+  - [x] Extract slot **`tema`** from `brief` JSON at `slot_index` (camelCase `slots[].tema`).
+  - [x] Skip rows with missing join or missing `tema`.
+  - [x] GROUP BY normalized tema; SUM counters; COUNT reels.
+  - [x] Rank and return top 3.
+- [x] Implement **`getStrategyPerformanceInsights`** Server Action — `requireOperator("handler")` first.
+  - [x] Validate `clientId` UUID + active client (mirror strategy generate client validation).
+  - [x] Validate `weekStart` with `trendWeekStartSchema`.
+  - [x] Return `{ ok: true, insights: StrategyPerformanceInsightsDto | null }`.
+- [x] Extend **`generateContentStrategyForClient`**: call aggregator before LLM; pass `metricsSummaryForPrompt` into agent module.
+- [x] Export pure **`buildMetricsSummaryForPrompt(insights)`** for tests (integer fields only).
+- [x] Unit tests: empty window → null; single tema; tie-break; excluded orphan join failure; cross-client isolation (`client_id` filter).
+- [ ] Integration test: generate with fixture metrics includes `<TRUSTED_METRICS_SUMMARY>` in prompt (mock LLM adapter). — **content-agents-engineer** (agent prompt delta)
 
 ---
 
@@ -171,8 +171,8 @@ metricsSummaryForPrompt: Array<{
 
 **Phase A: no migration tasks.**
 
-- [ ] Confirm existing **`neuramark_reel_metrics_client_recorded_idx`** sufficient for window query (US-13.1).
-- [ ] Document join path in CONTRACT — no new `neuramark_*` objects Phase A.
+- [x] Confirm existing **`neuramark_reel_metrics_client_recorded_idx`** sufficient for window query (US-13.1).
+- [x] Document join path in CONTRACT — no new `neuramark_*` objects Phase A.
 - [ ] Phase B backlog only: optional materialized aggregate table / pillar mapping column — **not US-13.2 Phase A**.
 
 ---

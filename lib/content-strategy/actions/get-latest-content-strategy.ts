@@ -9,12 +9,14 @@ import {
   contentStrategyForbiddenError,
   contentStrategyForbiddenFieldsError,
   contentStrategyInternalError,
+  contentStrategyNotFoundError,
   contentStrategyUnauthenticatedError,
   contentStrategyValidationError,
   getLatestContentStrategyForbiddenResult,
   getLatestContentStrategyUnauthenticatedResult,
 } from "@/lib/content-strategy/errors";
-import { findForbiddenContentStrategyKeys } from "@/lib/content-strategy/find-forbidden-keys";
+import { findForbiddenGetLatestContentStrategyKeys } from "@/lib/content-strategy/find-forbidden-keys";
+import { validateActiveOperatorClientId } from "@/lib/content-strategy/validate-active-operator-client-id";
 import { loadLatestStrategyRowWithApproval } from "@/lib/content-strategy/load-latest-strategy-row-with-approval";
 import { toContentStrategyView } from "@/lib/content-strategy/to-strategy-view";
 import { getPlaybookForAgents } from "@/lib/playbook/get-playbook-for-agents";
@@ -47,7 +49,7 @@ export async function getLatestContentStrategy(
       throw error;
     }
 
-    if (findForbiddenContentStrategyKeys(rawInput).length > 0) {
+    if (findForbiddenGetLatestContentStrategyKeys(rawInput).length > 0) {
       return contentStrategyForbiddenFieldsError();
     }
 
@@ -58,8 +60,19 @@ export async function getLatestContentStrategy(
       );
     }
 
+    let clientId = operator.id;
+    if (parsed.data.clientId !== undefined) {
+      const clientCheck = await validateActiveOperatorClientId(
+        parsed.data.clientId,
+      );
+      if (!clientCheck.ok) {
+        return contentStrategyNotFoundError();
+      }
+      clientId = parsed.data.clientId;
+    }
+
     const row = await loadLatestStrategyRowWithApproval({
-      clientId: operator.id,
+      clientId,
       weekStart: parsed.data.weekStart,
     });
 
