@@ -14,7 +14,6 @@ import {
   WAN_PROVIDER_KEY,
   WAN_REFERENCE_STILL_MISSING_MESSAGE_KEY,
   WAN_UNIT_COST_CENTS_PER_CLIP,
-  clampWanClipCount,
   clampWanClipDurationSec,
 } from "@/lib/contracts/siliconflow-wan21-turbo";
 import type {
@@ -38,6 +37,11 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
 
+import {
+  computeBrollClipCount,
+  isFacelessNeedsBroll,
+  resolveBeatTexts,
+} from "./broll-estimate-shared";
 import { findForbiddenVideoJobKeys } from "./find-forbidden-keys";
 import { videoJobForbiddenFieldsError, videoJobMutationError } from "./errors";
 import { enqueueVideoJobPoll } from "./enqueue-video-job-poll";
@@ -65,40 +69,12 @@ export type CreateBrollVideoJobsOptions = {
   };
 };
 
-function isFacelessNeedsBroll(params: {
-  visualMode: string;
-  modalidad: string;
-  brollBeatCount: number;
-}): boolean {
-  return (
-    params.modalidad === "faceless" ||
-    params.visualMode === "faceless" ||
-    params.brollBeatCount > 0
-  );
-}
-
 export function buildWanBrollPrompt(params: {
   beatText: string;
 }): string {
   const beat = params.beatText.trim().slice(0, 300);
   const wrapped = `Cinematic B-roll. ${WAN_PROMPT_BEAT_OPEN}${beat}${WAN_PROMPT_BEAT_CLOSE}`;
   return wrapped.slice(0, WAN_PROMPT_MAX_CHARS);
-}
-
-function resolveBeatTexts(params: {
-  needsBroll: boolean;
-  brollBeats: string[] | undefined;
-  hook: string;
-  body: string;
-}): string[] {
-  const beats = params.brollBeats ?? [];
-  if (beats.length > 0) {
-    return beats.slice(0, clampWanClipCount(beats.length));
-  }
-  if (params.needsBroll) {
-    return [`${params.hook} ${params.body}`.trim()];
-  }
-  return [];
 }
 
 export async function createBrollVideoJobs(
@@ -169,7 +145,12 @@ export async function createBrollVideoJobs(
 
     const clipCount = options?.singleClipRetry
       ? 1
-      : clampWanClipCount(Math.max(1, beatTexts.length));
+      : computeBrollClipCount({
+          needsBroll,
+          brollBeats: script.package.brollBeats,
+          hook: script.package.hook,
+          body: script.package.body,
+        });
 
     const providerResult = await resolveProviderForJob({
       clientId: input.clientId,

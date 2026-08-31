@@ -137,6 +137,9 @@ export const FORBIDDEN_VIDEO_JOB_AUTHORITY_KEYS = [
   "duration",
   "clipDurationSec",
   "clip_duration_sec",
+  /** US-8.9 — session-only operator identity; never client authority. */
+  "operatorClientId",
+  "operator_client_id",
 ] as const;
 
 export const createTalkingHeadVideoJobSuccessSchema = z
@@ -490,7 +493,9 @@ export const previewBrollVideoJobsEstimateSuccessSchema = z
     unitCostCentsPerClip: z.number().int().nonnegative(),
     clipCount: z.number().int().nonnegative(),
     needsBroll: z.boolean(),
-    providerKey: z.literal("siliconflow_wan21_turbo").optional(),
+    providerKey: z
+      .enum(["siliconflow_wan21_turbo", "ltx_broll_high"])
+      .optional(),
     blockedReasonKey: z.string().optional(),
   })
   .strict();

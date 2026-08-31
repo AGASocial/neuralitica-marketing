@@ -76,12 +76,12 @@ Concrete consumer: **`/operator/scripts`** Operator Reel row (`ScriptsPageView`)
 
 Concrete consumers: **`BrollGenerateControl`** (preview) · **`BrollGenerateConfirmDialog`** (create).
 
-- [ ] **`lib/video-jobs/actions/preview-broll-video-jobs-estimate.ts`** — `"use server"`; `requireOperator`; parse `previewBrollVideoJobsEstimateRequestSchema`; IDOR (`clientId === operator.id`); delegate to shared estimate helper (extract from orchestrator or thin wrapper — CONTRACT freezes).
-- [ ] **Extend `previewBrollVideoJobsEstimateSuccessSchema`** — `providerKey: z.enum(["siliconflow_wan21_turbo", "ltx_broll_high"]).optional()`; keep `needsBroll`, `blockedReasonKey`, cost fields.
-- [ ] **B-roll in-flight check** — preview returns blocked/hidden signal when broll jobs queued/processing (CONTRACT freezes query).
-- [ ] **Re-export / barrel** — export preview action from video-jobs actions index if pattern exists.
-- [ ] **Tests** — preview: faceless eligible Wan; high tier LTX; ineligible non-faceless; non-operator 403; forbidden fields; in-flight hides.
-- [ ] **No changes to `createBrollVideoJobs` core** unless preview extraction requires shared helper refactor (minimal).
+- [x] **`lib/video-jobs/actions/preview-broll-video-jobs-estimate.ts`** — `"use server"`; `requireOperator`; parse `previewBrollVideoJobsEstimateRequestSchema`; IDOR (`clientId === operator.id`); delegate to shared estimate helper (extract from orchestrator or thin wrapper — CONTRACT freezes).
+- [x] **Extend `previewBrollVideoJobsEstimateSuccessSchema`** — `providerKey: z.enum(["siliconflow_wan21_turbo", "ltx_broll_high"]).optional()`; keep `needsBroll`, `blockedReasonKey`, cost fields.
+- [x] **B-roll in-flight check** — preview returns blocked/hidden signal when broll jobs queued/processing (CONTRACT freezes query).
+- [x] **Re-export / barrel** — export preview action from video-jobs actions index if pattern exists.
+- [x] **Tests** — preview: faceless eligible Wan; high tier LTX; ineligible non-faceless; non-operator 403; forbidden fields; in-flight hides.
+- [x] **No changes to `createBrollVideoJobs` core** unless preview extraction requires shared helper refactor (minimal).
 
 ---
 
