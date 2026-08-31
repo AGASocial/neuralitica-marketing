@@ -84,7 +84,7 @@
 
 **Consumer:** `/operator/scripts` assembly panel (existing).
 
-- [ ] Enable **Assemble Reel** when `modalidad === faceless` and server/batch signals inputs complete (≥1 completed broll **or** completed primary for degrade) — today gated on primary only. (**FE BUILD** — CONTRACT Reviewed by FE approved; see FE BUILD constraints)
+- [x] Enable **Assemble Reel** when server `canAssemble` (faceless stitch or primary/degrade) — dropped primary-only button gate. (**FE BUILD** 2026-08-31)
 - [x] Reuse existing **preview player** for stitched `assembled_reel` — **no** new stitch UI / B-roll strip. (confirmed at FE signoff — no new route)
 - [x] EN/ES: `facelessWaitingForClips`, `facelessMissingVoiceover`, `failure.fingerprintMismatch` (signoff)
 - [x] No Cliente routes · no FFmpeg / clip-list details in UI. (confirmed at FE signoff)

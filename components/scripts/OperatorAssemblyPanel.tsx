@@ -312,6 +312,8 @@ function mergePolledStatus(
     brandingFailureReason: polled.brandingFailureReason,
     canApplyBranding: polled.canApplyBranding,
     canRebrand: polled.canRebrand,
+    // Poll DTO omits canAssemble — preserve batch/server readiness.
+    canAssemble: current.canAssemble,
     canReassemble: polled.canReassemble,
     updatedAt: polled.updatedAt,
   };
@@ -451,10 +453,15 @@ export function OperatorAssemblyPanel({
   const assemblyInFlight = job !== null && isAssemblyInFlight(job.status);
   const brandingInFlight =
     job !== null && isBrandingInFlight(job.brandingStatus);
-  const canAssembleInitial =
+  // Server-authoritative readiness (faceless stitch or primary/degrade).
+  // Never invent faceless broll readiness from client video-job maps.
+  const canAssembleFromServer =
+    job?.canAssemble === true && !pending && !assemblyInFlight;
+  // No-job primary convenience until companion readiness DTO lands
+  // (talking-head + faceless degrade only — not client-side broll guessing).
+  const canAssembleNoJobPrimaryFallback =
     job === null && hasPrimaryVideo && !assemblyInFlight && !pending;
-  const canAssembleFromDto = job?.canAssemble === true && !pending && !assemblyInFlight;
-  const showAssemble = canAssembleInitial || canAssembleFromDto;
+  const showAssemble = canAssembleFromServer || canAssembleNoJobPrimaryFallback;
   const showReassemble =
     job?.canReassemble === true && !pending && !assemblyInFlight;
   const showApplyBranding =
@@ -702,7 +709,7 @@ export function OperatorAssemblyPanel({
             icon="pi pi-video"
             size="small"
             loading={pending}
-            disabled={panelBusy || !hasPrimaryVideo}
+            disabled={panelBusy}
             onClick={() => void handleAssemble()}
           />
         ) : null}
