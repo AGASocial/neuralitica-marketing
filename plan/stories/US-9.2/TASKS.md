@@ -347,3 +347,55 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 - [x] QA lean — APPROVE (Medium #1 CLOSED; M2 poll race still open / out of scope)
 - [x] PO CLOSE M1
 - [x] Do **not** check/uncheck USER_STORIES § US-9.2 AC
+
+---
+
+## Phase B-M2 — Branding poll claim race (PREP)
+
+**Sprint:** `US-9.2-B-M2` · **Branch:** `feature/US-9.2-b-m2-branding-poll-claim` · **PREP:** [`PHASE-B-M2.md`](./PHASE-B-M2.md)
+
+**Closes:** QA Phase A Finding 1 · QA-PHASE-B Medium #2. **No** USER_STORIES AC changes.
+
+### Backend / worker (nextjs-backend + media-pipeline-engineer)
+
+- [ ] **`applyBrandingJobUpdate`** — on `queued` → `processing` claim, inspect UPDATE rows affected / `RETURNING`; **0 rows** → `{ idempotent: true }` (M2-3).
+- [ ] **`runBrandingJob`** — if claim returns `idempotent: true`, or row already `processing` at entry → return **before** `mkdtemp` / download / FFmpeg (M2-4).
+- [ ] **`pollQueuedBrandingJobsBatch`** — candidate filter **`branding_status = 'queued'`** only; drop `processing` from poll batch (M2-5).
+- [ ] **Unit test** — simulated lost claim / concurrent claim → **zero** `runFfmpeg` / spawn invocations; winner path unchanged.
+- [ ] **CONTRACT amend** — § Poll runtime + `runBrandingJob` step 1: atomic claim semantics, idempotent skip, `queued`-only poll predicate (**nextjs-backend** — required before BUILD).
+
+### Frontend
+
+- [ ] **None** (M2-9).
+
+### Database
+
+- [ ] **None** — conditional UPDATE on existing `neuramark_assembled_reels` row.
+
+### Security
+
+- [ ] **SECURITY.md lean amend** — branding worker claim AC (mirror US-9.1 `[SEC] Worker job claim`; security-architect).
+
+---
+
+## Agent routing summary (Phase B-M2)
+
+| Agent | Owns |
+|-------|------|
+| **media-pipeline-engineer** | `poll-branding-jobs.ts`, `runBrandingJob` early-return gate |
+| **nextjs-backend** | `applyBrandingJobUpdate` rows-affected; CONTRACT amend; unit tests |
+| **nextjs-frontend** | None |
+| **security-architect** | SECURITY lean amend (worker claim) |
+
+---
+
+## Gate checklist — Phase B-M2
+
+- [x] PREP — [`PHASE-B-M2.md`](./PHASE-B-M2.md) + this checklist + README note
+- [ ] SECURITY.md lean amend (security-architect)
+- [ ] CONTRACT.md amend (nextjs-backend — atomic claim; FE Reviewed N/A)
+- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend)
+- [ ] VALIDATION lean — lost claim → no spawn
+- [ ] QA lean — Medium #2 CLOSED
+- [ ] PO CLOSE M2
+- [ ] Do **not** check/uncheck USER_STORIES § US-9.2 AC
