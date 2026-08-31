@@ -5,7 +5,7 @@
 ```yaml
 current_phase: 3
 current_story: US-11.2
-story_status: PREP
+story_status: VALIDATE
 feature_branch: feature/US-11.2-revision-round
 last_completed_story: US-11.1
 phase_status: in_progress
@@ -39,7 +39,7 @@ updated_at: 2026-08-30T23:22:00Z
 | US-10.1 Run automated QA | done | agents `0b56c9e`/`75802d6` · BE `5e50115` · FE `b5e0941` · VALIDATION `d95555d` · QA `a6ba923` · CLOSE `b7a3bb9` (6/6 AC; override → US-10.2) |
 | US-10.2 Operator override with reason | done | BE `a9cc533` · FE `0c6bfb0` · VALIDATION `d7e3cd5` · QA `3da5547` · CLOSE `c9b97e5` (7/7 AC; approval render → US-11.1) |
 | US-11.1 Present Reel package for client approval | done | BE `d830b0f` · FE `defd9ff` · VALIDATION `633c6f5` · QA `3f39db9` · CLOSE `4f11d38` (5/5 AC; request-changes → US-11.2) |
-| US-11.2 Request controlled revision round | PREP | branch `feature/US-11.2-revision-round` · SPEC+SECURITY next |
+| US-11.2 Request controlled revision round | BUILD | branch `feature/US-11.2-revision-round` · CONTRACT `38d4a1d` · FE signoff `237bdea` · VALIDATE next |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
