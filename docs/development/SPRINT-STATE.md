@@ -3,17 +3,17 @@
 > Mantenido por `master-orchestrator`. No editar manualmente salvo para corregir un atasco.
 
 ```yaml
-current_phase: 5
-current_story: null
-story_status: SELECT
-feature_branch: null
+current_phase: 3
+current_story: US-8.7
+story_status: PREP
+feature_branch: feature/US-8.7-heygen-adapter
 last_completed_story: US-13.2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T14:00:00Z
+updated_at: 2026-08-31T15:50:00Z
 ```
 
-## Fase 5 — Operación semanal (Sprint 7 / P1)
+## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
 
 | Story | Status | Notes |
 |-------|--------|-------|
@@ -21,6 +21,14 @@ updated_at: 2026-08-31T14:00:00Z
 | US-12.2 Mark manual publication done | done | BE `6e0fcf0` · FE `513632e` · DB `f62a1a2` · VALIDATION `ceacf10` · QA `8b3536f` · CLOSE `f148e2d` (4/4 AC; metrics → US-13.1) |
 | US-13.1 Record basic post metrics manually | done | BE `7880a3c` · FE `6eb7c81` · DB `7880a3c` · fix `d544a47` · VALIDATION `1e90f5f` · QA `d9f829b` · CLOSE `d544a47` (5/5 AC; strategy insights → US-13.2) |
 | US-13.2 Surface top themes for next strategy cycle | done | BE `4649b83` · agents `ead2932` · FE `0419e5a` · VALIDATION `6fa9ad8` · QA `7ff873e` · CLOSE `6f06c42` FF-merge to main (3/3 AC; brief-read clientId parity → Phase B) |
+| Phase integration | done | PHASE-5.md CONNECTED `bf0ae66` (0 blockers) |
+
+## Sprint 7 backlog — Provider P1 (post Fase 5)
+
+| Story | Status | Notes |
+|-------|--------|-------|
+| US-8.7 HeyGen adapter (high tier) | PREP | branch `feature/US-8.7-heygen-adapter` · README+TASKS · Phase A adapter → Phase B activate/orchestrator/FE · deps US-8.1 ✅ · US-3.3 ✅ · US-5.1 ✅ · US-X.4 ✅ |
+| US-8.5 Wan B-roll adapter | pending | after US-8.7 or parallel backlog |
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -63,6 +71,8 @@ updated_at: 2026-08-31T14:00:00Z
 
 ## Historial reciente
 
+- 2026-08-31 · US-8.7 PREP: README + TASKS in `plan/stories/US-8.7/` — Phase A (adapter) then Phase B (activate catalog + orchestrator + operator FE); next SPEC-REVIEW → SECURITY → CONTRACT.
+- 2026-08-31 · Fase 5 integration CONNECTED `bf0ae66`; SELECT **US-8.7** HeyGen adapter; branch `feature/US-8.7-heygen-adapter`.
 - 2026-08-31 · US-13.2 CLOSE: 3/3 AC checked; VALIDATION PASS WITH NOTES `6fa9ad8` (98/98); QA APPROVE WITH CONDITIONS `7ff873e` (0 Critical/High, 1 Medium non-blocking: brief-read clientId parity → Phase B); FF-merge `6f06c42` to main; **Sprint 7 complete**; Phase 5 → SELECT **phase integration** (recommended), **US-8.7**, or **US-8.5**.
 - 2026-08-31 · US-13.2 SELECT → PREP. Branch `feature/US-13.2-strategy-insights` from main; deps US-13.1 ✅ · US-4.1 ✅; README + TASKS in `plan/stories/US-13.2/`.
 - 2026-08-31 · US-13.1 CLOSE: 5/5 AC checked; VALIDATION PASS WITH NOTES `1e90f5f` (37/37); QA APPROVE WITH CONDITIONS `d9f829b` (0 Critical/High, 4 Low); fix `d544a47` (editable default); FF-merge `d544a47` to main; Phase 5 → SELECT **US-13.2** (recommended), US-8.7, or phase integration.
@@ -71,9 +81,3 @@ updated_at: 2026-08-31T14:00:00Z
 - 2026-08-30 · US-12.2 SELECT → PREP. Branch `feature/US-12.2-mark-published` from main; deps US-12.1 ✅.
 - 2026-08-30 · US-12.1 CLOSE: 5/5 AC checked; VALIDATION PASS WITH NOTES `d642e70` (18/18); QA APPROVE WITH CONDITIONS `80766dc` after fix `79546ab` (0 Critical/High); FF-merge `722e5e0` to main; Phase 5 → SELECT **US-12.2** (recommended), US-13.1, or US-8.7.
 - 2026-08-30 · US-11.3 CLOSE: 5/5 AC checked; VALIDATION PASS WITH NOTES `209dcc3` (44/44); QA APPROVE WITH CONDITIONS `04dfe5b` (0 Critical/High); FF-merge `dfdace9` to main; **Sprint 6 complete** (US-11.1/11.2/11.3); Phase 3 → SELECT **US-12.1** (recommended), phase integration, or US-8.5.
-- 2026-08-30 · US-11.2 CLOSE Phase A: 5/5 AC checked; VALIDATION PASS WITH NOTES `e4f12fb` (105/105); QA APPROVE WITH CONDITIONS `84902c8`; FF-merge `a08b999` to main; Phase 3 → SELECT **US-11.3** (recommended) or US-8.5.
-- 2026-08-30 · US-11.2 SELECT → PREP. Branch `feature/US-11.2-revision-round` from main; deps US-11.1 ✅.
-- 2026-08-30 · US-11.1 CLOSE Phase A: 5/5 AC checked; VALIDATION PASS WITH NOTES `633c6f5` (25/25); QA APPROVE WITH CONDITIONS `3f39db9`; FF-merge `4f11d38` to main; Phase 3 → SELECT **US-11.2** (recommended) or US-11.3 or US-8.5.
-- 2026-08-30 · US-11.1 SELECT → PREP. Branch `feature/US-11.1-client-approval` from main; deps US-10.1 ✅ · US-10.2 ✅ · US-9.2 ✅.
-- 2026-08-30 · US-10.2 CLOSE Phase A: 7/7 AC checked; VALIDATION PASS WITH NOTES `d7e3cd5` (22/22); QA APPROVE WITH CONDITIONS `3da5547`; FF-merge `c9b97e5` to main; Phase 3 → SELECT **US-11.1** (recommended) or US-8.5.
-- 2026-08-30 · US-10.2 SELECT → PREP. Branch `feature/US-10.2-qa-override` from main; deps US-10.1 ✅.
