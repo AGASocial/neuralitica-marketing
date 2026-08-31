@@ -37,9 +37,16 @@ import { enqueueVideoJobPoll } from "./enqueue-video-job-poll";
 import { loadReelScriptForVideoJob } from "./load-reel-script-for-video-job";
 import { mapVideoJobRow, VIDEO_JOBS_TABLE } from "./video-job-row";
 
+/**
+ * Internal-only options for retry / already-gated callers.
+ * Never expose via a `"use server"` re-export — clients must use
+ * `actions/create-broll-video-jobs.ts`, which always calls requireOperator
+ * and supplies `operatorClientId` from the session only.
+ */
 export type CreateBrollVideoJobsOptions = {
   parentJobId?: string;
   attempt?: number;
+  /** Server-resolved operator id only — never from client body. */
   operatorClientId?: string;
   jobKind?: "broll_generate" | "broll_retry";
   /**

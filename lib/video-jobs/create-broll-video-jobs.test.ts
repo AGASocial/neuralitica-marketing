@@ -583,4 +583,84 @@ describe("US-8.5 Phase B createBrollVideoJobs", () => {
     );
     assert.match(src, /import ["']server-only["']/);
   });
+
+  it("H1 — Server Action always requireOperator; never re-exports options", () => {
+    const actionSrc = readFileSync(
+      path.join(__dirname, "actions/create-broll-video-jobs.ts"),
+      "utf8",
+    );
+    assert.match(actionSrc, /^"use server";/m);
+    assert.doesNotMatch(
+      actionSrc,
+      /export\s*\{\s*createBrollVideoJobs\s*\}\s*from/,
+    );
+    assert.match(actionSrc, /await requireOperator\("handler"\)/);
+    const fnStart = actionSrc.indexOf("export async function createBrollVideoJobs");
+    assert.ok(fnStart >= 0);
+    const requireIdx = actionSrc.indexOf('requireOperator("handler")', fnStart);
+    const coreIdx = actionSrc.indexOf("createBrollVideoJobsCore", fnStart);
+    assert.ok(requireIdx >= 0 && coreIdx > requireIdx);
+    assert.match(
+      actionSrc,
+      /createBrollVideoJobsCore\(\s*rawInput\s*,\s*\{\s*operatorClientId:\s*operator\.id/,
+    );
+    assert.match(
+      actionSrc,
+      /export async function createBrollVideoJobs\(\s*rawInput:\s*unknown,?\s*\)/,
+    );
+    // Single-arg action only — no options parameter reachable from the client.
+    assert.doesNotMatch(
+      actionSrc,
+      /export async function createBrollVideoJobs\([^)]*options/,
+    );
+  });
+
+  it("H1 — Server Action rejects non-operator before core", async () => {
+    await withServerOnlyStub(async () => {
+      let coreCalled = false;
+      const nodeModule = Module as unknown as NodeModuleLoad;
+      const originalLoad = nodeModule._load.bind(nodeModule);
+      nodeModule._load = function (request, parent, isMain) {
+        if (request === "server-only") return {};
+        const req = String(request);
+        if (req.includes("require-user")) {
+          return {
+            isAuthGuardError: (e: unknown) =>
+              Boolean(e && typeof e === "object" && "status" in e),
+            requireOperator: async () => {
+              const err = new Error("Forbidden") as Error & { status: number };
+              err.status = 403;
+              throw err;
+            },
+          };
+        }
+        if (
+          req.includes("create-broll-video-jobs") &&
+          !req.includes("actions/")
+        ) {
+          return {
+            createBrollVideoJobs: async () => {
+              coreCalled = true;
+              return { ok: true, jobs: [], skipped: [], createdCount: 0, skippedCount: 0, skippedNoNeedsBroll: false };
+            },
+          };
+        }
+        return originalLoad(request, parent, isMain);
+      };
+      clearModuleCache();
+      try {
+        const { createBrollVideoJobs } = require("./actions/create-broll-video-jobs.ts");
+        const result = await createBrollVideoJobs({
+          reelScriptId: REEL_SCRIPT_ID,
+          clientId: CLIENT_ID,
+        });
+        assert.equal(result.ok, false);
+        assert.equal(result.error.code, "FORBIDDEN");
+        assert.equal(coreCalled, false);
+      } finally {
+        nodeModule._load = originalLoad;
+        clearModuleCache();
+      }
+    });
+  });
 });
