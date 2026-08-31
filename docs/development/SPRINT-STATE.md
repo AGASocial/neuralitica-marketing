@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: null
-story_status: SELECT
-feature_branch: null
+current_story: US-9.1-B
+story_status: PREP
+feature_branch: feature/US-9.1-phase-b-broll-stitch
 last_completed_story: US-8.5
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T16:45:00Z
+updated_at: 2026-08-31T16:55:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -30,7 +30,7 @@ updated_at: 2026-08-31T16:45:00Z
 | US-8.7 HeyGen adapter (high tier) | done | FE `a18d4cb` · BE `299d638` · VALIDATION `602995c` (5/5 AC; 22/22) · QA `fc19d0a` · fix `b3a9377` · CLOSE `89d0119` FF-merge to main |
 | US-8.5 Wan B-roll adapter | done | BUILD `f7cf726` · VALIDATION `14a74f5` (6/6 AC; 39/39) · QA `8617ae7` · fix `e75e1b7` · CLOSE `6c66f7d` FF-merge to main (stitch → US-9.1 Phase B) |
 
-**Sprint 7 provider backlog complete.** Next backlog: **US-9.1 Phase B** faceless B-roll stitch (recommended), or high-tier B-roll (`ltx_broll_high`) when prioritized.
+**Sprint 7 provider backlog complete.** Active: **US-9.1 Phase B** faceless B-roll stitch (`US-9.1-B` / PREP).
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -55,7 +55,7 @@ updated_at: 2026-08-31T16:45:00Z
 | US-8.6 MuseTalk adapter | done | Phase A `dbc9ce2` · Phase B `bdfaaf2` · VALIDATION `798635e` · QA `82bde3d` · CLOSE `2fb7573` (4/5 AC; P1 override defer) |
 | US-8.3 Manual video upload fallback | done | FE `fc6deca` · BE `eaa974a` · fixes `f3f78af`/`b2fb1cc` · VALIDATION `2f5edc0` · QA `a58faeb` · CLOSE `d8baafb` |
 | US-9.3 Text-to-speech for voiceover | done | Phase A `dfdd08b` · adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813` · VALIDATION `1715048` · QA `e9c1833` · CLOSE 5/6 AC (ElevenLabs Phase B defer) |
-| US-9.1 Assemble final 9:16 Reel | done | Phase A `4853871` · worker `f74570f`/`153b73a` · BE `7189f4b` · FE `9e7142c` · VALIDATION `03dff73` · QA `5c0ec7e` · CLOSE 5/5 AC (faceless B-roll Phase B unblocked by US-8.5) |
+| US-9.1 Assemble final 9:16 Reel | Phase A done · Phase B PREP | Phase A `4853871` · CLOSE 5/5 AC; **Phase B PREP** faceless B-roll stitch `feature/US-9.1-phase-b-broll-stitch` (US-8.5 ✅) |
 | US-9.2 Add subtitles, logo, and cover | done | worker `7518bc5` · BE `36e9dd3`+fix `757da6a` · FE `a15921b` · VALIDATION `4378c65` · QA `c0d6f66` · CLOSE `92b196a` |
 | US-10.1 Run automated QA | done | agents `0b56c9e`/`75802d6` · BE `5e50115` · FE `b5e0941` · VALIDATION `d95555d` · QA `a6ba923` · CLOSE `b7a3bb9` (6/6 AC; override → US-10.2) |
 | US-10.2 Operator override with reason | done | BE `a9cc533` · FE `0c6bfb0` · VALIDATION `d7e3cd5` · QA `3da5547` · CLOSE `c9b97e5` (7/7 AC; approval render → US-11.1) |
@@ -73,6 +73,7 @@ updated_at: 2026-08-31T16:45:00Z
 
 ## Historial reciente
 
+- 2026-08-31 · US-9.1 Phase B PREP: `PHASE-B.md` + README/TASKS freezes (B1–B14); branch `feature/US-9.1-phase-b-broll-stitch`; sprint `US-9.1-B` / PREP; next SPEC-REVIEW → SECURITY → CONTRACT.
 - 2026-08-31 · US-8.5 CLOSE: 6/6 AC checked; VALIDATION PASS WITH NOTES `14a74f5` (39/39); QA APPROVE WITH CONDITIONS `8617ae7` (H1/M1 fixed `e75e1b7`); FF-merge `6c66f7d` to main; **Sprint 7 provider backlog complete** → SELECT **US-9.1 Phase B** faceless B-roll stitch (recommended), or high-tier B-roll when added.
 - 2026-08-31 · US-8.5 PREP: README + TASKS in `plan/stories/US-8.5/` — Phase A (adapter) then Phase B (B-roll orchestrator + graceful degrade); stitch → US-9.1 Phase B; FE preview deferred; next SPEC-REVIEW → SECURITY → CONTRACT.
 - 2026-08-31 · US-8.7 CLOSE: 5/5 AC checked; VALIDATION PASS WITH NOTES `602995c` (22/22); QA APPROVE WITH CONDITIONS `fc19d0a` (0 Critical/High; M1/M2 fixed `b3a9377`); FF-merge `89d0119` to main; Provider P1 → SELECT **US-8.5** Wan B-roll (recommended).

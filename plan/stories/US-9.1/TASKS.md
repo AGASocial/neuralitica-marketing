@@ -1,15 +1,17 @@
 # US-9.1 — Assemble final 9:16 Reel
 
 **Priority:** P0  
-**Depends on:** US-8.4 ✅ primary video jobs · US-6.1 ✅ (sequencing — captions not assembly input). **Soft:** US-9.3 ✅ voiceover assets · US-8.2/8.6/8.3 ✅ primary sources · US-8.5 B-roll (**Phase B**).  
-**Acceptance criteria:** `plan/USER_STORIES.md` § US-9.1 (source of truth — do **not** redefine; do **not** check off in PREP)  
-**Implementers:** **media-pipeline-engineer** + **nextjs-backend** + **nextjs-frontend** (`docs/development/AGENT-ROSTER.md` Phase 4). **integrations-engineer** only if weekly auto-assemble is explicitly in scope ( **not in V1 BUILD** ).  
-**Canonical terms:** **Ensamblado** · **Job de generación** · **Paquete de guion** · **download-and-own** · **Reel 9:16**. Avoid CONTEXT _Evitar_ list in product-facing copy.
+**Depends on:** US-8.4 ✅ · US-6.1 ✅ · US-9.3 ✅ · US-8.2/8.6/8.3 ✅ · **US-8.5 ✅** (Phase B hard — owned `broll` clips). Phase A ✅.  
+**Acceptance criteria:** `plan/USER_STORIES.md` § US-9.1 (do **not** redefine; do **not** uncheck Phase A AC in PREP; Phase B re-validates same AC).  
+**Implementers (Phase B):** **media-pipeline-engineer** + **nextjs-backend** + thin **nextjs-frontend**.  
+**Canonical terms:** **Ensamblado** · **Job de generación** · **Paquete de guion** · **download-and-own** · **Reel 9:16**. Avoid CONTEXT _Evitar_ list in product-facing copy.  
+**Phase B doc:** [`PHASE-B.md`](./PHASE-B.md).
 
 ## Out of scope (do not implement here)
 
 - **US-9.2** subtitles, logo, cover frame (second FFmpeg pass).
-- **US-8.5** Wan B-roll adapter body (Phase B stitch consumer only).
+- **US-8.5** Wan adapter / `createBrollVideoJobs` (✅ CLOSED — consume clips only).
+- **Talking-head B-roll overlays** · **full rewind FX** · **new story ID**.
 - **US-10.1** QA agent · **US-11.x** approval/publish UI.
 - **Weekly cycle** auto-assemble cron (integrations-engineer / ADR-0001).
 - **Cliente** assemble trigger.
@@ -34,8 +36,8 @@
 | Batch `assemblyByReelScriptId` on week load | **US-9.1** BE |
 | Primary video resolution (latest completed primary job) | **US-9.1** BE (reads US-8.4 rows) |
 | Voiceover resolution / remux edge case | **US-9.1** BE + worker |
-| B-roll multi-clip stitch | **Phase B** (after US-8.5) |
-| `editing_hints` cold open / rewind FX | **Phase B** |
+| B-roll multi-clip stitch | **Phase B** (this PREP — US-8.5 ✅) |
+| `editing_hints` cold open / rewind FX | Phase B: numeric cold-open only; rewind still out |
 | TTS synthesis | **US-9.3** ✅ |
 | Video job create/poll | **US-8.4** ✅ |
 
@@ -43,7 +45,8 @@
 
 | Topic | Decision |
 |-------|----------|
-| Branch | **`feature/US-9.1-assemble-reel`** |
+| Branch (Phase A) | **`feature/US-9.1-assemble-reel`** (historical) |
+| Branch (Phase B) | **`feature/US-9.1-phase-b-broll-stitch`** |
 | Template id | **`reel_v1_basic`** (only template in V1) |
 | Output resolution | **1080×1920** (9:16) |
 | Idempotency | Unique completed assembly per **`(reel_script_id, script_updated_at, input_fingerprint)`**; re-call returns existing row |
@@ -67,12 +70,66 @@
 
 | Phase | Deliverables |
 |-------|----------------|
-| **A** | DDL · orchestrator · Phase A FFmpeg graph · worker loop · Operator UI · idempotency · duration AC · SEC guards |
-| **B** | Faceless + B-roll concat · `cold_open_notes` trim · metadata for `broll_beats` · graceful B-roll absence |
+| **A** ✅ | DDL · orchestrator · Phase A FFmpeg graph · worker loop · Operator UI · idempotency · duration AC · SEC guards |
+| **B** PREP | Faceless B-roll concat · fingerprint + resolver · degrade · thin FE Assemble gate · optional numeric cold-open · see [`PHASE-B.md`](./PHASE-B.md) |
+
+**Phase B branch:** `feature/US-9.1-phase-b-broll-stitch` · **Depends on:** US-8.5 ✅ · Phase A ✅  
+**Phase B freezes:** [`PHASE-B.md`](./PHASE-B.md) B1–B14 (do not contradict in BUILD).
 
 ---
 
-## Frontend (nextjs-frontend)
+## Phase B checklist (PREP 2026-08-31)
+
+### Frontend (nextjs-frontend) — Phase B
+
+**Consumer:** `/operator/scripts` assembly panel (existing).
+
+- [ ] Enable **Assemble Reel** when `modalidad === faceless` and server/batch signals inputs complete (≥1 completed broll **or** completed primary for degrade) — today gated on primary only.
+- [ ] Reuse existing **preview player** for stitched `assembled_reel` — **no** new stitch UI / B-roll strip.
+- [ ] EN/ES: only if new `messageKey`s land in CONTRACT (e.g. faceless waiting for clips); otherwise no copy churn.
+- [ ] No Cliente routes · no FFmpeg / clip-list details in UI.
+
+### Backend / API (nextjs-backend) — Phase B
+
+**Concrete consumers:** FE Assemble enablement · worker stitch path · downstream US-9.2/10.1/11.1 (unchanged output shape).
+
+- [ ] CONTRACT Phase B amendment: faceless resolve rules, fingerprint shape, error codes, concat seam, fixtures.
+- [ ] Extend **`resolveAssemblyInputs`** (or sibling): for faceless, load up to **8** completed owned `asset_role = broll` outputs ordered by job **`created_at ASC`**; talking-head path unchanged (ignore broll).
+- [ ] Zero completed broll → degrade to Phase A primary if present, else `ASSEMBLY_INPUTS_INCOMPLETE`.
+- [ ] Extend **`input_fingerprint`** with ordered broll asset ids + path tag (`primary` vs `broll_stitch`) — CONTRACT exact string.
+- [ ] Orchestrator: pass broll asset id list / path into assembly row or worker-readable fields per CONTRACT (lean: fingerprint + nullable `primary_video_asset_id` when stitch-only).
+- [ ] Unit tests: faceless stitch resolve, degrade, talking-head ignores broll, ownership fail-closed, forbidden keys unchanged.
+- [ ] **No new DDL** unless CONTRACT proves lineage column needed (lean: none).
+
+### Worker / FFmpeg (media-pipeline-engineer) — Phase B
+
+- [ ] Implement **`lib/assembly/ffmpeg/build-broll-concat-args.ts`** — pure `string[]` from local clip paths + voiceover + target/tolerance (+ optional cold-open seconds); **no** script text in argv.
+- [ ] Wire **`runAssemblyJob`** faceless/`broll_stitch` branch: download owned clips → concat/normalize 1080×1920 → trim/pad → upload → UPDATE job.
+- [ ] FFmpeg via existing **`runFfmpeg` / `spawn(..., { shell: false })`** only; temp under assembly workspace; cleanup `finally`.
+- [ ] Partial clip sets OK; never wait for failed/queued broll jobs.
+- [ ] Golden tests for concat args; mocked spawn; grep: no `fetch(` / no shell interpolation.
+- [ ] Optional: safe integer parse of `cold_open_notes` for lead trim only — CONTRACT bounds; skip if unparsable.
+
+### Security (security-architect — Phase B amend)
+
+- [ ] Multi-clip ownership / tenancy before each Storage read
+- [ ] Concat demuxer / filter_complex injection surface (paths only)
+- [ ] Fingerprint / IDOR parity with Phase A
+- [ ] No SiliconFlow CDN fetch at assembly time
+
+### Phase B contract-first sequence
+
+1. **product-owner** — Phase B PREP ✅ (`PHASE-B.md` · this checklist · SPRINT-STATE)
+2. **spec-guardian** — SPEC-REVIEW amendment (S3.M10 stitch)
+3. **security-architect** — SECURITY.md amendment
+4. **nextjs-backend** — CONTRACT.md Phase B + **Reviewed by FE**
+5. **BUILD** — media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend
+6. **requirements-validator** — VALIDATION.md Phase B
+7. **qa-engineer** — QA.md Phase B
+
+---
+
+## Frontend (nextjs-frontend) — Phase A ✅
 
 **Consumer surfaces:** `/operator/scripts` expand row (same pattern as video job panel).
 
@@ -142,7 +199,7 @@
 - [ ] **`lib/assembly/enqueue-assembly-job.ts`** — `in_process` fire-and-forget like video jobs.
 - [ ] **`worker/assembly-jobs.ts`** — long-poll `queued`/`processing` rows; call `runAssemblyJob`.
 - [ ] Phase A filter graph (CONTRACT freezes): scale+crop **1080×1920**, **`libx264`**, **`aac`**, trim/pad to target ± tolerance.
-- [ ] Phase B module stub: **`lib/assembly/ffmpeg/build-broll-concat-args.ts`** — implement when US-8.5 lands.
+- [ ] Phase B: **`lib/assembly/ffmpeg/build-broll-concat-args.ts`** — implement in Phase B BUILD (see checklist above).
 - [ ] Tests: args builder snapshots; mocked spawn; no live FFmpeg in CI.
 - [ ] Worker env: Supabase service-role, Storage bucket, **`ASSEMBLY_JOB_POLL_MODE`**, region **`iad`** note in README/deploy docs (out of story code if no fly.toml yet).
 

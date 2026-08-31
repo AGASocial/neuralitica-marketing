@@ -930,14 +930,14 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | Pipeline job: inputs from video job + script + TTS audio → FFmpeg or service → `assembled_reels` |
 | **DB** | `assembled_reels` (reel_script_id, preview_url, final_url, status, template_id) |
 
-**Acceptance criteria** *(Phase A CLOSED 2026-08-30 — faceless B-roll stitch deferred Phase B / US-8.5)*
+**Acceptance criteria** *(Phase A CLOSED 2026-08-30 — 5/5 AC; Phase B PREP 2026-08-31 faceless B-roll stitch on `feature/US-9.1-phase-b-broll-stitch` — re-validate same AC on stitch path; no new story ID)*
 - [x] Output aspect ratio 9:16
 - [x] Duration within script target ± configurable tolerance
 - [x] Pipeline idempotent per script version
 - [x] [SEC] FFmpeg (or the assembly service) is invoked with argument arrays, never shell string interpolation; all input paths come from validated `media_assets` records owned by the job's client, and text inputs (subtitles, filenames) cannot inject FFmpeg options or shell metacharacters
 - [x] [SEC] Assembly only consumes assets already stored by the system; it never fetches arbitrary URLs supplied at assembly time (SSRF guard)
 
-**Depends on:** US-8.4, US-6.1
+**Depends on:** US-8.4, US-6.1 · **Phase B:** US-8.5 ✅ (owned `asset_role = broll` clips)
 
 ---
 

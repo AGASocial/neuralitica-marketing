@@ -1,20 +1,20 @@
 # US-9.1 — Assemble final 9:16 Reel
 
-**Status:** CLOSED Phase A (2026-08-30) — VALIDATION PASS WITH NOTES `03dff73` · QA APPROVE WITH CONDITIONS `5c0ec7e` · PO AC check-off 5/5 on `feature/US-9.1-assemble-reel`. Builds worker `f74570f`/`153b73a` · BE `7189f4b` · FE `9e7142c`. Faceless B-roll stitch deferred Phase B (US-8.5).
+**Status:** Phase A **CLOSED** (2026-08-30) — VALIDATION `03dff73` · QA `5c0ec7e` · 5/5 AC. **Phase B PREP** (2026-08-31) — faceless B-roll stitch; US-8.5 ✅. Canonical Phase B doc: [`PHASE-B.md`](./PHASE-B.md).
 
 **As a** System, **I want** to combine voice, avatar/B-roll, template, and timing, **so that** output is Instagram-ready vertical video.
 
-Ship **FFmpeg assembly** on the **Fly.io worker** (ADR-0003): Operator-triggered pipeline that resolves **completed primary video** + **script timing** (+ **voiceover asset** for lineage / remux when needed) → **`neuramark_assembled_reels`** row + **`neuramark_media_assets`** (`asset_type = assembled_reel`); **9:16 output**, **duration within target ± tolerance**, **idempotent per script version**. **Phase A** = normalize/mux talking-head and manual-primary paths; **Phase B** = faceless multi-clip B-roll stitch + `editing_hints` (cold open / rewind).
+Ship **FFmpeg assembly** on the **Fly.io worker** (ADR-0003): Operator-triggered pipeline that resolves **completed primary video** + **script timing** (+ **voiceover asset** for lineage / remux when needed) → **`neuramark_assembled_reels`** row + **`neuramark_media_assets`** (`asset_type = assembled_reel`); **9:16 output**, **duration within target ± tolerance**, **idempotent per script version**. **Phase A** = normalize/mux talking-head and manual-primary paths; **Phase B** = faceless multi-clip B-roll stitch (+ minimal cold-open trim; rewind FX still deferred).
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-9.1 (5/5 AC checked Phase A — faceless B-roll stitch deferred Phase B).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-9.1 (5/5 AC checked Phase A — Phase B re-validates same AC on stitch path; no new story ID).
 
-**This folder:** [`plan/stories/US-9.1/`](./) — `README.md` · `TASKS.md` (gates: `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` — create when story enters sprint).
+**This folder:** [`plan/stories/US-9.1/`](./) — `README.md` · [`PHASE-B.md`](./PHASE-B.md) · `TASKS.md` · Phase A gates (`SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`).
 
-**Branch:** `feature/US-9.1-assemble-reel`
+**Branch (Phase B):** `feature/US-9.1-phase-b-broll-stitch` · **Branch (Phase A, historical):** `feature/US-9.1-assemble-reel`
 
-**Depends on:** [US-8.4](../US-8.4/) ✅ job orchestration + completed `output_media_asset_id` · [US-6.1](../US-6.1/) ✅ captions exist for downstream approval package (not assembly input in this story). **Soft:** [US-9.3](../US-9.3/) ✅ voiceover `media_assets` · [US-8.2](../US-8.2/) / [US-8.6](../US-8.6/) / [US-8.3](../US-8.3/) primary video sources · [US-8.5](../../USER_STORIES.md) B-roll adapter (**Phase B** — may be deferred).
+**Depends on:** [US-8.4](../US-8.4/) ✅ · [US-6.1](../US-6.1/) ✅ · [US-9.3](../US-9.3/) ✅ · [US-8.2](../US-8.2/) / [US-8.6](../US-8.6/) / [US-8.3](../US-8.3/) ✅ · [US-8.5](../US-8.5/) ✅ B-roll clips (Phase B hard dependency).
 
-**Unblocks:** [US-9.2](../../USER_STORIES.md) subtitles/logo/cover (second-pass FFmpeg on assembled base) · [US-10.1](../../USER_STORIES.md) QA on assembled output · [US-11.1](../../USER_STORIES.md) client approval preview · weekly cycle assembly step (integrations-engineer, ADR-0001).
+**Unblocks:** Faceless production completeness (US-8.5 stitch handoff) · [US-9.2](../US-9.2/) / [US-10.1](../../USER_STORIES.md) / [US-11.1](../../USER_STORIES.md) already consume assembled output.
 
 ---
 
@@ -33,7 +33,7 @@ Ship **FFmpeg assembly** on the **Fly.io worker** (ADR-0003): Operator-triggered
 | Story / topic | Why out |
 |---------------|---------|
 | **US-9.2** subtitles, logo, cover frame | Separate second-pass story on assembled base. |
-| **US-8.5** Wan B-roll adapter body | Phase B assembly stitch; not required for Phase A AC. |
+| **US-8.5** Wan B-roll adapter body | ✅ CLOSED — Phase B **consumes** clips only (no adapter work). |
 | **US-10.1** QA agent | Downstream consumer of `assembled_reel_id`. |
 | **US-11.x** approval / publish | Downstream; assembly output is input. |
 | **Weekly cycle auto-assemble** | integrations-engineer (ADR-0001) — Operator manual trigger first. |
@@ -68,10 +68,10 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; long-lived third-par
 
 | Phase | Scope | Closes |
 |-------|-------|--------|
-| **A (US-9.1 BUILD — ship first)** | DDL + orchestrator + worker FFmpeg **normalize path**: completed **primary** video → scale/center-crop **1080×1920** → trim/pad to **`target_duration_sec ± tolerance`** → store **`assembled_reel`** asset. Supports **`modalidad ∈ {own_avatar, generic_avatar}`** and **manual/API primary**. Operator UI + status poll. Idempotency on **`(reel_script_id, script_updated_at, input_fingerprint)`**. Template **`reel_v1_basic`** only. | US-9.1 AC: 9:16, duration tolerance, idempotency, `[SEC]` FFmpeg + SSRF guards |
-| **B (same story or follow-up BUILD slice — after US-8.5 or explicit PO pull-in)** | **Faceless** path: stitch **multiple `asset_role = broll`** clips + voiceover mux; apply **`cold_open_notes` / `editing_notes`** from script (cold open trim, simple concat — not full rewind FX). Graceful skip when B-roll jobs failed (primary-only degrade). | SPEC §3 S3.M10 partial: `editing_hints` + B-roll; USER_STORIES US-8.5 AC “stitched in assembly” |
+| **A (CLOSED 2026-08-30)** | DDL + orchestrator + worker FFmpeg **normalize path**: completed **primary** → **1080×1920** → trim/pad → **`assembled_reel`**. Talking-head + manual primary. Idempotency + Operator UI. | US-9.1 AC 5/5 |
+| **B (PREP 2026-08-31 — same story `US-9.1-B`)** | **Faceless** path: stitch up to **8** completed owned **`asset_role = broll`** clips + voiceover mux; optional safe numeric cold-open trim; **degrade** to Phase A primary path or incomplete when zero broll. Full rewind FX still out. Details + freezes: [`PHASE-B.md`](./PHASE-B.md). | SPEC §3 S3.M10 B-roll stitch handoff from US-8.5; re-validate US-9.1 SEC/duration AC on stitch path |
 
-**VALIDATION note (binding):** If Phase B is deferred at BUILD time, **`VALIDATION.md`** must document **partial SPEC S3.M10 closure** (no B-roll stitch, no editing_hints FX) — same pattern as US-9.3 ElevenLabs defer.
+**VALIDATION note (binding):** Phase A VALIDATION documented partial S3.M10 (no B-roll stitch). Phase B VALIDATION must close that gap for stitch + note remaining rewind-FX defer if still out.
 
 ---
 
@@ -82,6 +82,7 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; long-lived third-par
 | **From US-8.4 / US-8.3 / US-8.6** | `output_media_asset_id` on latest completed **`asset_role = primary`** job for `reel_script_id` | Required for Phase A assemble; foreign/missing → `ASSEMBLY_INPUTS_INCOMPLETE` |
 | **From US-9.3** | Latest **`voiceover`** asset for script (optional FK on assembly row) | Talking-head: audio already in primary MP4; remux only when primary has **no audio stream** (manual edge case) |
 | **From US-5.1** | `target_duration_sec`, `updated_at`, `modalidad`, notes | Duration target + idempotency key |
+| **From US-8.5** | Completed **`asset_role = broll`** jobs → owned `output_media_asset_id` (max 8) | Phase B stitch inputs; failed jobs skipped |
 | **To US-9.2** | `assembled_reel` **`output_media_asset_id`** | Second-pass burn-in; do not re-generate primary |
 | **To US-10.1** | `neuramark_assembled_reels.id` | QA report FK |
 | **To US-11.1** | Signed media serve URL for assembled MP4 | Approval preview player |
@@ -98,9 +99,9 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; long-lived third-par
 | 4 | **Duration tolerance** | **`NEURAMARK_ASSEMBLY_DURATION_TOLERANCE_SEC`** default **`2`**. Output duration must satisfy **`abs(actual - target) <= tolerance`**. Trim primary with `-t`; pad with **`tpad`** / **`apad`** only when shorter — CONTRACT freezes filter graph. |
 | 5 | **Talking-head path** | **`modalidad ∈ {own_avatar, generic_avatar}`**: require completed primary video job; **canonical audio = primary video stream** (SadTalker/MuseTalk already muxed VO). Store **`voiceover_asset_id`** from latest script-linked voiceover when present for fingerprint only. |
 | 6 | **Manual-primary path** | **`provider_key = manual`** (US-8.3): same normalize pipeline. If probe finds **no audio stream**, mux latest **`voiceover`** asset. |
-| 7 | **Faceless path** | **Phase B.** Phase A: **`modalidad = faceless`** without completed primary → **`ASSEMBLY_INPUTS_INCOMPLETE`** with messageKey pointing Operator to manual upload (US-8.3) or wait for US-8.5. Do not block talking-head slots. |
-| 8 | **B-roll stitch** | **Phase B** after US-8.5 (or manual multiple uploads P1). Phase A ignores **`broll_beats`** except persist on assembly metadata for downstream. |
-| 9 | **Editing hints** | **Phase B** minimal: **`cold_open_notes`** → optional lead trim seconds from script (default off in Phase A). Full playbook **`editing_hints`** rewind FX deferred. |
+| 7 | **Faceless path** | **Phase B** — see **B2–B5** below / [`PHASE-B.md`](./PHASE-B.md). Phase A: faceless without primary → incomplete. |
+| 8 | **B-roll stitch** | **Phase B** — US-8.5 ✅. Stitch faceless + completed broll only; talking-head ignores broll. |
+| 9 | **Editing hints** | **Phase B** minimal numeric cold-open trim only; rewind FX still deferred. |
 | 10 | **Output storage** | **`neuramark_media_assets`** new type **`assembled_reel`**; **`neuramark_assembled_reels.output_media_asset_id`** FK — **no** `preview_url` / `final_url` columns (download-and-own storage keys). |
 | 11 | **Trigger** | Operator Server Action **`assembleReelForScript({ reelScriptId })`** on **`/operator/scripts`** — **`requireOperator("handler")`**; input **`{ reelScriptId }` only**. |
 | 12 | **Status read** | **`GET /api/assembly-jobs/[jobId]`** — operator session + `client_id` scope → foreign **404**; DTO subset (no FFmpeg command, no storage paths). |
@@ -110,30 +111,57 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; long-lived third-par
 | 16 | **US-6.1 dependency** | Sequencing only — captions not assembly inputs; approval package joins later (US-11.1). |
 | 17 | **Implementers** | **media-pipeline-engineer** + **nextjs-backend** + **nextjs-frontend**; CONTRACT before BUILD. |
 
+### Phase B freezes (2026-08-31) — binding summary
+
+Full table in [`PHASE-B.md`](./PHASE-B.md). Do not reopen without PO + SECURITY:
+
+| # | Decision |
+|---|----------|
+| **B1** | Same story **US-9.1** / sprint **`US-9.1-B`** — not a new ID. |
+| **B2** | Stitch **only** `modalidad === faceless` + ≥1 completed owned broll; talking-head **ignores** broll. |
+| **B3** | Clip order = completed broll jobs **`created_at ASC`**, max **8**; never put beat text in FFmpeg. |
+| **B4** | Missing/failed broll → stitch completed subset; zero broll → Phase A primary degrade or incomplete — **never block** on failed Wan jobs. |
+| **B5** | Faceless audio = mux owned **voiceover** when needed. |
+| **B6** | FFmpeg **args-array only**; server temp paths only. |
+| **B7** | All inputs owned by assembly `client_id`. |
+| **B8** | Max clips **8** (US-8.5). |
+| **B9** | Fingerprint includes ordered broll asset ids + path tag. |
+| **B10** | Same 9:16 + duration tolerance as Phase A. |
+| **B11** | Cold-open = optional safe integer trim only; no rewind FX. |
+| **B12** | FE: reuse preview; enable Assemble for faceless when inputs complete. |
+| **B13** | Trigger `{ reelScriptId }` only; no assembly-time URL fetch. |
+| **B14** | Implementers: media-pipeline + BE (+ thin FE); CONTRACT amend before BUILD. |
+
 ---
 
 ## Gates (orchestrator)
 
-- [x] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 S3.M10; **GAPS** — US-9.2 split + Phase B editing_hints documented)
-- [ ] SECURITY.md (security-architect — FFmpeg injection, path traversal, IDOR, worker tenancy)
-- [ ] CONTRACT.md (nextjs-backend — DDL, orchestrator, worker seam, DTOs; **Reviewed by FE** before BUILD)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer — ADR-0003 worker path)
+### Phase A (CLOSED)
 
-**Next after PREP:** spec-guardian **SPEC-REVIEW** → security-architect **SECURITY** → nextjs-backend **CONTRACT**.
+- [x] SPEC-REVIEW.md · SECURITY.md · CONTRACT.md · BUILD · VALIDATION.md · QA.md
+
+### Phase B (active)
+
+- [ ] SPEC-REVIEW.md amendment (S3.M10 B-roll stitch)
+- [ ] SECURITY.md amendment (concat / multi-asset tenancy)
+- [ ] CONTRACT.md Phase B section + **Reviewed by FE**
+- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend)
+- [ ] VALIDATION.md Phase B
+- [ ] QA.md Phase B
+
+**Next after Phase B PREP:** spec-guardian **SPEC-REVIEW** → security-architect **SECURITY** → nextjs-backend **CONTRACT**.
 
 ---
 
 ## Acceptance criteria mapping (USER_STORIES § US-9.1)
 
-| AC | US-9.1 deliverable |
-|----|-------------------|
-| Output aspect ratio 9:16 | FFmpeg **`reel_v1_basic`** → **1080×1920** |
-| Duration within script target ± tolerance | Trim/pad vs **`target_duration_sec`**; env tolerance |
-| Pipeline idempotent per script version | Idempotency key + return existing completed row |
-| [SEC] FFmpeg args-array; validated owned assets; no injectable text | Worker spawn + ownership-verified storage keys; Phase A no drawtext |
-| [SEC] No arbitrary URL fetch at assembly | Storage service-role read only |
+| AC | Phase A | Phase B |
+|----|---------|---------|
+| Output aspect ratio 9:16 | `reel_v1_basic` primary normalize | Same after broll concat |
+| Duration within target ± tolerance | Trim/pad primary | Trim/pad stitched timeline |
+| Idempotent per script version | fingerprint primary+VO+template | fingerprint + ordered broll ids + path tag |
+| [SEC] FFmpeg args-array; owned assets | Phase A spawn floors | Same — no beat/notes text in argv |
+| [SEC] No arbitrary URL fetch | Storage only | Storage only (never SiliconFlow CDN) |
 
 ---
 
@@ -142,18 +170,20 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; long-lived third-par
 | Question | PO default |
 |----------|------------|
 | Which template in V1? | **`reel_v1_basic`** only — no FE picker. |
-| Idempotency key shape? | **`reel_script_id` + `script_updated_at` + `input_fingerprint`**. |
+| Idempotency key shape? | Phase A triple; Phase B extends fingerprint with broll ids + path tag. |
 | Duration tolerance? | **±2 s** default, env-configurable. |
-| Talking-head vs faceless? | Phase A: **talking-head + manual primary**; faceless **Phase B** (blocked without primary). |
-| B-roll required? | **Optional Phase B**; US-8.5 not a hard dependency for Phase A ship. |
-| Audio source when primary has VO baked in? | Use **primary video audio**; voiceover asset for fingerprint/edge remux only. |
+| Talking-head vs faceless? | Phase A talking-head; Phase B faceless stitch (B2). |
+| New story ID for stitch? | **No** — Phase B of US-9.1. |
+| Stitch whenever broll exists? | **No** — faceless only. |
+| FE stitch preview? | **Reuse** existing assembled preview. |
+| Max clips? | **8**. |
+| Audio source when primary has VO baked in? | Use **primary video audio**; voiceover for fingerprint/edge remux. |
 | Preview vs final URL? | **Single output asset**; serve via existing media Route Handler. |
 
-## SPEC / spec-guardian watchlist (not PO blockers for PREP)
+## SPEC / spec-guardian watchlist (Phase B)
 
 | Item | Notes |
 |------|-------|
-| SPEC S3.M10 bundles subtitles/logo with assembly | **Split across US-9.1 + US-9.2** — SPEC-REVIEW should record intentional partial closure per story. |
-| SPEC `preview_url` / `final_url` shorthand | Replaced by **`output_media_asset_id`** + Storage (consistent with video jobs). |
-| SPEC auto-assemble in weekly cycle | **US-14.x / integrations-engineer** — out of US-9.1 BUILD. |
-| `editing_hints` cold open / rewind | **Phase B** — document gap if deferred. |
+| SPEC S3.M10 B-roll + editing_hints | Phase B closes **stitch**; rewind FX may remain GAPS. |
+| US-8.5 handoff | Consume owned `broll` assets only — no provider I/O in assembly. |
+| SPEC auto-assemble | Still out (integrations-engineer). |
