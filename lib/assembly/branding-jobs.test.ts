@@ -59,13 +59,65 @@ describe("computeBrandingFingerprint", () => {
       coverFrameSec: 1.0,
       subtitleBeatCount: 2,
       subtitleSourceHash: "a".repeat(64),
+      voiceoverTimingHash: "b".repeat(64),
     };
     const fp = computeBrandingFingerprint({
       preBrandingOutputMediaAssetId: "88888888-8888-4888-8888-888888888888",
       brandingConfig: config,
       subtitleSourceHash: config.subtitleSourceHash,
+      voiceoverTimingHash: config.voiceoverTimingHash,
     });
     assert.match(fp, /^[0-9a-f]{64}$/);
+  });
+
+  it("changes when VO timing hash changes with same on-screen", () => {
+    const base = {
+      subtitlesEnabled: true,
+      logoEnabled: true,
+      coverFrameSec: 1.0,
+      subtitleBeatCount: 2,
+      subtitleSourceHash: "a".repeat(64),
+      voiceoverTimingHash: "b".repeat(64),
+    };
+    const pre = "88888888-8888-4888-8888-888888888888";
+    const fp1 = computeBrandingFingerprint({
+      preBrandingOutputMediaAssetId: pre,
+      brandingConfig: base,
+      subtitleSourceHash: base.subtitleSourceHash,
+      voiceoverTimingHash: base.voiceoverTimingHash,
+    });
+    const fp2 = computeBrandingFingerprint({
+      preBrandingOutputMediaAssetId: pre,
+      brandingConfig: { ...base, voiceoverTimingHash: "c".repeat(64) },
+      subtitleSourceHash: base.subtitleSourceHash,
+      voiceoverTimingHash: "c".repeat(64),
+    });
+    assert.notEqual(fp1, fp2);
+  });
+
+  it("is sticky when VO timing hash is unchanged", () => {
+    const config = {
+      subtitlesEnabled: true,
+      logoEnabled: true,
+      coverFrameSec: 1.0,
+      subtitleBeatCount: 2,
+      subtitleSourceHash: "a".repeat(64),
+      voiceoverTimingHash: "b".repeat(64),
+    };
+    const pre = "88888888-8888-4888-8888-888888888888";
+    const fp1 = computeBrandingFingerprint({
+      preBrandingOutputMediaAssetId: pre,
+      brandingConfig: config,
+      subtitleSourceHash: config.subtitleSourceHash,
+      voiceoverTimingHash: config.voiceoverTimingHash,
+    });
+    const fp2 = computeBrandingFingerprint({
+      preBrandingOutputMediaAssetId: pre,
+      brandingConfig: { ...config },
+      subtitleSourceHash: config.subtitleSourceHash,
+      voiceoverTimingHash: config.voiceoverTimingHash,
+    });
+    assert.equal(fp1, fp2);
   });
 });
 
@@ -78,6 +130,28 @@ describe("findForbiddenBrandingKeys", () => {
     });
     assert.ok(keys.includes("logoAssetId"));
     assert.ok(keys.includes("onScreenText"));
+  });
+
+  it("allows coverFrameSec but forbids VO/timing/hash/path keys", () => {
+    const allowed = findForbiddenBrandingKeys({
+      assemblyJobId: JOB_ID,
+      coverFrameSec: 2.5,
+    });
+    assert.equal(allowed.length, 0);
+
+    const keys = findForbiddenBrandingKeys({
+      assemblyJobId: JOB_ID,
+      voiceoverText: "inject",
+      beatTimings: [],
+      voiceoverTimingHash: "a".repeat(64),
+      tempPath: "/tmp/x",
+      assPath: "/tmp/y.ass",
+    });
+    assert.ok(keys.includes("voiceoverText"));
+    assert.ok(keys.includes("beatTimings"));
+    assert.ok(keys.includes("voiceoverTimingHash"));
+    assert.ok(keys.includes("tempPath"));
+    assert.ok(keys.includes("assPath"));
   });
 });
 
@@ -120,18 +194,37 @@ describe("applyBrandingForAssembly security", () => {
     });
   });
 
-  it("returns FORBIDDEN_FIELDS for forbidden keys", async () => {
+  it("returns FORBIDDEN_FIELDS for voiceoverText", async () => {
     await withServerOnlyStub(async () => {
       const { applyBrandingForAssemblyInner } = loadBrandingModule(
         "@/lib/assembly/create-branding-job-for-assembly",
       );
       const result = await applyBrandingForAssemblyInner({
         assemblyJobId: JOB_ID,
-        coverFrameSec: 2,
+        voiceoverText: "inject",
       });
       assert.equal(result.ok, false);
       if (!result.ok) {
         assert.equal(result.error.code, "FORBIDDEN_FIELDS");
+      }
+    });
+  });
+
+  it("returns VALIDATION_ERROR for coverFrameSec out of range", async () => {
+    await withServerOnlyStub(async () => {
+      const { applyBrandingForAssemblyInner } = loadBrandingModule(
+        "@/lib/assembly/create-branding-job-for-assembly",
+      );
+      for (const coverFrameSec of [-1, 46, "1;rm"] as const) {
+        const result = await applyBrandingForAssemblyInner({
+          assemblyJobId: JOB_ID,
+          coverFrameSec,
+        });
+        assert.equal(result.ok, false);
+        if (!result.ok) {
+          assert.equal(result.error.code, "VALIDATION_ERROR");
+          assert.ok(result.error.fields?.coverFrameSec);
+        }
       }
     });
   });

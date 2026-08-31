@@ -249,6 +249,8 @@ function baseBrandingJobRow(overrides: Record<string, unknown> = {}) {
       subtitleBeatCount: 2,
       subtitleSourceHash:
         "173c1ddf22a285919046857aa25bb6ad8417248851f49a47fbe4560505167791",
+      voiceoverTimingHash:
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     },
     failure_reason: null,
     cover_media_asset_id: null,
@@ -452,6 +454,7 @@ function createReelScriptQuery(onScreenText: string) {
     maybeSingle: async () => ({
       data: {
         on_screen_text: onScreenText,
+        voiceover_text: "one two three four",
         target_duration_sec: 30,
       },
       error: null,

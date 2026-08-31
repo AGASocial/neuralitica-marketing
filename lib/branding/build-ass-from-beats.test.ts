@@ -1,9 +1,10 @@
 /**
- * US-9.2 buildAssFromBeats — equal split timing + ASS header.
+ * US-9.2 buildAssFromBeats — equal split + VO-proportional timings.
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { computeVoProportionalBeatTimings } from "../assembly/compute-vo-proportional-beat-timings.ts";
 import {
   BRANDING_ASS_FONT_NAME,
   BRANDING_ASS_MARGIN_V,
@@ -26,6 +27,54 @@ describe("buildAssFromBeats", () => {
 
     assert.match(assContent, /Dialogue: 0,0:00:00.00,0:00:10.00,Default,,0,0,0,,One/);
     assert.match(assContent, /Dialogue: 0,0:00:20.00,0:00:30.00,Default,,0,0,0,,Three/);
+  });
+
+  it("uses explicit VO-proportional timings for Dialogue timestamps", () => {
+    const voiceoverText = "one two three four five six seven eight";
+    const sanitizedBeats = ["Hook", "Body", "CTA"];
+    const beatTimings = computeVoProportionalBeatTimings({
+      beatCount: sanitizedBeats.length,
+      targetDurationSec: 30,
+      voiceoverText,
+    });
+    // 8 tokens → [3,3,2] → 11.25, 11.25, 7.5
+    assert.deepEqual(beatTimings, [
+      { startSec: 0, endSec: 11.25 },
+      { startSec: 11.25, endSec: 22.5 },
+      { startSec: 22.5, endSec: 30 },
+    ]);
+
+    const { assContent } = buildAssFromBeats({
+      sanitizedBeats,
+      targetDurationSec: 30,
+      outputAssPath: "/tmp/subtitles.ass",
+      beatTimings,
+    });
+
+    assert.match(
+      assContent,
+      /Dialogue: 0,0:00:00.00,0:00:11.25,Default,,0,0,0,,Hook/,
+    );
+    assert.match(
+      assContent,
+      /Dialogue: 0,0:00:22.50,0:00:30.00,Default,,0,0,0,,CTA/,
+    );
+    assert.doesNotMatch(assContent, /one two three/);
+    assert.doesNotMatch(assContent, /voiceover/);
+  });
+
+  it("falls back to equal split when beatTimings length mismatches", () => {
+    const { beatTimings, assContent } = buildAssFromBeats({
+      sanitizedBeats: ["A", "B"],
+      targetDurationSec: 20,
+      outputAssPath: "/tmp/subtitles.ass",
+      beatTimings: [{ startSec: 0, endSec: 5 }],
+    });
+    assert.deepEqual(beatTimings, [
+      { startSec: 0, endSec: 10 },
+      { startSec: 10, endSec: 20 },
+    ]);
+    assert.match(assContent, /Dialogue: 0,0:00:00.00,0:00:10.00,Default,,0,0,0,,A/);
   });
 
   it("includes frozen typography constants", () => {

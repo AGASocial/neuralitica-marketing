@@ -16,11 +16,13 @@ function stableStringify(value: unknown): string {
     .join(",")}}`;
 }
 
+/** Phase B fingerprint — includes voiceoverTimingHash. */
 export function computeBrandingFingerprint(params: {
   preBrandingOutputMediaAssetId: string;
   brandingConfig: BrandingConfigSnapshot;
   subtitleSourceHash: string;
+  voiceoverTimingHash: string;
 }): string {
-  const payload = `${params.preBrandingOutputMediaAssetId}|${stableStringify(params.brandingConfig)}|${params.subtitleSourceHash}`;
+  const payload = `${params.preBrandingOutputMediaAssetId}|${stableStringify(params.brandingConfig)}|${params.subtitleSourceHash}|${params.voiceoverTimingHash}`;
   return createHash("sha256").update(payload).digest("hex");
 }

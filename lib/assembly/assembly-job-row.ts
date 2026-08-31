@@ -102,6 +102,24 @@ export function mapAssemblyJobRow(
     const parsed = brandingConfigSnapshotSchema.safeParse(raw.branding_config);
     if (parsed.success) {
       brandingConfig = parsed.data;
+    } else if (
+      raw.branding_config &&
+      typeof raw.branding_config === "object" &&
+      !Array.isArray(raw.branding_config)
+    ) {
+      // Phase A rows may omit voiceoverTimingHash — soft-default empty VO hash.
+      const legacy = brandingConfigSnapshotSchema.safeParse({
+        ...(raw.branding_config as Record<string, unknown>),
+        voiceoverTimingHash:
+          typeof (raw.branding_config as Record<string, unknown>)
+            .voiceoverTimingHash === "string"
+            ? (raw.branding_config as Record<string, unknown>)
+                .voiceoverTimingHash
+            : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      });
+      if (legacy.success) {
+        brandingConfig = legacy.data;
+      }
     }
   }
 

@@ -8,6 +8,8 @@ import { probeLocalMediaFile } from "@/lib/assembly/probe-media-streams";
 import { runFfmpeg } from "@/lib/assembly/run-ffmpeg";
 import { getMediaStorage } from "@/lib/media/storage/get-media-storage";
 
+import { computeVoProportionalBeatTimings } from "@/lib/assembly/compute-vo-proportional-beat-timings";
+
 import { applyBrandingJobUpdate } from "./apply-branding-job-update";
 import { buildAssFromBeats } from "./build-ass-from-beats";
 import { buildReelV1BrandingArgs } from "./build-reel-v1-branding-args";
@@ -16,7 +18,10 @@ import {
   generateCoverFrameStorageKey,
   isTerminalBrandingStatus,
 } from "./branding-job-row";
-import { extractCoverFrameArgs } from "./extract-cover-frame-args";
+import {
+  clampCoverSeekSec,
+  extractCoverFrameArgs,
+} from "./extract-cover-frame-args";
 import {
   insertBrandedReelMediaAsset,
   insertCoverFrameMediaAsset,
@@ -128,6 +133,7 @@ export async function runBrandingJob(
 
   const burnSubtitles = config.subtitlesEnabled && config.subtitleBeatCount > 0;
   let sanitizedBeats: string[] = [];
+  let voiceoverText = "";
 
   if (burnSubtitles) {
     const script = await loadScriptBrandingContext({
@@ -138,6 +144,8 @@ export async function runBrandingJob(
       await failBrandingJob(activeJob.id, BRANDING_FAILURE_CONFIG);
       return;
     }
+
+    voiceoverText = script.voiceoverText;
 
     const sanitized = sanitizeSubtitleBeats(
       resolveSubtitleBeats(script.onScreenText),
@@ -185,10 +193,16 @@ export async function runBrandingJob(
     }
 
     if (effectiveBurnSubtitles) {
+      const beatTimings = computeVoProportionalBeatTimings({
+        beatCount: sanitizedBeats.length,
+        targetDurationSec: activeJob.targetDurationSec,
+        voiceoverText,
+      });
       const { assContent } = buildAssFromBeats({
         sanitizedBeats,
         targetDurationSec: activeJob.targetDurationSec,
         outputAssPath: assPath,
+        beatTimings,
       });
       await writeFile(assPath, assContent, "utf8");
     }
@@ -208,10 +222,17 @@ export async function runBrandingJob(
       return;
     }
 
+    const brandedProbe = await probeFn(brandedPath);
+    const durationSec = brandedProbe?.durationSec ?? activeJob.targetDurationSec;
+    const clampedCoverSec = clampCoverSeekSec({
+      coverFrameSec: config.coverFrameSec,
+      durationSec,
+    });
+
     const coverArgs = extractCoverFrameArgs({
       localBrandedPath: brandedPath,
       localCoverPath: coverPath,
-      coverFrameSec: config.coverFrameSec,
+      coverFrameSec: clampedCoverSec,
     });
 
     const coverResult = await ffmpegRunner(coverArgs);
@@ -241,9 +262,6 @@ export async function runBrandingJob(
       contentType: "image/jpeg",
       sizeBytes: coverBuffer.length,
     });
-
-    const brandedProbe = await probeFn(brandedPath);
-    const durationSec = brandedProbe?.durationSec ?? activeJob.targetDurationSec;
 
     const brandedInsert = await insertBrandedReelMediaAsset({
       clientId: activeJob.clientId,

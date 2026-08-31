@@ -29,6 +29,7 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
 
+import { computeVoiceoverTimingHash } from "./compute-vo-proportional-beat-timings";
 import {
   brandingBaseIncompleteError,
   brandingJobForbiddenError,
@@ -83,6 +84,7 @@ function buildBrandingConfigSnapshot(params: {
   coverFrameSec: number;
   sanitizedBeats: string[];
   subtitleSourceHash: string;
+  voiceoverTimingHash: string;
 }): BrandingConfigSnapshot {
   return {
     subtitlesEnabled: params.subtitlesEnabled,
@@ -90,6 +92,7 @@ function buildBrandingConfigSnapshot(params: {
     coverFrameSec: params.coverFrameSec,
     subtitleBeatCount: params.sanitizedBeats.length,
     subtitleSourceHash: params.subtitleSourceHash,
+    voiceoverTimingHash: params.voiceoverTimingHash,
   };
 }
 
@@ -97,6 +100,8 @@ export async function createBrandingJobForAssembly(input: {
   assemblyJobId: string;
   subtitlesEnabled?: boolean;
   logoEnabled?: boolean;
+  /** Operator manual only — ignored on auto_chain / revision. */
+  coverFrameSec?: number;
   source: "auto_chain" | "operator_manual" | "revision";
   clientId?: string;
 }): Promise<CreateBrandingJobForAssemblyResult> {
@@ -148,7 +153,10 @@ export async function createBrandingJobForAssembly(input: {
     const subtitlesEnabled =
       input.subtitlesEnabled ?? defaults.subtitlesEnabled;
     const logoEnabled = input.logoEnabled ?? defaults.logoEnabled;
-    const coverFrameSec = defaults.coverFrameSec;
+    const coverFrameSec =
+      input.source === "operator_manual" && input.coverFrameSec !== undefined
+        ? input.coverFrameSec
+        : defaults.coverFrameSec;
 
     const beats = resolveSubtitleBeats(script.onScreenText);
     const sanitized = sanitizeSubtitleBeats(beats);
@@ -165,12 +173,17 @@ export async function createBrandingJobForAssembly(input: {
     const effectiveSubtitlesEnabled =
       subtitlesEnabled && sanitized.sanitizedBeats.length > 0;
 
+    const voiceoverTimingHash = computeVoiceoverTimingHash(
+      script.voiceoverText,
+    );
+
     const brandingConfig = buildBrandingConfigSnapshot({
       subtitlesEnabled: effectiveSubtitlesEnabled,
       logoEnabled,
       coverFrameSec,
       sanitizedBeats: sanitized.sanitizedBeats,
       subtitleSourceHash: sanitized.subtitleSourceHash,
+      voiceoverTimingHash,
     });
 
     const preBrandingOutputMediaAssetId = job.outputMediaAssetId!;
@@ -178,6 +191,7 @@ export async function createBrandingJobForAssembly(input: {
       preBrandingOutputMediaAssetId,
       brandingConfig,
       subtitleSourceHash: sanitized.subtitleSourceHash,
+      voiceoverTimingHash,
     });
 
     if (
@@ -252,7 +266,22 @@ export async function applyBrandingForAssemblyInner(
 
   const parsed = applyBrandingForAssemblyRequestSchema.safeParse(rawInput);
   if (!parsed.success) {
-    return brandingValidationError();
+    const fields: Record<string, string[]> = {};
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0];
+      if (typeof key !== "string") continue;
+      const message =
+        key === "coverFrameSec"
+          ? "scripts.branding.coverFrame.invalid"
+          : issue.message;
+      fields[key] = fields[key] ?? [];
+      if (!fields[key].includes(message)) {
+        fields[key].push(message);
+      }
+    }
+    return brandingValidationError(
+      Object.keys(fields).length > 0 ? fields : undefined,
+    );
   }
 
   const request: ApplyBrandingForAssemblyRequest = parsed.data;
@@ -261,6 +290,7 @@ export async function applyBrandingForAssemblyInner(
     assemblyJobId: request.assemblyJobId,
     subtitlesEnabled: request.subtitlesEnabled,
     logoEnabled: request.logoEnabled,
+    coverFrameSec: request.coverFrameSec,
     source: "operator_manual",
   });
 }

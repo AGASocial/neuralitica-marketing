@@ -7,16 +7,19 @@ import {
   BRANDING_ASS_PLAY_RES_X,
   BRANDING_ASS_PLAY_RES_Y,
 } from "./constants";
+import {
+  computeEqualSplitBeatTimings,
+  type AssBeatTiming,
+} from "@/lib/assembly/compute-vo-proportional-beat-timings";
 
-export type AssBeatTiming = {
-  startSec: number;
-  endSec: number;
-};
+export type { AssBeatTiming };
 
 export type BuildAssFromBeatsInput = {
   sanitizedBeats: string[];
   targetDurationSec: number;
   outputAssPath: string;
+  /** Phase B: when omitted or wrong length, equal-split fallback. */
+  beatTimings?: AssBeatTiming[];
 };
 
 export type BuildAssFromBeatsResult = {
@@ -35,30 +38,29 @@ function formatAssTimestamp(sec: number): string {
 }
 
 /**
- * Build ASS subtitle file content — equal beat split (US-9.2 Phase A).
+ * Build ASS subtitle file content (US-9.2).
+ * Dialogue text = sanitized on_screen beats only; timings may be VO-proportional.
  * Pure function; caller writes assContent to temp path before FFmpeg spawn.
  */
 export function buildAssFromBeats(
   input: BuildAssFromBeatsInput,
 ): BuildAssFromBeatsResult {
-  const beatTimings: AssBeatTiming[] = [];
-  const dialogueLines: string[] = [];
-
   if (input.sanitizedBeats.length === 0) {
-    const header = buildAssHeader();
-    return { assContent: header, beatTimings };
+    return { assContent: buildAssHeader(), beatTimings: [] };
   }
 
-  const beatDurationSec = input.targetDurationSec / input.sanitizedBeats.length;
+  const beatTimings =
+    input.beatTimings &&
+    input.beatTimings.length === input.sanitizedBeats.length
+      ? input.beatTimings
+      : computeEqualSplitBeatTimings(
+          input.sanitizedBeats.length,
+          input.targetDurationSec,
+        );
 
-  input.sanitizedBeats.forEach((beat, index) => {
-    const startSec = index * beatDurationSec;
-    const endSec = (index + 1) * beatDurationSec;
-    beatTimings.push({ startSec, endSec });
-
-    dialogueLines.push(
-      `Dialogue: 0,${formatAssTimestamp(startSec)},${formatAssTimestamp(endSec)},Default,,0,0,0,,${beat}`,
-    );
+  const dialogueLines = input.sanitizedBeats.map((beat, index) => {
+    const timing = beatTimings[index]!;
+    return `Dialogue: 0,${formatAssTimestamp(timing.startSec)},${formatAssTimestamp(timing.endSec)},Default,,0,0,0,,${beat}`;
   });
 
   const assContent = [buildAssHeader(), ...dialogueLines, ""].join("\n");

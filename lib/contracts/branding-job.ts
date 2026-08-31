@@ -38,6 +38,8 @@ export const DEFAULT_ASSEMBLY_CONFIG: AssemblyConfig = {
 export const brandingConfigSnapshotSchema = assemblyConfigSchema.extend({
   subtitleBeatCount: z.number().int().min(0).max(8),
   subtitleSourceHash: z.string().length(64),
+  /** Phase B — server-only; do not expose in Operator DTO. */
+  voiceoverTimingHash: z.string().length(64),
 });
 
 export type BrandingConfigSnapshot = z.infer<
@@ -78,6 +80,8 @@ export const applyBrandingForAssemblyRequestSchema = z
     assemblyJobId: z.string().uuid(),
     subtitlesEnabled: z.boolean().optional(),
     logoEnabled: z.boolean().optional(),
+    /** Phase B — Operator manual Apply / Re-brand only. */
+    coverFrameSec: z.number().finite().min(0).max(45).optional(),
   })
   .strict();
 
@@ -182,23 +186,34 @@ export type UpdateAssemblyConfigDefaultsResult =
       };
     };
 
+/** Phase B — coverFrameSec / cover_frame_sec allowed as typed Zod number on apply. */
 export const FORBIDDEN_BRANDING_AUTHORITY_KEYS = [
   "onScreenText",
   "on_screen_text",
+  "voiceoverText",
+  "voiceover_text",
+  "beatTimings",
+  "beat_timings",
+  "subtitleBeats",
+  "subtitle_beats",
   "logoAssetId",
   "logo_asset_id",
-  "coverFrameSec",
-  "cover_frame_sec",
   "coverMediaAssetId",
   "cover_media_asset_id",
   "preBrandingOutputMediaAssetId",
   "pre_branding_output_media_asset_id",
   "brandingConfig",
   "branding_config",
+  "assemblyConfig",
+  "assembly_config",
   "brandingFingerprint",
   "branding_fingerprint",
   "brandingStatus",
   "branding_status",
+  "voiceoverTimingHash",
+  "voiceover_timing_hash",
+  "subtitleSourceHash",
+  "subtitle_source_hash",
   "clientId",
   "client_id",
   "status",
@@ -207,11 +222,15 @@ export const FORBIDDEN_BRANDING_AUTHORITY_KEYS = [
   "fontPath",
   "font",
   "beatText",
-  "subtitleBeats",
-  "subtitle_beats",
   "force",
   "skipIdempotency",
   "skip_idempotency",
+  "tempPath",
+  "assPath",
+  "ffmpegArgs",
+  "localBasePath",
+  "storageKey",
+  "storage_key",
   "baseVideoUrl",
   "logoUrl",
   "assetUrl",

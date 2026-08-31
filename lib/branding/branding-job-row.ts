@@ -8,6 +8,7 @@ type BrandingConfigSnapshot = {
   coverFrameSec: number;
   subtitleBeatCount: number;
   subtitleSourceHash: string;
+  voiceoverTimingHash: string;
 };
 
 type BrandingStatus =
@@ -54,6 +55,9 @@ const BRANDING_JOB_SELECT = [
 export const BRANDING_JOB_SELECT_COLUMNS = BRANDING_JOB_SELECT;
 export const BRANDING_JOBS_TABLE = "neuramark_assembled_reels" as const;
 
+const EMPTY_VOICEOVER_TIMING_HASH =
+  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+
 function parseBrandingConfig(raw: unknown): BrandingConfigSnapshot | null {
   if (!raw || typeof raw !== "object") {
     return null;
@@ -69,12 +73,18 @@ function parseBrandingConfig(raw: unknown): BrandingConfigSnapshot | null {
   ) {
     return null;
   }
+  const voiceoverTimingHash =
+    typeof row.voiceoverTimingHash === "string" &&
+    row.voiceoverTimingHash.length === 64
+      ? row.voiceoverTimingHash
+      : EMPTY_VOICEOVER_TIMING_HASH;
   return {
     subtitlesEnabled: row.subtitlesEnabled,
     logoEnabled: row.logoEnabled,
     coverFrameSec: row.coverFrameSec,
     subtitleBeatCount: row.subtitleBeatCount,
     subtitleSourceHash: row.subtitleSourceHash,
+    voiceoverTimingHash,
   };
 }
 

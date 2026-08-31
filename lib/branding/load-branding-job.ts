@@ -58,7 +58,11 @@ export async function loadClientLogoAssetId(
 export async function loadScriptBrandingContext(params: {
   clientId: string;
   reelScriptId: string;
-}): Promise<{ onScreenText: string; targetDurationSec: number } | null> {
+}): Promise<{
+  onScreenText: string;
+  voiceoverText: string;
+  targetDurationSec: number;
+} | null> {
   if (!isSupabaseConfigured()) {
     return null;
   }
@@ -66,7 +70,7 @@ export async function loadScriptBrandingContext(params: {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("neuramark_reel_scripts")
-    .select("on_screen_text, target_duration_sec")
+    .select("on_screen_text, voiceover_text, target_duration_sec")
     .eq("id", params.reelScriptId)
     .eq("client_id", params.clientId)
     .maybeSingle();
@@ -77,6 +81,7 @@ export async function loadScriptBrandingContext(params: {
 
   const row = data as {
     on_screen_text?: unknown;
+    voiceover_text?: unknown;
     target_duration_sec?: unknown;
   };
 
@@ -89,6 +94,8 @@ export async function loadScriptBrandingContext(params: {
 
   return {
     onScreenText: row.on_screen_text,
+    voiceoverText:
+      typeof row.voiceover_text === "string" ? row.voiceover_text : "",
     targetDurationSec: row.target_duration_sec,
   };
 }
