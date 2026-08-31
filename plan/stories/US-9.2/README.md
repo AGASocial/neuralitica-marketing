@@ -1,6 +1,6 @@
 # US-9.2 — Add subtitles, logo, and cover
 
-**Status:** CLOSED Phase A (2026-08-30) — VALIDATION PASS WITH NOTES `4378c65` (fix `757da6a`) · QA APPROVE WITH CONDITIONS `c0d6f66` · 5/5 AC. VO-synced subtitle timing deferred Phase B.
+**Status:** Phase A CLOSED (2026-08-30) — 5/5 AC · CLOSE `92b196a`. **Phase B PREP** (2026-08-31) — VO-synced subtitle timing + per-reel `coverFrameSec`; see [`PHASE-B.md`](./PHASE-B.md). Sprint: **`US-9.2-B`** · branch **`feature/US-9.2-phase-b-subtitle-cover`**.
 
 **As a** System, **I want** burned-in subtitles, client logo overlay, and a cover frame export, **so that** Reels match brand and perform on Instagram.
 
@@ -8,9 +8,10 @@ Ship the **second-pass FFmpeg branding pipeline** (ADR-0003) on top of US-9.1 **
 
 **Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-9.2 (do **not** check off in PREP).
 
-**This folder:** [`plan/stories/US-9.2/`](./) — `README.md` · `TASKS.md` (PREP). `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` authored in later gates.
+**This folder:** [`plan/stories/US-9.2/`](./) — `README.md` · [`PHASE-B.md`](./PHASE-B.md) · `TASKS.md` · Phase A `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
 
-**Branch:** `feature/US-9.2-subtitles-logo-cover`
+**Branch (Phase A):** `feature/US-9.2-subtitles-logo-cover` (merged)  
+**Branch (Phase B):** `feature/US-9.2-phase-b-subtitle-cover`
 
 **Depends on:** [US-9.1](../US-9.1/) ✅ `assembled_reel` base + `neuramark_assembled_reels.output_media_asset_id` · [US-2.2](../US-2.2/) ✅ Ficha viva edit surface · [US-5.1](../US-5.1/) ✅ `on_screen_text` beats · [US-3.3](../US-3.3/) ✅ shared upload validation stack · [US-14.5](../US-14.5/) ✅ `requireOperator()`.
 
@@ -73,9 +74,9 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; soft subs; STT; Busi
 | Phase | Scope | Closes |
 |-------|-------|--------|
 | **A (US-9.2 BUILD — ship first)** | DDL · logo upload on Ficha · client `assembly_config` defaults · branding worker pass (burn-in + logo overlay + cover @ 1s) · auto-chain after assembly complete · Operator branding panel + toggles · idempotency · `[SEC]` upload + subtitle sanitize · mobile safe-zone typography constants | USER_STORIES § US-9.2 AC rows |
-| **B (follow-up BUILD slice — explicit PO pull-in)** | VO-proportional beat timing (words-per-beat from `voiceover_text`); optional `coverFrameSec` override per reel on Operator panel; bundled second font weight; preview thumbnail strip | SPEC polish — not required for AC closure |
+| **B (US-9.2-B — PREP 2026-08-31)** | VO-proportional beat timing (words-per-beat from `voiceover_text`); Operator per-reel `coverFrameSec` override. **Out this slice:** second font weight, preview thumbnail strip | Closes Phase A deferred polish; Phase A AC stay checked — see [`PHASE-B.md`](./PHASE-B.md) |
 
-**VALIDATION note (binding):** Phase A closes US-9.2 AC and completes the **subtitles/logo/cover** slice deferred from US-9.1 partial S3.M10 closure. Phase B timing polish documented as non-blocking defer.
+**VALIDATION note (binding):** Phase A closed US-9.2 AC and the **subtitles/logo/cover** slice deferred from US-9.1 partial S3.M10. Phase B closes VO timing + Operator `coverFrameSec` only; re-verify **[SEC]** on the new path.
 
 ---
 
@@ -84,7 +85,7 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; soft subs; STT; Busi
 | Direction | Artifact | Rule |
 |-----------|----------|------|
 | **From US-9.1** | `neuramark_assembled_reels.id` + `output_media_asset_id` (`assembled_reel`) where `status = completed` | Branding input — never re-generate primary video |
-| **From US-5.1** | `on_screen_text`, `target_duration_sec`, `reel_script_id` | Subtitle beat source + timing denominator |
+| **From US-5.1** | `on_screen_text`, `voiceover_text` (Phase B timing), `target_duration_sec`, `reel_script_id` | Subtitle beat source + VO word partition + timing denominator |
 | **From US-2.2 / profile** | `logo_asset_id`, `assembly_config` defaults | Logo overlay + default toggles |
 | **From US-3.3** | `validateAndPrepareMediaUpload` | Logo upload validation stack |
 | **To US-9.1 row** | Updates `output_media_asset_id` → branded MP4; sets `pre_branding_output_media_asset_id`; `cover_media_asset_id` | Downstream QA/approval use branded output |
@@ -100,12 +101,12 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; soft subs; STT; Busi
 | 1 | **Runtime** | Second-pass FFmpeg on **Fly worker** only (ADR-0003). Vercel orchestrator enqueues; extend **`worker/assembly-jobs.ts`** (or sibling **`worker/branding-jobs.ts`**) — same poll seam pattern as US-9.1. |
 | 2 | **Subtitle source** | **`neuramark_reel_scripts.on_screen_text`** only — split on `\n` into beat lines (reuse US-5.2 newline model). **No** STT/ASR from voiceover audio in V1. Empty/missing beats → branding runs with **`subtitlesEnabled: false`** effective (skip burn-in). |
 | 3 | **Burn-in vs soft subs** | **Burn-in only V1** — hardcoded into output MP4 via FFmpeg **`subtitles`** filter (ASS/SRT temp file) or sanitized **`drawtext`** chain. No separate subtitle track. Rationale: IG manual upload expects single file; SPEC S3.M10 “subtítulos” = visible on export. |
-| 4 | **Beat timing V1** | **Equal duration split:** `beatDurationSec = target_duration_sec / beatCount`. Beat *i* visible `[i * beatDurationSec, (i+1) * beatDurationSec)`. First beat starts at **t = 0**. Phase B may add VO-weighted timing. |
+| 4 | **Beat timing V1** | **Equal duration split:** `beatDurationSec = target_duration_sec / beatCount`. Beat *i* visible `[i * beatDurationSec, (i+1) * beatDurationSec)`. First beat starts at **t = 0**. **Phase B:** VO-proportional — see [`PHASE-B.md`](./PHASE-B.md) B3–B5. |
 | 5 | **Logo upload surface** | **`/profile` (Ficha viva)** — new **Marca / Brand** section. **Not** Preferencias (`/settings/preferences`). Rationale: brand identity aligns with business profile (US-2.2); USER_STORIES DB row `business_profiles.logo_asset_id` maps to **`neuramark_business_profiles.logo_asset_id`**. |
 | 6 | **Logo asset type** | **`client_logo`** on `neuramark_media_assets` — single active logo per client (replace-on-upload). Storage key pattern: `neuramark/{clientId}/logo-{uuid}.{ext}` (CONTRACT freezes regex). |
 | 7 | **Logo optional** | When **`logo_asset_id` IS NULL** or **`logoEnabled: false`**, skip overlay — **default template** = no logo (transparent). No placeholder watermark in V1. |
 | 8 | **Logo placement** | **Top-right** safe zone: max width **12%** of frame (**~130px** at 1080w), padding **48px** from top/right edges, preserve aspect ratio, opacity **100%**. |
-| 9 | **Cover frame timing** | Default **`coverFrameSec: 1.0`** — extract frame at **1 second** into **branded** output (post overlay). Operator override deferred Phase B; client default lives in `assembly_config`. |
+| 9 | **Cover frame timing** | Default **`coverFrameSec: 1.0`** — extract frame at **1 second** into **branded** output (post overlay). Client default in `assembly_config`. **Phase B:** Operator per-reel override — see [`PHASE-B.md`](./PHASE-B.md) B7–B11. |
 | 10 | **Cover asset** | **`cover_frame`** asset type — JPEG (**`.jpg`**) from FFmpeg `-ss` + `-vframes 1`; stored download-and-own; exposed via authenticated media serve + Operator **Download cover** button. |
 | 11 | **`assembly_config` shape (client defaults on Ficha)** | JSON on **`neuramark_business_profiles.assembly_config`**: `{ "subtitlesEnabled": true, "logoEnabled": true, "coverFrameSec": 1.0 }`. Zod strict; defaults when column NULL = all true + 1.0s. Cliente edits via **`updateAssemblyConfigDefaults`** Server Action on `/profile`. |
 | 12 | **`branding_config` snapshot (per assembly row)** | JSON on **`neuramark_assembled_reels.branding_config`**: same keys as `assembly_config` plus server **`subtitleBeatCount`**, **`subtitleSourceHash`** (sha256 of sanitized beats — idempotency). Copied from client defaults at enqueue; Operator toggles on apply/re-brand override **`subtitlesEnabled` / `logoEnabled`** for that run only. |
@@ -124,14 +125,19 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; soft subs; STT; Busi
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — expect ALIGNED; closes US-9.1 partial S3.M10 subtitles/logo/cover gap)
-- [ ] SECURITY.md (security-architect — drawtext/subtitle injection, logo upload, path traversal)
-- [ ] CONTRACT.md (nextjs-backend — DDL, branding orchestrator, worker args, DTOs; **Reviewed by FE** before BUILD)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md
-- [ ] QA.md
+### Phase A — CLOSED
+- [x] SPEC-REVIEW.md · SECURITY.md · CONTRACT.md · BUILD · VALIDATION.md · QA.md · AC checked
 
-**Next gate:** spec-guardian SPEC-REVIEW → security-architect SECURITY → nextjs-backend CONTRACT.
+### Phase B — active
+- [x] PREP — [`PHASE-B.md`](./PHASE-B.md) + TASKS Phase B checklist
+- [ ] SPEC-REVIEW.md amendment (spec-guardian)
+- [ ] SECURITY.md amendment (security-architect — numeric `coverFrameSec` on trigger; VO never in argv)
+- [ ] CONTRACT.md Phase B section + **Reviewed by FE** (nextjs-backend → nextjs-frontend)
+- [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
+- [ ] VALIDATION.md Phase B
+- [ ] QA.md Phase B
+
+**Next gate:** spec-guardian SPEC-REVIEW (Phase B) → security-architect SECURITY amend → nextjs-backend CONTRACT Phase B.
 
 ---
 

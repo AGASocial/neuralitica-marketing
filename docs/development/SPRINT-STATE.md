@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: null
-story_status: SELECT
-feature_branch: null
+current_story: US-9.2-B
+story_status: PREP
+feature_branch: feature/US-9.2-phase-b-subtitle-cover
 last_completed_story: US-9.1-B
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T17:25:00Z
+updated_at: 2026-08-31T17:45:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -31,7 +31,7 @@ updated_at: 2026-08-31T17:25:00Z
 | US-8.5 Wan B-roll adapter | done | BUILD `f7cf726` · VALIDATION `14a74f5` (6/6 AC; 39/39) · QA `8617ae7` · fix `e75e1b7` · CLOSE `6c66f7d` FF-merge to main (stitch → US-9.1 Phase B) |
 | US-9.1 Phase B faceless B-roll stitch | done | BUILD `c3a9c19` · FE `80652c2` · fix `1106420` · VALIDATION `6d13f4b` (5/5 + 16/16) · QA `37d0dcb` · CLOSE `9a95b55` FF-merge to main |
 
-**Sprint 7 provider + faceless stitch complete.** Next backlog: **US-9.2 Phase B** (VO-synced subtitle timing + `coverFrameSec` — recommended), high-tier B-roll (`ltx_broll_high`) when prioritized, or **US-7.3 Phase B** video/TTS/B-roll spend backfill.
+**Sprint 7 provider + faceless stitch complete.** Active: **US-9.2 Phase B PREP** (VO-synced subtitle timing + `coverFrameSec`). Alternates: high-tier B-roll (`ltx_broll_high`), or **US-7.3 Phase B** video/TTS/B-roll spend backfill.
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -57,7 +57,7 @@ updated_at: 2026-08-31T17:25:00Z
 | US-8.3 Manual video upload fallback | done | FE `fc6deca` · BE `eaa974a` · fixes `f3f78af`/`b2fb1cc` · VALIDATION `2f5edc0` · QA `a58faeb` · CLOSE `d8baafb` |
 | US-9.3 Text-to-speech for voiceover | done | Phase A `dfdd08b` · adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813` · VALIDATION `1715048` · QA `e9c1833` · CLOSE 5/6 AC (ElevenLabs Phase B defer) |
 | US-9.1 Assemble final 9:16 Reel | done (A+B) | Phase A `4853871` · CLOSE 5/5 AC; **Phase B CLOSED** `9a95b55` FF-merge (VALIDATION `6d13f4b` 5/5+16/16; QA `37d0dcb`; fix `1106420`) |
-| US-9.2 Add subtitles, logo, and cover | done | worker `7518bc5` · BE `36e9dd3`+fix `757da6a` · FE `a15921b` · VALIDATION `4378c65` · QA `c0d6f66` · CLOSE `92b196a` (Phase B: VO-synced timing + `coverFrameSec` deferred) |
+| US-9.2 Add subtitles, logo, and cover | Phase A done · **B PREP** | Phase A CLOSE `92b196a` (5/5 AC). **Phase B PREP:** VO-sync + `coverFrameSec` — `PHASE-B.md` · branch `feature/US-9.2-phase-b-subtitle-cover` |
 | US-10.1 Run automated QA | done | agents `0b56c9e`/`75802d6` · BE `5e50115` · FE `b5e0941` · VALIDATION `d95555d` · QA `a6ba923` · CLOSE `b7a3bb9` (6/6 AC; override → US-10.2) |
 | US-10.2 Operator override with reason | done | BE `a9cc533` · FE `0c6bfb0` · VALIDATION `d7e3cd5` · QA `3da5547` · CLOSE `c9b97e5` (7/7 AC; approval render → US-11.1) |
 | US-11.1 Present Reel package for client approval | done | BE `d830b0f` · FE `defd9ff` · VALIDATION `633c6f5` · QA `3f39db9` · CLOSE `4f11d38` (5/5 AC; request-changes → US-11.2) |

@@ -950,7 +950,7 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | Subtitle generation from on-screen text + VO; logo placement; cover frame extract at 1s |
 | **DB** | `business_profiles.logo_asset_id`; assembly config JSON |
 
-**Acceptance criteria** *(Phase A CLOSED 2026-08-30 — VO-synced subtitle timing + per-reel `coverFrameSec` override deferred Phase B)*
+**Acceptance criteria** *(Phase A CLOSED 2026-08-30 — 5/5 AC; Phase B PREP 2026-08-31 — VO-synced timing + per-reel `coverFrameSec`; branch `feature/US-9.2-phase-b-subtitle-cover`; Phase A AC stay checked)*
 - [x] Subtitles readable on mobile safe zone
 - [x] Logo optional; default template if missing
 - [x] Cover image exported for manual IG upload
