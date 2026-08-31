@@ -1683,7 +1683,8 @@
         "faceless_broll_wan": "Faceless — B-roll (Wan)",
         "tts_voiceover_required": "Voz en off requerida (TTS)",
         "high_tier_inactive": "Nivel alto seleccionado pero sin proveedor activo para este rol",
-        "manual_fallback_operator": "Subida manual (ruta operador)"
+        "manual_fallback_operator": "Subida manual (ruta operador)",
+        "operator_heygen_fallback": "Reserva HeyGen del Operator tras fallo de nivel bajo"
       },
       "errors": {
         "providerUnavailable": "No hay proveedor disponible para el nivel y rol seleccionados.",

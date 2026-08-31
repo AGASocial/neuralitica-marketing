@@ -1,6 +1,6 @@
 # US-8.7 — HeyGen adapter (high tier / operator fallback, P1)
 
-**Status:** PREP (2026-08-31) — README + TASKS frozen; gates SECURITY → CONTRACT → BUILD pending.
+**Status:** CONTRACT frozen (2026-08-31) — SECURITY ✅ · CONTRACT ✅ (FE signoff pending) · BUILD pending.
 
 **As a** System, **I want** HeyGen API integration, **so that** operators can produce higher-polish avatar Reels or recover when low-tier adapters fail.
 
@@ -94,15 +94,15 @@ _Evitar:_ client-supplied `provider_key`; long-lived third-party `output_url` as
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 S3.M9 Video Provider)
-- [ ] SECURITY.md (security-architect — HeyGen SSRF, operator fallback abuse, key redaction, Avatar IV cost footgun)
-- [ ] CONTRACT.md (nextjs-backend — frozen; **Reviewed by FE:** required)
+- [x] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 S3.M9 Video Provider)
+- [x] SECURITY.md (security-architect — HeyGen SSRF, operator fallback abuse, key redaction, Avatar IV cost footgun)
+- [x] CONTRACT.md (nextjs-backend — frozen 2026-08-31; **Reviewed by FE:** pending)
 - [ ] BUILD Phase A (media-pipeline-engineer + nextjs-backend)
 - [ ] BUILD Phase B (BE orchestrator + DB activate + FE)
 - [ ] VALIDATION.md (requirements-validator)
 - [ ] QA.md (qa-engineer)
 
-**Status:** PREP. **Next:** SPEC-REVIEW → SECURITY → CONTRACT → BUILD A → BUILD B.
+**Status:** CONTRACT frozen. **Next:** FE Reviewed by FE line → BUILD A → BUILD B.
 
 ---
 

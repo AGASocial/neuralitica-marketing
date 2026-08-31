@@ -44,6 +44,9 @@ export const videoJobErrorCodeSchema = z.enum([
   /** US-8.3 manual upload slot guards */
   "SLOT_JOB_IN_FLIGHT",
   "SLOT_COMPLETED_JOB_EXISTS",
+  /** US-8.7 HeyGen fallback eligibility */
+  "HEYGEN_FALLBACK_INELIGIBLE",
+  "HEYGEN_CONFIG_MISSING",
 ]);
 
 export type VideoJobErrorCode = z.infer<typeof videoJobErrorCodeSchema>;
@@ -61,7 +64,7 @@ export const videoJobMutationErrorSchema = z
 
 export type VideoJobMutationError = z.infer<typeof videoJobMutationErrorSchema>;
 
-/** Keys rejected on create/retry paths (US-8.4 SECURITY; US-8.6 extends loop id). */
+/** Keys rejected on create/retry/HeyGen paths (US-8.4 / US-8.6 / US-8.7 SECURITY). */
 export const FORBIDDEN_VIDEO_JOB_AUTHORITY_KEYS = [
   "status",
   "outputUrl",
@@ -83,6 +86,33 @@ export const FORBIDDEN_VIDEO_JOB_AUTHORITY_KEYS = [
   "skip_retry_limit",
   "overrideRetryLimit",
   "override_retry_limit",
+  /** US-8.7 — server forces heygen_high / engine / avatar inputs. */
+  "providerKey",
+  "provider_key",
+  "providerTier",
+  "provider_tier",
+  "tier",
+  "engine",
+  "heygenEngine",
+  "heygen_engine",
+  "avatarIv",
+  "avatar_iv",
+  "avatarV",
+  "avatar_v",
+  "avatarId",
+  "avatar_id",
+  "imageUrl",
+  "image_url",
+  "audioUrl",
+  "audio_url",
+  "sourceUrl",
+  "source_url",
+  "forceHeygen",
+  "force_heygen",
+  "unitCostCents",
+  "unit_cost_cents",
+  "estimatedCostCents",
+  "estimated_cost_cents",
 ] as const;
 
 export const createTalkingHeadVideoJobSuccessSchema = z
@@ -258,3 +288,97 @@ export type VideoJobRetryOverrideRow = z.infer<
 /** i18n key stored server-side for stale timeout failures. */
 export const VIDEO_JOB_STALE_FAILURE_MESSAGE_KEY =
   "scripts.videoJob.failure.staleTimeout" as const;
+
+/** Low-tier talking-head keys eligible as HeyGen fallback parents (US-8.7). */
+export const HEYGEN_FALLBACK_PARENT_PROVIDER_KEYS = [
+  "sadtalker_low",
+  "musetalk_low",
+] as const;
+
+export type HeygenFallbackParentProviderKey =
+  (typeof HEYGEN_FALLBACK_PARENT_PROVIDER_KEYS)[number];
+
+/**
+ * Operator “Generate with HeyGen” request (US-8.7 Phase B).
+ * Server decides high-tier vs fallback force — no provider_key / engine fields.
+ */
+export const createHeygenTalkingHeadVideoJobRequestSchema = z
+  .object({
+    reelScriptId: z.string().uuid(),
+    clientId: z.string().uuid(),
+    targetDurationSec: z.number().int().positive().max(120),
+    voiceoverAssetId: z.string().uuid().optional(),
+    portraitAssetId: z.string().uuid().optional(),
+    confirmEstimateCents: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export type CreateHeygenTalkingHeadVideoJobRequest = z.infer<
+  typeof createHeygenTalkingHeadVideoJobRequestSchema
+>;
+
+export const createHeygenTalkingHeadVideoJobSuccessSchema = z
+  .object({
+    ok: z.literal(true),
+    jobId: z.string().uuid(),
+    status: videoJobStatusSchema,
+    estimatedCostCents: z.number().int().nonnegative(),
+    attempt: z.number().int().min(1),
+    /** true when created via failed-low-tier fallback (audit row written). */
+    usedOperatorFallback: z.boolean(),
+  })
+  .strict();
+
+export type CreateHeygenTalkingHeadVideoJobSuccess = z.infer<
+  typeof createHeygenTalkingHeadVideoJobSuccessSchema
+>;
+
+export type CreateHeygenTalkingHeadVideoJobResult =
+  | CreateHeygenTalkingHeadVideoJobSuccess
+  | VideoJobMutationError;
+
+/** Preview estimate before Operator confirms HeyGen generate (Phase B FE). */
+export const previewHeygenTalkingHeadEstimateRequestSchema = z
+  .object({
+    reelScriptId: z.string().uuid(),
+    clientId: z.string().uuid(),
+    targetDurationSec: z.number().int().positive().max(120).optional(),
+  })
+  .strict();
+
+export const previewHeygenTalkingHeadEstimateSuccessSchema = z
+  .object({
+    ok: z.literal(true),
+    estimatedCostCents: z.number().int().nonnegative(),
+    unitCostCentsPerSecond: z.number().int().nonnegative(),
+    durationSec: z.number().int().positive(),
+    eligible: z.boolean(),
+    eligibilityPath: z.enum(["high_tier", "operator_fallback", "ineligible"]),
+    blockedReasonKey: z.string().optional(),
+  })
+  .strict();
+
+export type PreviewHeygenTalkingHeadEstimateRequest = z.infer<
+  typeof previewHeygenTalkingHeadEstimateRequestSchema
+>;
+export type PreviewHeygenTalkingHeadEstimateSuccess = z.infer<
+  typeof previewHeygenTalkingHeadEstimateSuccessSchema
+>;
+
+/** Append-only HeyGen fallback override audit row (US-8.7 Phase B migration). */
+export const heygenFallbackOverrideRowSchema = z
+  .object({
+    id: z.string().uuid(),
+    clientId: z.string().uuid(),
+    reelScriptId: z.string().uuid(),
+    parentJobId: z.string().uuid(),
+    newJobId: z.string().uuid().nullable(),
+    operatorClientId: z.string().uuid(),
+    rationaleKey: z.literal("operator_heygen_fallback"),
+    createdAt: z.string().datetime({ offset: true }),
+  })
+  .strict();
+
+export type HeygenFallbackOverrideRow = z.infer<
+  typeof heygenFallbackOverrideRowSchema
+>;

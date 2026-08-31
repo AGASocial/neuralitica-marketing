@@ -52,6 +52,8 @@ export const providerRationaleKeySchema = z.enum([
   "tts_voiceover_required",
   "high_tier_inactive",
   "manual_fallback_operator",
+  /** US-8.7 — Operator explicit HeyGen after failed low-tier talking-head job. */
+  "operator_heygen_fallback",
 ]);
 
 export type ProviderRationaleKey = z.infer<typeof providerRationaleKeySchema>;
