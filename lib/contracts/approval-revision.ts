@@ -5,9 +5,8 @@
  */
 import { z } from "zod";
 
-import {
-  APPROVAL_FEEDBACK_MAX_LENGTH,
-} from "@/lib/contracts/approval";
+/** Shared with US-11.1 feedback cap — defined here to avoid circular import with approval.ts. */
+export const APPROVAL_CHANGE_NOTE_MAX_LENGTH = 500 as const;
 
 /** Delimiter tag for Cliente change notes in script/caption LLM prompts (US-4.1 pattern). */
 export const UNTRUSTED_CLIENT_CHANGE_REQUEST_TAG =
@@ -38,7 +37,7 @@ const optionalChangeNoteSchema = z
   .pipe(
     z
       .string()
-      .max(APPROVAL_FEEDBACK_MAX_LENGTH)
+      .max(APPROVAL_CHANGE_NOTE_MAX_LENGTH)
       .transform((value) => (value.length === 0 ? undefined : value)),
   )
   .optional();
@@ -79,9 +78,9 @@ export const changeRequestClientRoundSchema = z
     round: z.number().int().min(1),
     tags: z.array(approvalChangeTagSchema).min(1),
     notesByTag: z
-      .record(approvalChangeTagSchema, z.string().min(1).max(APPROVAL_FEEDBACK_MAX_LENGTH))
+      .record(approvalChangeTagSchema, z.string().min(1).max(APPROVAL_CHANGE_NOTE_MAX_LENGTH))
       .optional(),
-    summary: z.string().min(1).max(APPROVAL_FEEDBACK_MAX_LENGTH).optional(),
+    summary: z.string().min(1).max(APPROVAL_CHANGE_NOTE_MAX_LENGTH).optional(),
     decidedAt: z.string().datetime({ offset: true }),
     decidedBy: z.string().uuid(),
     routingStartedAt: z.string().datetime({ offset: true }).optional(),
@@ -99,7 +98,7 @@ export const changeRequestOperatorGrantSchema = z
     kind: z.literal("operator_grant"),
     grantedAt: z.string().datetime({ offset: true }),
     grantedBy: z.string().uuid(),
-    reason: z.string().min(1).max(APPROVAL_FEEDBACK_MAX_LENGTH),
+    reason: z.string().min(1).max(APPROVAL_CHANGE_NOTE_MAX_LENGTH),
   })
   .strict();
 
@@ -122,9 +121,9 @@ export const lastChangeRequestDtoSchema = z
     round: z.number().int().min(1),
     tags: z.array(approvalChangeTagSchema).min(1),
     notesByTag: z
-      .record(approvalChangeTagSchema, z.string().min(1).max(APPROVAL_FEEDBACK_MAX_LENGTH))
+      .record(approvalChangeTagSchema, z.string().min(1).max(APPROVAL_CHANGE_NOTE_MAX_LENGTH))
       .optional(),
-    summary: z.string().min(1).max(APPROVAL_FEEDBACK_MAX_LENGTH).optional(),
+    summary: z.string().min(1).max(APPROVAL_CHANGE_NOTE_MAX_LENGTH).optional(),
     decidedAt: z.string().datetime({ offset: true }),
   })
   .strict();
@@ -147,13 +146,13 @@ export const revisionContextSchema = z
     delimitedNotesByTag: z
       .record(
         approvalChangeTagSchema,
-        z.string().min(1).max(APPROVAL_FEEDBACK_MAX_LENGTH + 64),
+        z.string().min(1).max(APPROVAL_CHANGE_NOTE_MAX_LENGTH + 64),
       )
       .optional(),
     delimitedSummary: z
       .string()
       .min(1)
-      .max(APPROVAL_FEEDBACK_MAX_LENGTH + 64)
+      .max(APPROVAL_CHANGE_NOTE_MAX_LENGTH + 64)
       .optional(),
   })
   .strict();
@@ -199,7 +198,7 @@ export const operatorGrantExtraRevisionInputSchema = z
         z
           .string()
           .min(1)
-          .max(APPROVAL_FEEDBACK_MAX_LENGTH),
+          .max(APPROVAL_CHANGE_NOTE_MAX_LENGTH),
       ),
   })
   .strict();

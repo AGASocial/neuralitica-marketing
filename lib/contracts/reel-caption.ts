@@ -247,7 +247,7 @@ export const selectReelCaptionCtaSuccessSchema = z
   })
   .strict();
 
-export type ReelCaptionInvoker = "operator" | "system";
+export type ReelCaptionInvoker = "operator" | "system" | "revision";
 
 export const generateReelCaptionsSuccessSchema = z
   .object({

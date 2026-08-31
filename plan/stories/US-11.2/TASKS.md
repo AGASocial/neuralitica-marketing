@@ -141,11 +141,11 @@ await routeApprovalChangeRequest({ approvalId, assembledReelId, changeRequest })
 
 **Consumers:** `routeApprovalChangeRequest` → script/caption regen orchestrators (server-only).
 
-- [ ] Extend script regen entrypoint to accept optional **`revisionContext`** `{ approvalId, tags, delimitedNotes }` — not Cliente-callable.
-- [ ] Extend caption regen similarly for caption-only path.
-- [ ] Wrap all Cliente note text in **`<UNTRUSTED_CLIENT_CHANGE_REQUEST>`** delimiters; explicit non-instruction framing in system prompt (mirror US-4.1 / US-5.1).
-- [ ] Reject malformed agent output before persist (existing Zod gates — no relaxation).
-- [ ] Do **not** expose revision context fields on Operator UI write paths from browser without operator auth.
+- [x] Extend script regen entrypoint to accept optional **`revisionContext`** `{ approvalId, tags, delimitedNotes }` — not Cliente-callable.
+- [x] Extend caption regen similarly for caption-only path.
+- [x] Wrap all Cliente note text in **`<UNTRUSTED_CLIENT_CHANGE_REQUEST>`** delimiters; explicit non-instruction framing in system prompt (mirror US-4.1 / US-5.1).
+- [x] Reject malformed agent output before persist (existing Zod gates — no relaxation).
+- [x] Do **not** expose revision context fields on Operator UI write paths from browser without operator auth.
 
 ---
 
@@ -153,12 +153,12 @@ await routeApprovalChangeRequest({ approvalId, assembledReelId, changeRequest })
 
 **Consumers:** `routeApprovalChangeRequest` for `assembly` / `branding` / full script path tail.
 
-- [ ] From router: enqueue **assembly** job when expansion requires (reuse `createAssemblyJobForReelScript` / existing assembly enqueue).
-- [ ] From router: enqueue **branding** when expansion requires (reuse `applyBrandingForAssembly` / auto-chain pattern from US-9.2).
-- [ ] When media path completes + QA gate ready: call **`requeueApprovalAfterRevision`** (or export hook for BE to register).
-- [ ] When **caption-only** path completes: trigger requeue without QA re-run (CONTRACT documents gate behavior).
-- [ ] Enqueue **QA re-run** when assembly/branding/script path runs (US-10.1 existing run QA helper).
-- [ ] Idempotency: do not double-enqueue if revision already in flight — CONTRACT should define `changes_requested` in-flight guard.
+- [x] From router: enqueue **assembly** job when expansion requires (reuse `createAssemblyJobForReelScript` / existing assembly enqueue).
+- [x] From router: enqueue **branding** when expansion requires (reuse `applyBrandingForAssembly` / auto-chain pattern from US-9.2).
+- [x] When media path completes + QA gate ready: call **`requeueApprovalAfterRevision`** (or export hook for BE to register).
+- [x] When **caption-only** path completes: trigger requeue without QA re-run (CONTRACT documents gate behavior).
+- [x] Enqueue **QA re-run** when assembly/branding/script path runs (US-10.1 existing run QA helper).
+- [x] Idempotency: do not double-enqueue if revision already in flight — CONTRACT should define `changes_requested` in-flight guard.
 
 ---
 

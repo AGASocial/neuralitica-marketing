@@ -48,6 +48,8 @@ import {
 import { createSiliconFlowLlmAdapter } from "@/lib/providers/siliconflow-llm-adapter";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
 import type { BusinessProfileForAgentsView } from "@/lib/contracts/profile";
+import type { RevisionContext } from "@/lib/contracts/approval-revision";
+import { revisionContextSchema } from "@/lib/contracts/approval-revision";
 
 export type GenerateReelCaptionsForClientParams = {
   clientId: string;
@@ -59,6 +61,8 @@ export type GenerateReelCaptionsForClientParams = {
   operatorClientId?: string;
   budgetOverride?: true;
   overrideReason?: string;
+  /** Server-only — required when invokedBy === "revision". */
+  revisionContext?: RevisionContext;
 };
 
 function resolveLocale(profile: BusinessProfileForAgentsView): "en" | "es" {
@@ -67,6 +71,33 @@ function resolveLocale(profile: BusinessProfileForAgentsView): "en" | "es" {
     return raw;
   }
   return "es";
+}
+
+function validateRevisionContextForInvoke(params: {
+  invokedBy: ReelCaptionInvoker;
+  revisionContext?: RevisionContext;
+}):
+  | { ok: true; revisionContext?: RevisionContext }
+  | { ok: false; fields: Record<string, string[]> } {
+  if (params.invokedBy === "revision") {
+    if (params.revisionContext === undefined) {
+      return { ok: false, fields: { revisionContext: ["REQUIRED"] } };
+    }
+    const parsed = revisionContextSchema.safeParse(params.revisionContext);
+    if (!parsed.success) {
+      return {
+        ok: false,
+        fields: zodInterviewErrorToFieldErrors(parsed.error),
+      };
+    }
+    return { ok: true, revisionContext: parsed.data };
+  }
+
+  if (params.revisionContext !== undefined) {
+    return { ok: false, fields: { revisionContext: ["FORBIDDEN"] } };
+  }
+
+  return { ok: true };
 }
 
 function buildSlotContext(
@@ -110,6 +141,15 @@ export async function generateReelCaptionsForClient(
   const clientId = clientParsed.data;
   const weekStart = weekParsed.data;
   const strategyId = params.strategyId;
+
+  const revisionGate = validateRevisionContextForInvoke({
+    invokedBy: params.invokedBy,
+    revisionContext: params.revisionContext,
+  });
+  if (!revisionGate.ok) {
+    return reelCaptionValidationError(revisionGate.fields);
+  }
+  const revisionContext = revisionGate.revisionContext;
 
   const inFlightScope: CaptionInFlightScope =
     params.mode === "batch"
@@ -333,6 +373,7 @@ export async function generateReelCaptionsForClient(
           provider,
           llmAdapter,
           locale,
+          revisionContext,
         });
       } catch (error) {
         console.error("[reel-captions] agent failed", {
@@ -441,6 +482,16 @@ export async function generateReelCaptionsForClient(
           providerKey: provider.key,
           invokedBy: params.invokedBy,
         });
+
+        if (params.invokedBy === "revision" && params.revisionContext) {
+          await requeueApprovalAfterRevision({
+            approvalId: params.revisionContext.approvalId,
+            clientId,
+            round: params.revisionContext.round,
+            pathKind: "caption_only",
+          });
+        }
+
         return {
           ok: true,
           strategyId,

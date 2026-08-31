@@ -11,6 +11,7 @@ import type { PlaybookForAgentsResult } from "@/lib/contracts/playbook";
 import type { TrendSnapshotForWeekResult } from "@/lib/contracts/trend";
 import type { ProviderCatalogRow } from "@/lib/contracts/providers";
 import { DEFAULT_LOW_TIER_PROVIDER_KEYS } from "@/lib/contracts/providers";
+import { UNTRUSTED_CLIENT_CHANGE_REQUEST_TAG } from "@/lib/contracts/approval-revision";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -340,6 +341,55 @@ describe("generate-reel-script agent module", () => {
     assert.match(systemPrompt, /Production modality.*faceless/);
     assert.match(systemPrompt, /Instagram Reels only/);
     assert.match(systemPrompt, /español/);
+  });
+
+  it("buildReelScriptPrompts injects delimited revision context when present", async () => {
+    const {
+      buildReelScriptPrompts,
+      resolveReelScriptSlotContext,
+    } = await loadReelScriptModule();
+    const { buildRevisionContext } = await withServerOnlyStub(async () =>
+      import("@/lib/approvals/build-revision-context.ts"),
+    );
+
+    const slotContext = resolveReelScriptSlotContext({
+      slot: SLOT,
+      playbook: PLAYBOOK,
+      trend: TREND,
+      mustDiscloseNotOwner: false,
+    });
+
+    const revisionContext = buildRevisionContext({
+      approvalId: "11111111-2222-4333-8444-555555555555",
+      round: 1,
+      changeRequest: {
+        tags: ["script", "caption"],
+        notesByTag: {
+          script: "Soften opening hook.",
+          caption: "CTA should mention consult.",
+        },
+        summary: "Warmer tone overall.",
+      },
+    });
+
+    const { systemPrompt, userPrompt } = buildReelScriptPrompts({
+      profile: PROFILE,
+      slotContext,
+      locale: "es",
+      revisionContext,
+    });
+
+    assert.match(
+      userPrompt,
+      new RegExp(`<${UNTRUSTED_CLIENT_CHANGE_REQUEST_TAG}>`),
+    );
+    assert.match(userPrompt, /Soften opening hook/);
+    assert.match(userPrompt, /CTA should mention consult/);
+    assert.match(userPrompt, /Warmer tone overall/);
+    assert.match(
+      systemPrompt,
+      /Cliente revision change-request blocks may appear/i,
+    );
   });
 
   it("prompt contains formato guionHints for slot slug", async () => {

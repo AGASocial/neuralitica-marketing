@@ -15,6 +15,7 @@ import {
   CTA_VARIANT_MIN,
   IG_CAPTION_MAX_CHARS,
 } from "@/lib/contracts/reel-caption";
+import { UNTRUSTED_CLIENT_CHANGE_REQUEST_TAG } from "@/lib/contracts/approval-revision";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -333,6 +334,48 @@ describe("generate-reel-caption agent module", () => {
       new RegExp(`${CTA_VARIANT_MIN}[–-]${CTA_VARIANT_MAX}`),
     );
     assert.match(systemPrompt, /español/);
+  });
+
+  it("buildReelCaptionPrompts injects delimited revision context when present", async () => {
+    const { buildReelCaptionPrompts } = await loadReelCaptionModule();
+    const { buildRevisionContext } = await withServerOnlyStub(async () =>
+      import("@/lib/approvals/build-revision-context.ts"),
+    );
+
+    const revisionContext = buildRevisionContext({
+      approvalId: "11111111-2222-4333-8444-555555555555",
+      round: 1,
+      changeRequest: {
+        tags: ["caption"],
+        notesByTag: {
+          caption: "Mention free consult in CTA.",
+        },
+        summary: "Warmer local tone.",
+      },
+    });
+
+    const { systemPrompt, userPrompt } = buildReelCaptionPrompts({
+      profile: PROFILE_WITH_ZONE,
+      slotContext: {
+        slot: SLOT,
+        scriptPackage: SCRIPT_PACKAGE,
+        reelScriptId: "22222222-2222-4222-8222-222222222222",
+        slotIndex: 0,
+      },
+      locale: "es",
+      revisionContext,
+    });
+
+    assert.match(
+      userPrompt,
+      new RegExp(`<${UNTRUSTED_CLIENT_CHANGE_REQUEST_TAG}>`),
+    );
+    assert.match(userPrompt, /Mention free consult in CTA/);
+    assert.match(userPrompt, /Warmer local tone/);
+    assert.match(
+      systemPrompt,
+      /Cliente revision change-request blocks may appear/i,
+    );
   });
 
   it("prompt contains zone description when profile has zone", async () => {

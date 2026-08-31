@@ -62,7 +62,7 @@ export const getReelScriptsForWeekInputSchema = z
   })
   .strict();
 
-export type ReelScriptInvoker = "operator" | "system";
+export type ReelScriptInvoker = "operator" | "system" | "revision";
 
 export const reelScriptListItemSchema = z
   .object({

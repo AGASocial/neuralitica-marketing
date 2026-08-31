@@ -49,6 +49,8 @@ import {
 import { createSiliconFlowLlmAdapter } from "@/lib/providers/siliconflow-llm-adapter";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
 import type { BusinessProfileForAgentsView } from "@/lib/contracts/profile";
+import type { RevisionContext } from "@/lib/contracts/approval-revision";
+import { revisionContextSchema } from "@/lib/contracts/approval-revision";
 
 export type GenerateReelScriptsForClientParams = {
   clientId: string;
@@ -60,6 +62,8 @@ export type GenerateReelScriptsForClientParams = {
   operatorClientId?: string;
   budgetOverride?: true;
   overrideReason?: string;
+  /** Server-only — required when invokedBy === "revision". */
+  revisionContext?: RevisionContext;
 };
 
 function buildSlotContext(
@@ -108,6 +112,33 @@ function resolveLocale(profile: BusinessProfileForAgentsView): "en" | "es" {
   return "es";
 }
 
+function validateRevisionContextForInvoke(params: {
+  invokedBy: ReelScriptInvoker;
+  revisionContext?: RevisionContext;
+}):
+  | { ok: true; revisionContext?: RevisionContext }
+  | { ok: false; fields: Record<string, string[]> } {
+  if (params.invokedBy === "revision") {
+    if (params.revisionContext === undefined) {
+      return { ok: false, fields: { revisionContext: ["REQUIRED"] } };
+    }
+    const parsed = revisionContextSchema.safeParse(params.revisionContext);
+    if (!parsed.success) {
+      return {
+        ok: false,
+        fields: zodInterviewErrorToFieldErrors(parsed.error),
+      };
+    }
+    return { ok: true, revisionContext: parsed.data };
+  }
+
+  if (params.revisionContext !== undefined) {
+    return { ok: false, fields: { revisionContext: ["FORBIDDEN"] } };
+  }
+
+  return { ok: true };
+}
+
 export async function generateReelScriptsForClient(
   params: GenerateReelScriptsForClientParams & { mode: "batch" },
 ): Promise<GenerateReelScriptsResult>;
@@ -136,6 +167,15 @@ export async function generateReelScriptsForClient(
   const clientId = clientParsed.data;
   const weekStart = weekParsed.data;
   const strategyId = params.strategyId;
+
+  const revisionGate = validateRevisionContextForInvoke({
+    invokedBy: params.invokedBy,
+    revisionContext: params.revisionContext,
+  });
+  if (!revisionGate.ok) {
+    return reelScriptValidationError(revisionGate.fields);
+  }
+  const revisionContext = revisionGate.revisionContext;
 
   const inFlightScope: ScriptInFlightScope =
     params.mode === "batch"
@@ -357,6 +397,7 @@ export async function generateReelScriptsForClient(
           provider,
           llmAdapter,
           locale,
+          revisionContext,
         });
       } catch (error) {
         console.error("[reel-scripts] agent failed", {
