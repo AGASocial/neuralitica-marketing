@@ -1,12 +1,12 @@
 # US-7.3 — Track actual cost per generation job
 
-**Status:** Phase A **CLOSED** (2026-08-29). **Phase B PREP** (2026-08-31) — sprint **`US-7.3-B`**. Freeze: [`PHASE-B.md`](./PHASE-B.md).
+**Status:** Phase A **CLOSED** (2026-08-29) + **Phase B CLOSED** (2026-08-31) — sprint **`US-7.3-B`**. Freeze: [`PHASE-B.md`](./PHASE-B.md).
 
 **As an** Operator, **I want** real API cost recorded per Reel, **so that** we learn true unit economics.
 
 **Phase A (CLOSED):** server-side actual-cost persistence on the spend ledger for **LLM** jobs + Operator **`/operator/scripts`** estimated vs actual (slot + weekly sum). VALIDATION PASS WITH NOTES (4/4 AC Phase A); QA APPROVE WITH NOTES after H1 fix `f60579d`. BE `030d85f` · FE `02b399b`/`ddca524` · fix `f60579d`.
 
-**Phase B (this sprint):** video / TTS / B-roll **actual backfill** on the same ledger; job-level cost on the **existing** Operator video panel (not a new `/operator/production` route). Upstream US-8.x / US-9.3 / US-7.4 Phase A **CLOSED**. **CONTRACT Phase B amendment required** — do not rewrite Phase A CONTRACT.
+**Phase B (CLOSED 2026-08-31):** video / TTS / B-roll **actual backfill** on the same ledger; job-level cost on the **existing** Operator video panel (not a new `/operator/production` route). VALIDATION PASS WITH NOTES; QA APPROVE WITH CONDITIONS (Critical 0, High 0). FE `1add7ed` · BE `d3b2e03` · media `3f3653c` · docs `6da4340`.
 
 **Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-7.3 (Phase A **checked** — do **not** uncheck; Phase B adds **no** new checkboxes).
 
@@ -64,13 +64,13 @@ _Evitar:_ exposing raw provider pricing or budget caps to Cliente; client-editab
 ### Phase A — CLOSED 2026-08-29
 - [x] SPEC-REVIEW.md · SECURITY.md · CONTRACT.md · BUILD · VALIDATION.md · QA.md
 
-### Phase B — PREP
+### Phase B — CLOSED 2026-08-31
 - [x] PREP — [`PHASE-B.md`](./PHASE-B.md) + TASKS Phase B checklist
-- [ ] SPEC-REVIEW.md amendment
-- [ ] SECURITY.md amendment
-- [ ] CONTRACT.md Phase B + Reviewed by FE
-- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend)
-- [ ] VALIDATION Phase B
-- [ ] QA Phase B
+- [x] SPEC-REVIEW.md amendment
+- [x] SECURITY.md amendment
+- [x] CONTRACT.md Phase B + Reviewed by FE
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend)
+- [x] VALIDATION Phase B — PASS WITH NOTES (Phase A AC stay [x]; video/TTS/B-roll [SEC] re-verified)
+- [x] QA Phase B — APPROVE WITH CONDITIONS (Critical 0 · High 0 · Medium 1 non-blocking · Low 4)
 
-**Next:** spec-guardian **SPEC-REVIEW** (Phase B).
+**Next:** orchestrator CLOSE `SPRINT-STATE.md` / merge as requested. Recommended SELECT: **US-9.2-B QA M1** (`voiceoverTimingHash` worker re-check).

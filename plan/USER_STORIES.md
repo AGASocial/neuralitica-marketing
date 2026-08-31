@@ -733,8 +733,8 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | On LLM job complete: persist `actual_cost_cents` on spend ledger via `finalizeGenerationCost`; async seam for US-8.x |
 | **DB** | `neuramark_reel_spend_events.actual_cost_cents`, `actual_cost_unavailable_reason` (canonical V1 store; `video_jobs.*` with US-8.2+) |
 
-**Acceptance criteria** *(Phase A CLOSED — LLM spend events; Phase B video/TTS + US-8.4 production list deferred)*
-- [x] Every completed job has actual or `null` with failure reason — Phase A: LLM script/caption jobs on `neuramark_reel_spend_events`; video/TTS async backfill deferred to US-8.x / US-9.3
+**Acceptance criteria** *(Phase A CLOSED — LLM spend events; **Phase B CLOSED 2026-08-31** — video/TTS/B-roll actuals + Operator job poll cost on `/operator/scripts`; no `/operator/production`)*
+- [x] Every completed job has actual or `null` with failure reason — Phase A: LLM script/caption jobs on `neuramark_reel_spend_events`; Phase B: video/TTS/B-roll actuals via poller `async_update` + TTS INSERT (no `/operator/production`)
 - [x] Dashboard aggregate cost per client per week (simple sum) — `/operator/scripts` weekly footer (Phase A)
 - [x] Operator-only: endpoint/action rejects non-operator sessions server-side (403) — cost data is margin-sensitive and never served to client sessions
 - [x] [SEC] `actual_cost_cents` is written only by the server-side job-completion handler from provider responses; no client-facing endpoint can set or edit recorded costs
@@ -752,7 +752,7 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | Aggregation over `neuramark_reel_spend_events` by `reel_script_id` + `asset_role`; batch `reelCostRollups` on `getReelScriptsForWeek`; reconcile with US-7.3 weekly/slot sums |
 | **DB** | No new tables; query **`neuramark_reel_spend_events`** only (canonical per US-7.3; `video_jobs` / `media_assets.cost_cents` deferred) |
 
-**Acceptance criteria** *(Phase A CLOSED — spend-ledger roll-up, LLM breakdown; Phase B video/TTS/B-roll lines when US-8.x / US-9.3 land)*
+**Acceptance criteria** *(Phase A CLOSED — spend-ledger roll-up, LLM breakdown; Phase B automatic expand realized 2026-08-31 via US-7.3-B spend rows — do not reopen BUILD)*
 - [x] Every Reel shows one total actual cost including failed attempts and all asset roles (talking_head, broll, tts, llm where tracked) — Phase A: LLM on spend ledger; video/voiceover/B-roll lines appear when upstream writers INSERT rows; failed attempts without spend rows excluded (US-7.3 PO lean)
 - [x] Estimated vs actual variance visible per Reel — `ReelCostRollupPanel` on expand row; `varianceCents` from server DTO
 - [x] Weekly per-client cost sum (US-7.3) reconciles with the sum of per-Reel totals — shared aggregator + automated reconciliation tests (week-scoped slot totals)

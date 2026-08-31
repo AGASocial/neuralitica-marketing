@@ -158,7 +158,7 @@ export type ReelWeekCostSummary = {
 
 ---
 
-## Phase B checklist (PREP — unchecked)
+## Phase B checklist (CLOSED 2026-08-31)
 
 ### Frontend (nextjs-frontend) — Phase B
 
@@ -207,7 +207,7 @@ export type ReelWeekCostSummary = {
 | **nextjs-backend** | DDL, `finalizeGenerationCost` sync, weekly summary, forbidden keys |
 | **nextjs-frontend** | `/operator/scripts` cost column + weekly footer |
 
-### Phase B (this PREP)
+### Phase B (CLOSED)
 | Agent | Owns |
 |-------|------|
 | **media-pipeline-engineer** | Adapter actual → persist → poller; Wan complete path tests |
@@ -292,16 +292,16 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
 **Status:** CLOSED (2026-08-29). Phase A complete; 4/4 AC checked in `plan/USER_STORIES.md`.
 
-### Phase B — PREP 2026-08-31
+### Phase B — CLOSED 2026-08-31
 - [x] PREP — [`PHASE-B.md`](./PHASE-B.md) + this Phase B checklist
 - [x] SPEC-REVIEW.md amendment (spec-guardian)
 - [x] SECURITY.md amendment (security-architect)
 - [x] CONTRACT.md Phase B + Reviewed by FE (nextjs-backend → nextjs-frontend)
-- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend)
-- [ ] VALIDATION Phase B — Phase A AC stay [x]; re-verify [SEC]
-- [ ] QA Phase B
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend) — FE `1add7ed` · BE `d3b2e03` · media `3f3653c` · docs `6da4340`
+- [x] VALIDATION Phase B — PASS WITH NOTES; Phase A AC stay [x]; re-verify [SEC]
+- [x] QA Phase B — APPROVE WITH CONDITIONS (Critical 0 · High 0 · Medium 1 non-blocking · Low 4)
 
-**Next:** requirements-validator **VALIDATION** (Phase B).
+**Status:** CLOSED (2026-08-31). Phase B complete; 4/4 USER_STORIES AC remain **[x]** (no new checkboxes).
 
 ---
 

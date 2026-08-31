@@ -130,3 +130,142 @@
 ## Verdict Rationale
 
 **APPROVE WITH NOTES** — implementation faithfully executes frozen CONTRACT Phase A and satisfies SECURITY conditions (central writer, forbidden keys, immutability, Operator gating, estimate-only budget gate). Automated coverage is strong (117 tests). The only merge blocker is a FE fallback type omission (H1), not a trust-boundary defect.
+
+---
+
+# Phase B — Video / TTS / B-roll spend backfill
+
+**Story:** US-7.3 Phase B (`US-7.3-B`)  
+**Branch:** `feature/US-7.3-phase-b-spend-backfill`  
+**Commits reviewed:** `1add7ed` (FE poll cost merge) · `d3b2e03` (GET cost DTO + TTS trusted duration) · `3f3653c` (poller duration + spend actual) · `6da4340` (PREP/SPEC/SECURITY/CONTRACT) · VALIDATION.md Phase B present  
+**Reviewed:** 2026-08-31  
+**Reviewer:** qa-engineer  
+**Sources:** `plan/stories/US-7.3/{CONTRACT,SECURITY,VALIDATION,PHASE-B}.md` Phase B; `lib/video-jobs/apply-video-job-status-update.ts`, `persist-video-job-output.ts`, `app/api/video-jobs/[jobId]/route.ts`, `lib/tts/synthesize-voiceover-for-client-trusted.ts`, `components/scripts/OperatorVideoJobSummaryPanel.tsx`, adapters (`optionalDurationSecFromBuffer`)
+
+### Verdict: APPROVE WITH CONDITIONS
+
+**Severity counts:** Critical **0** · High **0** · Medium **1** · Low **4**  
+**CLOSE recommended:** **Yes** — no Critical/High. Medium/Low are post-close hardening; they do **not** block Phase B CLOSE. Do **not** uncheck Phase A USER_STORIES AC.
+
+Phase B BUILD matches frozen CONTRACT (writer table, Operator poll `OperatorProductionJobCostDto`, no `/operator/production`, Cliente response-shape exclusion) and SECURITY Phase B **12 conditions**. Hunt items (Cliente leak, client-supplied actuals, late INSERT, fail/cancel spend mutation, write-once, SSRF/vendor log leak, `@supabase` in Client Components) **PASS**.
+
+---
+
+## Findings (Phase B)
+
+### Critical / High
+
+None.
+
+### Medium (non-blocking)
+
+| ID | Location | Issue | Why it matters | Fix direction |
+|----|----------|-------|----------------|---------------|
+| **M1** | `lib/video-jobs/apply-video-job-status-update.ts:114-123` | `await finalizeGenerationCost(...)` result is discarded. `{ ok: false }` (`NOT_FOUND`, `TENANT_MISMATCH`, `VALIDATION_ERROR`) still proceeds to mark the job `completed` and mirror `actual_cost_cents` on `neuramark_video_jobs`. | Completed job + job-row actual while ledger stays estimate-only. Operator GET is **ledger-wins**, so the panel can show pending/`estimated_only` after complete; weekly SUM misses the actual. Throws still fail the poller (good); soft `ok: false` is fail-open. `ALREADY_FINALIZED` *should* be ignored. | Check result; on `NOT_FOUND` / `TENANT_MISMATCH` / `VALIDATION_ERROR` log and fail the complete pass (or skip job-row actual). Treat `ALREADY_FINALIZED` as success. |
+
+### Low (non-blocking)
+
+| ID | Location | Issue | Why it matters | Fix direction |
+|----|----------|-------|----------------|---------------|
+| **L1** | `lib/providers/video/optional-duration-sec-from-buffer.ts:14-19` · `lib/media/probe-video-duration.ts` | `Promise.race` 1.5s timeout does **not** abort `mp4box` parsing of vendor bytes. Poller does not hang (timeout wins), but a stuck parser can retain the buffer. | Untrusted-buffer residual. Download already cap-bytes + host allowlist. Duration omit-on-timeout matches CONTRACT. | Bound parse (slice first N bytes) or drop the probe promise reference; do not block complete on duration. |
+| **L2** | `components/scripts/OperatorVideoJobSummaryPanel.tsx:240-248` | Poll JSON is `as`‑cast; no Zod `operatorVideoJobSummaryDtoSchema` on the client. No unit test for `mergePolledStatus`. | GET already validates server-side. Malformed 200 would only affect Operator display, not the ledger. | Optional `safeParse` before merge; add a tiny merge unit test. |
+| **L3** | `OperatorVideoJobSummaryPanel.tsx:221,260,270` | Lint: `prefer-const` on `timer`; `react-hooks/exhaustive-deps` (`job` omitted, deps are `job?.jobId` / `job?.status`). | Quality only; poll still keyed on job identity + in-flight status. | `const` after assign, or leave with comment; not a security issue. |
+| **L4** | `lib/video-jobs/build-operator-production-job-cost.ts:40-49` | Ledger `select` ignores `error`; missing `data` falls back to job-row costs even when `spendEventId` is present. | Transient DB error can show mirror instead of ledger (DTO ledger-wins gap). No Cliente leak. | If `error`, keep last known / omit actual rather than silently using job-row when a spend id exists. |
+
+---
+
+## Hunt checklist (requested)
+
+| Hunt | Result | Evidence |
+|------|--------|----------|
+| Cliente cost leakage on poll/serializers | **PASS** | GET first await `requireOperator` (`route.ts:24-31`); Cliente 403, no `cost` JSON (`video-jobs.test.ts` PB-S2). `operatorVideoJobStatusDtoSchema` stays status-only. Calendar slot DTO uses `videoJob?.status` only — no cost fields. Approval / list / voiceover schemas omit cost keys (PB-S4). Trusted TTS success return omits cost keys (`synthesize-voiceover-for-client-trusted.ts:165-171`). |
+| Client-supplied `actualCostCents` | **PASS** | GET has no body. Forbidden keys on video create + TTS (`find-forbidden-keys.ts`, `find-forbidden-synthesis-keys.ts`). Tests: TTS `actualCostCents` / `durationSec` → `FORBIDDEN_FIELDS`. Persist/finalize read adapter `fetchAsset` / typed `storedAsset` only. |
+| Late spend INSERT when `spendEventId` missing | **PASS** | Log only (`apply-video-job-status-update.ts:124-130`); no `finalize` / no `recordReelSpendEvent`. Test asserts no INSERT and log has no vendor URL. |
+| Fail/cancel mutating spend actuals | **PASS** | Fail/cancel do not call `finalizeGenerationCost`. Job update may rewrite `actual_cost_cents` with existing job value (`null`); does not invent `0`. Tests: zero finalize, zero spend INSERT. |
+| Write-once / overwrite of actuals | **PASS** | `updateReelSpendEventActual` `WHERE actual_cost_cents IS NULL`; different value → `ALREADY_FINALIZED`. Terminal job early-return skips second finalize. Test: stored actual stays `18` when persist returns `99`. |
+| SSRF / vendor body leak in logs | **PASS** | `fetchAsset` → `validateProviderOutputUrl` + host allowlist + redirect re-check + max bytes. Missing-`spendEventId` log: `jobId` / `clientId` / `reelScriptId` only — no `rawOutputUrl`. |
+| Duration probe hang / untrusted buffer | **PASS WITH L1** | 1.5s race timeout so complete is not blocked; duration omitted. Parser not aborted (L1). |
+| `@supabase/supabase-js` in Client Components | **PASS** | No `@supabase` under `components/`. Panel `fetch`s Next.js GET only. `formatCentsForDisplay` is display-only (no `server-only` leak). |
+| Contract vs implementation drift | **PASS** | GET validates `operatorVideoJobSummaryDtoSchema` + `mapOperatorVideoJobSummaryDto`. FE `mergePolledStatus` copies `cost`. `durationSec` on video `async_update` + TTS trusted INSERT. Closed `provider_no_billing` when persist actual null. No `/operator/production`. No new DDL. DTO ledger-wins when `spendEventId` present. Budget still `estimated_cost_cents` only. |
+
+---
+
+## SECURITY Phase B — 12 conditions
+
+| # | Condition | Status |
+|---|-----------|--------|
+| 1 | TTS exception: `server-only`, adapter-sourced, no client actuals, write-once, no migrate | **PASS** |
+| 2 | Exclusive actual writers: `finalize` async_update / manual 0 + TTS INSERT; create estimate-only | **PASS** |
+| 3 | Zero HTTP mutations accepting actuals / client `durationSec` | **PASS** |
+| 4 | FE = panel + Operator GET + `OperatorProductionJobCostDto`; no `/operator/production` | **PASS** |
+| 5 | Poll DTO Operator-only; zero cost keys on Cliente poll/serializers | **PASS** |
+| 6 | Ledger canonical; job-row mirror; DTO ledger-wins; no `video_jobs` SUM | **PASS** |
+| 7 | Fail/cancel: no spend actual UPDATE | **PASS** |
+| 8 | Missing `spendEventId`: log only; no late INSERT | **PASS** |
+| 9 | Complete + `spendEventId`: actual or closed reason; never null/null | **PASS** |
+| 10 | `durationSec` server-derived on video async_update + TTS trusted | **PASS** (omit on timeout — L1) |
+| 11 | Budget gate estimates only | **PASS** |
+| 12 | Security test matrix PB-S1–S12 | **PASS** (75/75 Phase B suite) |
+
+---
+
+## CONTRACT Compliance (Phase B)
+
+| Item | Status |
+|------|--------|
+| Video complete → `async_update` + `durationSec` + closed reason | **PASS** |
+| Missing `spendEventId` → no INSERT | **PASS** |
+| Fail/cancel ∉ finalize | **PASS** |
+| Operator GET 200 includes `cost` / `OperatorProductionJobCostDto`; no `cost_model` | **PASS** |
+| FE poll merge copies `cost` | **PASS** (L2: no FE unit test) |
+| TTS trusted `durationSec` on INSERT; leave TTS on `recordReelSpendEvent` | **PASS** |
+| Manual `actual = 0` unchanged | **PASS** (verify tests) |
+| Wan B-roll same poller writer | **PASS** |
+| No `/operator/production`; no US-7.4 reopen; no new tables | **PASS** |
+| GET 404/403 envelopes | **PASS** (404 `{ error: "NOT_FOUND" }` pre-existing US-8.4; 403 `{ error: { code: "FORBIDDEN" } }` matches CONTRACT) |
+
+---
+
+## Checks Run
+
+| Command | Result |
+|---------|--------|
+| `npx tsx --test` Phase B suite (`apply-video-job-status-update`, `build-operator-production-job-cost`, `video-jobs`, `us-7.3-phase-b-security`, TTS synthesize, talking-head, b-roll, manual upload) | **75/75 pass** |
+| `npx tsc --noEmit` | **FAIL** (pre-existing test-file noise). Phase B prod hit: `synthesize-voiceover-for-client-trusted.ts:170` excess `idempotent` (US-11.2 shape; not introduced as a cost field). `create-broll-video-jobs.ts` TS2322 **not** in Phase B diff vs `origin/main`. |
+| `npx next lint` on Phase B files | Panel **prefer-const** Error + hooks warning (L3). Other listed files clean. |
+| `npm run build` | **Not run** (tsc already showed no Phase B app-route type break on GET/poller). |
+| Grep: `@supabase` in `components/` | **0** |
+| Grep: `app/**/operator/production` | **0** |
+| Grep: prod `recordReelSpendEvent` / `finalizeGenerationCost` call sites | Create = estimate-only; complete = `async_update`; TTS INSERT actual; no Route Handler UPDATE of spend actuals |
+
+---
+
+## What Was Not Covered
+
+- Live browser poll-after-complete on `/operator/scripts` (Operator GET + panel merge).
+- Live Cliente session hitting `GET /api/video-jobs/[jobId]` (unit 403 only).
+- HTTP webhook Route Handler (none in this slice; `source: "webhook"` enum-only).
+- Full `npm run build`.
+- USER_STORIES AC checkboxes (out of this gate by instruction).
+
+---
+
+## Recommended actions
+
+| Priority | Action | Owner |
+|----------|--------|-------|
+| **CLOSE** | Phase B CLOSE; do **not** change USER_STORIES US-7.3 AC | product-owner |
+| Post-close | Honor `finalizeGenerationCost` `{ ok: false }` except `ALREADY_FINALIZED` (M1) | media-pipeline-engineer |
+| Post-close | Optional duration-probe abort / FE merge parse (L1–L2) | media-pipeline-engineer / nextjs-frontend |
+
+---
+
+## CLOSE recommendation (Phase B)
+
+**Yes — CLOSE recommended.** Trust boundaries hold: no client write of actuals, no Cliente cost JSON, no late ledger INSERT, fail/cancel leave estimate-only spend, Operator poll carries `OperatorProductionJobCostDto`. Remaining items are fail-open spend persist (M1) and hardening.
+
+---
+
+## Verdict Rationale (Phase B)
+
+**APPROVE WITH CONDITIONS** — implementation matches frozen CONTRACT Phase B and SECURITY’s 12 conditions. Automated matrix **75/75**. No Critical/High. Conditions = M1 (check finalize result) + Low hygiene; none require fix before CLOSE. **Next gate:** product-owner Phase B CLOSE notes only.

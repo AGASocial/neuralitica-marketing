@@ -1,9 +1,10 @@
 # US-7.3 Phase B — Video / TTS / B-roll spend backfill
 
 **Story ID:** **US-7.3** (same story — **not** a new `US-7.x` ID). Sprint label: **`US-7.3-B`**.  
-**Status:** PREP (2026-08-31) — Phase A CLOSED (2026-08-29). Upstream US-8.4 / US-8.2 / US-8.6 / US-8.7 / US-8.5 / US-8.3 / US-9.3 / US-9.1-B / US-9.2-B / US-7.4 Phase A **CLOSED**.  
+**Status:** **CLOSED** (2026-08-31) — Phase A CLOSED (2026-08-29). Upstream US-8.4 / US-8.2 / US-8.6 / US-8.7 / US-8.5 / US-8.3 / US-9.3 / US-9.1-B / US-9.2-B / US-7.4 Phase A **CLOSED**.  
 **Branch:** `feature/US-7.3-phase-b-spend-backfill`  
-**CONTRACT:** Phase A frozen — **do not rewrite**. **CONTRACT Phase B amendment required** (nextjs-backend, CONTRACT gate).
+**BUILD hashes:** FE `1add7ed` · BE `d3b2e03` · media `3f3653c` · docs `6da4340`  
+**CONTRACT:** Phase A frozen — **do not rewrite**. Phase B amendment **shipped** (Reviewed by FE).
 
 **As an** Operator, **I want** real API cost recorded per completed video / TTS / B-roll job on the spend ledger, **so that** weekly and per-Reel economics include generation jobs beyond LLM.
 
@@ -111,22 +112,22 @@ See [`TASKS.md`](./TASKS.md) § Phase B checklist.
 3. **US-8.2 / 8.6 / 8.7 / 8.5 / 8.3** ✅ — talking-head / Wan / manual writers  
 4. **US-9.3** ✅ — TTS spend INSERT  
 5. **US-7.4 Phase A** ✅ — roll-up consumer (no reopen)  
-6. **This PREP** → **SPEC-REVIEW** (Phase B) → **SECURITY** amend (TTS exception + poll cost DTO) → **CONTRACT** Phase B + FE Reviewed → **BUILD** → **VALIDATION** → **QA** → CLOSE Phase B  
+6. **This Phase B** — SPEC-REVIEW → SECURITY amend → CONTRACT Phase B + FE Reviewed → BUILD → VALIDATION → QA → **CLOSED 2026-08-31**  
 
-**Unblocks:** truthful weekly + per-Reel economics including video/TTS/B-roll; US-7.4 Phase B “automatic expand” realized.
+**Unblocks:** truthful weekly + per-Reel economics including video/TTS/B-roll; US-7.4 Phase B “automatic expand” realized (no US-7.4 BUILD).
 
 ---
 
-## Gates (Phase B)
+## Gates (Phase B) — CLOSED 2026-08-31
 
-- [ ] SPEC-REVIEW.md amendment (spec-guardian — video/TTS/B-roll actuals + surface = `/operator/scripts`)
-- [ ] SECURITY.md amendment (security-architect — TTS INSERT exception; poll cost Operator-only; re-verify [SEC])
-- [ ] CONTRACT.md Phase B section (nextjs-backend) — Reviewed by FE before BUILD
-- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend)
-- [ ] VALIDATION.md Phase B (requirements-validator) — Phase A AC stay [x]; re-verify [SEC]
-- [ ] QA.md Phase B (qa-engineer)
+- [x] SPEC-REVIEW.md amendment (spec-guardian — video/TTS/B-roll actuals + surface = `/operator/scripts`)
+- [x] SECURITY.md amendment (security-architect — TTS INSERT exception; poll cost Operator-only; re-verify [SEC])
+- [x] CONTRACT.md Phase B section (nextjs-backend) — Reviewed by FE before BUILD
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend) — FE `1add7ed` · BE `d3b2e03` · media `3f3653c` · docs `6da4340`
+- [x] VALIDATION.md Phase B (requirements-validator) — PASS WITH NOTES; Phase A AC stay [x]; re-verify [SEC]
+- [x] QA.md Phase B (qa-engineer) — APPROVE WITH CONDITIONS (Critical 0 · High 0 · Medium 1 non-blocking · Low 4)
 
-**Next after PREP:** spec-guardian **SPEC-REVIEW** (Phase B) → security-architect **SECURITY** amend → nextjs-backend **CONTRACT** Phase B.
+**Status:** CLOSED. **Next SELECT:** US-9.2-B QA M1 (`voiceoverTimingHash` worker re-check).
 
 ---
 

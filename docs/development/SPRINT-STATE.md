@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: US-7.3-B
-story_status: VALIDATE
-feature_branch: feature/US-7.3-phase-b-spend-backfill
-last_completed_story: US-9.2-B
+current_story: US-9.2-B-M1
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-7.3-B
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T19:20:00Z
+updated_at: 2026-08-31T19:50:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -32,7 +32,7 @@ updated_at: 2026-08-31T19:20:00Z
 | US-9.1 Phase B faceless B-roll stitch | done | BUILD `c3a9c19` · FE `80652c2` · fix `1106420` · VALIDATION `6d13f4b` (5/5 + 16/16) · QA `37d0dcb` · CLOSE `9a95b55` FF-merge to main |
 | US-9.2 Phase B VO-sync + coverFrameSec | done | BE `95419c1` · FE `8f365bf` · VALIDATION `6db2cba` (2/2; 44/44) · QA `02bfa3b` · CLOSE `7783de2` FF-merge to main |
 
-**Sprint 7 provider + faceless stitch + branding Phase B complete.** Next SELECT: **US-7.3 Phase B** (video/TTS/B-roll spend backfill — recommended). Alternates: high-tier B-roll (`ltx_broll_high`), or QA M1 worker `voiceoverTimingHash` re-check fast-follow.
+**Sprint 7 provider + faceless stitch + branding Phase B + US-7.3-B spend backfill complete.** Next SELECT: **US-9.2-B QA M1** (worker `voiceoverTimingHash` re-check — recommended). Alternates: high-tier B-roll (`ltx_broll_high`), or US-7.3-B QA M1 (fail-closed `finalize` on complete).
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -49,8 +49,8 @@ updated_at: 2026-08-31T19:20:00Z
 | US-6.2 CTA variants for caption testing | done | BE `146479c` · FE `f82ba33` · VALIDATION `258773c` · QA `fc0f4b2` · CLOSE `72723c5` |
 | US-7.1 Configure max budget per Reel | done | BE `3bdc709` · FE `bb19e4d` · fix `69d274f` · VALIDATION `13531f8` · QA `f8ac2a7` · CLOSE `d68b71a` |
 | US-7.2 Select provider by economics | done | BE `8eab3f7` · FE `2ab482c` · fix `78e6aa1` · VALIDATION `eb03f8e` · QA `4ed7fe9` · CLOSE `fcecce4` |
-| US-7.3 Track actual cost per job | done | BE `030d85f` · FE `02b399b`/`ddca524` · fix `f60579d` · VALIDATION `09656e0` · QA `691f657` · CLOSE Phase A |
-| US-7.4 Report real total cost per Reel | done | BE `5c9abb4` · FE `8735be2` · fix `5b3e9d7` · VALIDATION `a678ac4` · QA `746a563` · CLOSE Phase A `f0ca5a0` |
+| US-7.3 Track actual cost per job | done (A+B) | Phase A CLOSE; **Phase B CLOSED** FE `1add7ed` · BE `d3b2e03` · media `3f3653c` · VALIDATION PASS WITH NOTES · QA APPROVE WITH CONDITIONS (0 Critical/High) |
+| US-7.4 Report real total cost per Reel | done | Phase A CLOSE `f0ca5a0`; Phase B automatic expand realized via US-7.3-B (no BUILD) |
 | US-8.1 Provider adapter interface | done | BE `a11d4ae` · fix `4193a1e` · VALIDATION `7367929` · QA `7f34bdb` · CLOSE `3ac3304` |
 | US-8.2 SadTalker adapter | done | Phase A `258fcef` · Phase B closed via US-8.4 `35a433d` |
 | US-8.4 Job status and failure UI | done | BE `689d8c6`/`77142b9` · FE `25737db` · VALIDATION `4e36fbc` · QA `9b24c48` · CLOSE `35a433d` |
@@ -75,6 +75,7 @@ updated_at: 2026-08-31T19:20:00Z
 
 ## Historial reciente
 
+- 2026-08-31 · US-7.3-B CLOSE: VALIDATION PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical/High, M1 non-blocking); FE `1add7ed` · BE `d3b2e03` · media `3f3653c`; video/TTS/B-roll actuals + Operator poll cost on `/operator/scripts`; US-7.4 Phase B auto-expand realized → SELECT **US-9.2-B QA M1** (`voiceoverTimingHash` worker re-check).
 - 2026-08-31 · US-7.3-B BUILD: FE `1add7ed` (poll cost merge) · BE `d3b2e03` (GET cost DTO + TTS duration) · media `3f3653c` (async_update duration + closed reason); next VALIDATE.
 - 2026-08-31 · US-7.3-B PREP: `PHASE-B.md` + README/TASKS freezes (B1–B18); branch `feature/US-7.3-phase-b-spend-backfill`; most writers already exist — BUILD = duration + poll cost refresh + TTS duration; no `/operator/production`; next SPEC-REVIEW.
 - 2026-08-31 · US-9.2 Phase B CLOSE: VALIDATION PASS WITH NOTES `6db2cba` (2/2 deferred; 44/44); QA APPROVE WITH CONDITIONS `02bfa3b` (0 Critical/High); FF-merge `7783de2` to main; VO-sync + `coverFrameSec` complete → SELECT **US-7.3 Phase B** (recommended), `ltx_broll_high`, or VO-hash M1 fast-follow.
