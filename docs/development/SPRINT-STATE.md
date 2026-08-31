@@ -4,16 +4,18 @@
 
 ```yaml
 current_phase: 3
-current_story: US-11.3
-story_status: VALIDATE
-feature_branch: feature/US-11.3-ready-to-publish
-last_completed_story: US-11.2
+current_story: null
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-11.3
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T01:42:00Z
+updated_at: 2026-08-31T02:00:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
+
+**Sprint 6 ✅** — US-11.1 · US-11.2 · US-11.3 (Cliente Aprobación module) complete.
 
 | Story | Status | Notes |
 |-------|--------|-------|
@@ -40,7 +42,7 @@ updated_at: 2026-08-31T01:42:00Z
 | US-10.2 Operator override with reason | done | BE `a9cc533` · FE `0c6bfb0` · VALIDATION `d7e3cd5` · QA `3da5547` · CLOSE `c9b97e5` (7/7 AC; approval render → US-11.1) |
 | US-11.1 Present Reel package for client approval | done | BE `d830b0f` · FE `defd9ff` · VALIDATION `633c6f5` · QA `3f39db9` · CLOSE `4f11d38` (5/5 AC; request-changes → US-11.2) |
 | US-11.2 Request controlled revision round | done | FE `9c60ff1` · BE `8072392`/`088eafa` · agents `f0e4569` · media `dd90242` · VALIDATION `e4f12fb` · QA `84902c8` · CLOSE `a08b999` (5/5 AC; operator UI/history → Phase B) |
-| US-11.3 Approve and mark ready to publish | BUILD | branch `feature/US-11.3-ready-to-publish` · CONTRACT `c09aeb6` · FE signoff `24ec3de` · VALIDATE next |
+| US-11.3 Approve and mark ready to publish | done | FE `f38c731` · BE `af50d1d` · VALIDATION `209dcc3` · QA `04dfe5b` · CLOSE `dfdace9` (5/5 AC; zip/webhook → Phase B) |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
@@ -52,6 +54,7 @@ updated_at: 2026-08-31T01:42:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-11.3 CLOSE: 5/5 AC checked; VALIDATION PASS WITH NOTES `209dcc3` (44/44); QA APPROVE WITH CONDITIONS `04dfe5b` (0 Critical/High); FF-merge `dfdace9` to main; **Sprint 6 complete** (US-11.1/11.2/11.3); Phase 3 → SELECT **US-12.1** (recommended), phase integration, or US-8.5.
 - 2026-08-30 · US-11.2 CLOSE Phase A: 5/5 AC checked; VALIDATION PASS WITH NOTES `e4f12fb` (105/105); QA APPROVE WITH CONDITIONS `84902c8`; FF-merge `a08b999` to main; Phase 3 → SELECT **US-11.3** (recommended) or US-8.5.
 - 2026-08-30 · US-11.2 SELECT → PREP. Branch `feature/US-11.2-revision-round` from main; deps US-11.1 ✅.
 - 2026-08-30 · US-11.1 CLOSE Phase A: 5/5 AC checked; VALIDATION PASS WITH NOTES `633c6f5` (25/25); QA APPROVE WITH CONDITIONS `3f39db9`; FF-merge `4f11d38` to main; Phase 3 → SELECT **US-11.2** (recommended) or US-11.3 or US-8.5.
