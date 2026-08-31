@@ -1,6 +1,6 @@
 # US-9.2 — Add subtitles, logo, and cover
 
-**Status:** Phase A CLOSED (2026-08-30) — 5/5 AC · CLOSE `92b196a`. **Phase B CLOSED** (2026-08-31) — VO-synced timing + `coverFrameSec`; VALIDATION PASS WITH NOTES `6db2cba` (2/2 deferred; 44/44); QA APPROVE WITH CONDITIONS `02bfa3b` (0 Critical/High). See [`PHASE-B.md`](./PHASE-B.md). Sprint: **`US-9.2-B`** · branch **`feature/US-9.2-phase-b-subtitle-cover`**.
+**Status:** Phase A CLOSED (2026-08-30) — 5/5 AC · CLOSE `92b196a`. **Phase B CLOSED** (2026-08-31) — VO-synced timing + `coverFrameSec`; VALIDATION PASS WITH NOTES `6db2cba` (2/2 deferred; 44/44); QA APPROVE WITH CONDITIONS `02bfa3b` (0 Critical/High). See [`PHASE-B.md`](./PHASE-B.md). **Active fast-follow:** **Phase B-M1 PREP** — worker `voiceoverTimingHash` re-check (QA-PHASE-B Medium #1). Sprint: **`US-9.2-B-M1`** · branch **`feature/US-9.2-b-m1-voiceover-timing-hash`**. See [`PHASE-B-M1.md`](./PHASE-B-M1.md).
 
 **As a** System, **I want** burned-in subtitles, client logo overlay, and a cover frame export, **so that** Reels match brand and perform on Instagram.
 
@@ -8,10 +8,11 @@ Ship the **second-pass FFmpeg branding pipeline** (ADR-0003) on top of US-9.1 **
 
 **Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-9.2 (do **not** check off in PREP).
 
-**This folder:** [`plan/stories/US-9.2/`](./) — `README.md` · [`PHASE-B.md`](./PHASE-B.md) · `TASKS.md` · Phase A `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
+**This folder:** [`plan/stories/US-9.2/`](./) — `README.md` · [`PHASE-B.md`](./PHASE-B.md) · [`PHASE-B-M1.md`](./PHASE-B-M1.md) · `TASKS.md` · Phase A `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` · `QA-PHASE-B.md`.
 
 **Branch (Phase A):** `feature/US-9.2-subtitles-logo-cover` (merged)  
-**Branch (Phase B):** `feature/US-9.2-phase-b-subtitle-cover`
+**Branch (Phase B):** `feature/US-9.2-phase-b-subtitle-cover` (merged)  
+**Branch (Phase B-M1):** `feature/US-9.2-b-m1-voiceover-timing-hash`
 
 **Depends on:** [US-9.1](../US-9.1/) ✅ `assembled_reel` base + `neuramark_assembled_reels.output_media_asset_id` · [US-2.2](../US-2.2/) ✅ Ficha viva edit surface · [US-5.1](../US-5.1/) ✅ `on_screen_text` beats · [US-3.3](../US-3.3/) ✅ shared upload validation stack · [US-14.5](../US-14.5/) ✅ `requireOperator()`.
 
@@ -74,9 +75,10 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; soft subs; STT; Busi
 | Phase | Scope | Closes |
 |-------|-------|--------|
 | **A (US-9.2 BUILD — ship first)** | DDL · logo upload on Ficha · client `assembly_config` defaults · branding worker pass (burn-in + logo overlay + cover @ 1s) · auto-chain after assembly complete · Operator branding panel + toggles · idempotency · `[SEC]` upload + subtitle sanitize · mobile safe-zone typography constants | USER_STORIES § US-9.2 AC rows |
-| **B (US-9.2-B — CLOSED 2026-08-31)** | VO-proportional beat timing (words-per-beat from `voiceover_text`); Operator per-reel `coverFrameSec` override. **Residual out:** second font · thumbnail strip · Cliente cover UI · worker VO-hash re-check (QA M1) | Closes Phase A deferred polish; Phase A AC stay checked — 2/2 PASS — see [`PHASE-B.md`](./PHASE-B.md) |
+| **B (US-9.2-B — CLOSED 2026-08-31)** | VO-proportional beat timing (words-per-beat from `voiceover_text`); Operator per-reel `coverFrameSec` override. **Residual out:** second font · thumbnail strip · Cliente cover UI | Closes Phase A deferred polish; Phase A AC stay checked — 2/2 PASS — see [`PHASE-B.md`](./PHASE-B.md) |
+| **B-M1 (US-9.2-B-M1 — PREP)** | Worker re-check of `voiceoverTimingHash` vs live VO before VO-proportional timings (QA-PHASE-B Medium #1). **No** new USER_STORIES AC. | Fast-follow integrity guard — see [`PHASE-B-M1.md`](./PHASE-B-M1.md) |
 
-**VALIDATION note (binding):** Phase A closed US-9.2 AC and the **subtitles/logo/cover** slice deferred from US-9.1 partial S3.M10. Phase B closes VO timing + Operator `coverFrameSec` only; re-verify **[SEC]** on the new path.
+**VALIDATION note (binding):** Phase A closed US-9.2 AC and the **subtitles/logo/cover** slice deferred from US-9.1 partial S3.M10. Phase B closes VO timing + Operator `coverFrameSec` only; re-verify **[SEC]** on the new path. **B-M1:** validate mismatch → failed / no spawn only — do not touch USER_STORIES AC.
 
 ---
 
@@ -137,7 +139,16 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; soft subs; STT; Busi
 - [x] VALIDATION-PHASE-B.md — PASS WITH NOTES `6db2cba` (2/2 deferred; 44/44)
 - [x] QA-PHASE-B.md — APPROVE WITH CONDITIONS `02bfa3b` (0 Critical/High)
 
-**Phase B CLOSED.** Residual out: second font · thumbnail strip · Cliente cover UI. Non-blocking QA follow-up: worker `voiceoverTimingHash` re-check (M1); poll claim race (Phase A carry-forward).
+**Phase B CLOSED.** Residual out: second font · thumbnail strip · Cliente cover UI. Poll claim race (Phase A carry-forward / QA M2) remains separate.
+
+### Phase B-M1 — PREP (active)
+- [x] PREP — [`PHASE-B-M1.md`](./PHASE-B-M1.md) + TASKS Phase B-M1 checklist
+- [ ] SECURITY.md lean amend (integrity re-check)
+- [ ] CONTRACT.md amend (worker step + fail code) — **required**; nextjs-backend authors
+- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend)
+- [ ] VALIDATION lean · QA lean · CLOSE M1
+
+**Next gate:** SECURITY lean amend (no SPEC — M1-10). Then CONTRACT amend → BUILD.
 
 ---
 

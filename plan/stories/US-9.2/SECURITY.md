@@ -633,3 +633,83 @@ Before Phase B BUILD, verify CONTRACT Phase B amendment:
 | **Condition count** | **8** |
 | **Veto** | No |
 | **Next gate** | CONTRACT.md Phase B amendment |
+
+---
+---
+
+# Security Design Review — US-9.2 Phase B-M1
+
+**Story:** US-9.2 Phase B-M1 — Worker `voiceoverTimingHash` re-check  
+**Sprint label:** `US-9.2-B-M1`  
+**Date:** 2026-08-31  
+**Reviewer:** security-architect  
+**Branch:** `feature/US-9.2-b-m1-voiceover-timing-hash`  
+**Sources:** `plan/stories/US-9.2/PHASE-B-M1.md` (PO M1-1…M1-10), Phase A + Phase B sections above, `plan/stories/US-9.2/QA-PHASE-B.md` Medium #1  
+**Status:** Binding **lean amend** — integrity hardening only. Phase A/B floors **remain in force**; this section does **not** rewrite them. Do not treat as CONTRACT.md. Do not check off `USER_STORIES.md` AC.  
+**Primary implementers:** **media-pipeline-engineer** (worker guard). **nextjs-backend** (fail constant + CONTRACT amend + unit test). **FE: none.**
+
+---
+
+## Verdict: APPROVE WITH CONDITIONS
+
+M1 closes a fingerprint integrity gap: worker already re-checks `subtitleSourceHash` but not `voiceoverTimingHash` before VO-proportional timings. Fix is correct and additive — mirror the subtitle-hash early-fail window; **no** new endpoints, client fields, or trust boundaries.
+
+**Confirmed:** no new client authority; `voiceover_text` still never enters ASS Dialogue or FFmpeg argv; fail reasons sanitized codes only.
+
+No REDESIGN. No veto of M1-1…M1-10. **Next gate:** CONTRACT amend (worker step + fail code) → BUILD.
+
+**Condition count (Phase B-M1):** **4**
+
+---
+
+### Binding conditions (Phase B-M1)
+
+1. **Guard placement:** After live script VO load + existing `subtitleSourceHash` check, **before** `mkdtemp` / ASS write / FFmpeg spawn — same early-fail window as subtitle hash (M1-2).
+2. **Compare + fail closed:** Reuse **`computeVoiceoverTimingHash(voiceoverText)`**; if ≠ `config.voiceoverTimingHash` → **`failBrandingJob`** with sanitized i18n key (CONTRACT freezes exact string, parallel to `BRANDING_FAILURE_SUBTITLE_HASH`); **zero** spawn (M1-3…M1-5, M1-7).
+3. **Legacy soft-skip only:** Enforce only when snapshot hash is **64-char hex**; empty/missing → skip VO-hash re-check (Phase A rows). Do **not** treat malformed non-empty values as skip — CONTRACT freezes (M1-6).
+4. **No client authority / no VO leakage:** No new apply fields; `voiceoverTimingHash` stays forbidden from client; VO still counts-only → never ASS Dialogue / argv; Operator DTO / logs show sanitized fail code only — never live VO, hash digests, or argv (M1-8).
+
+---
+
+### Abuse cases (M1 delta)
+
+- *As a malicious actor, I change `voiceover_text` after enqueue so ASS timings diverge from fingerprint* → **Blocked:** worker recompute ≠ snapshot → `failed`, no spawn.
+- *As a malicious actor, I POST `voiceoverTimingHash` / override fingerprint on apply* → **Blocked:** still forbidden (Phase B); M1 adds no client path.
+- *As a malicious actor, I force VO into ASS/argv via the new guard path* → **Blocked:** guard is hash compare only; VO still never written to Dialogue/argv.
+- *As a malicious actor, I read VO or hash digests from the failure DTO* → **Blocked:** sanitized i18n code only.
+
+---
+
+### Security Acceptance Criteria (Phase B-M1 — additive for VALIDATION)
+
+Phase A/B `[SEC]` remain binding. Additive only:
+
+- [ ] **[SEC] (Phase B-M1) Worker `voiceoverTimingHash` re-check:** After live VO load and `subtitleSourceHash` guard, before temp dir / ASS / spawn: if `config.voiceoverTimingHash` is **64-char hex**, recompute via **`computeVoiceoverTimingHash(voiceoverText)`**; mismatch → **`failBrandingJob`** + CONTRACT-frozen sanitized key; **no** FFmpeg spawn. Empty/missing hash → skip re-check (legacy). Empty VO with present hash still enforced.
+- [ ] **[SEC] (Phase B-M1) No new client authority:** M1 adds **no** apply/trigger fields, no client-supplied hash/timings, no FE surface. `voiceoverTimingHash` / fingerprint overrides remain **`FORBIDDEN_FIELDS`**.
+- [ ] **[SEC] (Phase B-M1) VO still never in ASS Dialogue or argv:** Guard path does not write VO into ASS body or FFmpeg args; unit test: mismatch → zero spawn; match path still has no VO substrings in ASS/argv.
+- [ ] **[SEC] (Phase B-M1) Sanitized failure only:** Fail reason is i18n/code constant only — no live VO text, hash digests, `storage_key`, or argv in Operator DTO or production logs.
+
+---
+
+### Vetoes (Phase B-M1)
+
+| If implementers… | Verdict |
+|---|---|
+| Proceed to VO-proportional ASS / spawn when hex snapshot hash ≠ live recompute | **REJECT** |
+| Accept client-supplied `voiceoverTimingHash` or skip-guard flags | **REJECT** |
+| Soft-skip on malformed non-empty snapshot hash (non-64-hex) without CONTRACT rule | **REJECT** |
+| Put VO / hash digest / argv into fail DTO or logs | **REJECT** |
+| Place guard after ASS write or spawn | **REJECT** |
+
+---
+
+### Gate summary (Phase B-M1)
+
+| Field | Value |
+|---|---|
+| **Verdict** | **APPROVE WITH CONDITIONS** |
+| **Condition count** | **4** |
+| **Veto** | No |
+| **Next gate** | CONTRACT.md Phase B-M1 amend (worker step + fail code) — then BUILD |
+
+**CONTRACT may proceed:** **Yes.** Do not start CONTRACT in this security turn.

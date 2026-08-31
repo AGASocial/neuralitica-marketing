@@ -1,18 +1,20 @@
 Reviewed by FE: yes — 2026-08-30 — nextjs-frontend (Phase A).  
-**Phase B — Reviewed by FE: yes — 2026-08-31 — nextjs-frontend** (Operator `coverFrameSec` InputNumber + Apply/Re-brand wire).
+**Phase B — Reviewed by FE: yes — 2026-08-31 — nextjs-frontend** (Operator `coverFrameSec` InputNumber + Apply/Re-brand wire).  
+**Phase B-M1 — Reviewed by FE: N/A — no FE surface** (PO M1-9; waiver — see § Phase B-M1). Contract frozen / BUILD unblocked without FE signoff.
 
 # API Contract — US-9.2 Add subtitles, logo, and cover
 
 **Story:** US-9.2  
-**Status:** Phase A frozen — 2026-08-30 · **Phase B section frozen — 2026-08-31** (Reviewed by FE: **yes — 2026-08-31** — BUILD unblocked)  
-**Security:** `plan/stories/US-9.2/SECURITY.md` (Phase A + Phase B APPROVE WITH CONDITIONS — 8 Phase B conditions reconciled in § Phase B)  
-**Spec review:** `plan/stories/US-9.2/SPEC-REVIEW.md` (Phase A GAPS closed) · `plan/stories/US-9.2/SPEC-REVIEW-PHASE-B.md` (**ALIGNED**)  
-**Phase B prep:** `plan/stories/US-9.2/PHASE-B.md` (PO B1–B15)  
+**Status:** Phase A frozen — 2026-08-30 · **Phase B section frozen — 2026-08-31** (Reviewed by FE: **yes — 2026-08-31**) · **Phase B-M1 section frozen — 2026-08-31** (FE Reviewed **N/A** — BUILD unblocked)  
+**Security:** `plan/stories/US-9.2/SECURITY.md` (Phase A + Phase B + **Phase B-M1** APPROVE WITH CONDITIONS — 4 M1 conditions reconciled in § Phase B-M1)  
+**Spec review:** `plan/stories/US-9.2/SPEC-REVIEW.md` (Phase A GAPS closed) · `plan/stories/US-9.2/SPEC-REVIEW-PHASE-B.md` (**ALIGNED**) · Phase B-M1: **no SPEC drift** (PO M1-10 — skip full SPEC-REVIEW)  
+**Phase B prep:** `plan/stories/US-9.2/PHASE-B.md` (PO B1–B15) · **Phase B-M1 prep:** `plan/stories/US-9.2/PHASE-B-M1.md` (PO M1-1…M1-10)  
 **Pattern:** `plan/stories/US-9.1/CONTRACT.md` (extends assembly pipeline; second-pass branding on Fly worker)  
 **Depends on:** US-9.1 ✅ assembled base + worker poll seam · US-5.1 ✅ `on_screen_text` + `voiceover_text` · US-5.2 ✅ beat line bounds + `countVoiceoverWords` tokenizer · US-9.3 Phase A ✅ VO audio (timestamps **not** required) · US-2.2 ✅ Ficha viva `/profile` · US-3.3 ✅ `validateAndPrepareMediaUpload` · US-14.5 ✅ `requireOperator()` / `requireActive()`  
 **ADR:** `docs/adr/0003-worker-flyio-ffmpeg.md` — Vercel orchestrator INSERT + enqueue; Fly FFmpeg + branding status writes  
 **Feature branch (Phase A):** `feature/US-9.2-subtitles-logo-cover` (merged)  
 **Feature branch (Phase B):** `feature/US-9.2-phase-b-subtitle-cover` · sprint `US-9.2-B`  
+**Feature branch (Phase B-M1):** `feature/US-9.2-b-m1-voiceover-timing-hash` · sprint `US-9.2-B-M1`  
 **Error envelope style:** same class as US-9.1 / US-8.4 (`ok: true` vs `{ ok: false, error: { code, fields?, messageKey? } }`)
 
 **This document is CONTRACT ONLY.** Zod mirrors live in `lib/contracts/branding-job.ts` (BUILD) and extensions to `lib/contracts/media-assets.ts`, `lib/contracts/assembly-job.ts`, `lib/contracts/profile.ts`. Extensions to `lib/assembly/**` and worker modules are specified here and applied during BUILD.
@@ -77,7 +79,8 @@ Reviewed by FE: yes — 2026-08-30 — nextjs-frontend (Phase A).
 | Phase | Scope | Closes |
 |-------|-------|--------|
 | **A (US-9.2 BUILD — CLOSED)** | DDL (`logo_asset_id`, `assembly_config`, branding columns, `client_logo` / `cover_frame` enums); logo upload/remove + `updateAssemblyConfigDefaults` on Ficha; branding worker pass (ASS burn-in + logo overlay + cover @ 1s); auto-chain after assembly `completed`; Operator branding panel + toggles; idempotency; `[SEC]` upload + subtitle sanitize; mobile safe-zone typography | USER_STORIES § US-9.2 AC rows (all five remain **[x]**) |
-| **B (US-9.2-B — this amendment)** | **Only:** (1) VO-proportional beat timing from `voiceover_text` word partitions (fallback equal split); (2) Operator per-reel optional **`coverFrameSec`** on manual Apply / Re-brand (Zod `0–45`, seek clamp). **Out of this slice (further defer):** bundled second font weight · preview thumbnail strip · Cliente Ficha `coverFrameSec` UI · TTS/ASR timestamps | Phase A deferred S3.M10 polish only — **no** new USER_STORIES AC checkboxes |
+| **B (US-9.2-B — CLOSED)** | **Only:** (1) VO-proportional beat timing from `voiceover_text` word partitions (fallback equal split); (2) Operator per-reel optional **`coverFrameSec`** on manual Apply / Re-brand (Zod `0–45`, seek clamp). **Out of this slice (further defer):** bundled second font weight · preview thumbnail strip · Cliente Ficha `coverFrameSec` UI · TTS/ASR timestamps | Phase A deferred S3.M10 polish only — **no** new USER_STORIES AC checkboxes |
+| **B-M1 (US-9.2-B-M1 — this amendment)** | Worker re-check of **`voiceoverTimingHash`** vs live script VO after subtitle-hash guard, before `mkdtemp` / ASS / spawn. Fail constant + unit test. **No** FE · **No** DB · **No** new USER_STORIES AC | Closes QA-PHASE-B Medium #1 only — see § Phase B-M1 |
 
 **VALIDATION note (binding):** Phase A closes USER_STORIES § US-9.2 AC and completes the **subtitles/logo/cover** slice deferred from US-9.1 partial S3.M10 closure. Phase B VALIDATION must re-verify **[SEC]** sanitization + cover bounds on the VO-timing / Operator-override path, and mark the two Phase A deferrals (**VO-synced timing**, **Operator `coverFrameSec`**) **closed**. Remaining S3.M10 elsewhere: weekly auto-brand (ADR-0001), further font/thumbnail polish.
 
@@ -1451,10 +1454,136 @@ Same USER_STORIES § US-9.2 AC (do **not** uncheck Phase A; **no** new checkboxe
 
 ---
 
+# Phase B-M1 — Worker `voiceoverTimingHash` re-check
+
+**Status:** Frozen — 2026-08-31 (BE authored) · **Reviewed by FE: N/A — no FE surface** (PO M1-9 waiver) · **BUILD unblocked** (no FE signoff required)  
+**Sprint:** `US-9.2-B-M1` · branch `feature/US-9.2-b-m1-voiceover-timing-hash`  
+**Sources:** `PHASE-B-M1.md` (M1-1…M1-10) · `SECURITY.md` Phase B-M1 (4 conditions) · QA-PHASE-B Medium #1  
+**DB:** **None.**  
+**FE:** **None** — Operator panel may keep generic failed status; optional i18n for the new key later.  
+**Phase A/B floors:** Remain binding. This section **amends** `runBrandingJob` only — does **not** rewrite Phase A/B sections above.
+
+**Acceptance boundary (narrow — binding):** Close fingerprint integrity gap — worker re-verifies snapshot `voiceoverTimingHash` against live script VO before VO-proportional ASS timings / spawn. **Do not** add or uncheck USER_STORIES § US-9.2 AC. **Do not** change hash formula, fingerprint shape, or apply schema.
+
+---
+
+## Phase B-M1 — SECURITY reconciliation (4 conditions)
+
+| # | Condition | Frozen here |
+|---|-----------|-------------|
+| 1 | Guard after live VO load + `subtitleSourceHash` check, **before** `mkdtemp` / ASS / spawn | § Worker step |
+| 2 | Reuse `computeVoiceoverTimingHash(voiceoverText)`; mismatch → `failBrandingJob` + sanitized key; **zero** spawn | § Fail constant · § Worker step |
+| 3 | Enforce only when snapshot hash is **64-char hex**; empty/missing → **skip**; malformed non-empty → **not** skip | § Legacy / enforce predicate |
+| 4 | No new client authority; VO still never ASS Dialogue / argv; fail reason = i18n code only | § Out of scope · § Fail constant |
+
+---
+
+## Phase B-M1 — Fail constant (frozen string)
+
+**File (BUILD):** `lib/branding/run-branding-job.ts` (parallel to `BRANDING_FAILURE_SUBTITLE_HASH`)
+
+```ts
+export const BRANDING_FAILURE_SUBTITLE_HASH =
+  "scripts.branding.failure.subtitleHashMismatch" as const; // existing — unchanged
+
+export const BRANDING_FAILURE_VOICEOVER_TIMING_HASH =
+  "scripts.branding.failure.voiceoverTimingHashMismatch" as const;
+```
+
+| Export | `messageKey` / `failure_reason` value (exact) |
+|--------|-----------------------------------------------|
+| `BRANDING_FAILURE_VOICEOVER_TIMING_HASH` | **`scripts.branding.failure.voiceoverTimingHashMismatch`** |
+
+**Rules:** Persist via `failBrandingJob` → `applyBrandingJobUpdate` as sanitized reason only. **Forbidden** in DTO / production logs: live VO text, hash digests, argv, `storage_key`.
+
+---
+
+## Phase B-M1 — Legacy / enforce predicate (frozen)
+
+Evaluate against the **`voiceoverTimingHash` field as stored in `branding_config` JSON** (or the worker’s equivalent raw snapshot field **before** any soft-default that invents a hash for missing Phase A rows):
+
+| Snapshot `voiceoverTimingHash` | Behavior |
+|--------------------------------|----------|
+| Absent, `null`, or `""` | **Skip** VO-hash re-check (Phase A legacy rows never stored the hash) |
+| Exactly **64 lowercase hex** (`/^[0-9a-f]{64}$/`) | **Enforce** — recompute and compare |
+| Non-empty malformed (wrong length, non-hex, uppercase-only mix that fails the regex) | **Fail** job with `BRANDING_FAILURE_CONFIG` — **no** spawn; **do not** soft-skip (SECURITY M1 condition 3) |
+
+**Empty VO (M1-7):** When hash is present (64-char hex), still enforce — `computeVoiceoverTimingHash("")` is deterministic (`sha256("")`); mismatch still fails.
+
+**BUILD note (binding):** Live `parseBrandingConfig` soft-defaults a missing field to `sha256("")` for Zod/fingerprint continuity. That soft-default **must not** cause false enforcement on Phase A rows. Guard must use raw-field presence (or equivalent: treat “was missing before soft-default” as skip). Soft-default empty-VO hash for a **present** Phase B empty-VO snapshot remains enforceable.
+
+---
+
+## Phase B-M1 — Worker step (`runBrandingJob` amend)
+
+**File (BUILD):** `lib/branding/run-branding-job.ts`  
+**Compare API (reuse — do not fork):** `computeVoiceoverTimingHash(voiceoverText)` from `lib/assembly/compute-vo-proportional-beat-timings.ts` (same input as enqueue — Phase B hash formula unchanged).
+
+**Placement (binding — same early-fail window as subtitle hash):**
+
+Inside the burn-in / script-load path, **after** successful sanitize + existing:
+
+```ts
+if (sanitized.subtitleSourceHash !== config.subtitleSourceHash) {
+  await failBrandingJob(activeJob.id, BRANDING_FAILURE_SUBTITLE_HASH);
+  return;
+}
+```
+
+…and **before** `mkdtemp` / ASS write / `computeVoProportionalBeatTimings` / FFmpeg `spawn`:
+
+```ts
+// Pseudocode — exact helper name free at BUILD
+const snapshotHash = /* raw branding_config.voiceoverTimingHash */;
+if (isPresent64LowerHex(snapshotHash)) {
+  const liveHash = computeVoiceoverTimingHash(voiceoverText);
+  if (liveHash !== snapshotHash) {
+    await failBrandingJob(activeJob.id, BRANDING_FAILURE_VOICEOVER_TIMING_HASH);
+    return;
+  }
+} else if (isNonEmptyMalformed(snapshotHash)) {
+  await failBrandingJob(activeJob.id, BRANDING_FAILURE_CONFIG);
+  return;
+}
+// else empty/missing → skip
+```
+
+| Rule | Detail |
+|------|--------|
+| When burn-in off | No VO timings path → guard naturally not required (no proportional ASS from VO) |
+| Match | Continue to proportional timings / temp / spawn unchanged |
+| Mismatch | `branding_status = failed`, reason = `BRANDING_FAILURE_VOICEOVER_TIMING_HASH`, **zero** FFmpeg invocations |
+| VO in ASS/argv | Unchanged — VO counts-only; never Dialogue / argv |
+
+**No** new apply/trigger fields. `voiceoverTimingHash` remains **`FORBIDDEN_FIELDS`** (Phase B list unchanged).
+
+---
+
+## Phase B-M1 — Unit test fixture requirement (BUILD)
+
+**File (BUILD):** `lib/branding/run-branding-job.test.ts` (extend)
+
+| Fixture | Expect |
+|---------|--------|
+| Live `voiceoverText` mutated so `computeVoiceoverTimingHash(live) !==` snapshot 64-hex `voiceoverTimingHash` (subtitle hash still matches) | Job **`failed`**; `failure_reason === BRANDING_FAILURE_VOICEOVER_TIMING_HASH`; **FFmpeg runner / spawn never called** |
+| Matching hash (happy path) | Proceeds past guard (existing path may cover) |
+| Empty/missing snapshot hash (legacy) | Guard skipped — does not false-fail solely for missing Phase A field |
+
+---
+
+## Phase B-M1 — Reviewed by FE
+
+**Reviewed by FE: N/A — no FE surface** (PO M1-9).
+
+**Waiver:** Phase B-M1 adds worker integrity guard + sanitized fail code only. No DTO, Server Action, or UI change. FE signoff **not required**. Contract frozen; **BUILD unblocked**.
+
+---
+
 ## Changelog
 
 | Date | Change |
 |------|--------|
+| 2026-08-31 | **Phase B-M1 freeze** — worker `voiceoverTimingHash` re-check after subtitle-hash guard; fail key `scripts.branding.failure.voiceoverTimingHashMismatch`; legacy empty/missing skip; FE Reviewed N/A; BUILD unblocked |
 | 2026-08-31 | **Phase B FE sign-off** — approved; BUILD constraints for Operator InputNumber + optional `coverFrameSec` wire + i18n; BUILD unblocked |
 | 2026-08-31 | **Phase B freeze** — VO word-partition timings + `voiceoverTimingHash` fingerprint; optional Operator `coverFrameSec` on apply; seek clamp; forbidden-keys amend; narrow scope (no second font / thumbnail) |
 | 2026-08-30 | Initial freeze — branding pipeline DDL, orchestrator, worker seam, ASS/FFmpeg graph, Cliente logo actions, DTOs, media serve; resolves SPEC-REVIEW + SECURITY gaps |

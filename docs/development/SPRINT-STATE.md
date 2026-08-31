@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-9.2-B-M1
-story_status: SELECT
-feature_branch: null
+story_status: VALIDATE
+feature_branch: feature/US-9.2-b-m1-voiceover-timing-hash
 last_completed_story: US-7.3-B
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T19:50:00Z
+updated_at: 2026-08-31T19:30:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
