@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-8.8
-story_status: PREP
+story_status: BUILD
 feature_branch: feature/US-8.8-ltx-broll-high
 last_completed_story: US-9.1-B-M2
 phase_status: sprint_7_closed
 blocked_reason: null
-updated_at: 2026-08-31T19:45:00Z
+updated_at: 2026-08-31T23:10:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
