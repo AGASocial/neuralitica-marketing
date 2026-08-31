@@ -15,7 +15,7 @@ import { normalizeToIsoMonday } from "@/lib/trend/normalize-week-start";
 export const dynamic = "force-dynamic";
 
 type ScriptsPageProps = {
-  searchParams: Promise<{ weekStart?: string }>;
+  searchParams: Promise<{ weekStart?: string; highlightSlot?: string }>;
 };
 
 function isNextNavigationError(error: unknown): boolean {
@@ -45,8 +45,13 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
   const user = await getCurrentUser();
   const locale = resolveLocale(user?.preferredLocale);
   const t = getTranslations(locale);
-  const { weekStart: rawWeekStart } = await searchParams;
+  const { weekStart: rawWeekStart, highlightSlot: rawHighlightSlot } = await searchParams;
   const weekStart = resolveWeekStart(rawWeekStart);
+  const highlightSlot = rawHighlightSlot ? Number.parseInt(rawHighlightSlot, 10) : undefined;
+  const parsedHighlightSlot =
+    highlightSlot !== undefined && Number.isInteger(highlightSlot) && highlightSlot >= 0
+      ? highlightSlot
+      : undefined;
   const clientId = user?.id ?? "00000000-0000-4000-8000-000000000001";
 
   let scriptsResult: Awaited<ReturnType<typeof getReelScriptsForWeek>>;
@@ -97,6 +102,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
   return (
     <ScriptsPageView
       weekStart={weekStart}
+      highlightSlot={parsedHighlightSlot}
       data={data}
       loadFailed={loadFailed}
       locale={locale}

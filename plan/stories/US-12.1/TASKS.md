@@ -114,16 +114,16 @@ type ClientGapWarningDto = {
 
 **Consumers:** `/operator/calendar` · `AppHeader` Operator nav · optional `/operator/scripts` highlight
 
-- [ ] Add **`app/(app)/operator/calendar/page.tsx`** — RSC; resolve `weekStart` from searchParams (same helper pattern as strategy/scripts); call `getOperatorCalendarForWeek`; loading via `loading.tsx`.
-- [ ] Create **`components/calendar/OperatorCalendarView.tsx`** (Client Component island): week header (range label, prev/next, PrimeReact `Calendar` picker); **7-column grid** Mon–Sun with localized day headers.
-- [ ] Render **slot cards** per day: client name, tema, `CalendarStatusTag` (color by `pipelineStatus`), optional thumbnail.
-- [ ] Render **gap warning** strip/card per client when `missingCount > 0` (copy: “{n} slot(s) unfilled” — EN/ES).
-- [ ] **Sidebar** on card click: summary fields from `CalendarSlotDetailDto`; CTAs “Open in Scripts” + “View strategy” (see README PO #6).
-- [ ] Wire **`AppHeader`**: Operator-only link **`header.nav.calendar`** → `/operator/calendar`.
-- [ ] i18n **`calendar.*`** in `messages/en.json` + `messages/es.json`: title, subtitle, weekdays, month labels, status labels, gap warning, sidebar CTAs, empty/error/back links.
-- [ ] Empty states: no slots for week; load error; forbidden (should not render — layout gates Operator).
-- [ ] Optional: extend **`ScriptsPageView`** to read **`highlightSlot`** query → scroll/expand matching row (same `weekStart`).
-- [ ] Mobile: stack columns or horizontal scroll for week grid — match existing Operator page responsive patterns.
+- [x] Add **`app/(app)/operator/calendar/page.tsx`** — RSC; resolve `weekStart` from searchParams (same helper pattern as strategy/scripts); call `getOperatorCalendarForWeek`; loading via `loading.tsx`.
+- [x] Create **`components/calendar/OperatorCalendarView.tsx`** (Client Component island): week header (range label, prev/next, PrimeReact `Calendar` picker); **7-column grid** Mon–Sun with localized day headers.
+- [x] Render **slot cards** per day: client name, tema, `CalendarStatusTag` (color by `pipelineStatus`), optional thumbnail.
+- [x] Render **gap warning** strip/card per client when `missingCount > 0` (copy: “{n} slot(s) unfilled” — EN/ES).
+- [x] **Sidebar** on card click: summary fields from `CalendarSlotDetailDto`; CTAs “Open in Scripts” + “View strategy” (see README PO #6).
+- [x] Wire **`AppHeader`**: Operator-only link **`header.nav.calendar`** → `/operator/calendar`.
+- [x] i18n **`calendar.*`** in `messages/en.json` + `messages/es.json`: title, subtitle, weekdays, month labels, status labels, gap warning, sidebar CTAs, empty/error/back links.
+- [x] Empty states: no slots for week; load error; forbidden (should not render — layout gates Operator).
+- [x] Optional: extend **`ScriptsPageView`** to read **`highlightSlot`** query → scroll/expand matching row (same `weekStart`).
+- [x] Mobile: stack columns or horizontal scroll for week grid — match existing Operator page responsive patterns.
 
 ---
 

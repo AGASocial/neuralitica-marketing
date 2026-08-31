@@ -73,6 +73,12 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
                 {t.header.nav.scripts}
               </Link>
               <Link
+                href="/operator/calendar"
+                style={{ color: "#374151", textDecoration: "none" }}
+              >
+                {t.header.nav.calendar}
+              </Link>
+              <Link
                 href="/operator/settings/cost-policy"
                 style={{ color: "#374151", textDecoration: "none" }}
               >

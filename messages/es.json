@@ -59,6 +59,7 @@
       "trends": "Snapshots de tendencias",
       "strategy": "Estrategia semanal",
       "scripts": "Guiones",
+      "calendar": "Calendario de contenido",
       "costPolicy": "Política de costo"
     }
   },
@@ -991,6 +992,59 @@
       "notDraft": "Solo los borradores pueden editarse o aprobarse.",
       "invalidTransition": "Esta estrategia ya no puede aprobarse. Actualiza e inténtalo de nuevo.",
       "locked": "Esta estrategia está bloqueada porque ya existen guiones.",
+      "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
+    }
+  },
+  "calendar": {
+    "loading": {
+      "page": "Cargando calendario de contenido…"
+    },
+    "page": {
+      "title": "Calendario de contenido",
+      "subtitle": "Vista semanal Lun–Dom multi-cliente de Reels programados desde estrategias semanales aprobadas.",
+      "weekLabel": "Semana",
+      "prevWeek": "Semana anterior",
+      "nextWeek": "Semana siguiente",
+      "emptyWeek": "Aún no hay slots de Reel programados para esta semana.",
+      "loadError": "No pudimos cargar el calendario de esta semana. Actualiza la página e inténtalo de nuevo.",
+      "backDashboard": "Volver al panel",
+      "gapWarning": "{client}: faltan {count} slot(s) esta semana (objetivo: 3).",
+      "clientsWithoutStrategy": "{count} cliente(s) activo(s) no tienen estrategia aprobada para esta semana."
+    },
+    "weekdays": {
+      "monday": "Lunes",
+      "tuesday": "Martes",
+      "wednesday": "Miércoles",
+      "thursday": "Jueves",
+      "friday": "Viernes",
+      "saturday": "Sábado",
+      "sunday": "Domingo"
+    },
+    "status": {
+      "draft": "Borrador",
+      "generating": "Generando",
+      "qa": "Revisión QA",
+      "pending": "Pendiente de aprobación",
+      "approved": "Aprobado",
+      "published": "Publicado",
+      "changesRequested": "Revisión solicitada"
+    },
+    "sidebar": {
+      "title": "Detalle del slot de Reel",
+      "client": "Cliente",
+      "tema": "Tema",
+      "goal": "Objetivo",
+      "scheduledDate": "Fecha programada",
+      "slotIndex": "Número de slot",
+      "pipelineStatus": "Estado del pipeline",
+      "openScripts": "Abrir en Guiones",
+      "viewStrategy": "Ver estrategia",
+      "deepLinkDisabledHint": "Los enlaces profundos solo abren para el cliente de tu sesión. Revisa el resumen aquí para otros clientes.",
+      "close": "Cerrar"
+    },
+    "errors": {
+      "validation": "Revisa los campos resaltados e inténtalo de nuevo.",
+      "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
       "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
     }
   },

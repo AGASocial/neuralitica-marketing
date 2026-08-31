@@ -286,6 +286,7 @@ type ScriptsPageCopy = {
 
 type ScriptsPageViewProps = {
   weekStart: string;
+  highlightSlot?: number;
   data: GetReelScriptsForWeekSuccess;
   loadFailed: boolean;
   locale: string;
@@ -489,6 +490,7 @@ type BudgetOverridePayload = {
 
 export function ScriptsPageView({
   weekStart,
+  highlightSlot,
   data,
   loadFailed,
   locale,
@@ -505,6 +507,16 @@ export function ScriptsPageView({
   const [captionSelectingSlot, setCaptionSelectingSlot] = useState<number | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<ReelScriptListItem[]>([]);
+
+  useEffect(() => {
+    if (highlightSlot === undefined || data.items.length === 0) {
+      return;
+    }
+    const match = data.items.find((item) => item.slotIndex === highlightSlot);
+    if (match) {
+      setExpandedRows([match]);
+    }
+  }, [highlightSlot, data.items]);
   const [budgetDialogVisible, setBudgetDialogVisible] = useState(false);
   const [budgetPreviewLoading, setBudgetPreviewLoading] = useState(false);
   const [budgetPreviewError, setBudgetPreviewError] = useState<string | null>(null);

@@ -59,6 +59,7 @@
       "trends": "Trend snapshots",
       "strategy": "Weekly strategy",
       "scripts": "Scripts",
+      "calendar": "Content calendar",
       "costPolicy": "Cost policy"
     }
   },
@@ -991,6 +992,59 @@
       "notDraft": "Only draft strategies can be edited or approved.",
       "invalidTransition": "This strategy can no longer be approved. Refresh and try again.",
       "locked": "This strategy is locked because scripts already exist.",
+      "internal": "Something went wrong. Please try again later."
+    }
+  },
+  "calendar": {
+    "loading": {
+      "page": "Loading content calendar…"
+    },
+    "page": {
+      "title": "Content calendar",
+      "subtitle": "Multi-client Mon–Sun view of scheduled Reels from approved weekly strategies.",
+      "weekLabel": "Week",
+      "prevWeek": "Previous week",
+      "nextWeek": "Next week",
+      "emptyWeek": "No Reel slots are scheduled for this week yet.",
+      "loadError": "We could not load the calendar for this week. Refresh the page to try again.",
+      "backDashboard": "Back to dashboard",
+      "gapWarning": "{client}: {count} slot(s) unfilled this week (target: 3).",
+      "clientsWithoutStrategy": "{count} active client(s) have no approved strategy for this week."
+    },
+    "weekdays": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    },
+    "status": {
+      "draft": "Draft",
+      "generating": "Generating",
+      "qa": "QA review",
+      "pending": "Pending approval",
+      "approved": "Approved",
+      "published": "Published",
+      "changesRequested": "Revision requested"
+    },
+    "sidebar": {
+      "title": "Reel slot detail",
+      "client": "Cliente",
+      "tema": "Topic",
+      "goal": "Goal",
+      "scheduledDate": "Scheduled date",
+      "slotIndex": "Slot number",
+      "pipelineStatus": "Pipeline status",
+      "openScripts": "Open in Scripts",
+      "viewStrategy": "View strategy",
+      "deepLinkDisabledHint": "Deep links open for your signed-in session client only. Review summary here for other clients.",
+      "close": "Close"
+    },
+    "errors": {
+      "validation": "Please check the highlighted fields and try again.",
+      "forbiddenFields": "Something went wrong. Please try again.",
       "internal": "Something went wrong. Please try again later."
     }
   },
