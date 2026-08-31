@@ -1,7 +1,7 @@
 # API Contract — US-13.2 Surface top themes for next strategy cycle
 
 **Story:** US-13.2  
-**Status:** Frozen — 2026-08-31 · **Reviewed by FE:** pending  
+**Status:** Frozen — 2026-08-31 · **Reviewed by FE:** approved — 2026-08-31  
 **Security:** `plan/stories/US-13.2/SECURITY.md` (APPROVE WITH CONDITIONS — 16 conditions reconciled below)  
 **Spec review:** `plan/stories/US-13.2/SPEC-REVIEW.md` (ALIGNED — 2 Medium · 4 Low closed below)  
 **Pattern:** US-13.1 `neuramark_reel_metrics` · US-4.1 `generateContentStrategyForClient` + delimiter prompts · US-4.2 Operator client selector  
@@ -1001,7 +1001,84 @@ Pattern matches US-4.1 orchestrator logging.
 
 ## Reviewed by FE
 
-**Reviewed by FE:** pending
+**Reviewed by FE:** approved — 2026-08-31
+
+**Verdict:** No blocking issues. DTO shapes, Server Action envelope, `null` empty semantics, placement, and i18n key map are FE-feasible against existing `/operator/strategy` shell (PrimeReact, Server Action pattern, RSC page loader). BUILD may proceed.
+
+**Non-blocking notes for implementers:** see § FE appendix (BUILD).
+
+---
+
+## FE appendix (BUILD)
+
+Binding clarifications for **nextjs-frontend** — supplement § Frontend contract; do not change API shapes.
+
+### 1. Empty state semantics
+
+| Source | Rule |
+|--------|------|
+| Success envelope | `{ ok: true, insights: StrategyPerformanceInsightsDto \| null }` |
+| Empty UX | Treat **`insights === null`** as empty state — **not** `{ available: false }` and **not** a page-level error |
+| Data present | When non-null, `insights.available === true` and `topThemes.length` is 1..3 |
+
+### 2. RSC initial load + Client Action refresh (frozen FE pattern)
+
+```text
+app/(app)/operator/strategy/page.tsx (RSC)
+  → resolve selectedClientId (see §3)
+  → aggregateReelMetricsByTema({ clientId: selectedClientId, weekStart })
+  → pass initialInsights prop to StrategyPageView
+
+StrategyInsightsPanel ("use client")
+  → render initialInsights immediately (no skeleton on first paint)
+  → on selectedClientId or weekStart change: call getStrategyPerformanceInsights({ clientId, weekStart })
+  → show PrimeReact Skeleton while action pending
+  → on action error: inline Message in panel only — do not block brief editor
+```
+
+**Week change:** Existing `router.push(?weekStart=…)` + `router.refresh()` re-runs RSC loader — panel receives fresh `initialInsights` prop. Reset panel local state from prop when `weekStart` or server-passed `initialInsights` identity changes.
+
+**Client change:** Dropdown `onChange` updates lifted `selectedClientId` in `StrategyPageView` — panel refetches via action (no full navigation required). Optionally sync `clientId` to URL searchParams so week navigation preserves selection (recommended; not a new route).
+
+### 3. Client selector + tenancy parity (BUILD requirement)
+
+| Call site | `clientId` passed |
+|-----------|-------------------|
+| RSC `aggregateReelMetricsByTema` | `selectedClientId` |
+| `getStrategyPerformanceInsights` | `selectedClientId` |
+| `generateContentStrategy` | `{ weekStart, clientId: selectedClientId }` |
+
+**Default `selectedClientId`:** `sessionClientId` (`user.id` from page). When `clients.length > 0`, enable Dropdown (remove `disabled`); default to session client if present in list, else first active client.
+
+**Out of US-13.2 CONTRACT scope (coordination note):** Shipped `getLatestContentStrategy` still resolves `operator.id` only. Enabling multi-client selector for insights/generate without extending strategy read may show brief for session client while insights reflect selected client. Prefer extending strategy read with the same validated optional `clientId` in BUILD if BE can ship in parallel; otherwise document as known V1 limitation until a follow-up story.
+
+### 4. Component split and placement
+
+| File | Boundary | Role |
+|------|----------|------|
+| `components/strategy/StrategyInsightsPanel.tsx` | `"use client"` | Panel UI, action refetch, loading/empty/error |
+| `components/strategy/StrategyPageView.tsx` | existing client island | Lift `selectedClientId`; wire generate + panel props |
+| `app/(app)/operator/strategy/page.tsx` | RSC | Initial insights fetch; pass `initialInsights`, `clients`, `sessionClientId` |
+
+**Placement (binding):** After client + week controls grid, **before** status/generate row and brief editor. Insights remain visible during generate pending state (read-only context).
+
+**UI primitives:** PrimeReact `Panel` (title from `strategy.insights.title`) + `DataTable` for ≤3 rows (pattern: `components/trend/TrendWeekEditorView.tsx`). Empty: `Message` severity `info` + `Link` to `/operator/calendar`. Lookback: subtitle using `strategy.insights.lookbackLabel` with `{windowStart}` / `{windowEnd}` from DTO (locale format via `Intl.DateTimeFormat`).
+
+### 5. i18n
+
+Add **`strategy.insights.*`** to `messages/en.json` and `messages/es.json` per `STRATEGY_INSIGHTS_MESSAGE_KEYS` in this contract. Reuse `strategy.errors.forbiddenFields` / `strategy.errors.internal` and `auth.errors.*` for shared codes; add panel-specific `strategy.insights.errors.validation` and `strategy.insights.errors.notFound`.
+
+Column headers: use `strategy.insights.columns.*`. Display **`tema`** label in UI — avoid “pillar” copy (Phase A).
+
+### 6. Types and imports
+
+- Import DTO types from `@/lib/contracts/strategy-insights` only.
+- **No** `@supabase/supabase-js` in Client Components.
+- **No** import of `aggregateReelMetricsByTema` in client code — RSC page only.
+
+### 7. Post-generate refresh
+
+Existing `router.refresh()` after successful `generateContentStrategy` is sufficient for optional insights re-fetch (PO #7). No blocking wait on insights action.
 
 ---
 
