@@ -5,7 +5,7 @@
 **Acceptance criteria:** `plan/USER_STORIES.md` § US-9.2 (source of truth — Phase A AC stay **[x]**; Phase B closes deferred polish only — do **not** uncheck)  
 **Implementers:** **media-pipeline-engineer** + **nextjs-backend** + **nextjs-frontend** (`docs/development/AGENT-ROSTER.md` Phase 4). **No content-agents-engineer** · **No integrations-engineer** in default BUILD.  
 **Canonical terms:** **Ensamblado** · **Paquete de guion** · **texto en pantalla** · **Ficha viva** · **Reel 9:16** · **download-and-own**. Avoid CONTEXT _Evitar_ list in product-facing copy.  
-**Active slice:** **Phase B** — [`PHASE-B.md`](./PHASE-B.md) · branch `feature/US-9.2-phase-b-subtitle-cover` · sprint `US-9.2-B`.
+**Active slice:** **Phase B ✅ CLOSED** — [`PHASE-B.md`](./PHASE-B.md) · branch `feature/US-9.2-phase-b-subtitle-cover` · sprint `US-9.2-B`.
 
 ## Out of scope (do not implement here)
 
@@ -119,7 +119,7 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 | Phase | Deliverables |
 |-------|----------------|
 | **A** ✅ | DDL · logo upload Ficha · assembly_config defaults · branding worker · auto-chain · Operator panel · cover export · idempotency · SEC guards · mobile safe-zone AC |
-| **B** (active) | VO-proportional timing from `voiceover_text` · Operator per-reel `coverFrameSec` override · SEC re-verify. **Out:** second font · thumbnail strip · Cliente cover UI |
+| **B** ✅ CLOSED | VO-proportional timing from `voiceover_text` · Operator per-reel `coverFrameSec` override · SEC re-verify. **Out residual:** second font · thumbnail strip · Cliente cover UI · worker VO-hash re-check (QA M1) |
 
 ### Phase B PO freezes (binding — full table in PHASE-B.md)
 
@@ -137,9 +137,9 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 
 ---
 
-## Phase B checklist (US-9.2-B)
+## Phase B checklist (CLOSED 2026-08-31)
 
-### Frontend (nextjs-frontend) — Phase B
+### Frontend (nextjs-frontend) — Phase B ✅
 
 **Surface:** `/operator/scripts` — extend existing `OperatorAssemblyPanel` branding section.
 
@@ -148,30 +148,31 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 - [x] Disable control while branding in-flight / panel busy (same as toggles).
 - [x] EN/ES under **`scripts.branding.coverFrame*`** (label, hint, validation).
 - [x] **Do not** rebuild subtitle/logo toggles (Phase A ✅). **No** Cliente Ficha cover control. **No** thumbnail strip.
+- [x] **CONTRACT Phase B Reviewed by FE** — approved 2026-08-31
 
-### Backend / API (nextjs-backend) — Phase B
+### Backend / API (nextjs-backend) — Phase B ✅
 
 **Concrete consumers:** Operator branding panel · Fly branding worker · auto-chain (defaults only).
 
-- [ ] Load **`voiceover_text`** with script beats in branding job load path (`load-branding-job` / create branding job).
-- [ ] **`computeVoProportionalBeatTimings({ beatCount, targetDurationSec, voiceoverText })`** pure helper — contiguous word partition; fallback equal split; unit tests.
-- [ ] Extend **`buildAssFromBeats`** (or caller) to accept explicit `beatTimings[]`; keep equal-split as default/fallback.
-- [ ] Amend **`applyBrandingForAssemblyRequestSchema`**: optional **`coverFrameSec: z.number().min(0).max(45)`**; merge into snapshot (override defaults when provided).
-- [ ] Remove **`coverFrameSec` / `cover_frame_sec`** from apply forbidden authority keys (SECURITY amend); keep other forbidden keys.
-- [ ] Auto-chain: still use client **`assembly_config.coverFrameSec`** only (no Operator override).
-- [ ] Fingerprint: include **`voiceoverTimingHash`** so VO text changes invalidate idempotency (CONTRACT freezes exact input).
-- [ ] Unit tests: partition math, fallback, cover override merge, forbidden keys, fingerprint VO change.
+- [x] Load **`voiceover_text`** with script beats in branding job load path (`load-branding-job` / create branding job).
+- [x] **`computeVoProportionalBeatTimings({ beatCount, targetDurationSec, voiceoverText })`** pure helper — contiguous word partition; fallback equal split; unit tests.
+- [x] Extend **`buildAssFromBeats`** (or caller) to accept explicit `beatTimings[]`; keep equal-split as default/fallback.
+- [x] Amend **`applyBrandingForAssemblyRequestSchema`**: optional **`coverFrameSec: z.number().min(0).max(45)`**; merge into snapshot (override defaults when provided).
+- [x] Remove **`coverFrameSec` / `cover_frame_sec`** from apply forbidden authority keys (SECURITY amend); keep other forbidden keys.
+- [x] Auto-chain: still use client **`assembly_config.coverFrameSec`** only (no Operator override).
+- [x] Fingerprint: include **`voiceoverTimingHash`** so VO text changes invalidate idempotency (CONTRACT freezes exact input).
+- [x] Unit tests: partition math, fallback, cover override merge, forbidden keys, fingerprint VO change.
 
-### Worker / media pipeline (media-pipeline-engineer) — Phase B
+### Worker / media pipeline (media-pipeline-engineer) — Phase B ✅
 
-- [ ] Branding run uses VO-proportional timings when VO present; equal fallback otherwise.
-- [ ] Cover extract: clamp **`coverFrameSec`** to **`[0, max(0, durationSec - 0.05)]`** (measured branded duration preferred).
-- [ ] Golden tests: proportional ASS Dialogue timestamps; clamp seek args; sanitizer regression fixtures unchanged.
-- [ ] **spawn args-array only** — no VO / beat strings in argv.
+- [x] Branding run uses VO-proportional timings when VO present; equal fallback otherwise.
+- [x] Cover extract: clamp **`coverFrameSec`** to **`[0, max(0, durationSec - 0.05)]`** (measured branded duration preferred).
+- [x] Golden tests: proportional ASS Dialogue timestamps; clamp seek args; sanitizer regression fixtures unchanged.
+- [x] **spawn args-array only** — no VO / beat strings in argv.
 
-### Database — Phase B
+### Database — Phase B ✅
 
-- [ ] **None** — reuse `assembly_config` / `branding_config` JSON.
+- [x] **None** — reuse `assembly_config` / `branding_config` JSON.
 
 ---
 
@@ -255,15 +256,14 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 | **nextjs-backend** | DDL, orchestrator, Server Actions, serve |
 | **nextjs-frontend** | Ficha logo + Operator branding panel |
 
-### Phase B (active)
+### Phase B ✅ CLOSED
 | Agent | Owns |
 |-------|------|
-| **media-pipeline-engineer** | VO-proportional ASS timings; cover seek clamp; golden tests |
-| **nextjs-backend** | VO load; timing helper; apply schema `coverFrameSec?`; fingerprint; forbidden-keys amend; CONTRACT Phase B |
-| **nextjs-frontend** | Operator cover `InputNumber` + i18n; wire Apply/Re-brand |
-| **spec-guardian** | Next: SPEC-REVIEW Phase B amendment |
-| **security-architect** | Next: SECURITY amend (numeric cover on trigger; VO never in argv) |
-| **nextjs-frontend** | FE Reviewed line on CONTRACT Phase B before BUILD |
+| **media-pipeline-engineer** | VO-proportional ASS timings; cover seek clamp; golden tests ✅ |
+| **nextjs-backend** | VO load; timing helper; apply schema `coverFrameSec?`; fingerprint; forbidden-keys amend; CONTRACT Phase B ✅ |
+| **nextjs-frontend** | Operator cover `InputNumber` + i18n; wire Apply/Re-brand ✅ |
+| **spec-guardian** | SPEC-REVIEW Phase B amendment ✅ |
+| **security-architect** | SECURITY amend (numeric cover on trigger; VO never in argv) ✅ |
 
 ---
 
@@ -286,12 +286,12 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 ### Phase A — CLOSED
 - [x] PREP · SPEC-REVIEW · SECURITY · CONTRACT · BUILD · VALIDATION · QA · AC checked in USER_STORIES
 
-### Phase B — active
+### Phase B — ✅ CLOSED 2026-08-31
 - [x] PREP — [`PHASE-B.md`](./PHASE-B.md) + this TASKS Phase B checklist
-- [ ] SPEC-REVIEW.md amendment (spec-guardian)
-- [ ] SECURITY.md amendment (security-architect)
+- [x] SPEC-REVIEW.md amendment (spec-guardian)
+- [x] SECURITY.md amendment (security-architect)
 - [x] CONTRACT.md Phase B + Reviewed by FE (nextjs-backend → nextjs-frontend) — FE approved 2026-08-31
-- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ nextjs-frontend)
-- [ ] VALIDATION.md Phase B (requirements-validator) — re-verify [SEC]; do **not** uncheck Phase A AC
-- [ ] QA.md Phase B (qa-engineer)
-- [ ] PO CLOSE Phase B note in USER_STORIES / SPRINT-STATE (after VALIDATION + QA)
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ nextjs-frontend) — BE `95419c1` · FE `8f365bf`
+- [x] VALIDATION-PHASE-B.md — PASS WITH NOTES `6db2cba` (2/2 deferred; 44/44); Phase A AC stay [x]
+- [x] QA-PHASE-B.md — APPROVE WITH CONDITIONS `02bfa3b` (0 Critical/High)
+- [x] PO CLOSE Phase B note in USER_STORIES / SPRINT-STATE

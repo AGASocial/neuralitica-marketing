@@ -1,7 +1,7 @@
 # US-9.2 Phase B — VO-synced subtitle timing + per-reel coverFrameSec
 
 **Story ID:** **US-9.2** (same story — **not** a new `US-9.x` ID). Sprint label: **`US-9.2-B`**.  
-**Status:** PREP (2026-08-31) — Phase A CLOSED (`92b196a`); US-9.1-B CLOSED.  
+**Status:** CLOSED (2026-08-31) — VALIDATION PASS WITH NOTES `6db2cba` (2/2 deferred; 44/44); QA APPROVE WITH CONDITIONS `02bfa3b` (0 Critical/High). Phase A CLOSED (`92b196a`).  
 **Branch:** `feature/US-9.2-phase-b-subtitle-cover`
 
 **As a** System, **I want** subtitle burn-in timed to voiceover pace and an Operator-chosen cover frame second, **so that** on-screen text tracks spoken VO and IG covers pick a useful frame per Reel.
@@ -109,16 +109,16 @@ See [`TASKS.md`](./TASKS.md) § Phase B checklist.
 
 ---
 
-## Gates (Phase B)
+## Gates (Phase B) — CLOSED 2026-08-31
 
-- [ ] SPEC-REVIEW.md amendment (spec-guardian — S3.M10 VO timing + cover override)
-- [ ] SECURITY.md amendment (security-architect — numeric cover on trigger; VO text never in argv; sanitizer unchanged)
-- [ ] CONTRACT.md Phase B section (nextjs-backend) — **Reviewed by FE** before BUILD
-- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ nextjs-frontend)
-- [ ] VALIDATION.md Phase B (requirements-validator)
-- [ ] QA.md Phase B (qa-engineer)
+- [x] SPEC-REVIEW.md amendment (spec-guardian — S3.M10 VO timing + cover override) — `SPEC-REVIEW-PHASE-B.md`
+- [x] SECURITY.md amendment (security-architect — numeric cover on trigger; VO text never in argv; sanitizer unchanged)
+- [x] CONTRACT.md Phase B section (nextjs-backend) — **Reviewed by FE** before BUILD
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ nextjs-frontend) — BE `95419c1` · FE `8f365bf`
+- [x] VALIDATION-PHASE-B.md (requirements-validator) — PASS WITH NOTES `6db2cba`
+- [x] QA-PHASE-B.md (qa-engineer) — APPROVE WITH CONDITIONS `02bfa3b`
 
-**Next after PREP:** spec-guardian **SPEC-REVIEW** (Phase B) → security-architect **SECURITY** amend → nextjs-backend **CONTRACT** Phase B.
+**Phase B CLOSED.** Residual: second font · thumbnail strip · Cliente cover UI · worker VO-hash re-check (QA M1).
 
 ---
 

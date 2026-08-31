@@ -1,6 +1,6 @@
 # US-9.2 — Add subtitles, logo, and cover
 
-**Status:** Phase A CLOSED (2026-08-30) — 5/5 AC · CLOSE `92b196a`. **Phase B PREP** (2026-08-31) — VO-synced subtitle timing + per-reel `coverFrameSec`; see [`PHASE-B.md`](./PHASE-B.md). Sprint: **`US-9.2-B`** · branch **`feature/US-9.2-phase-b-subtitle-cover`**.
+**Status:** Phase A CLOSED (2026-08-30) — 5/5 AC · CLOSE `92b196a`. **Phase B CLOSED** (2026-08-31) — VO-synced timing + `coverFrameSec`; VALIDATION PASS WITH NOTES `6db2cba` (2/2 deferred; 44/44); QA APPROVE WITH CONDITIONS `02bfa3b` (0 Critical/High). See [`PHASE-B.md`](./PHASE-B.md). Sprint: **`US-9.2-B`** · branch **`feature/US-9.2-phase-b-subtitle-cover`**.
 
 **As a** System, **I want** burned-in subtitles, client logo overlay, and a cover frame export, **so that** Reels match brand and perform on Instagram.
 
@@ -74,7 +74,7 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; soft subs; STT; Busi
 | Phase | Scope | Closes |
 |-------|-------|--------|
 | **A (US-9.2 BUILD — ship first)** | DDL · logo upload on Ficha · client `assembly_config` defaults · branding worker pass (burn-in + logo overlay + cover @ 1s) · auto-chain after assembly complete · Operator branding panel + toggles · idempotency · `[SEC]` upload + subtitle sanitize · mobile safe-zone typography constants | USER_STORIES § US-9.2 AC rows |
-| **B (US-9.2-B — PREP 2026-08-31)** | VO-proportional beat timing (words-per-beat from `voiceover_text`); Operator per-reel `coverFrameSec` override. **Out this slice:** second font weight, preview thumbnail strip | Closes Phase A deferred polish; Phase A AC stay checked — see [`PHASE-B.md`](./PHASE-B.md) |
+| **B (US-9.2-B — CLOSED 2026-08-31)** | VO-proportional beat timing (words-per-beat from `voiceover_text`); Operator per-reel `coverFrameSec` override. **Residual out:** second font · thumbnail strip · Cliente cover UI · worker VO-hash re-check (QA M1) | Closes Phase A deferred polish; Phase A AC stay checked — 2/2 PASS — see [`PHASE-B.md`](./PHASE-B.md) |
 
 **VALIDATION note (binding):** Phase A closed US-9.2 AC and the **subtitles/logo/cover** slice deferred from US-9.1 partial S3.M10. Phase B closes VO timing + Operator `coverFrameSec` only; re-verify **[SEC]** on the new path.
 
@@ -128,16 +128,16 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; soft subs; STT; Busi
 ### Phase A — CLOSED
 - [x] SPEC-REVIEW.md · SECURITY.md · CONTRACT.md · BUILD · VALIDATION.md · QA.md · AC checked
 
-### Phase B — active
+### Phase B — CLOSED 2026-08-31
 - [x] PREP — [`PHASE-B.md`](./PHASE-B.md) + TASKS Phase B checklist
-- [ ] SPEC-REVIEW.md amendment (spec-guardian)
-- [ ] SECURITY.md amendment (security-architect — numeric `coverFrameSec` on trigger; VO never in argv)
-- [ ] CONTRACT.md Phase B section + **Reviewed by FE** (nextjs-backend → nextjs-frontend)
-- [ ] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md Phase B
-- [ ] QA.md Phase B
+- [x] SPEC-REVIEW.md amendment (spec-guardian) — `SPEC-REVIEW-PHASE-B.md`
+- [x] SECURITY.md amendment (security-architect — numeric `coverFrameSec` on trigger; VO never in argv)
+- [x] CONTRACT.md Phase B section + **Reviewed by FE** (nextjs-backend → nextjs-frontend)
+- [x] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend) — BE `95419c1` · FE `8f365bf`
+- [x] VALIDATION-PHASE-B.md — PASS WITH NOTES `6db2cba` (2/2 deferred; 44/44)
+- [x] QA-PHASE-B.md — APPROVE WITH CONDITIONS `02bfa3b` (0 Critical/High)
 
-**Next gate:** spec-guardian SPEC-REVIEW (Phase B) → security-architect SECURITY amend → nextjs-backend CONTRACT Phase B.
+**Phase B CLOSED.** Residual out: second font · thumbnail strip · Cliente cover UI. Non-blocking QA follow-up: worker `voiceoverTimingHash` re-check (M1); poll claim race (Phase A carry-forward).
 
 ---
 
