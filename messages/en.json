@@ -993,6 +993,26 @@
       "invalidTransition": "This strategy can no longer be approved. Refresh and try again.",
       "locked": "This strategy is locked because scripts already exist.",
       "internal": "Something went wrong. Please try again later."
+    },
+    "insights": {
+      "title": "Performance insights",
+      "empty": "No performance data yet for this client in the last 4 weeks.",
+      "lookbackLabel": "Last 4 weeks ({windowStart} – {windowEnd})",
+      "calendarHint": "Record metrics on published Reels in the content calendar →",
+      "columns": {
+        "tema": "Topic",
+        "reelCount": "Reels",
+        "views": "Views",
+        "likes": "Likes",
+        "comments": "Comments",
+        "saves": "Saves",
+        "dms": "DMs",
+        "engagementScore": "Engagement"
+      },
+      "errors": {
+        "validation": "Please check the client and week, then try again.",
+        "notFound": "That client was not found or is inactive."
+      }
     }
   },
   "calendar": {

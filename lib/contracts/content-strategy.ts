@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 
+import { agentClientIdSchema } from "@/lib/contracts/profile";
 import { playbookSlugSchema } from "@/lib/contracts/playbook";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
 import { visualModalitySchema } from "@/lib/contracts/visual-preferences";
@@ -73,6 +74,8 @@ export type ContentStrategyBrief = z.infer<typeof contentStrategyBriefSchema>;
 export const generateContentStrategyInputSchema = z
   .object({
     weekStart: trendWeekStartSchema,
+    /** Optional — when omitted, fallback to operator session client (US-13.2). */
+    clientId: agentClientIdSchema.optional(),
   })
   .strict();
 
@@ -222,6 +225,8 @@ export type ApproveContentStrategyResult =
 export const getLatestContentStrategyInputSchema = z
   .object({
     weekStart: trendWeekStartSchema,
+    /** Optional — when omitted, fallback to operator.id (session client). */
+    clientId: agentClientIdSchema.optional(),
   })
   .strict();
 

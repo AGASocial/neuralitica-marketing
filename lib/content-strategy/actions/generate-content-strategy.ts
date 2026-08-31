@@ -13,12 +13,14 @@ import {
   contentStrategyForbiddenFieldsError,
   contentStrategyInFlightError,
   contentStrategyInternalError,
+  contentStrategyNotFoundError,
   contentStrategyRateLimitedError,
   contentStrategyUnauthenticatedError,
   contentStrategyValidationError,
 } from "@/lib/content-strategy/errors";
 import { findForbiddenContentStrategyKeys } from "@/lib/content-strategy/find-forbidden-keys";
 import { generateContentStrategyForClient } from "@/lib/content-strategy/generate-content-strategy-for-client";
+import { validateActiveOperatorClientId } from "@/lib/content-strategy/validate-active-operator-client-id";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
 
 function authGuardEnvelope(error: {
@@ -59,8 +61,16 @@ export async function generateContentStrategy(
       );
     }
 
-    const clientId = operator.id;
-    const { weekStart } = parsed.data;
+    const { weekStart, clientId: requestedClientId } = parsed.data;
+
+    let clientId = operator.id;
+    if (requestedClientId !== undefined) {
+      const clientCheck = await validateActiveOperatorClientId(requestedClientId);
+      if (!clientCheck.ok) {
+        return contentStrategyNotFoundError();
+      }
+      clientId = requestedClientId;
+    }
 
     const rateCheck = await checkGenerationRateLimit({ clientId, weekStart });
     if (!rateCheck.ok) {

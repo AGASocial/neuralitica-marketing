@@ -18,6 +18,7 @@ import {
   hasValidEditableThemes,
 } from "@/components/strategy/strategy-brief-edit";
 import { StrategyBriefView } from "@/components/strategy/StrategyBriefView";
+import { StrategyInsightsPanel } from "@/components/strategy/StrategyInsightsPanel";
 import type {
   ContentStrategyBrief,
   ContentStrategyDayOfWeek,
@@ -29,6 +30,7 @@ import { approveContentStrategy } from "@/lib/content-strategy/actions/approve-c
 import { generateContentStrategy } from "@/lib/content-strategy/actions/generate-content-strategy";
 import { updateContentStrategyBrief } from "@/lib/content-strategy/actions/update-content-strategy-brief";
 import type { OperatorClientOption } from "@/lib/content-strategy/load-operator-clients-for-strategy";
+import type { StrategyPerformanceInsightsDto } from "@/lib/contracts/strategy-insights";
 import type { VisualModality } from "@/lib/contracts/visual-preferences";
 import { formatWeekRange, normalizeToIsoMonday } from "@/lib/trend/normalize-week-start";
 
@@ -100,12 +102,38 @@ type StrategyPageCopy = {
     forbidden: string;
     internal: string;
   };
+  insights: {
+    title: string;
+    empty: string;
+    lookbackLabel: string;
+    calendarHint: string;
+    columns: {
+      tema: string;
+      reelCount: string;
+      views: string;
+      likes: string;
+      comments: string;
+      saves: string;
+      dms: string;
+      engagementScore: string;
+    };
+    errors: {
+      validation: string;
+      notFound: string;
+      forbiddenFields: string;
+      forbidden: string;
+      unauthenticated: string;
+      internal: string;
+    };
+  };
 };
 
 type StrategyPageViewProps = {
   weekStart: string;
   sessionClientId: string;
+  selectedClientId: string;
   clients: OperatorClientOption[];
+  initialInsights: StrategyPerformanceInsightsDto | null;
   strategy: ContentStrategyView | null;
   playbookLabels?: Record<string, string>;
   loadFailed: boolean;
@@ -181,7 +209,9 @@ function messageForCode(
 export function StrategyPageView({
   weekStart,
   sessionClientId,
+  selectedClientId: initialSelectedClientId,
   clients,
+  initialInsights,
   strategy,
   playbookLabels,
   loadFailed,
@@ -195,6 +225,12 @@ export function StrategyPageView({
   const [approving, setApproving] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [editedBrief, setEditedBrief] = useState<ContentStrategyBrief | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState(initialSelectedClientId);
+  const clientSelectorEnabled = clients.length > 0;
+
+  useEffect(() => {
+    setSelectedClientId(initialSelectedClientId);
+  }, [initialSelectedClientId]);
 
   useEffect(() => {
     if (strategy) {
@@ -255,8 +291,24 @@ export function StrategyPageView({
   function navigateWeek(nextWeekStart: string) {
     const params = new URLSearchParams();
     params.set("weekStart", nextWeekStart);
+    if (clientSelectorEnabled && selectedClientId) {
+      params.set("clientId", selectedClientId);
+    }
     router.push(`/operator/strategy?${params.toString()}`);
     router.refresh();
+  }
+
+  function handleClientChange(nextClientId: string) {
+    if (isBusy || !clientSelectorEnabled) {
+      return;
+    }
+
+    setSelectedClientId(nextClientId);
+
+    const params = new URLSearchParams();
+    params.set("weekStart", weekStart);
+    params.set("clientId", nextClientId);
+    router.replace(`/operator/strategy?${params.toString()}`);
   }
 
   async function handleGenerate() {
@@ -268,7 +320,10 @@ export function StrategyPageView({
     setBanner(null);
 
     try {
-      const result = await generateContentStrategy({ weekStart });
+      const result = await generateContentStrategy({
+        weekStart,
+        clientId: selectedClientId,
+      });
 
       if (result.ok) {
         toastRef.current?.show({
@@ -397,14 +452,21 @@ export function StrategyPageView({
           </label>
           <Dropdown
             inputId="strategy-client-select"
-            value={sessionClientId}
+            value={selectedClientId}
             options={clientOptions}
-            disabled
+            disabled={!clientSelectorEnabled || isBusy}
+            onChange={(event) => {
+              if (typeof event.value === "string") {
+                handleClientChange(event.value);
+              }
+            }}
             style={{ width: "100%" }}
           />
-          <p style={{ margin: "0.5rem 0 0", color: "#6b7280", fontSize: "0.875rem" }}>
-            {copy.clientSessionHint}
-          </p>
+          {!clientSelectorEnabled ? (
+            <p style={{ margin: "0.5rem 0 0", color: "#6b7280", fontSize: "0.875rem" }}>
+              {copy.clientSessionHint}
+            </p>
+          ) : null}
         </div>
 
         <div>
@@ -433,6 +495,14 @@ export function StrategyPageView({
           </p>
         </div>
       </div>
+
+      <StrategyInsightsPanel
+        initialInsights={initialInsights}
+        clientId={selectedClientId}
+        weekStart={weekStart}
+        locale={locale}
+        copy={copy.insights}
+      />
 
       <div
         style={{

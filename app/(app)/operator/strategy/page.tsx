@@ -1,16 +1,19 @@
 import { StrategyPageView } from "@/components/strategy/StrategyPageView";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import type { ContentStrategyView } from "@/lib/contracts/content-strategy";
+import { agentClientIdSchema } from "@/lib/contracts/profile";
 import { getLatestContentStrategy } from "@/lib/content-strategy/actions/get-latest-content-strategy";
 import { loadOperatorClientsForStrategy } from "@/lib/content-strategy/load-operator-clients-for-strategy";
+import type { OperatorClientOption } from "@/lib/content-strategy/load-operator-clients-for-strategy";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
 import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { aggregateReelMetricsByTema } from "@/lib/metrics/aggregate-reel-metrics-by-tema";
 import { normalizeToIsoMonday } from "@/lib/trend/normalize-week-start";
 
 export const dynamic = "force-dynamic";
 
 type StrategyPageProps = {
-  searchParams: Promise<{ weekStart?: string }>;
+  searchParams: Promise<{ weekStart?: string; clientId?: string }>;
 };
 
 function isNextNavigationError(error: unknown): boolean {
@@ -32,6 +35,28 @@ function resolveWeekStart(query?: string): string {
   return normalizeToIsoMonday(new Date());
 }
 
+function resolveSelectedClientId(
+  queryClientId: string | undefined,
+  sessionClientId: string,
+  clients: OperatorClientOption[],
+): string {
+  const activeIds = new Set(clients.map((client) => client.id));
+  const parsedClientId = queryClientId
+    ? agentClientIdSchema.safeParse(queryClientId)
+    : null;
+
+  if (parsedClientId?.success && activeIds.has(parsedClientId.data)) {
+    return parsedClientId.data;
+  }
+  if (activeIds.has(sessionClientId)) {
+    return sessionClientId;
+  }
+  if (clients.length > 0) {
+    return clients[0].id;
+  }
+  return sessionClientId;
+}
+
 /**
  * Operator weekly content strategy hub (US-4.1).
  * Auth: `operator/layout.tsx` `requireOperator("page")`.
@@ -40,7 +65,7 @@ export default async function StrategyPage({ searchParams }: StrategyPageProps) 
   const user = await getCurrentUser();
   const locale = resolveLocale(user?.preferredLocale);
   const t = getTranslations(locale);
-  const { weekStart: rawWeekStart } = await searchParams;
+  const { weekStart: rawWeekStart, clientId: rawClientId } = await searchParams;
   const weekStart = resolveWeekStart(rawWeekStart);
 
   let strategyResult:
@@ -73,11 +98,34 @@ export default async function StrategyPage({ searchParams }: StrategyPageProps) 
     playbookLabels = strategyResult.playbookLabels;
   }
 
+  const selectedClientId = resolveSelectedClientId(
+    rawClientId,
+    user?.id ?? "",
+    clients,
+  );
+
+  let initialInsights: Awaited<ReturnType<typeof aggregateReelMetricsByTema>> =
+    null;
+
+  try {
+    initialInsights = await aggregateReelMetricsByTema({
+      clientId: selectedClientId,
+      weekStart,
+    });
+  } catch (error) {
+    if (isNextNavigationError(error)) {
+      throw error;
+    }
+    initialInsights = null;
+  }
+
   return (
     <StrategyPageView
       weekStart={weekStart}
       sessionClientId={user?.id ?? ""}
+      selectedClientId={selectedClientId}
       clients={clients}
+      initialInsights={initialInsights}
       strategy={strategy}
       playbookLabels={playbookLabels}
       loadFailed={loadFailed}
@@ -129,6 +177,21 @@ export default async function StrategyPage({ searchParams }: StrategyPageProps) 
           unauthenticated: t.auth.errors.unauthenticated,
           forbidden: t.auth.errors.forbidden,
           internal: t.strategy.errors.internal,
+        },
+        insights: {
+          title: t.strategy.insights.title,
+          empty: t.strategy.insights.empty,
+          lookbackLabel: t.strategy.insights.lookbackLabel,
+          calendarHint: t.strategy.insights.calendarHint,
+          columns: t.strategy.insights.columns,
+          errors: {
+            validation: t.strategy.insights.errors.validation,
+            notFound: t.strategy.insights.errors.notFound,
+            forbiddenFields: t.strategy.errors.forbiddenFields,
+            forbidden: t.auth.errors.forbidden,
+            unauthenticated: t.auth.errors.unauthenticated,
+            internal: t.strategy.errors.internal,
+          },
         },
       }}
     />

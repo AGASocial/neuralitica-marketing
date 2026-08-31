@@ -112,16 +112,18 @@ metricsSummaryForPrompt: Array<{
 
 **Consumer:** `/operator/strategy` · `components/strategy/StrategyPageView.tsx` (or sibling panel)
 
-- [ ] Add **Insights** section above brief / below client+week controls.
-- [ ] When insights available: show **top 3** **`tema`** rows with aggregated counters (views, likes, comments, saves, DMs) + Reel count.
-- [ ] Show lookback label (e.g. “Last 4 weeks”) from DTO `windowStart` / `windowEnd`.
-- [ ] **Empty state** when `insights.available === false` — friendly copy + hint to record metrics on published Reels in **Calendario de contenido** (link `/operator/calendar`).
-- [ ] **Loading** skeleton while insights load (match strategy page pending pattern).
-- [ ] Re-load when **client selector** or **weekStart** changes (props from page).
-- [ ] i18n EN + ES under **`strategy.insights.*`**.
-- [ ] Do **not** add a separate insights route.
-- [ ] Do **not** expose Supabase in Client Components.
-- [ ] Insights block is **read-only** — no edit/save CTAs.
+- [x] Add **Insights** section above brief / below client+week controls.
+- [x] When insights available: show **top 3** **`tema`** rows with aggregated counters (views, likes, comments, saves, DMs) + Reel count.
+- [x] Show lookback label (e.g. “Last 4 weeks”) from DTO `windowStart` / `windowEnd`.
+- [x] **Empty state** when `insights === null` — friendly copy + hint to record metrics on published Reels in **Calendario de contenido** (link `/operator/calendar`).
+- [x] **Loading** skeleton while insights load (match strategy page pending pattern).
+- [x] Re-load when **client selector** or **weekStart** changes (props from page / action refetch).
+- [x] i18n EN + ES under **`strategy.insights.*`**.
+- [x] Do **not** add a separate insights route.
+- [x] Do **not** expose Supabase in Client Components.
+- [x] Insights block is **read-only** — no edit/save CTAs.
+
+**FE satisfies:** USER_STORIES § US-13.2 AC — insights snippet on strategy page; empty state; client selector parity for insights read + generate `clientId`.
 
 ---
 
