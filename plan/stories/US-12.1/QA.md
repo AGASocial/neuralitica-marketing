@@ -2,57 +2,29 @@
 
 **Story:** US-12.1 — Weekly calendar view (Calendario de contenido)  
 **Branch:** `feature/US-12.1-weekly-calendar`  
-**Date:** 2026-08-30  
+**Date:** 2026-08-30 (re-run after fix commit `79546ab`)  
 **Reviewer:** qa-engineer  
 **Sources:** `VALIDATION.md` · `CONTRACT.md` · `SECURITY.md` · `lib/calendar/` · `components/calendar/` · `app/(app)/operator/calendar/` · `app/api/media/assets/[assetId]/route.ts`
 
 ---
 
-## Verdict: BLOCK
+## Verdict: APPROVE WITH CONDITIONS
 
-Security gates and unit tests pass, but **`npm run build` fails** on a type error in `lib/calendar/errors.ts` (US-12.1 module). Production deploy is blocked until fixed.
+All US-12.1 blocking defects from the initial gate are resolved. Security controls pass; calendar unit tests pass (18/18). Calendar module type-checks cleanly in production build. Full `npm run build` still fails on a **pre-existing, out-of-scope** TTS type error (`lib/tts/synthesize-voiceover-for-client-trusted.ts:149`) — unchanged from US-11.3 QA; does not block US-12.1 story closure on feature merit.
+
+**Severity counts:** Critical **0** · High **0** · Medium **0** · Low **2**
 
 ---
 
 ## Findings
 
-### High — Build fails on calendar error helper return types
+### Resolved since initial gate (79546ab)
 
-**File:** `lib/calendar/errors.ts:18-21`
-
-**What:** `calendarValidationError()` declares a return type narrowed to `code: "VALIDATION_ERROR"`, but it returns `calendarError(...)` whose inferred return uses the full `CalendarErrorCode` union. Next.js production build (`next build`) fails type-checking:
-
-```
-Type '"VALIDATION_ERROR" | "FORBIDDEN_FIELDS" | ...' is not assignable to type '"VALIDATION_ERROR"'.
-```
-
-**Why it matters:** Vercel deploy and CI build gate cannot pass; story is not production-ready.
-
-**Fix direction:** Narrow `calendarError` with generics per code literal, or inline return objects in each helper so declared return types match (same pattern as peer modules, e.g. reel-scripts errors).
-
----
-
-### Medium — DB read failures silently return empty calendar
-
-**File:** `lib/calendar/get-operator-calendar-for-week.ts:79-80`
-
-**What:** `loadCalendarSlotRows()` returns `[]` when Supabase returns an error or null data, with no throw and no error flag to the action envelope.
-
-**Why it matters:** Operator may see “empty week” instead of `INTERNAL_ERROR` / load-error UI when Postgres is misconfigured or a query fails. Masks operational incidents; gap warnings and sync stats may also be wrong.
-
-**Fix direction:** Propagate error (throw → action `INTERNAL_ERROR`) or return a discriminated error from core so the page sets `loadFailed=true`.
-
----
-
-### Low — English sidebar label uses Spanish “Cliente”
-
-**File:** `messages/en.json` (~line 1034, key `calendar.sidebar.client`)
-
-**What:** Value is `"Cliente"` instead of `"Client"`.
-
-**Why it matters:** EN locale inconsistency; noted in VALIDATION.md. Not a security defect.
-
-**Fix direction:** Change to `"Client"` in `messages/en.json`.
+| Prior severity | File | Issue | Resolution |
+|----------------|------|-------|------------|
+| **High** | `lib/calendar/errors.ts` | Return-type narrowing caused `next build` failure | Helpers now return `CalendarErrorEnvelope` directly; build passes calendar modules |
+| **Medium** | `lib/calendar/get-operator-calendar-for-week.ts:79-80` | DB errors silently returned `[]` | Now throws; action catches → `calendarInternalError()` envelope |
+| **Low** | `messages/en.json` | `calendar.sidebar.client` was `"Cliente"` | Fixed to `"Client"` |
 
 ---
 
@@ -95,6 +67,7 @@ Type '"VALIDATION_ERROR" | "FORBIDDEN_FIELDS" | ...' is not assignable to type '
 | Operator cross-client `assembled_reel` media | **PASS** | `route.ts:254-255` allows any tenant after `requireOperator`; `generated_video` / `voiceover` still `row.client_id === operator.id` |
 | Client bundle — no Supabase / secrets | **PASS** | `OperatorCalendarView.tsx` client island imports types only; no `@supabase` in `components/calendar/` |
 | RLS deny-by-default DDL | **PASS** | `supabase/migrations/20260831050000_neuramark_content_calendar_slots.sql` |
+| DB load failure → INTERNAL_ERROR | **PASS** | `get-operator-calendar-for-week.ts:79-80` throws; action `:53-57` returns `calendarInternalError()` |
 | Back doors / hardcoded bypass | **PASS** | None beyond sanctioned `getCurrentUser()` interim user |
 
 ---
@@ -103,12 +76,12 @@ Type '"VALIDATION_ERROR" | "FORBIDDEN_FIELDS" | ...' is not assignable to type '
 
 | Command | Result |
 |---------|--------|
-| `npx tsx --test lib/calendar/calendar.test.ts` | **18 / 18 pass** (~142 ms) |
-| `npm run build` | **FAIL** — type error in `lib/calendar/errors.ts:21` |
-| `npm run lint` | **FAIL** — repo-wide pre-existing issues; US-12.1 calendar prod files have no unique lint errors (test file uses `require()` like other house tests) |
-| `npx tsc --noEmit` | **Not clean** — pre-existing test/agent TS errors repo-wide; calendar prod modules not singled out beyond build failure above |
+| `npx tsx --test lib/calendar/calendar.test.ts` | **18 / 18 pass** (~137 ms) |
+| `npm run build` | **FAIL** — pre-existing TTS type error at `lib/tts/synthesize-voiceover-for-client-trusted.ts:149` (`'inserted' is possibly 'null'`); calendar modules compile; **out of scope** (same as US-11.3 QA) |
+| `npm run lint` | **FAIL** — repo-wide pre-existing issues; US-12.1 calendar prod files have no unique lint errors |
 | Manual grep: Cliente imports of `getOperatorCalendarForWeek` | **None** |
 | Manual review: media route Operator/Cliente branches | **Matches CONTRACT** |
+| Fix commit review: `79546ab` | **PASS** — errors.ts, DB throw, EN label |
 
 ---
 
@@ -118,26 +91,14 @@ Type '"VALIDATION_ERROR" | "FORBIDDEN_FIELDS" | ...' is not assignable to type '
 - Live Supabase integration / migration apply on remote project
 - Load testing sync-on-read under concurrent Operator reads
 - Full repo lint/type-check cleanliness (out of US-12.1 scope; pre-existing debt)
-
----
-
-## Severity counts
-
-| Severity | Count |
-|----------|------:|
-| Critical | 0 |
-| High | 1 |
-| Medium | 1 |
-| Low | 3 |
+- TTS build fix (separate hygiene / US-11.x follow-up)
 
 ---
 
 ## Closure recommendation
 
-**Do not close US-12.1 yet.**
+**Close US-12.1 — APPROVE WITH CONDITIONS.**
 
-1. **Required (blocks merge):** Fix `lib/calendar/errors.ts` return-type narrowing so `npm run build` passes.
-2. **Recommended before PO check-off:** Address silent DB empty fallback (Medium); fix EN `calendar.sidebar.client` (Low).
-3. **Optional hardening:** Add missing CONTRACT security grep/runtime tests (Low).
-
-After (1) is merged and build is green, re-run QA gate → expect **APPROVE WITH CONDITIONS** on remaining Low/Medium items.
+1. **Story is ready for PO check-off.** All blocking (High/Medium) findings are fixed; security gates and unit tests pass.
+2. **Optional hardening (Low, non-blocking):** Add missing CONTRACT security grep/runtime tests listed above in a follow-up or before Cliente calendar work.
+3. **Repo hygiene (out of scope):** Fix TTS `inserted` nullability before production deploy of the full app; does not block US-12.1 feature closure.
