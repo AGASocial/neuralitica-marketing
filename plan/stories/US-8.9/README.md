@@ -1,6 +1,6 @@
 # US-8.9 — Operator B-roll generate UI (P1)
 
-**Status:** PREP (2026-08-31) — story + TASKS frozen; branch `feature/US-8.9-broll-operator-generate-ui`; next SPEC-REVIEW → SECURITY → CONTRACT.
+**Status:** CONTRACT frozen (2026-08-31) — SPEC-REVIEW ALIGNED · SECURITY APPROVE WITH CONDITIONS · CONTRACT.md frozen (FE stamp pending); branch `feature/US-8.9-broll-operator-generate-ui`; next FE stamp → BUILD.
 
 **As an** Operator, **I want** to trigger B-roll clip generation from `/operator/scripts` for faceless Reels, **so that** I can produce Wan (low tier) or LTX (high tier) clips without manual backend calls.
 
@@ -75,15 +75,15 @@ _Evitar:_ client-supplied `provider_key`; client-computed cost; exposing API key
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — thin FE story vs SPEC §3 Operator flows)
-- [ ] SECURITY.md (security-architect — operator gate, no authority smuggling, preview IDOR)
-- [ ] CONTRACT.md (nextjs-backend — preview action + extended schema + FE props; **Reviewed by FE**)
-- [ ] BUILD (nextjs-frontend + nextjs-backend)
+- [x] SPEC-REVIEW.md (spec-guardian — ALIGNED)
+- [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
+- [x] CONTRACT.md (frozen 2026-08-31 — preview + FE props; **Reviewed by FE pending stamp**)
+- [ ] BUILD (nextjs-frontend + nextjs-backend) — after FE stamp on CONTRACT
 - [ ] VALIDATION.md (requirements-validator)
 - [ ] QA.md (qa-engineer)
 - [ ] CLOSE — 6/6 AC checked in USER_STORIES.md (product-owner)
 
-**Status:** PREP. **Next:** SPEC-REVIEW on `feature/US-8.9-broll-operator-generate-ui`.
+**Status:** CONTRACT frozen. **Next:** nextjs-frontend stamps CONTRACT → BUILD.
 
 ---
 

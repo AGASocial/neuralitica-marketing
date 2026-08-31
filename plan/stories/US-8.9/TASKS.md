@@ -93,21 +93,21 @@ Concrete consumers: **`BrollGenerateControl`** (preview) · **`BrollGenerateConf
 
 ## Contract-first gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend — preview DTO, visibility rules, FE copy keys; **Reviewed by FE**)
-- [ ] BUILD
+- [x] SPEC-REVIEW.md (spec-guardian) — ALIGNED
+- [x] SECURITY.md (security-architect) — APPROVE WITH CONDITIONS
+- [x] CONTRACT.md — frozen 2026-08-31; **Reviewed by FE pending**
+- [ ] BUILD — after FE stamp
 - [ ] VALIDATION.md
 - [ ] QA.md
 - [ ] CLOSE (product-owner — check AC in USER_STORIES.md)
 
 ---
 
-## Open questions (resolve in CONTRACT)
+## Open questions — resolved in CONTRACT.md
 
-1. **In-flight detection:** Query latest broll job per `reel_script_id` in preview, or pass broll job snapshot from server component props? **PO lean:** preview action queries server-side (single source of truth).
-2. **Blocked vs hidden:** When preview returns `blockedReasonKey` (e.g. reference still missing), hide button vs show disabled + tooltip? **PO lean:** hide (match HeyGen ineligible) unless CONTRACT prefers surfaced blocked state for Operator debugging.
-3. **Refresh after success:** Reuse existing `onHeygenGenerateSuccess` router refresh pattern — name parallel `onBrollGenerateSuccess` callback.
-4. **Clip count display:** Show beat count from preview `clipCount` — server clamped (max 8).
+1. **In-flight detection:** Preview queries `neuramark_video_jobs` server-side (`asset_role = broll`, `queued`/`processing`).
+2. **Blocked vs hidden:** **Hide** when `blockedReasonKey` or ineligible (match HeyGen).
+3. **Refresh after success:** `onBrollGenerateSuccess` mirror of HeyGen.
+4. **Clip count display:** Server `clipCount` (max 8).
 
-No SPEC amendment assumed in PREP: Operator-triggered B-roll create is implied by US-8.5 orchestrator + deferred FE row; this story closes the gap without new product modules.
+See `CONTRACT.md` for full freezes.
