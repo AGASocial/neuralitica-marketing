@@ -104,6 +104,13 @@ export async function applyVideoJobStatusUpdate(
     actualCostCents = persisted.actualCostCents;
     failureReason = null;
 
+    const durationSec =
+      typeof persisted.durationSec === "number" && persisted.durationSec > 0
+        ? persisted.durationSec
+        : null;
+    const actualCostUnavailableReason =
+      actualCostCents === null ? ("provider_no_billing" as const) : null;
+
     if (job.spendEventId) {
       await finalizeGenerationCost({
         mode: "async_update",
@@ -111,7 +118,14 @@ export async function applyVideoJobStatusUpdate(
         clientId: job.clientId,
         reelScriptId: job.reelScriptId,
         actualCostCents,
-        actualCostUnavailableReason: null,
+        actualCostUnavailableReason,
+        durationSec,
+      });
+    } else {
+      console.error("[video-jobs] completed job missing spendEventId", {
+        jobId: job.id,
+        clientId: job.clientId,
+        reelScriptId: job.reelScriptId,
       });
     }
   }

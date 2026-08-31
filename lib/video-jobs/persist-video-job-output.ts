@@ -7,7 +7,11 @@ import type { VideoJobRow } from "./video-job-row";
 export async function persistVideoJobOutputAsset(params: {
   job: VideoJobRow;
   rawOutputUrl: string;
-}): Promise<{ outputMediaAssetId: string; actualCostCents: number }> {
+}): Promise<{
+  outputMediaAssetId: string;
+  actualCostCents: number | null;
+  durationSec: number | null;
+}> {
   const adapter = await getVideoAdapterForJob(params.job);
   const stored = await adapter.fetchAsset(
     params.job.externalJobId,
@@ -26,6 +30,11 @@ export async function persistVideoJobOutputAsset(params: {
 
   return {
     outputMediaAssetId: inserted.mediaAssetId,
-    actualCostCents: stored.actualCostCents,
+    actualCostCents:
+      typeof stored.actualCostCents === "number" ? stored.actualCostCents : null,
+    durationSec:
+      typeof stored.durationSec === "number" && stored.durationSec > 0
+        ? stored.durationSec
+        : null,
   };
 }

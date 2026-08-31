@@ -38,6 +38,7 @@ import {
   sanitizeProviderErrorMessage,
   validateProviderOutputUrl,
 } from "@/lib/providers/normalize-provider-response";
+import { optionalDurationSecFromBuffer } from "@/lib/providers/video/optional-duration-sec-from-buffer";
 import type { VideoProviderAdapter } from "@/lib/providers/provider-adapters";
 
 type HeygenVideoPayload = {
@@ -582,11 +583,14 @@ export function createHeygenHighAdapter(
         mimeType: contentType,
       });
 
+      const durationSec = await optionalDurationSecFromBuffer(buffer);
+
       return storedMediaAssetSchema.parse({
         storageKey: uploaded.storageKey,
         mimeType: contentType,
         sizeBytes: uploaded.sizeBytes,
         actualCostCents: estimatedCostCents,
+        ...(durationSec != null ? { durationSec } : {}),
       });
     },
   };

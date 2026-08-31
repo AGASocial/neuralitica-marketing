@@ -43,6 +43,7 @@ import {
   sanitizeProviderErrorMessage,
   validateProviderOutputUrl,
 } from "@/lib/providers/normalize-provider-response";
+import { optionalDurationSecFromBuffer } from "@/lib/providers/video/optional-duration-sec-from-buffer";
 import type { VideoProviderAdapter } from "@/lib/providers/provider-adapters";
 
 type WanSubmitResponse = {
@@ -477,11 +478,14 @@ export function createSiliconflowWan21TurboAdapter(
         mimeType: contentType,
       });
 
+      const durationSec = await optionalDurationSecFromBuffer(buffer);
+
       return storedMediaAssetSchema.parse({
         storageKey: uploaded.storageKey,
         mimeType: contentType,
         sizeBytes: uploaded.sizeBytes,
         actualCostCents: unitCostCentsPerClip,
+        ...(durationSec != null ? { durationSec } : {}),
       });
     },
   };

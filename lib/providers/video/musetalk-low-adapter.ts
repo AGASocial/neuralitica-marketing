@@ -33,6 +33,7 @@ import {
   sanitizeProviderErrorMessage,
   validateProviderOutputUrl,
 } from "@/lib/providers/normalize-provider-response";
+import { optionalDurationSecFromBuffer } from "@/lib/providers/video/optional-duration-sec-from-buffer";
 import type { VideoProviderAdapter } from "@/lib/providers/provider-adapters";
 
 type ReplicatePrediction = {
@@ -435,11 +436,14 @@ export function createMusetalkLowAdapter(
         mimeType: contentType,
       });
 
+      const durationSec = await optionalDurationSecFromBuffer(buffer);
+
       return storedMediaAssetSchema.parse({
         storageKey: uploaded.storageKey,
         mimeType: contentType,
         sizeBytes: uploaded.sizeBytes,
         actualCostCents: defaultEstimateCents,
+        ...(durationSec != null ? { durationSec } : {}),
       });
     },
   };

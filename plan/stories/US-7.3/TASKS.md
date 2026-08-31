@@ -187,14 +187,14 @@ export type ReelWeekCostSummary = {
 
 ### Worker / media pipeline (media-pipeline-engineer) — Phase B
 
-- [ ] Confirm talking-head / HeyGen / Wan **`fetchAsset.actualCostCents`** reaches `persistVideoJobOutputAsset` → poller `async_update` (adapters already return catalog/estimate cents).
-- [ ] Wan B-roll complete uses the **same** `applyVideoJobStatusUpdate` path (no second writer).
-- [ ] **No** new adapter (`ltx_broll_high` out). **No** FFmpeg / branding spend.
-- [ ] Unit/golden: complete with `spendEventId` updates spend actual; fail does not.
+- [x] Confirm talking-head / HeyGen / Wan **`fetchAsset.actualCostCents`** reaches `persistVideoJobOutputAsset` → poller `async_update` (adapters already return catalog/estimate cents).
+- [x] Wan B-roll complete uses the **same** `applyVideoJobStatusUpdate` path (no second writer).
+- [x] **No** new adapter (`ltx_broll_high` out). **No** FFmpeg / branding spend.
+- [x] Unit/golden: complete with `spendEventId` updates spend actual; fail does not.
 
 ### Database — Phase B
 
-- [ ] **None** — reuse `neuramark_reel_spend_events.duration_sec` / `actual_cost_unavailable_reason` (Phase A migration).
+- [x] **None** — reuse `neuramark_reel_spend_events.duration_sec` / `actual_cost_unavailable_reason` (Phase A migration).
 
 ---
 
