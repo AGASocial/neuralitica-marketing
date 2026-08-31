@@ -1411,6 +1411,33 @@
         }
       }
     },
+    "heygen": {
+      "button": "Generar con HeyGen",
+      "title": "Confirmar generación con HeyGen",
+      "confirm": "Generar con HeyGen",
+      "cancel": "Cancelar",
+      "loading": "Cargando estimación de HeyGen…",
+      "loadError": "No pudimos cargar la estimación de HeyGen. Inténtalo más tarde.",
+      "estimated": "Costo estimado",
+      "pathHighTier": "Política de alto nivel — se usará HeyGen para este Reel.",
+      "pathFallback": "Falló la generación de bajo nivel — fallback del operador a HeyGen.",
+      "ineligible": "La generación con HeyGen no está disponible para este Reel.",
+      "blocked": "Generación con HeyGen no disponible",
+      "toastSuccess": "Job de video HeyGen en cola.",
+      "errors": {
+        "unauthenticated": "Inicia sesión para continuar.",
+        "forbidden": "No tienes acceso a la generación con HeyGen.",
+        "notFound": "No se encontró ese guion de Reel.",
+        "validation": "Revisa la solicitud e inténtalo de nuevo.",
+        "forbiddenFields": "Solicitud de HeyGen no válida.",
+        "budgetExceeded": "Bloqueado — superaría el presupuesto del Reel.",
+        "consentRevoked": "Se requiere consentimiento activo de avatar propio para Reels con avatar propio.",
+        "providerUnavailable": "HeyGen no está disponible en este momento.",
+        "fallbackIneligible": "El fallback a HeyGen no es elegible para este Reel.",
+        "configMissing": "HeyGen no está configurado en este entorno.",
+        "internal": "Algo salió mal. Inténtalo más tarde."
+      }
+    },
     "voiceover": {
       "title": "Voz en off",
       "aiOnlyNote": "Solo voz generada por IA — sintetizada a partir del texto de voz en off del guion.",

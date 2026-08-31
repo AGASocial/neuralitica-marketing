@@ -174,6 +174,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
           toastRetrySuccess: t.scripts.videoJob.toastRetrySuccess,
           toastOverrideSuccess: t.scripts.videoJob.toastOverrideSuccess,
         },
+        heygen: t.scripts.heygen,
         voiceover: t.scripts.voiceover,
         assembly: {
           ...t.scripts.assembly,

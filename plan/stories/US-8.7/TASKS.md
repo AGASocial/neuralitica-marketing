@@ -150,13 +150,17 @@ import { createHeygenHighAdapter } from "@/lib/providers/video/heygen-high-adapt
 
 Concrete consumer: Operator Reel / script detail (US-8.4 surfaces).
 
-- [ ] **“Generate with HeyGen”** control — visible only to Operator when eligibility met (high tier **or** failed low-tier talking-head job).
-- [ ] **Confirm dialog** shows estimated cost (per-second × duration) before submit.
-- [ ] **EN + ES** message keys for label, confirm, errors, disabled reasons.
-- [ ] **PrimeReact** components; no client-supplied `provider_key` / tier fields.
-- [ ] Hide / disable for non-operator; clients never see the action.
-- [ ] After success, rely on existing US-8.4 status badges / poll (provider-agnostic).
-- [ ] Loading / error / empty (ineligible) states covered.
+- [x] **“Generate with HeyGen”** control — visible only to Operator when eligibility met (high tier **or** failed low-tier talking-head job).
+- [x] **Confirm dialog** shows estimated cost (per-second × duration) before submit.
+- [x] **EN + ES** message keys for label, confirm, errors, disabled reasons.
+- [x] **PrimeReact** components; no client-supplied `provider_key` / tier fields.
+- [x] Hide / disable for non-operator; clients never see the action.
+- [x] After success, rely on existing US-8.4 status badges / poll (provider-agnostic).
+- [x] Loading / error / empty (ineligible) states covered.
+
+**AC satisfied (FE slice — validator confirms):** Operator “Generate with HeyGen” ConfirmDialog on `/operator/scripts` expand; preview → confirm; visibility from `eligibilityPath ∈ { high_tier, operator_fallback }`; `scripts.heygen.*` EN/ES; HEYGEN_* error mapping; never sends provider_key/engine/tier.
+
+**BE dependency:** `lib/video-jobs/actions/create-heygen-talking-head-video-job.ts` ships fail-closed stubs (`eligible: false` / `PROVIDER_UNAVAILABLE`) until nextjs-backend replaces with real `previewHeygenTalkingHeadEstimate` + `createHeygenTalkingHeadVideoJob` orchestration.
 
 ---
 

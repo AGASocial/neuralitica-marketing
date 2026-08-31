@@ -43,6 +43,10 @@ import {
   type ManualVideoUploadCopy,
 } from "@/components/scripts/ManualVideoUploadDialog";
 import {
+  HeygenGenerateControl,
+  type HeygenGenerateConfirmCopy,
+} from "@/components/scripts/HeygenGenerateConfirmDialog";
+import {
   OperatorVideoJobSummaryPanel,
   VideoJobStatusTag,
   type OperatorVideoJobCopy,
@@ -221,6 +225,7 @@ type ScriptsPageCopy = {
     toastRetrySuccess: string;
     toastOverrideSuccess: string;
   };
+  heygen: HeygenGenerateConfirmCopy;
   voiceover: OperatorVoiceoverCopy;
   assembly: OperatorAssemblyCopy & {
     reassembleConfirm: AssemblyReassembleConfirmCopy;
@@ -960,6 +965,15 @@ export function ScriptsPageView({
     router.refresh();
   }
 
+  function handleHeygenGenerateSuccess() {
+    toastRef.current?.show({
+      severity: "success",
+      summary: copy.heygen.toastSuccess,
+      life: 4000,
+    });
+    router.refresh();
+  }
+
   function handleVideoJobOverrideSuccess() {
     toastRef.current?.show({
       severity: "success",
@@ -1471,6 +1485,8 @@ export function ScriptsPageView({
                 }
                 onRequestVideoJobRetry={openRetryDialog}
                 onRequestVideoJobOverride={openOverrideDialog}
+                onHeygenGenerateSuccess={handleHeygenGenerateSuccess}
+                onHeygenGenerateError={handleVideoJobMutationError}
                 onManualUploadSuccess={(job) => {
                   if (row.scriptId) {
                     handleManualUploadSuccess(row.scriptId, job);
@@ -1656,6 +1672,8 @@ type ReelDetailPanelProps = {
   onSelectCaptionCta: (slotIndex: number, selectedCtaIndex: number) => void;
   onRequestVideoJobRetry: (failedJobId: string) => void;
   onRequestVideoJobOverride: (failedJobId: string) => void;
+  onHeygenGenerateSuccess: () => void;
+  onHeygenGenerateError: (message: string) => void;
   onManualUploadSuccess: (job: OperatorVideoJobSummaryDto) => void;
   onVoiceoverSuccess: (result: SynthesizeVoiceoverForReelScriptSuccess) => void;
   onVoiceoverToastSuccess: (summary: string) => void;
@@ -1696,6 +1714,8 @@ function ReelDetailPanel({
   onSelectCaptionCta,
   onRequestVideoJobRetry,
   onRequestVideoJobOverride,
+  onHeygenGenerateSuccess,
+  onHeygenGenerateError,
   onManualUploadSuccess,
   onVoiceoverSuccess,
   onVoiceoverToastSuccess,
@@ -1726,6 +1746,8 @@ function ReelDetailPanel({
     assemblyJob?.jobId != null
       ? qaByAssembledReelId[assemblyJob.jobId]
       : null;
+  const videoJobInFlight =
+    videoJob?.status === "queued" || videoJob?.status === "processing";
 
   return (
     <div>
@@ -1761,6 +1783,20 @@ function ReelDetailPanel({
           onSuccess={onVoiceoverSuccess}
           onError={onVoiceoverError}
           onToastSuccess={onVoiceoverToastSuccess}
+        />
+      ) : null}
+      {row.scriptId ? (
+        <HeygenGenerateControl
+          reelScriptId={row.scriptId}
+          clientId={clientId}
+          targetDurationSec={row.targetDurationSec}
+          voiceoverAssetId={voiceoverSummary?.voiceoverAssetId}
+          jobInFlight={videoJobInFlight}
+          locale={locale}
+          copy={copy.heygen}
+          disabled={isBusy}
+          onSuccess={onHeygenGenerateSuccess}
+          onError={onHeygenGenerateError}
         />
       ) : null}
       <OperatorVideoJobSummaryPanel

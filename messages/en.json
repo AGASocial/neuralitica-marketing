@@ -1411,6 +1411,33 @@
         }
       }
     },
+    "heygen": {
+      "button": "Generate with HeyGen",
+      "title": "Confirm HeyGen generation",
+      "confirm": "Generate with HeyGen",
+      "cancel": "Cancel",
+      "loading": "Loading HeyGen estimate…",
+      "loadError": "We could not load the HeyGen estimate. Try again later.",
+      "estimated": "Estimated cost",
+      "pathHighTier": "High-tier policy — HeyGen will be used for this Reel.",
+      "pathFallback": "Low-tier generation failed — operator fallback to HeyGen.",
+      "ineligible": "HeyGen generation is not available for this Reel.",
+      "blocked": "HeyGen generation unavailable",
+      "toastSuccess": "HeyGen video job queued.",
+      "errors": {
+        "unauthenticated": "Please log in to continue.",
+        "forbidden": "You do not have access to HeyGen generation.",
+        "notFound": "That Reel script was not found.",
+        "validation": "Please check the request and try again.",
+        "forbiddenFields": "Invalid HeyGen request.",
+        "budgetExceeded": "Blocked — would exceed Reel budget.",
+        "consentRevoked": "Active avatar consent is required for own-avatar Reels.",
+        "providerUnavailable": "HeyGen is not available right now.",
+        "fallbackIneligible": "HeyGen fallback is not eligible for this Reel.",
+        "configMissing": "HeyGen is not configured for this environment.",
+        "internal": "Something went wrong. Please try again later."
+      }
+    },
     "voiceover": {
       "title": "Voiceover",
       "aiOnlyNote": "AI-generated voice only — synthesized from the script voiceover text.",
