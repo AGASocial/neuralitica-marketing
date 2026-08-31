@@ -3,14 +3,14 @@
 > Mantenido por `master-orchestrator`. No editar manualmente salvo para corregir un atasco.
 
 ```yaml
-current_phase: 3
-current_story: null
-story_status: idle
-feature_branch: null
+current_phase: 7
+current_story: US-15.1
+story_status: prep
+feature_branch: feature/US-15.1-weekly-cron
 last_completed_story: US-8.9
-phase_status: sprint_8_closed
+phase_status: sprint_9_prep
 blocked_reason: null
-updated_at: 2026-08-31T22:05:00Z
+updated_at: 2026-08-31T22:15:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -44,7 +44,15 @@ updated_at: 2026-08-31T22:05:00Z
 | US-8.9 Operator B-roll generate UI | done | FE `4eed5a5` · BE `e8bd0d3` · VALIDATION PASS WITH NOTES (6/6 AC; 41/41) · QA APPROVE (0 Critical/High, 3 Low) · CLOSE 2026-08-31 |
 | Phase integration | done | PHASE-8.md CONNECTED (0 blockers; 79/79 integration tests) |
 
-**Sprint 8 CLOSED** — Operator B-roll generate UI on `/operator/scripts` (Wan low + LTX high via policy) → stitch → branding → QA verified on `main`. **Idle backlog:** PLAN F7 cron · QA follow-ups (enqueue-time audio probe · faceless revision B-roll step).
+**Sprint 8 CLOSED** — Operator B-roll generate UI on `/operator/scripts` (Wan low + LTX high via policy) → stitch → branding → QA verified on `main`. **Idle backlog:** QA follow-ups (enqueue-time audio probe · faceless revision B-roll step).
+
+## Sprint 9 — PLAN F7 weekly cron (PREP)
+
+| Story | Status | Notes |
+|-------|--------|-------|
+| US-15.1 Weekly cycle cron + orchestration | prep | Phase A: cron + CRON_SECRET + dry-run + idempotency ledger · Phase B: full pipeline (deferred) · branch `feature/US-15.1-weekly-cron` · next SPEC-REVIEW |
+
+**Sprint 9 PREP** — SELECT **US-15.1** (PLAN F7 / ADR-0001) after Sprint 8 CLOSE. Alternates deferred: US-11.2-B faceless revision B-roll step · QA follow-ups.
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -87,6 +95,7 @@ updated_at: 2026-08-31T22:05:00Z
 
 ## Historial reciente
 
+- 2026-08-31 · US-15.1 SELECT → PREP: `US-15.1` added to USER_STORIES.md (Phase A 5 AC + Phase B 4 AC); README + TASKS in `plan/stories/US-15.1/` — PLAN F7 cron (ADR-0001): Phase A = cron route + dry-run + ledger; Phase B = full pipeline wiring; branch `feature/US-15.1-weekly-cron`; next SPEC-REVIEW.
 - 2026-08-31 · Sprint 8 phase integration CONNECTED: `PHASE-8.md` (0 blockers; 79/79 tests); Operator UI → Wan/LTX preview+create → stitch → branding → QA verified on `main` → **Sprint 8 fully closed**; SELECT **PLAN F7 cron** (recommended) or QA follow-ups.
 - 2026-08-31 · US-8.9 CLOSE: 6/6 AC checked; VALIDATION PASS WITH NOTES (6/6 AC; 41/41); QA APPROVE (0 Critical/High, 3 Low); FE `4eed5a5` · BE `e8bd0d3`; branch `feature/US-8.9-broll-operator-generate-ui` ready for FF-merge → **Sprint 8 CLOSED**; SELECT **Sprint 8 phase integration** (recommended), **PLAN F7 cron**, or QA follow-ups.
 - 2026-08-31 · US-8.9 SELECT → PREP: `US-8.9` added to USER_STORIES.md (6 AC); README + TASKS in `plan/stories/US-8.9/` — Operator B-roll generate UI on `/operator/scripts`; reuse `createBrollVideoJobs` + HeyGen pattern; Wan low + LTX high per policy; branch `feature/US-8.9-broll-operator-generate-ui`; next SPEC-REVIEW.

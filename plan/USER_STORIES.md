@@ -1228,6 +1228,47 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 
 ---
 
+## Phase 7 — Ciclo semanal automatizado (P0)
+
+> **PLAN Fase 7** · **ADR-0001** · SPEC S3.M14 · TASKS.md § Fase 7. Orchestrates existing `invokedBy: "system"` seams (US-4.1 ✅, US-5.1 ✅, US-6.1 ✅, US-10.1 ✅ auto-chain) through a trusted server runner — **not** Instagram publish (ADR-0002).
+
+### Module: Weekly cycle scheduler (P0)
+
+#### US-15.1 — Weekly cycle cron endpoint and orchestration (Phase A + B)
+
+**As a** System, **I want** a scheduled weekly cycle per active Client with complete onboarding, **so that** 3 Reels reach the approval queue without Operator clicks on the happy path.
+
+| Owner | Work |
+|-------|------|
+| **FE** | Phase B only: Operator manual "Run cycle" + dry-run preview on `/operator/cycle` (or extend `/operator/strategy`); EN/ES i18n; no Cliente surface |
+| **BE** | Phase A: Vercel Cron Route Handler (`CRON_SECRET`); `lib/orchestration/` weekly runner; eligibility query; idempotency ledger; dry-run mode. Phase B: wire strategy → scripts → captions → video/TTS/B-roll → assembly → branding → QA → approval queue via existing orchestrators with `invokedBy: "system"` |
+| **DB** | Phase A: `neuramark_weekly_cycle_runs` (client_id, week_start, status, mode, step_log JSONB, started_at, finished_at) + unique (client_id, week_start) |
+
+**Acceptance criteria**
+
+*Phase A — cron endpoint + dry-run (BUILD first)*
+
+- [ ] Vercel Cron invokes `GET/POST /api/cron/weekly-cycle` with `Authorization: Bearer ${CRON_SECRET}`; missing/invalid secret → 401; no browser/Cliente exposure
+- [ ] Runner enumerates `neuramark_clients` where `active = true` and onboarding complete (profile exists + visual mode set per US-2.3 / US-3.1); skips ineligible clients with logged reason
+- [ ] Resolves canonical `weekStart` (ISO Monday UTC) per client run; idempotent: second cron tick for same client+week returns existing run row without duplicate spend (`dryRun` may re-plan without writes)
+- [ ] `dryRun: true` (env flag or query) executes eligibility + step plan only — **no** LLM, provider, FFmpeg, or spend side effects; returns structured plan per client (steps: strategy, scripts, captions, primary video, TTS, B-roll, assembly, branding, QA, approval)
+- [ ] [SEC] Cron Route Handler is the only HTTP entry for System cycle; orchestrator modules are `server-only`; forbidden request fields rejected; no `client_id` from untrusted body without operator gate on manual path
+
+*Phase B — full pipeline (deferred until Phase A CLOSE)*
+
+- [ ] Happy path auto-advances: `generateContentStrategyForClient({ invokedBy: "system" })` → auto-approve or draft-bypass gate frozen in CONTRACT → `generateReelScriptsForClient` → `generateReelCaptionsForClient` → provider jobs (primary/TTS/B-roll per policy) → assembly → branding → QA (reuse auto-chain) → ensure approval queue (US-11.1 pattern) for all 3 slots
+- [ ] Partial failure: successful slots continue to approval queue; failed slots recorded on run row with step + error code; Operator can inspect run status (FE minimal table or log-only acceptable for CLOSE)
+- [ ] Operator manual trigger Server Action (`requireOperator`) runs same orchestrator for one client+week with `mode: "live"`; shares idempotency ledger with cron
+- [ ] [SEC] System path never publishes to Instagram (ADR-0002); never bypasses Cliente approval gate; inactive clients never enqueued; budget blocks surface as run step failures, not silent skip
+
+**Depends on:** US-4.1 ✅ · US-4.2 ✅ · US-5.1 ✅ · US-6.1 ✅ · US-7.1 ✅ · US-7.2 ✅ · US-8.x ✅ · US-9.1 ✅ · US-9.2 ✅ · US-9.3 ✅ · US-10.1 ✅ · US-11.1 ✅ · US-14.5 ✅ · US-16.1 ✅ · US-16.2 ✅ · US-2.3 ✅ · US-3.1 ✅
+
+**Priority:** P0 (PLAN F7 — idle backlog after Sprint 8)
+
+**Out of scope:** Instagram Graph publish (ADR-0002 / Fase 6) · onboarding IG connect checklist (TASKS § onboarding) · Operator pause/skip week UI (follow-up) · SC-1..SC-4 formal verification story (integration-checker PHASE-7)
+
+---
+
 ## Cross-cutting stories (all phases)
 
 #### US-X.1 — Dashboard as default entry
@@ -1318,6 +1359,7 @@ Sprint 5: US-8.5, US-9.1, US-9.2, US-7.3, US-7.4, US-10.1, US-10.2
 Sprint 6: US-11.1, US-11.2, US-11.3
 Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, US-8.8 (LTX high-tier B-roll)
 Sprint 8 (P1): US-8.9 (Operator B-roll generate UI) — CLOSED 2026-08-31
+Sprint 9 (P0): US-15.1 (Weekly cycle cron — PLAN F7 Phase A then B) — PREP 2026-08-31
 ```
 
 Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.
