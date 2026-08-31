@@ -5,13 +5,19 @@
 ```yaml
 current_phase: 5
 current_story: US-12.1
-story_status: PREP
+story_status: BUILD
 feature_branch: feature/US-12.1-weekly-calendar
 last_completed_story: US-11.3
 phase_status: in_progress
 blocked_reason: null
 updated_at: 2026-08-31T02:05:00Z
 ```
+
+## Fase 5 — Operación semanal (Sprint 7 / P1)
+
+| Story | Status | Notes |
+|-------|--------|-------|
+| US-12.1 Weekly calendar view | CONTRACT | branch `feature/US-12.1-weekly-calendar` · PREP `e55cafe` · SPEC GAPS `42b2897` · SECURITY `4c6c7f3` |
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -43,6 +49,7 @@ updated_at: 2026-08-31T02:05:00Z
 | US-11.1 Present Reel package for client approval | done | BE `d830b0f` · FE `defd9ff` · VALIDATION `633c6f5` · QA `3f39db9` · CLOSE `4f11d38` (5/5 AC; request-changes → US-11.2) |
 | US-11.2 Request controlled revision round | done | FE `9c60ff1` · BE `8072392`/`088eafa` · agents `f0e4569` · media `dd90242` · VALIDATION `e4f12fb` · QA `84902c8` · CLOSE `a08b999` (5/5 AC; operator UI/history → Phase B) |
 | US-11.3 Approve and mark ready to publish | done | FE `f38c731` · BE `af50d1d` · VALIDATION `209dcc3` · QA `04dfe5b` · CLOSE `dfdace9` (5/5 AC; zip/webhook → Phase B) |
+| US-12.1 Weekly calendar view | SIGNOFF | branch `feature/US-12.1-weekly-calendar` · CONTRACT `7aed097` · BUILD next |
 
 ## Fase 2 — Playbook + Tendencias (manual V1) ✅
 
