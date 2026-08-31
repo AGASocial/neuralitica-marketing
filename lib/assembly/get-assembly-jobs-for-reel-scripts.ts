@@ -12,18 +12,34 @@ import {
   ASSEMBLY_JOBS_TABLE,
   mapAssemblyJobRow,
 } from "./assembly-job-row";
-import { mapOperatorAssemblyJobDto } from "./map-operator-assembly-job-dto";
+import {
+  mapNullJobAssemblyReadinessDto,
+  mapOperatorAssemblyJobDto,
+} from "./map-operator-assembly-job-dto";
+
+type ScriptAssemblyContext = {
+  updatedAt: string;
+  modalidad: VisualModality | null;
+  targetDurationSec: number | null;
+  coldOpenNotes: string | null;
+};
+
+function parseModalidad(value: unknown): VisualModality | null {
+  if (
+    value === "faceless" ||
+    value === "own_avatar" ||
+    value === "generic_avatar"
+  ) {
+    return value;
+  }
+  return null;
+}
 
 async function loadScriptContextByReel(params: {
   clientId: string;
   reelScriptIds: string[];
-}): Promise<
-  Map<string, { updatedAt: string; modalidad: VisualModality | null }>
-> {
-  const result = new Map<
-    string,
-    { updatedAt: string; modalidad: VisualModality | null }
-  >();
+}): Promise<Map<string, ScriptAssemblyContext>> {
+  const result = new Map<string, ScriptAssemblyContext>();
 
   if (!isSupabaseConfigured() || params.reelScriptIds.length === 0) {
     return result;
@@ -32,7 +48,9 @@ async function loadScriptContextByReel(params: {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("neuramark_reel_scripts")
-    .select("id, updated_at, slot_index, strategy_id")
+    .select(
+      "id, updated_at, modalidad, target_duration_sec, cold_open_notes",
+    )
     .eq("client_id", params.clientId)
     .in("id", params.reelScriptIds);
 
@@ -47,7 +65,13 @@ async function loadScriptContextByReel(params: {
     }
     result.set(row.id, {
       updatedAt: row.updated_at,
-      modalidad: null,
+      modalidad: parseModalidad(row.modalidad),
+      targetDurationSec:
+        typeof row.target_duration_sec === "number"
+          ? row.target_duration_sec
+          : null,
+      coldOpenNotes:
+        typeof row.cold_open_notes === "string" ? row.cold_open_notes : null,
     });
   }
 
@@ -77,12 +101,12 @@ export async function getAssemblyJobsForReelScripts(params: {
     .in("reel_script_id", params.reelScriptIds)
     .order("created_at", { ascending: false });
 
-  if (error || !data) {
+  if (error) {
     return result;
   }
 
   const latestByReel = new Map<string, ReturnType<typeof mapAssemblyJobRow>>();
-  for (const raw of data) {
+  for (const raw of data ?? []) {
     const row = mapAssemblyJobRow(raw as Record<string, unknown>);
     if (!row) {
       continue;
@@ -98,12 +122,35 @@ export async function getAssemblyJobsForReelScripts(params: {
     }
     const ctx = scriptContext.get(reelScriptId);
     const modalidad =
-      params.modalidadByReelScriptId?.get(reelScriptId) ?? "faceless";
+      params.modalidadByReelScriptId?.get(reelScriptId) ??
+      ctx?.modalidad ??
+      "faceless";
 
     result[reelScriptId] = await mapOperatorAssemblyJobDto(job, {
       clientId: params.clientId,
       modalidad,
       scriptUpdatedAt: ctx?.updatedAt ?? null,
+    });
+  }
+
+  // Null-job readiness companions (first-time faceless stitch / primary degrade).
+  for (const reelScriptId of params.reelScriptIds) {
+    if (result[reelScriptId] !== null) {
+      continue;
+    }
+
+    const ctx = scriptContext.get(reelScriptId);
+    const modalidad =
+      params.modalidadByReelScriptId?.get(reelScriptId) ??
+      ctx?.modalidad ??
+      "faceless";
+
+    result[reelScriptId] = await mapNullJobAssemblyReadinessDto({
+      clientId: params.clientId,
+      reelScriptId,
+      modalidad,
+      targetDurationSec: ctx?.targetDurationSec ?? null,
+      coldOpenNotes: ctx?.coldOpenNotes,
     });
   }
 

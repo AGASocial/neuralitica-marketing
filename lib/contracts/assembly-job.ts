@@ -166,11 +166,16 @@ export const brandingJobStatusDtoSchema = z.enum([
   "skipped",
 ]);
 
+/**
+ * Batch / week-load DTO. When no assembly row exists yet, BE may emit a
+ * readiness companion (`jobId`/`status`/timestamps null) with server
+ * `canAssemble` for first-time faceless stitch (or primary/degrade).
+ */
 export const operatorAssemblyJobDtoSchema = z
   .object({
-    jobId: z.string().uuid(),
+    jobId: z.string().uuid().nullable(),
     reelScriptId: z.string().uuid(),
-    status: assemblyJobStatusSchema,
+    status: assemblyJobStatusSchema.nullable(),
     templateId: z.literal(ASSEMBLY_TEMPLATE_REEL_V1_BASIC),
     targetDurationSec: z.number().positive(),
     actualDurationSec: z.number().positive().nullable(),
@@ -185,8 +190,8 @@ export const operatorAssemblyJobDtoSchema = z
     brandingFailureReason: z.string().nullable(),
     canAssemble: z.boolean(),
     canReassemble: z.boolean(),
-    createdAt: z.string().datetime({ offset: true }),
-    updatedAt: z.string().datetime({ offset: true }),
+    createdAt: z.string().datetime({ offset: true }).nullable(),
+    updatedAt: z.string().datetime({ offset: true }).nullable(),
   })
   .strict();
 
@@ -194,8 +199,15 @@ export type OperatorAssemblyJobDto = z.infer<
   typeof operatorAssemblyJobDtoSchema
 >;
 
+/** Poll GET `/api/assembly-jobs/[jobId]` — always a persisted job row. */
 export const operatorAssemblyJobStatusDtoSchema = operatorAssemblyJobDtoSchema
   .omit({ canAssemble: true })
+  .extend({
+    jobId: z.string().uuid(),
+    status: assemblyJobStatusSchema,
+    createdAt: z.string().datetime({ offset: true }),
+    updatedAt: z.string().datetime({ offset: true }),
+  })
   .strict();
 
 export type OperatorAssemblyJobStatusDto = z.infer<

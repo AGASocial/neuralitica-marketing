@@ -85,6 +85,7 @@
 **Consumer:** `/operator/scripts` assembly panel (existing).
 
 - [x] Enable **Assemble Reel** when server `canAssemble` (faceless stitch or primary/degrade) — dropped primary-only button gate. (**FE BUILD** 2026-08-31)
+- [x] **B12 fix:** use null-job readiness companion `canAssemble` for first-time faceless (no prior job / no primary); do not require `hasPrimaryVideo`. (2026-08-31)
 - [x] Reuse existing **preview player** for stitched `assembled_reel` — **no** new stitch UI / B-roll strip. (confirmed at FE signoff — no new route)
 - [x] EN/ES: `facelessWaitingForClips`, `facelessMissingVoiceover`, `failure.fingerprintMismatch` (signoff)
 - [x] No Cliente routes · no FFmpeg / clip-list details in UI. (confirmed at FE signoff)
@@ -95,6 +96,8 @@
 **Concrete consumers:** FE Assemble enablement · worker stitch path · downstream US-9.2/10.1/11.1 (unchanged output shape).
 
 - [x] CONTRACT Phase B amendment: faceless resolve rules, fingerprint shape, error codes, concat seam, fixtures. (`CONTRACT.md` § Phase B — 2026-08-31; Reviewed by FE approved)
+- [x] **B12:** week-batch null-job readiness companion via `mapNullJobAssemblyReadinessDto` / `getAssemblyJobsForReelScripts` — `canAssemble` when faceless resolve would succeed (broll+VO) with no assembly row. (2026-08-31)
+- [x] Unit tests: first-time faceless `canAssemble=true` (`assembly-readiness.phase-b.test.ts`). (2026-08-31)
 - [ ] Extend **`resolveAssemblyInputs`** (or sibling): for faceless, load up to **8** completed owned `asset_role = broll` outputs ordered by job **`created_at ASC`**; talking-head path unchanged (ignore broll).
 - [ ] Zero completed broll → degrade to Phase A primary if present, else `ASSEMBLY_INPUTS_INCOMPLETE`.
 - [ ] Extend **`input_fingerprint`** with ordered broll asset ids + path tag (`primary` vs `broll_stitch`) — CONTRACT exact string.

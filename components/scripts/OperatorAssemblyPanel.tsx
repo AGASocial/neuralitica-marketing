@@ -159,8 +159,17 @@ function brandingStatusSeverity(
   }
 }
 
-function isAssemblyInFlight(status: AssemblyJobStatus): boolean {
+function isAssemblyInFlight(status: AssemblyJobStatus | null): boolean {
   return status === "queued" || status === "processing";
+}
+
+function isPersistedAssemblyJob(
+  job: OperatorAssemblyJobDto | null,
+): job is OperatorAssemblyJobDto & {
+  jobId: string;
+  status: AssemblyJobStatus;
+} {
+  return job !== null && job.jobId !== null && job.status !== null;
 }
 
 function isBrandingInFlight(status: BrandingJobStatus | null): boolean {
@@ -345,6 +354,11 @@ function showBrandingPendingBanner(job: OperatorAssemblyJobDto): boolean {
   );
 }
 
+/** True when map entry is a null-job readiness companion (no row yet). */
+function isReadinessCompanion(job: OperatorAssemblyJobDto | null): boolean {
+  return job !== null && job.jobId === null;
+}
+
 function primaryVideoCompleted(
   videoJob: OperatorVideoJobSummaryDto | null | undefined,
 ): boolean {
@@ -390,27 +404,28 @@ export function OperatorAssemblyPanel({
   }, [initialJob]);
 
   const shouldPoll =
-    job !== null &&
+    isPersistedAssemblyJob(job) &&
     (isAssemblyInFlight(job.status) || isBrandingInFlight(job.brandingStatus));
 
   useEffect(() => {
-    if (!job || !shouldPoll) {
+    if (!isPersistedAssemblyJob(job) || !shouldPoll) {
       setPolling(false);
       return;
     }
 
+    const jobId = job.jobId;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     async function pollOnce() {
-      if (cancelled || !job) {
+      if (cancelled) {
         return;
       }
 
       setPolling(true);
 
       try {
-        const response = await fetch(`/api/assembly-jobs/${job.jobId}`, {
+        const response = await fetch(`/api/assembly-jobs/${jobId}`, {
           method: "GET",
           cache: "no-store",
         });
@@ -457,8 +472,8 @@ export function OperatorAssemblyPanel({
   // Never invent faceless broll readiness from client video-job maps.
   const canAssembleFromServer =
     job?.canAssemble === true && !pending && !assemblyInFlight;
-  // No-job primary convenience until companion readiness DTO lands
-  // (talking-head + faceless degrade only — not client-side broll guessing).
+  // Legacy: map entry still null (no companion) — primary-only convenience.
+  // Do not use for faceless stitch when companion says canAssemble.
   const canAssembleNoJobPrimaryFallback =
     job === null && hasPrimaryVideo && !assemblyInFlight && !pending;
   const showAssemble = canAssembleFromServer || canAssembleNoJobPrimaryFallback;
@@ -504,7 +519,7 @@ export function OperatorAssemblyPanel({
   }
 
   async function handleApplyBranding() {
-    if (!job || brandingPending || !showApplyBranding) {
+    if (!isPersistedAssemblyJob(job) || brandingPending || !showApplyBranding) {
       return;
     }
 
@@ -585,7 +600,7 @@ export function OperatorAssemblyPanel({
         <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600 }}>
           {copy.title}
         </h3>
-        {job ? (
+        {isPersistedAssemblyJob(job) ? (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", alignItems: "center" }}>
             <Tag
               value={copy.status[job.status]}
@@ -609,7 +624,7 @@ export function OperatorAssemblyPanel({
         ) : null}
       </div>
 
-      {!job ? (
+      {!job || isReadinessCompanion(job) ? (
         <p style={{ margin: "0 0 0.75rem", fontSize: "0.875rem", color: "#6b7280" }}>
           {copy.empty}
         </p>
@@ -727,7 +742,7 @@ export function OperatorAssemblyPanel({
         ) : null}
       </div>
 
-      {job?.status === "completed" ? (
+      {job !== null && isPersistedAssemblyJob(job) && job.status === "completed" ? (
         <section
           style={{
             marginTop: "1rem",
