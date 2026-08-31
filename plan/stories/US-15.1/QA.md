@@ -1,4 +1,82 @@
-# QA Report — US-15.1 Phase A
+# QA Re-review — US-15.1 Phase A
+
+**Story:** US-15.1 — Weekly cycle cron endpoint and orchestration
+**Scope:** Phase A fix re-review
+**Branch:** `feature/US-15.1-weekly-cron`
+**Fix commits reviewed:** `4b5449d`, `23d048c`
+**Revalidation reviewed:** `3e3e4ea`
+**Date:** 2026-08-31
+**Reviewer:** qa-engineer
+
+### Final verdict: APPROVE WITH CONDITIONS
+
+**Current severity counts:** Critical **0** · High **0** · Medium **0** · Low **1** documentation condition
+**Prior findings:** H1 **CLOSED** · M1 **CLOSED** · L1 **CLOSED**
+**CLOSE:** **Allowed.** The remaining condition is non-blocking and belongs in the mandatory Phase B CONTRACT delta.
+
+The fixes preserve Phase A's no-spend boundary and close the ledger-corruption blocker with two independent controls: acquisition refuses non-`dry_run` states, and persistence performs an affected-row-verified conditional update. Profile lookup rejection is isolated per client, and malformed non-empty JSON is rejected before week resolution or batch execution for both GET and POST.
+
+---
+
+## Fix verification
+
+| Prior finding | Status | Evidence |
+|---------------|--------|----------|
+| **H1 — dry-run re-plan overwrites live/terminal ledger state** | **CLOSED** | Existing `planned`, `running`, `completed`, and `failed` rows return `replan: "BLOCKED"` (`lib/orchestration/acquire-weekly-cycle-run.ts:38-49`), and the runner exits before plan/persist (`run-weekly-cycle-for-client.ts:30-33`). Persistence independently applies `WHERE id = ? AND status = 'dry_run'`, selects the affected row, and returns `NOT_REPLANNABLE` on zero matches (`persist-weekly-cycle-run-plan.ts:16-25`). It no longer writes `status` or `mode`. Tests cover all four non-dry states at acquire and runner boundaries plus an acquire/persist interleaving where another worker changes the state. |
+| **M1 — rejected profile lookup aborts the batch** | **CLOSED** | Each profile lookup is wrapped independently; rejection records `PROFILE_LOAD_FAILED` and continues (`list-eligible-clients-for-weekly-cycle.ts:42-51`). The regression visits a rejecting client and then a later eligible client, asserting both the skip classification and continued eligibility (`list-eligible-clients-for-weekly-cycle.test.ts:30-64`). |
+| **L1 — malformed JSON treated as empty** | **CLOSED** | A non-empty parse failure returns `400 { "error": "INVALID_JSON" }` with `Cache-Control: no-store` before forbidden-key scan, week resolution, or batch (`app/api/cron/weekly-cycle/route.ts:29-40`). GET and POST are both exercised with zero batch calls (`route.test.ts:37-51`). |
+
+### Interleaving and data-integrity assessment
+
+- The unique `(client_id, week_start)` constraint remains the insert race arbiter.
+- A non-dry row observed during acquire cannot reach planner or persistence.
+- If a `dry_run` row changes after acquire, the conditional persist affects zero rows and the runner returns `RUN_NOT_REPLANNABLE`.
+- The guarded update changes only `step_log` and `finished_at`; it cannot rewrite `status`, `mode`, or `started_at`.
+- `maybeSingle()` plus the unique run `id` makes zero affected rows explicit; database errors still become controlled `INTERNAL_ERROR` at the runner boundary.
+
+---
+
+## Current findings
+
+### Low — Additive safety outcomes are not recorded in the original frozen contract
+
+**Files:** `app/api/cron/weekly-cycle/route.ts:35`; `lib/orchestration/acquire-weekly-cycle-run.ts:7-23`; `lib/orchestration/run-weekly-cycle-for-client.ts:8-10`; `plan/stories/US-15.1/CONTRACT.md`
+
+**What:** The fixes add `INVALID_JSON`, internal `replan: ALLOWED | BLOCKED`, and internal `RUN_NOT_REPLANNABLE` semantics beyond the original frozen type sketches.
+
+**Why it matters:** These outcomes are safe and do not alter the successful public cron response, but Phase B implementers need the same state-transition vocabulary to avoid weakening the repaired idempotency boundary.
+
+**Condition / owner:** `nextjs-backend` and `integrations-engineer` must carry these outcomes into the mandatory Phase B CONTRACT/SECURITY delta before live wiring. This does **not** block Phase A CLOSE.
+
+No new correctness, trust-boundary, secret-handling, Supabase, concurrency, no-spend, dependency, backdoor, or scope findings were found.
+
+---
+
+## Checks Run — Re-review
+
+| Command | Result |
+|---------|--------|
+| `npx tsx --test lib/contracts/weekly-cycle.test.ts lib/orchestration/weekly-cycle.test.ts lib/orchestration/verify-cron-secret.test.ts app/api/cron/weekly-cycle/route.test.ts lib/orchestration/list-eligible-clients-for-weekly-cycle.test.ts lib/orchestration/acquire-weekly-cycle-run.test.ts lib/orchestration/persist-weekly-cycle-run-plan.test.ts lib/orchestration/run-weekly-cycle-for-client.test.ts` | **30 pass / 0 fail** across all **8** focused files. |
+| Scoped `npx eslint` over the 11 US-15.1 production TypeScript files | **PASS / exit 0**. |
+| Fix-range regression/backdoor scan (`8c8e902..3e3e4ea`) | **PASS** — no dependency addition, outbound request, eval/dynamic execution, public secret, alternate auth/session path, client Supabase import, or Phase B spend import. |
+
+### What remains untested
+
+- Live Supabase/PostgREST execution of the conditional update and migration/RLS behavior.
+- Deployed Vercel Cron authorization injection.
+- Phase B live orchestration, manual Operator trigger, and UI, which remain out of scope and require their own frozen delta and gates.
+
+---
+
+## Gate summary
+
+`Phase A · US-15.1 · QA re-review · qa-engineer · APPROVE WITH CONDITIONS · CLOSE allowed`
+
+The original BLOCK report is retained below as audit history.
+
+---
+
+# Initial QA Report — US-15.1 Phase A (historical)
 
 **Story:** US-15.1 — Weekly cycle cron endpoint and orchestration  
 **Scope:** Phase A only  
