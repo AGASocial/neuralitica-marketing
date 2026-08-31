@@ -1,6 +1,6 @@
 # US-15.1 — Weekly cycle cron endpoint and orchestration (Phase A + B)
 
-**Status:** BUILD Phase A ready (2026-08-31) — SPEC-REVIEW ✅ · SECURITY ✅ · CONTRACT Phase A frozen; branch `feature/US-15.1-weekly-cron`; next **BUILD Phase A** → VALIDATION → QA → CLOSE Phase A.
+**Status:** **Phase A CLOSED** (2026-08-31) — 5/5 Phase A acceptance criteria satisfied; VALIDATION **PASS WITH NOTES**; QA **APPROVE WITH CONDITIONS** and CLOSE allowed. **Phase B is deferred** until a mandatory CONTRACT/SECURITY delta is frozen and reviewed by FE.
 
 **As a** System, **I want** a scheduled weekly cycle per active Client with complete onboarding, **so that** 3 Reels reach the approval queue without Operator clicks on the happy path.
 
@@ -81,10 +81,12 @@ PLAN F7 is too large for one BUILD gate. **Phase A** lands the cron auth surface
 - [x] SPEC-REVIEW.md (spec-guardian)
 - [x] SECURITY.md (security-architect)
 - [x] CONTRACT.md Phase A (spec-guardian freeze — 2026-08-31)
-- [ ] BUILD Phase A (integrations-engineer + nextjs-backend)
-- [ ] VALIDATION.md Phase A
-- [ ] QA.md Phase A
-- [ ] CLOSE Phase A (product-owner)
+- [x] BUILD Phase A (integrations-engineer + nextjs-backend) — `54bfdbc`, `8828f73`, `2658713`; fixes `4b5449d`, `23d048c`
+- [x] VALIDATION.md Phase A — PASS WITH NOTES (`3e3e4ea`)
+- [x] QA.md Phase A — APPROVE WITH CONDITIONS; CLOSE allowed (`efc6b75`)
+- [x] CLOSE Phase A (product-owner) — 2026-08-31; 5/5 Phase A AC checked
 - [ ] BUILD Phase B → VALIDATION → QA → CLOSE Phase B
 
-**Next gate:** BUILD Phase A (`integrations-engineer` + `nextjs-backend`).
+**Mandatory Phase B delta:** before any Phase B BUILD, `nextjs-backend` + `integrations-engineer` must update CONTRACT and `security-architect` must review SECURITY to freeze `INVALID_JSON`, acquire `replan: ALLOWED | BLOCKED`, and runner `RUN_NOT_REPLANNABLE` semantics; then `nextjs-frontend` signs off the Phase B contract.
+
+**Next gate:** Phase B **CONTRACT/SECURITY delta** (PREP; no BUILD yet).

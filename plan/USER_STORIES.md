@@ -1248,11 +1248,11 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 
 *Phase A — cron endpoint + dry-run (BUILD first)*
 
-- [ ] Vercel Cron invokes `GET/POST /api/cron/weekly-cycle` with `Authorization: Bearer ${CRON_SECRET}`; missing/invalid secret → 401; no browser/Cliente exposure
-- [ ] Runner enumerates `neuramark_clients` where `active = true` and onboarding complete (profile exists + visual mode set per US-2.3 / US-3.1); skips ineligible clients with logged reason
-- [ ] Resolves canonical `weekStart` (ISO Monday UTC) per client run; idempotent: second cron tick for same client+week returns existing run row without duplicate spend (`dryRun` may re-plan without writes)
-- [ ] `dryRun: true` (env flag or query) executes eligibility + step plan only — **no** LLM, provider, FFmpeg, or spend side effects; returns structured plan per client (steps: strategy, scripts, captions, primary video, TTS, B-roll, assembly, branding, QA, approval)
-- [ ] [SEC] Cron Route Handler is the only HTTP entry for System cycle; orchestrator modules are `server-only`; forbidden request fields rejected; no `client_id` from untrusted body without operator gate on manual path
+- [x] Vercel Cron invokes `GET/POST /api/cron/weekly-cycle` with `Authorization: Bearer ${CRON_SECRET}`; missing/invalid secret → 401; no browser/Cliente exposure
+- [x] Runner enumerates `neuramark_clients` where `active = true` and onboarding complete (profile exists + visual mode set per US-2.3 / US-3.1); skips ineligible clients with logged reason
+- [x] Resolves canonical `weekStart` (ISO Monday UTC) per client run; idempotent: second cron tick for same client+week returns existing run row without duplicate spend (`dryRun` may re-plan without writes)
+- [x] `dryRun: true` (env flag or query) executes eligibility + step plan only — **no** LLM, provider, FFmpeg, or spend side effects; returns structured plan per client (steps: strategy, scripts, captions, primary video, TTS, B-roll, assembly, branding, QA, approval)
+- [x] [SEC] Cron Route Handler is the only HTTP entry for System cycle; orchestrator modules are `server-only`; forbidden request fields rejected; no `client_id` from untrusted body without operator gate on manual path
 
 *Phase B — full pipeline (deferred until Phase A CLOSE)*
 
@@ -1359,7 +1359,7 @@ Sprint 5: US-8.5, US-9.1, US-9.2, US-7.3, US-7.4, US-10.1, US-10.2
 Sprint 6: US-11.1, US-11.2, US-11.3
 Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, US-8.8 (LTX high-tier B-roll)
 Sprint 8 (P1): US-8.9 (Operator B-roll generate UI) — CLOSED 2026-08-31
-Sprint 9 (P0): US-15.1 (Weekly cycle cron — PLAN F7 Phase A then B) — PREP 2026-08-31
+Sprint 9 (P0): US-15.1 (Weekly cycle cron — PLAN F7 Phase A CLOSED 2026-08-31; Phase B deferred pending CONTRACT/SECURITY delta)
 ```
 
 Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.

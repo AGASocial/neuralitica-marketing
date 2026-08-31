@@ -42,7 +42,7 @@ Concrete consumers: **Vercel Cron** · **Operator manual trigger (Phase B)** · 
 
 ### Idempotency ledger
 
-- [ ] **Migration `neuramark_weekly_cycle_runs`** — columns: `id`, `client_id`, `week_start`, `status` (`planned`|`running`|`completed`|`failed`|`dry_run`), `mode` (`cron`|`operator`), `step_log` JSONB, `started_at`, `finished_at`, `created_at`; unique index `neuramark_weekly_cycle_runs_client_week_uidx` on `(client_id, week_start)`.
+- [x] **Migration `neuramark_weekly_cycle_runs`** — columns: `id`, `client_id`, `week_start`, `status` (`planned`|`running`|`completed`|`failed`|`dry_run`), `mode` (`cron`|`operator`), `step_log` JSONB, `started_at`, `finished_at`, `created_at`; unique index `neuramark_weekly_cycle_runs_client_week_uidx` on `(client_id, week_start)`.
 - [x] **`acquireWeeklyCycleRun()`** — insert or return existing; prevent concurrent live runs for same client+week.
 
 ### Dry-run orchestrator
@@ -64,14 +64,14 @@ Concrete consumers: **Vercel Cron** · **Operator manual trigger (Phase B)** · 
 
 ## Phase A — DB checklist
 
-- [ ] **`neuramark_weekly_cycle_runs`** table + unique index + RLS/service-role access pattern (server-only writes).
-- [ ] **No changes** to existing production tables beyond run ledger.
+- [x] **`neuramark_weekly_cycle_runs`** table + unique index + RLS/service-role access pattern (server-only writes).
+- [x] **No changes** to existing production tables beyond run ledger.
 
 ---
 
 ## Phase A — FE checklist
 
-- [ ] **None** — Phase A is backend-only. Operator UI deferred to Phase B.
+- [x] **None** — Phase A is backend-only. Operator UI deferred to Phase B.
 
 ---
 
@@ -127,14 +127,15 @@ Concrete consumer: **Operator cycle control page** (minimal).
 - [x] SPEC-REVIEW.md (spec-guardian)
 - [x] SECURITY.md (security-architect)
 - [x] CONTRACT.md — Phase A freeze (cron auth, ledger DDL, dry-run orchestrator, eligibility) — 2026-08-31
-- [ ] BUILD Phase A (integrations-engineer + nextjs-backend)
-- [ ] VALIDATION.md Phase A
-- [ ] QA.md Phase A
-- [ ] CLOSE Phase A (product-owner)
+- [x] BUILD Phase A (integrations-engineer + nextjs-backend) — `54bfdbc`, `8828f73`, `2658713`; fixes `4b5449d`, `23d048c`
+- [x] VALIDATION.md Phase A — PASS WITH NOTES (`3e3e4ea`)
+- [x] QA.md Phase A — APPROVE WITH CONDITIONS; CLOSE allowed (`efc6b75`)
+- [x] CLOSE Phase A (product-owner) — 2026-08-31; 5/5 Phase A AC checked
 
 ### Phase B
 
-- [ ] CONTRACT.md — Phase B delta (live wiring, strategy gate, manual trigger, FE props)
+- [ ] CONTRACT.md — mandatory Phase B delta (live wiring, strategy gate, manual trigger, FE props) freezing `INVALID_JSON`, acquire `replan: ALLOWED | BLOCKED`, and runner `RUN_NOT_REPLANNABLE`
+- [ ] SECURITY.md — Phase B delta review covering the same additive safety outcomes before live wiring
 - [ ] **Reviewed by FE** on Phase B CONTRACT
 - [ ] BUILD Phase B
 - [ ] VALIDATION.md Phase B
