@@ -106,28 +106,28 @@ markCalendarSlotPublished({
 
 **Consumers:** Operator calendar Sidebar Dialog (FE above); US-13.1 will read published rows later.
 
-- [ ] Migration **ALTER** `neuramark_content_calendar_slots` add `published_at timestamptz NULL`, `instagram_post_url text NULL` (`neuramark_` naming; RLS unchanged).
-- [ ] Zod: `markCalendarSlotPublishedInputSchema` + success/error result schemas in `lib/contracts/calendar.ts`.
-- [ ] IG URL schema: optional; when set must be `https://www.instagram.com/...`; max length; normalize empty → null.
-- [ ] Implement **`markCalendarSlotPublished`** Server Action: `requireOperator("handler")` first → 403; `.strict()` input; forbid authority keys (`client_id`, etc.).
-- [ ] Load slot by `slotId`; 404 if missing.
-- [ ] Resolve assembled reel + **re-check** latest approval `approved`; reject otherwise (`NOT_APPROVED` / `SLOT_NOT_READY`).
-- [ ] UPDATE `publish_status = 'published'`, `published_at`, `instagram_post_url`; bump `updated_at` via existing trigger.
-- [ ] Idempotent re-mark: allow when already published if still approved; overwrite date/URL.
-- [ ] **No** unpublish path.
-- [ ] Extend calendar read mapping to populate `publishedAt` / `instagramPostUrl` on DTO.
-- [ ] Update **`syncCalendarSlotsForWeek`** to preserve `published_at` + `instagram_post_url` (and existing `publish_status`) on upsert.
-- [ ] Unit/security tests: non-operator 403; non-approved reject; URL validation; happy path; re-mark; sync preserve; no Graph/integrations imports.
+- [x] Migration **ALTER** `neuramark_content_calendar_slots` add `published_at timestamptz NULL`, `instagram_post_url text NULL` (`neuramark_` naming; RLS unchanged).
+- [x] Zod: `markCalendarSlotPublishedInputSchema` + success/error result schemas in `lib/contracts/calendar.ts`.
+- [x] IG URL schema: optional; when set must be `https://www.instagram.com/...`; max length; normalize empty → null.
+- [x] Implement **`markCalendarSlotPublished`** Server Action: `requireOperator("handler")` first → 403; `.strict()` input; forbid authority keys (`client_id`, etc.).
+- [x] Load slot by `slotId`; 404 if missing.
+- [x] Resolve assembled reel + **re-check** latest approval `approved`; reject otherwise (`NOT_APPROVED` / `SLOT_NOT_READY`).
+- [x] UPDATE `publish_status = 'published'`, `published_at`, `instagram_post_url`; bump `updated_at` via existing trigger.
+- [x] Idempotent re-mark: allow when already published if still approved; overwrite date/URL.
+- [x] **No** unpublish path.
+- [x] Extend calendar read mapping to populate `publishedAt` / `instagramPostUrl` on DTO.
+- [x] Update **`syncCalendarSlotsForWeek`** to preserve `published_at` + `instagram_post_url` (and existing `publish_status`) on upsert.
+- [x] Unit/security tests: non-operator 403; non-approved reject; URL validation; happy path; re-mark; sync preserve; no Graph/integrations imports.
 
 ---
 
 ## Database (nextjs-backend / migrations)
 
-- [ ] New migration file (timestamp after US-12.1 `20260831050000_…`): ALTER TABLE only — **do not** recreate table.
-- [ ] Columns: `published_at timestamptz NULL`, `instagram_post_url text NULL`.
-- [ ] Comment on columns noting US-12.2 manual mark + US-13.1 consumer.
-- [ ] No new enums; `publish_status` CHECK remains `ready` \| `published`.
-- [ ] No RLS policies (deny-by-default / service-role Node only).
+- [x] New migration file (timestamp after US-12.1 `20260831050000_…`): ALTER TABLE only — **do not** recreate table.
+- [x] Columns: `published_at timestamptz NULL`, `instagram_post_url text NULL`.
+- [x] Comment on columns noting US-12.2 manual mark + US-13.1 consumer.
+- [x] No new enums; `publish_status` CHECK remains `ready` \| `published`.
+- [x] No RLS policies (deny-by-default / service-role Node only).
 
 ---
 

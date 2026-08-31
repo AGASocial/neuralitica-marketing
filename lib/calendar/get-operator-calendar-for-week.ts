@@ -15,6 +15,7 @@ import type { QaReportStatus } from "@/lib/contracts/qa-report";
 import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved-strategy-for-week";
 import { loadOperatorClientsForStrategy } from "@/lib/content-strategy/load-operator-clients-for-strategy";
 import { deriveCalendarPipelineStatus } from "@/lib/calendar/derive-calendar-pipeline-status";
+import { mapPublishMetadataToDto } from "@/lib/calendar/map-publish-metadata-dto";
 import {
   CALENDAR_SLOTS_TABLE,
   syncCalendarSlotsForWeek,
@@ -33,7 +34,7 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
 
-type CalendarSlotRow = {
+export type CalendarSlotRow = {
   id: string;
   clientId: string;
   clientDisplayName: string;
@@ -43,6 +44,8 @@ type CalendarSlotRow = {
   strategyId: string;
   reelScriptId: string | null;
   publishStatus: CalendarPublishStatus;
+  publishedAtRaw: string | null;
+  instagramPostUrlRaw: string | null;
   tema: string;
   goal: ContentStrategySlotGoal;
 };
@@ -71,7 +74,7 @@ async function loadCalendarSlotRows(weekStart: string): Promise<CalendarSlotRow[
   const { data, error } = await supabase
     .from(CALENDAR_SLOTS_TABLE)
     .select(
-      "id, client_id, week_start, scheduled_date, slot_index, strategy_id, reel_script_id, publish_status",
+      "id, client_id, week_start, scheduled_date, slot_index, strategy_id, reel_script_id, publish_status, published_at, instagram_post_url",
     )
     .eq("week_start", weekStart)
     .in("client_id", activeClientIds);
@@ -127,6 +130,12 @@ async function loadCalendarSlotRows(weekStart: string): Promise<CalendarSlotRow[
       reelScriptId:
         typeof row.reel_script_id === "string" ? row.reel_script_id : null,
       publishStatus,
+      publishedAtRaw:
+        typeof row.published_at === "string" ? row.published_at : null,
+      instagramPostUrlRaw:
+        typeof row.instagram_post_url === "string"
+          ? row.instagram_post_url
+          : null,
       tema: slotMeta.tema,
       goal: slotMeta.goal,
     });
@@ -323,6 +332,82 @@ function buildClientSummaries(params: {
   );
 }
 
+async function buildSlotDetailDtoForRow(
+  row: CalendarSlotRow,
+  context: {
+    captionsByScript: Map<string, ReelCaptionSummary>;
+    videoJobs: Awaited<ReturnType<typeof getVideoJobsForReelScripts>>;
+    assemblyJobs: Awaited<ReturnType<typeof getAssemblyJobsForReelScripts>>;
+    qaByReel: Awaited<ReturnType<typeof getQaReportsForAssembledReels>>;
+    approvalsByReel: Map<
+      string,
+      {
+        id: string;
+        status: import("@/lib/contracts/approval").ApprovalStatus;
+      }
+    >;
+  },
+): Promise<CalendarSlotDetailDto> {
+  const captionSummary =
+    row.reelScriptId !== null
+      ? (context.captionsByScript.get(row.reelScriptId) ??
+        PENDING_REEL_CAPTION_SUMMARY)
+      : null;
+
+  const videoJob =
+    row.reelScriptId !== null ? context.videoJobs[row.reelScriptId] : null;
+  const assemblyJob =
+    row.reelScriptId !== null ? context.assemblyJobs[row.reelScriptId] : null;
+  const assembledReelId = assemblyJob?.jobId ?? null;
+  const qaReport =
+    assembledReelId !== null ? context.qaByReel[assembledReelId] : null;
+  const approval =
+    assembledReelId !== null
+      ? context.approvalsByReel.get(assembledReelId)
+      : null;
+
+  const derived = deriveCalendarPipelineStatus({
+    publishStatus: row.publishStatus,
+    reelScriptId: row.reelScriptId,
+    captionSummary,
+    videoJobStatus: videoJob?.status ?? null,
+    assemblyStatus: assemblyJob?.status ?? null,
+    brandingStatus: assemblyJob?.brandingStatus ?? null,
+    outputMediaAssetId: assemblyJob?.outputMediaAssetId ?? null,
+    qaReportStatus: (qaReport?.status as QaReportStatus | undefined) ?? null,
+    approvalStatus: approval?.status ?? null,
+    approvalId: approval?.id ?? null,
+    assembledReelId,
+  });
+
+  const publishMetadata = mapPublishMetadataToDto({
+    publishStatus: row.publishStatus,
+    publishedAtRaw: row.publishedAtRaw,
+    instagramPostUrlRaw: row.instagramPostUrlRaw,
+  });
+
+  return {
+    slotId: row.id,
+    clientId: row.clientId,
+    clientDisplayName: row.clientDisplayName,
+    weekStart: row.weekStart,
+    scheduledDate: row.scheduledDate,
+    slotIndex: row.slotIndex,
+    tema: row.tema,
+    reelScriptId: row.reelScriptId,
+    pipelineStatus: derived.pipelineStatus,
+    approvalId: derived.approvalId,
+    assembledReelId: derived.assembledReelId,
+    thumbnailPreviewUrl: derived.thumbnailPreviewUrl,
+    strategyId: row.strategyId,
+    goal: row.goal,
+    approvalStatus: derived.approvalStatus,
+    changesRequested: derived.changesRequested,
+    publishedAt: publishMetadata.publishedAt,
+    instagramPostUrl: publishMetadata.instagramPostUrl,
+  };
+}
+
 async function buildSlotDetailDtos(
   slotRows: CalendarSlotRow[],
 ): Promise<CalendarSlotDetailDto[]> {
@@ -376,58 +461,138 @@ async function buildSlotDetailDtos(
       assembledReelIds,
     );
 
+    const context = {
+      captionsByScript,
+      videoJobs,
+      assemblyJobs,
+      qaByReel,
+      approvalsByReel,
+    };
+
     for (const row of clientSlots) {
-      const captionSummary =
-        row.reelScriptId !== null
-          ? (captionsByScript.get(row.reelScriptId) ?? PENDING_REEL_CAPTION_SUMMARY)
-          : null;
-
-      const videoJob =
-        row.reelScriptId !== null ? videoJobs[row.reelScriptId] : null;
-      const assemblyJob =
-        row.reelScriptId !== null ? assemblyJobs[row.reelScriptId] : null;
-      const assembledReelId = assemblyJob?.jobId ?? null;
-      const qaReport =
-        assembledReelId !== null ? qaByReel[assembledReelId] : null;
-      const approval =
-        assembledReelId !== null ? approvalsByReel.get(assembledReelId) : null;
-
-      const derived = deriveCalendarPipelineStatus({
-        publishStatus: row.publishStatus,
-        reelScriptId: row.reelScriptId,
-        captionSummary,
-        videoJobStatus: videoJob?.status ?? null,
-        assemblyStatus: assemblyJob?.status ?? null,
-        brandingStatus: assemblyJob?.brandingStatus ?? null,
-        outputMediaAssetId: assemblyJob?.outputMediaAssetId ?? null,
-        qaReportStatus: (qaReport?.status as QaReportStatus | undefined) ?? null,
-        approvalStatus: approval?.status ?? null,
-        approvalId: approval?.id ?? null,
-        assembledReelId,
-      });
-
-      detailSlots.push({
-        slotId: row.id,
-        clientId: row.clientId,
-        clientDisplayName: row.clientDisplayName,
-        weekStart: row.weekStart,
-        scheduledDate: row.scheduledDate,
-        slotIndex: row.slotIndex,
-        tema: row.tema,
-        reelScriptId: row.reelScriptId,
-        pipelineStatus: derived.pipelineStatus,
-        approvalId: derived.approvalId,
-        assembledReelId: derived.assembledReelId,
-        thumbnailPreviewUrl: derived.thumbnailPreviewUrl,
-        strategyId: row.strategyId,
-        goal: row.goal,
-        approvalStatus: derived.approvalStatus,
-        changesRequested: derived.changesRequested,
-      });
+      detailSlots.push(await buildSlotDetailDtoForRow(row, context));
     }
   }
 
   return detailSlots;
+}
+
+/**
+ * Operator calendar aggregate orchestrator (US-12.1).
+ * Caller must gate with requireOperator before invoking.
+ */
+export async function loadCalendarSlotRowById(
+  slotId: string,
+): Promise<CalendarSlotRow | null> {
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from(CALENDAR_SLOTS_TABLE)
+    .select(
+      "id, client_id, week_start, scheduled_date, slot_index, strategy_id, reel_script_id, publish_status, published_at, instagram_post_url",
+    )
+    .eq("id", slotId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  const row = data as Record<string, unknown>;
+  if (
+    typeof row.id !== "string" ||
+    typeof row.client_id !== "string" ||
+    typeof row.week_start !== "string" ||
+    typeof row.scheduled_date !== "string" ||
+    typeof row.slot_index !== "number" ||
+    typeof row.strategy_id !== "string"
+  ) {
+    return null;
+  }
+
+  const clients = await loadOperatorClientsForStrategy();
+  const client = clients.find((entry) => entry.id === row.client_id);
+  if (!client) {
+    return null;
+  }
+
+  const meta = await loadStrategySlotMeta(row.strategy_id);
+  const slotMeta = meta.get(row.slot_index);
+  if (!slotMeta) {
+    return null;
+  }
+
+  const publishStatus: CalendarPublishStatus =
+    row.publish_status === "published" ? "published" : "ready";
+
+  return {
+    id: row.id,
+    clientId: row.client_id,
+    clientDisplayName: client.displayName,
+    weekStart: row.week_start,
+    scheduledDate: row.scheduled_date,
+    slotIndex: row.slot_index,
+    strategyId: row.strategy_id,
+    reelScriptId:
+      typeof row.reel_script_id === "string" ? row.reel_script_id : null,
+    publishStatus,
+    publishedAtRaw:
+      typeof row.published_at === "string" ? row.published_at : null,
+    instagramPostUrlRaw:
+      typeof row.instagram_post_url === "string" ? row.instagram_post_url : null,
+    tema: slotMeta.tema,
+    goal: slotMeta.goal,
+  };
+}
+
+export async function buildCalendarSlotDetailDtoForRow(
+  row: CalendarSlotRow,
+): Promise<CalendarSlotDetailDto> {
+  const reelScriptIds = row.reelScriptId !== null ? [row.reelScriptId] : [];
+
+  const captionsByScript = await loadCaptionsByReelScriptIds({
+    clientId: row.clientId,
+    strategyId: row.strategyId,
+    reelScriptIds,
+  });
+
+  const videoJobs = await getVideoJobsForReelScripts({
+    clientId: row.clientId,
+    reelScriptIds,
+  });
+
+  const assemblyJobs = await getAssemblyJobsForReelScripts({
+    clientId: row.clientId,
+    reelScriptIds,
+  });
+
+  const assembledReelIds = [
+    ...new Set(
+      Object.values(assemblyJobs)
+        .map((job) => job?.jobId)
+        .filter((id): id is string => typeof id === "string"),
+    ),
+  ];
+
+  const qaByReel = await getQaReportsForAssembledReels({
+    clientId: row.clientId,
+    assembledReelIds,
+  });
+
+  const approvalsByReel = await loadApprovalsByAssembledReelIds(
+    assembledReelIds,
+  );
+
+  return buildSlotDetailDtoForRow(row, {
+    captionsByScript,
+    videoJobs,
+    assemblyJobs,
+    qaByReel,
+    approvalsByReel,
+  });
 }
 
 /**

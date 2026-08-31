@@ -181,6 +181,8 @@ export async function syncCalendarSlotsForWeek(
           strategy_id: approved.id,
           reel_script_id: reelScriptId,
           publish_status: "ready",
+          published_at: null,
+          instagram_post_url: null,
         });
 
         if (!error) {
