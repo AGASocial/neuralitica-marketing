@@ -1,64 +1,79 @@
 ## Validation Report — US-15.1 Phase A
 
-### Verdict: FAIL
+### Verdict: PASS WITH NOTES
 
-The Phase A implementation has the intended plan-only architecture, but it does not satisfy the frozen validation contract. The required behavioral test matrix is largely absent, including the binding security requirement to mock or spy the spend modules and assert zero calls. In addition, GET and POST are not identical at the forbidden-field gate: only POST bodies are parsed, so a GET request carrying a forbidden JSON body reaches the batch runner.
+Phase A now satisfies all five acceptance criteria and the binding Phase A conditions in `SPEC-REVIEW.md`, `SECURITY.md`, and the frozen `CONTRACT.md`. Fix commit `2658713` closes the three blockers from the initial validation (`29ebe97`): GET and POST now share forbidden-field handling, the frozen behavioral test matrix is present, and dry-run/idempotency behavior is exercised with zero-call assertions plus the structural no-spend import guard.
 
-**Implementation commits reviewed:** `54bfdbc`, `8828f73`
+**Implementation commits reviewed:** `54bfdbc`, `8828f73`, `2658713`
 
-**Scope validated:** Phase A only; Phase B live orchestration, Operator trigger, and UI are deferred.
+**Validation history:** initial verdict **FAIL** at `29ebe97`; re-validation after fixes is **PASS WITH NOTES**.
+
+**Scope:** Phase A only. Phase B live orchestration, Operator manual trigger, partial-failure live log, and UI remain deferred.
 
 ### Acceptance Criteria
 
 | Criterion | Status | Evidence |
 |---|---|---|
-| Vercel Cron invokes `GET/POST /api/cron/weekly-cycle` with `Authorization: Bearer ${CRON_SECRET}`; missing/invalid secret → 401; no browser/Cliente exposure | **PASS WITH NOTES** | Schedule and path are correct in `vercel.json:1-5`. The route exports GET and POST, is dynamic, and sets `no-store` (`app/api/cron/weekly-cycle/route.ts:6-8,26-27`). Authentication is the first operation (`route.ts:10-12`); verification accepts Bearer only, hashes both values with SHA-256, and uses `timingSafeEqual` (`lib/orchestration/verify-cron-secret.ts:9-27`). Missing/wrong auth returns 401, while missing production config correctly returns the frozen 503. No Phase A manual action or Operator/Cliente UI was found. **Note:** the required valid/invalid/missing/prod-unset route/auth behavioral tests do not exist.
-| Runner enumerates active clients with profile + visual mode; skips ineligible clients with reason | **PASS WITH NOTES** | Server-only enumeration filters `neuramark_clients.active = true` and orders results (`lib/orchestration/list-eligible-clients-for-weekly-cycle.ts:1,15-22`), then classifies missing/load-failed profile and missing visual mode (`:25-34`). Skipped entries are returned before eligible clients are processed (`lib/orchestration/run-weekly-cycle-batch.ts:14-24`) and therefore receive no ledger row. **Note:** no behavioral eligibility tests exist; the frozen minimum explicitly requires eligible, missing-profile, and inactive coverage.
-| Canonical ISO Monday `weekStart`; same client/week is idempotent without duplicate spend; dry-run may re-plan | **PASS WITH NOTES** | Server authority uses the shared ISO Monday normalizer and schema (`lib/orchestration/resolve-week-start-for-cycle.ts:1-6`), and the route does not read caller `weekStart` (`route.ts:21-22`). The migration enforces unique `(client_id, week_start)` (`supabase/migrations/20260831110000_neuramark_weekly_cycle_runs.sql:3-20`). Acquire uses conflict-ignore insert followed by lookup of the existing row (`lib/orchestration/acquire-weekly-cycle-run.ts:15-32`), and re-runs update the same row's plan (`lib/orchestration/run-weekly-cycle-for-client.ts:15-18`; `persist-weekly-cycle-run-plan.ts:6-9`). **Note:** no first/second/concurrent acquire behavioral test proves the frozen semantics.
-| `dryRun: true` executes eligibility + ordered 10-step plan only, with no spend side effects, and returns a structured plan | **FAIL** | The route hard-codes `dryRun: true` (`route.ts:22`); planner order and refs match the frozen contract (`lib/contracts/weekly-cycle.ts:10-21`; `lib/orchestration/plan-weekly-cycle-steps.ts:13-22`). The per-client runner has no spend imports and rejects non-true `dryRun` (`lib/orchestration/run-weekly-cycle-for-client.ts:1-18`). However, SECURITY's binding test requirement says tests must **mock or spy spend modules and assert zero calls**. The only spend test reads source text and checks substrings (`lib/orchestration/weekly-cycle.test.ts:13-19`); it never executes the runner and never asserts zero calls. No test verifies plan persistence, re-plan behavior, or the runtime dry-run guard. This is a CLOSE blocker.
-| [SEC] Cron Route Handler is sole HTTP entry; orchestration is server-only; forbidden request fields rejected; no untrusted client authority | **FAIL** | The inspected orchestration modules use `import "server-only"` (`lib/orchestration/*.ts`, except the contract-designated pure resolver), and no alternate weekly-cycle HTTP/action entry was found. POST top-level forbidden fields are rejected (`route.ts:14-21`; `lib/contracts/weekly-cycle.ts:118-152`). But the shared handler only parses a body when `request.method === "POST"` (`route.ts:14-20`), despite GET/POST being frozen as aliases with identical auth and batch behavior. A GET request with a JSON body containing `clientId`, `weekStart`, or `dryRun` bypasses the forbidden-field gate and executes the batch. There is also no route test proving forbidden-field rejection or zero DB calls after auth failure.
+| Vercel Cron invokes `GET/POST /api/cron/weekly-cycle` with Bearer `CRON_SECRET`; invalid/missing → 401; no browser/Cliente exposure | **PASS** | `vercel.json:1-5` freezes Monday 06:00 UTC and the correct path. The route exports GET/POST aliases, `force-dynamic`, Node runtime, and `no-store` (`app/api/cron/weekly-cycle/route.ts:6-8,22-40`). Auth is the first action (`:26-27`). SHA-256 fixed-length digests and `timingSafeEqual` are used (`lib/orchestration/verify-cron-secret.ts:9-27`). Runtime tests cover valid, missing, wrong, and production-unset secret (`verify-cron-secret.test.ts:20-34`) and prove auth failure never invokes batch (`route.test.ts:32-46`). No alternate HTTP action or Phase A FE trigger was found. |
+| Enumerates active clients; profile + visual mode gate; ineligible clients skipped with reason | **PASS** | Server-only query filters `active = true` (`lib/orchestration/list-eligible-clients-for-weekly-cycle.ts:25-34`), defensively rejects inactive rows, then checks profile existence/load failure and visual mode (`:36-50`). Batch maps skipped entries before processing eligible clients, so skipped clients get no ledger row (`run-weekly-cycle-batch.ts:13-24`). Tests cover eligible, missing-profile, and inactive classification (`list-eligible-clients-for-weekly-cycle.test.ts:12-28`). |
+| Canonical ISO Monday `weekStart`; same client/week idempotent; dry-run may re-plan | **PASS** | Server week authority uses shared `normalizeToIsoMonday` plus schema (`resolve-week-start-for-cycle.ts:1-6`); the route does not consume caller week authority (`route.ts:29-35`). Migration uniquely constrains `(client_id, week_start)` (`supabase/migrations/20260831110000_neuramark_weekly_cycle_runs.sql:3-20`). Acquire performs conflict-ignore insert then existing-row lookup (`acquire-weekly-cycle-run.ts:15-35`). Tests prove first/second acquire and one winner across eight concurrent calls (`acquire-weekly-cycle-run.test.ts:41-62`). Runner test proves the same row plan is persisted/refreshed on CREATED and ALREADY_EXISTS (`run-weekly-cycle-for-client.test.ts:26-45`). |
+| `dryRun: true` executes eligibility + ordered 10-step plan only, no spend side effects, structured per-client plan | **PASS** | Route hard-codes `dryRun: true` (`route.ts:35`); planner defines the frozen ten-step order and string refs (`lib/contracts/weekly-cycle.ts:10-21`; `plan-weekly-cycle-steps.ts:13-22`). The runner has only acquire/persist/planner imports and rejects false before dependencies run (`run-weekly-cycle-for-client.ts:1-5,24-35`). Tests execute create/re-plan, persist twice, assert ten spend-seam spies remain at zero calls, and prove `dryRun: false` triggers no dependency (`run-weekly-cycle-for-client.test.ts:14-58`). Structural grep additionally forbids all frozen spend import families (`weekly-cycle.test.ts:13-19`). |
+| [SEC] Cron is sole System-cycle HTTP entry; server-only orchestration; forbidden request fields rejected; no untrusted client authority | **PASS** | All non-pure orchestration modules carry `import "server-only"`; the pure week resolver is the frozen exception (`weekly-cycle.test.ts:21-31`). The shared handler reads the body for both aliases and rejects frozen forbidden keys before resolving week or running batch (`route.ts:29-35`). Regression tests prove GET and POST forbidden bodies return 400 with zero batch calls (`route.test.ts:48-59`). Cron target selection remains exclusively server enumeration; no Phase A manual action or other weekly-cycle route exists. |
 
 ### Binding SECURITY / CONTRACT Conditions
 
-| Area | Status | Evidence / finding |
+| Area | Status | Evidence |
 |---|---|---|
-| Auth order, Bearer-only secret, timing-safe fixed-length compare, prod fail-closed, secret hygiene | **PASS (static)** | `app/api/cron/weekly-cycle/route.ts:10-12`; `lib/orchestration/verify-cron-secret.ts:9-27`. No logging of the secret/header was found. Runtime coverage required by CONTRACT is absent.
-| Phase A structural spend block and production plan-only precedence | **PASS (static)** | Route hard-codes `dryRun: true` (`route.ts:22`); per-client imports are limited to acquire/persist/planner (`run-weekly-cycle-for-client.ts:1-5`) and runtime rejects false (`:12-14`). No live spend modules, dynamic imports, provider adapters, new agents, FFmpeg, or worker enqueue were added.
-| Dry-run zero-call proof | **FAIL — blocker** | Required mock/spy zero-call assertion is absent; `lib/orchestration/weekly-cycle.test.ts:13-19` is only a source-string grep.
-| Server-only enumeration, eligibility, no ledger row for skipped clients | **PASS (static), untested** | `list-eligible-clients-for-weekly-cycle.ts:15-35`; `run-weekly-cycle-batch.ts:14-24`.
-| Unique ledger, concurrent acquire, re-plan existing row | **PASS (static), untested** | Unique constraint at migration `:16-19`; conflict-ignore acquire at `acquire-weekly-cycle-run.ts:17-31`; re-plan update at `persist-weekly-cycle-run-plan.ts:6-9`. The frozen first/second/concurrent behavior has no executable test.
-| Server-authoritative ISO Monday | **PASS** | `resolve-week-start-for-cycle.ts:1-6`; route `:22`. Query parameters are not consulted.
-| Forbidden request fields | **FAIL — blocker** | POST is guarded, but GET bodies are never parsed (`route.ts:14-21`), contrary to the frozen GET/POST alias behavior and the binding requirement that presence of forbidden authority fields returns 400.
-| Ledger RLS and zero policies | **PASS** | RLS enabled with no policy declarations in the new migration (`supabase/migrations/20260831110000_neuramark_weekly_cycle_runs.sql:34-35`). All new object names use `neuramark_`.
-| Minimal response and cache behavior | **PASS** | Batch response contains counts plus minimal per-client variants (`run-weekly-cycle-batch.ts:7-24`); route returns no full profile/step log and sets `Cache-Control: no-store` (`route.ts:8,23`).
-| Phase A scope / no-spend | **PASS** | No manual trigger, Operator UI, Cliente UI, IG publish, new agent/provider adapter, or live pipeline wiring appears in commits `54bfdbc` / `8828f73`.
+| Auth order, Bearer-only secret, fixed-length timing-safe compare, prod fail-closed, session cannot bypass | **PASS** | `route.ts:26-27`; `verify-cron-secret.ts:9-27`; runtime coverage at `verify-cron-secret.test.ts:20-34` and `route.test.ts:32-46`. |
+| Secret hygiene, logging redaction, minimal errors | **PASS** | No secret/header logging or response exposure exists; errors are frozen minimal envelopes. No query, cookie, `x-cron-secret`, or session bypass is implemented. |
+| Structural Phase A spend block and production dry-run precedence | **PASS** | Route hard-codes true (`route.ts:35`); runner type/runtime guard at `run-weekly-cycle-for-client.ts:7,28`; imports at `:1-5` contain no spend module. Source guard covers all forbidden families (`weekly-cycle.test.ts:13-19`). |
+| Executable zero-spend proof | **PASS** | Runner test executes both first-run and re-plan paths, asserts all ten named spend spies have zero calls, and rejects false before injected dependencies (`run-weekly-cycle-for-client.test.ts:14-58`). Together with structural import exclusion, Phase A has no reachable spend seam. |
+| Server enumeration, eligibility, sequential processing, skipped clients without ledger rows | **PASS** | Eligibility `:25-51`; sequential `for ... of` batch at `run-weekly-cycle-batch.ts:18-23`; eligibility test `:12-28`. |
+| Unique ledger, concurrent acquire, existing-row re-plan | **PASS** | Migration `:16-19`; acquire `:20-35`; concurrency test `acquire-weekly-cycle-run.test.ts:41-62`; persist/re-plan test `run-weekly-cycle-for-client.test.ts:26-45`. |
+| Server-authoritative ISO Monday; caller week ignored/rejected | **PASS** | Resolver `:1-6`; route `:29-35`; frozen forbidden-key contract `lib/contracts/weekly-cycle.ts:118-152`. |
+| Forbidden request fields for GET and POST | **PASS** | Shared body parse and gate at `route.ts:29-35`; both-method regression at `route.test.ts:48-59`. |
+| RLS enabled, zero policies, prefixed schema | **PASS** | Migration `supabase/migrations/20260831110000_neuramark_weekly_cycle_runs.sql:3-35` contains the prefixed table/index/constraint names, enables RLS, and defines no policies. |
+| Response minimalism and no-store | **PASS** | Minimal aggregate/client variants at `run-weekly-cycle-batch.ts:7-24`; `Cache-Control: no-store` at `route.ts:8,36`; no full profile or `step_log` in HTTP response. |
+| No manual/browser trigger; no Phase B or out-of-scope work | **PASS** | Search found only the cron HTTP route and internal orchestration. No Operator/Cliente UI, manual action, IG publish, new agent/provider, FFmpeg, live spend wiring, or changes to existing production tables were added. |
 
 ### Convention Compliance
 
-- Backend-only Phase A: no localization or PrimeReact work is required.
-- Supabase access remains server-side; the cron route has a concrete Vercel Cron consumer.
-- Database objects follow the `neuramark_` prefix and are delivered through a migration.
-- No browser Supabase SDK usage, client-side tokens, or current-user/session bypass was introduced.
+- Phase A is backend-only, so EN/ES and PrimeReact requirements do not apply yet.
+- Supabase access and secrets remain server-side; the endpoint has the concrete Vercel Cron consumer.
+- Database changes use a migration and `neuramark_` prefixes.
+- No Client Component, browser Supabase SDK, browser token, or current-user/session shortcut was introduced.
 
 ### Test Results
 
-| Command | Result |
-|---|---|
-| `npx tsx --test lib/contracts/weekly-cycle.test.ts lib/orchestration/weekly-cycle.test.ts` | **7 passed, 0 failed**. These cover schemas, forbidden-key helper, resolver source shape, server-only markers, and source-level spend-import absence. |
-| `npx tsc --noEmit` | **Failed due to broad pre-existing repository test/type errors** outside US-15.1. No US-15.1 file appeared in the reported diagnostics; this command is not a clean story-level signal. |
+```text
+npx tsx --test \
+  lib/contracts/weekly-cycle.test.ts \
+  lib/orchestration/weekly-cycle.test.ts \
+  lib/orchestration/verify-cron-secret.test.ts \
+  app/api/cron/weekly-cycle/route.test.ts \
+  lib/orchestration/list-eligible-clients-for-weekly-cycle.test.ts \
+  lib/orchestration/acquire-weekly-cycle-run.test.ts \
+  lib/orchestration/run-weekly-cycle-for-client.test.ts
+```
 
-The frozen Phase A minimum test matrix is not implemented: no `verify-cron-secret.test.ts`, cron route test, eligibility test, acquire/idempotency test, or executable per-client runner test exists.
+Result: **17 passed, 0 failed** across **7 suites**.
 
-### Gaps (what blocks PASS)
+Repository-wide `npx tsc --noEmit` was red during the initial validation because of broad pre-existing test/type errors outside US-15.1; no US-15.1 diagnostic appeared. The focused executable suite is green.
 
-1. **nextjs-backend:** make GET and POST apply the same forbidden-body-field gate, or explicitly reject GET bodies before batch execution. Add a route regression test showing forbidden GET/POST authority fields return 400 and do not call the batch.
-2. **nextjs-backend / integrations-engineer:** implement the frozen behavioral suites for auth (valid, missing, wrong, production unset, no DB/batch after auth failure), eligibility, first/second acquire, concurrent idempotency, per-client plan persistence/re-plan, and forbidden fields.
-3. **integrations-engineer:** replace or supplement the source grep with an executable dry-run test that mocks/spies the named spend seams and asserts zero calls, as required by SECURITY. Keep the structural grep as defense in depth.
+### Gaps
+
+None blocking Phase A CLOSE.
+
+### Notes
+
+1. Tests use dependency injection/in-memory doubles rather than a live Supabase database. The DB unique constraint plus conflict-ignore code is present, and concurrency semantics are covered at the unit boundary; live migration/E2E verification remains an integration concern.
+2. The zero-spend assertion uses named standalone spies while the stronger structural source test proves no spend module is imported. This combination satisfies the Phase A structural guard; Phase B must receive a new SECURITY/CONTRACT review before introducing actual spend dependencies.
+3. Malformed JSON is treated as an empty body. The frozen contract specifies forbidden-key behavior but no malformed-JSON error, so this is non-blocking.
 
 ### Scope Creep
 
-None found in commits `54bfdbc` and `8828f73`.
+None found in `54bfdbc`, `8828f73`, or `2658713`.
 
-### Recommended Next Actions (and which agent should take them)
+### Recommended Next Actions
 
-Return to **BUILD/FIX** with `nextjs-backend` for the route/auth/idempotency test matrix and GET forbidden-field fix, plus `integrations-engineer` for executable eligibility/runner/zero-spend tests. After an atomic fix commit, rerun **requirements-validator**. Do not advance to QA or Phase B while these Phase A blockers remain.
+Advance to **Phase A QA**. On QA approval, the product-owner may CLOSE Phase A and check the five Phase A acceptance criteria. Before any Phase B BUILD, freeze the Phase B CONTRACT delta and obtain the required SECURITY review and FE signoff.
