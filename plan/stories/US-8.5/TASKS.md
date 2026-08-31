@@ -233,14 +233,14 @@ All objects keep `neuramark_` prefix.
 ## Gates (orchestrator)
 
 - [x] SPEC-REVIEW.md (spec-guardian — **GAPS**)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md authored (nextjs-backend; **Reviewed by FE: N/A**)
+- [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
+- [x] CONTRACT.md authored (nextjs-backend; **Reviewed by FE: N/A**)
 - [ ] BUILD Phase A (media-pipeline-engineer + nextjs-backend)
 - [ ] BUILD Phase B (BE orchestrator + degrade/budget)
 - [ ] VALIDATION.md (requirements-validator) — note stitch → US-9.1 Phase B
 - [ ] QA.md (qa-engineer)
 
-**Status:** PREP. **Next:** SECURITY → CONTRACT.
+**Status:** CONTRACT frozen. **Next:** BUILD Phase A.
 
 ---
 

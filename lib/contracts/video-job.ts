@@ -47,6 +47,10 @@ export const videoJobErrorCodeSchema = z.enum([
   /** US-8.7 HeyGen fallback eligibility */
   "HEYGEN_FALLBACK_INELIGIBLE",
   "HEYGEN_CONFIG_MISSING",
+  /** US-8.5 Wan B-roll orchestrator */
+  "BROLL_REFERENCE_STILL_MISSING",
+  "BROLL_NOT_NEEDED",
+  "BROLL_PROVIDER_UNAVAILABLE",
 ]);
 
 export type VideoJobErrorCode = z.infer<typeof videoJobErrorCodeSchema>;
@@ -113,6 +117,26 @@ export const FORBIDDEN_VIDEO_JOB_AUTHORITY_KEYS = [
   "unit_cost_cents",
   "estimatedCostCents",
   "estimated_cost_cents",
+  /** US-8.5 — server-authored B-roll prompt / still; never client authority. */
+  "prompt",
+  "brollPrompt",
+  "broll_prompt",
+  "freeformPrompt",
+  "freeform_prompt",
+  "negativePrompt",
+  "negative_prompt",
+  "referenceImageAssetId",
+  "reference_image_asset_id",
+  "referenceStillAssetId",
+  "reference_still_asset_id",
+  "image",
+  "clipCount",
+  "clip_count",
+  "brollClipCount",
+  "broll_clip_count",
+  "duration",
+  "clipDurationSec",
+  "clip_duration_sec",
 ] as const;
 
 export const createTalkingHeadVideoJobSuccessSchema = z
@@ -381,4 +405,99 @@ export const heygenFallbackOverrideRowSchema = z
 
 export type HeygenFallbackOverrideRow = z.infer<
   typeof heygenFallbackOverrideRowSchema
+>;
+
+// ─── US-8.5 Wan B-roll orchestrator ─────────────────────────────────────────
+
+/**
+ * Operator create B-roll jobs request (US-8.5 Phase B).
+ * Server owns provider_key, prompts, reference still, clip count, duration.
+ */
+export const createBrollVideoJobsRequestSchema = z
+  .object({
+    reelScriptId: z.string().uuid(),
+    clientId: z.string().uuid(),
+  })
+  .strict();
+
+export type CreateBrollVideoJobsRequest = z.infer<
+  typeof createBrollVideoJobsRequestSchema
+>;
+
+export const createBrollVideoJobCreatedItemSchema = z
+  .object({
+    jobId: z.string().uuid(),
+    status: videoJobStatusSchema,
+    estimatedCostCents: z.number().int().nonnegative(),
+    beatIndex: z.number().int().nonnegative(),
+    attempt: z.number().int().min(1),
+  })
+  .strict();
+
+export type CreateBrollVideoJobCreatedItem = z.infer<
+  typeof createBrollVideoJobCreatedItemSchema
+>;
+
+export const createBrollVideoJobSkippedItemSchema = z
+  .object({
+    beatIndex: z.number().int().nonnegative(),
+    reasonCode: z.enum([
+      "BUDGET_EXCEEDED",
+      "PROVIDER_UNAVAILABLE",
+      "VALIDATION_ERROR",
+      "INTERNAL_ERROR",
+    ]),
+    messageKey: z.string().optional(),
+  })
+  .strict();
+
+export type CreateBrollVideoJobSkippedItem = z.infer<
+  typeof createBrollVideoJobSkippedItemSchema
+>;
+
+export const createBrollVideoJobsSuccessSchema = z
+  .object({
+    ok: z.literal(true),
+    jobs: z.array(createBrollVideoJobCreatedItemSchema),
+    skipped: z.array(createBrollVideoJobSkippedItemSchema),
+    createdCount: z.number().int().nonnegative(),
+    skippedCount: z.number().int().nonnegative(),
+    /** True when script does not need B-roll — no jobs created (not an error). */
+    skippedNoNeedsBroll: z.boolean(),
+  })
+  .strict();
+
+export type CreateBrollVideoJobsSuccess = z.infer<
+  typeof createBrollVideoJobsSuccessSchema
+>;
+
+export type CreateBrollVideoJobsResult =
+  | CreateBrollVideoJobsSuccess
+  | VideoJobMutationError;
+
+/** Preview total B-roll estimate before Operator confirms (optional Phase B). */
+export const previewBrollVideoJobsEstimateRequestSchema = z
+  .object({
+    reelScriptId: z.string().uuid(),
+    clientId: z.string().uuid(),
+  })
+  .strict();
+
+export const previewBrollVideoJobsEstimateSuccessSchema = z
+  .object({
+    ok: z.literal(true),
+    estimatedCostCents: z.number().int().nonnegative(),
+    unitCostCentsPerClip: z.number().int().nonnegative(),
+    clipCount: z.number().int().nonnegative(),
+    needsBroll: z.boolean(),
+    providerKey: z.literal("siliconflow_wan21_turbo").optional(),
+    blockedReasonKey: z.string().optional(),
+  })
+  .strict();
+
+export type PreviewBrollVideoJobsEstimateRequest = z.infer<
+  typeof previewBrollVideoJobsEstimateRequestSchema
+>;
+export type PreviewBrollVideoJobsEstimateSuccess = z.infer<
+  typeof previewBrollVideoJobsEstimateSuccessSchema
 >;
