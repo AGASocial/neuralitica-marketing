@@ -1502,11 +1502,14 @@
         "assembling": "Assembling…"
       },
       "failure": {
-        "staleTimeout": "Assembly timed out while processing."
+        "staleTimeout": "Assembly timed out while processing.",
+        "fingerprintMismatch": "Assembly inputs changed unexpectedly. Try assembling again."
       },
       "errors": {
         "inputsIncomplete": "Assembly inputs are incomplete for this Reel.",
         "facelessNoPrimary": "Faceless Reels need a completed primary video before assembly.",
+        "facelessWaitingForClips": "Faceless Reels need completed B-roll clips (or a primary video) before assembly.",
+        "facelessMissingVoiceover": "Faceless assembly needs a voiceover before continuing.",
         "missingAudio": "Primary video has no audio — generate a voiceover first.",
         "unauthenticated": "Please log in to continue.",
         "forbidden": "You do not have access to that.",
@@ -1523,6 +1526,8 @@
         "errors": {
           "inputsIncomplete": "Assembly inputs are incomplete for this Reel.",
           "facelessNoPrimary": "Faceless Reels need a completed primary video before assembly.",
+          "facelessWaitingForClips": "Faceless Reels need completed B-roll clips (or a primary video) before assembly.",
+          "facelessMissingVoiceover": "Faceless assembly needs a voiceover before continuing.",
           "missingAudio": "Primary video has no audio — generate a voiceover first.",
           "unauthenticated": "Please log in to continue.",
           "forbidden": "You do not have access to that.",

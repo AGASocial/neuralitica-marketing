@@ -24,6 +24,8 @@ export type AssemblyReassembleConfirmCopy = {
     forbiddenFields: string;
     inputsIncomplete: string;
     facelessNoPrimary: string;
+    facelessWaitingForClips: string;
+    facelessMissingVoiceover: string;
     missingAudio: string;
     internal: string;
   };
@@ -47,6 +49,12 @@ function messageForAssemblyError(
 ): string {
   if (messageKey === "scripts.assembly.errors.facelessNoPrimary") {
     return copy.errors.facelessNoPrimary;
+  }
+  if (messageKey === "scripts.assembly.errors.facelessWaitingForClips") {
+    return copy.errors.facelessWaitingForClips;
+  }
+  if (messageKey === "scripts.assembly.errors.facelessMissingVoiceover") {
+    return copy.errors.facelessMissingVoiceover;
   }
   if (messageKey === "scripts.assembly.errors.missingAudio") {
     return copy.errors.missingAudio;

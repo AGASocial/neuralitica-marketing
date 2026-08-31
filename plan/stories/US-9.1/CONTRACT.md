@@ -1,10 +1,10 @@
 Reviewed by FE (Phase A): yes — 2026-08-30 — nextjs-frontend.  
-Reviewed by FE (Phase B): **pending** — nextjs-frontend (Assemble enablement + faceless readiness DTO).
+Reviewed by FE (Phase B): **approved** — 2026-08-31 — nextjs-frontend (Assemble enablement + faceless readiness DTO).
 
 # API Contract — US-9.1 Assemble final 9:16 Reel
 
 **Story:** US-9.1  
-**Status:** Phase A frozen — 2026-08-30 (Reviewed by FE). **Phase B amendment frozen — 2026-08-31** (FE Phase B review pending).  
+**Status:** Phase A frozen — 2026-08-30 (Reviewed by FE). **Phase B amendment frozen — 2026-08-31** (Reviewed by FE — approved).  
 **Security:** `plan/stories/US-9.1/SECURITY.md` (Phase A + Phase B APPROVE WITH CONDITIONS — 10 Phase B conditions reconciled below)  
 **Spec review:** `plan/stories/US-9.1/SPEC-REVIEW.md` (Phase A) · `plan/stories/US-9.1/SPEC-REVIEW-PHASE-B.md` (Phase B GAPS — resolved by § Phase B)  
 **Pattern:** `plan/stories/US-8.4/CONTRACT.md` (poll seam, Operator DTOs, forbidden keys, migration SQL verbatim)  
@@ -847,7 +847,7 @@ Assembly panel on `/operator/scripts` expand row is implementable against this c
 **Sprint label:** `US-9.1-B`  
 **Sources:** `PHASE-B.md` B1–B14 · `SPEC-REVIEW-PHASE-B.md` · `SECURITY.md` Phase B (10 conditions) · US-8.5 CONTRACT § US-9.1 Phase B handoff  
 **Phase A floors remain binding** — Phase B extends; does not weaken spawn, SSRF, Operator gate, IDOR, or DTO closure.  
-**Reviewed by FE (Phase B):** **pending** — nextjs-frontend must sign Assemble enablement + readiness fields before Phase B BUILD ships FE.
+**Reviewed by FE (Phase B):** **approved** — 2026-08-31 — nextjs-frontend.
 
 ### SECURITY Phase B reconciliation (10 conditions)
 
@@ -1320,14 +1320,32 @@ Same USER_STORIES § US-9.1 AC (do **not** add checkboxes):
 
 ## Reviewed by FE (Phase B)
 
-**Reviewed by FE:** **pending** — nextjs-frontend
+**Reviewed by FE:** **approved** — 2026-08-31 (nextjs-frontend)
 
-Expected FE signoff checklist:
+Phase B assembly on `/operator/scripts` is implementable against this amendment:
 
-- [ ] Enable **Assemble** when faceless + server `canAssemble` (broll+VO or primary degrade) — not primary-only
-- [ ] No client asset ids / clip lists on mutate
-- [ ] Reuse existing preview; map new `messageKey`s EN+ES
-- [ ] Confirm readiness DTO shape (batch null-job vs companion flag)
+- **Surface:** Same `OperatorAssemblyPanel` on expand row — **no new route**, no B-roll strip / stitch preview UI.
+- **Assemble enablement:** FE BUILD must stop treating primary-completed as the sole gate for faceless. Enable **Assemble Reel** when server `canAssemble === true` (faceless stitch = ≥1 owned broll + voiceover, **or** primary degrade). Keep `assembleReelForScript({ reelScriptId })` only — never send clip lists / asset ids.
+- **Preview:** Reuse existing `<video src="/api/media/assets/{outputMediaAssetId}">` when `completed` — same authenticated serve as Phase A.
+- **i18n (landed at signoff):** EN+ES `scripts.assembly.errors.facelessWaitingForClips`, `facelessMissingVoiceover`; `scripts.assembly.failure.fingerprintMismatch`. Prefer **Video sin rostro** / **Ensamblado** in ES product copy.
+- **Out of scope:** No Cliente routes; no FFmpeg / `broll_asset_ids` / `path_tag` in UI.
+
+### FE BUILD constraints (binding for thin FE slice)
+
+| # | Constraint |
+|---|------------|
+| 1 | **Server-authoritative readiness.** Today `OperatorAssemblyPanel` uses `canAssembleInitial = job === null && hasPrimaryVideo` (Phase A). Phase B FE must prefer `job?.canAssemble === true` and **not** invent readiness from client-side broll/video job maps. |
+| 2 | **No-job readiness shape.** Fixture with `jobId: null` does **not** match current `operatorAssemblyJobDtoSchema` (`jobId` uuid required). **BE must ship one of:** (a) companion `assemblyReadinessByReelScriptId` / script-row `canAssemble` when map entry is `null`, **or** (b) nullable-job readiness DTO Zod that FE can parse. FE will not guess clip completeness. |
+| 3 | **Talking-head fallback.** Primary-only local gate may remain as convenience **only** when `modalidad !== faceless` **or** until readiness DTO lands — never block faceless stitch when server says `canAssemble`. |
+| 4 | **Poll merge.** Continue preserving `canAssemble` when merging `GET /api/assembly-jobs/[jobId]` (poll omits it). |
+| 5 | **Optional DTO:** `assemblyPathTag?` on batch DTO is display-optional — FE does not require it for enablement. |
+
+Signoff checklist:
+
+- [x] Enable **Assemble** when faceless + server `canAssemble` (broll+VO or primary degrade) — not primary-only (**FE BUILD**)
+- [x] No client asset ids / clip lists on mutate
+- [x] Reuse existing preview; map new `messageKey`s EN+ES (**i18n landed at signoff**)
+- [x] Confirm readiness DTO shape (batch null-job vs companion flag) — **prefer companion / nullable readiness; see constraint #2**
 
 ---
 
@@ -1335,6 +1353,7 @@ Expected FE signoff checklist:
 
 | Date | Change |
 |------|--------|
+| 2026-08-31 | **Reviewed by FE (Phase B)** — approved; i18n messageKeys; FE BUILD constraints on `canAssemble` readiness DTO |
 | 2026-08-31 | **Phase B freeze** — faceless broll resolve (ASC, max 8); persist `broll_asset_ids` + `assembly_path_tag`; fingerprint five-part + `path_tag`; `buildBrollConcatArgs` concat demuxer; degrade/voiceover/cold-open bounds; Zod/test/FE readiness; SECURITY 10 conditions. FE Phase B review **pending** |
 | 2026-08-30 | Reviewed by FE — nextjs-frontend signoff; BUILD unblocked for FE slice |
 | 2026-08-30 | Initial freeze — assembly pipeline DDL, orchestrator, worker seam, FFmpeg Phase A graph, DTOs, media serve; resolves SPEC-REVIEW + SECURITY gaps |

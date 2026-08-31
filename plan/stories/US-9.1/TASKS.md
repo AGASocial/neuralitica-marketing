@@ -84,16 +84,17 @@
 
 **Consumer:** `/operator/scripts` assembly panel (existing).
 
-- [ ] Enable **Assemble Reel** when `modalidad === faceless` and server/batch signals inputs complete (≥1 completed broll **or** completed primary for degrade) — today gated on primary only.
-- [ ] Reuse existing **preview player** for stitched `assembled_reel` — **no** new stitch UI / B-roll strip.
-- [ ] EN/ES: only if new `messageKey`s land in CONTRACT (e.g. faceless waiting for clips); otherwise no copy churn.
-- [ ] No Cliente routes · no FFmpeg / clip-list details in UI.
+- [ ] Enable **Assemble Reel** when `modalidad === faceless` and server/batch signals inputs complete (≥1 completed broll **or** completed primary for degrade) — today gated on primary only. (**FE BUILD** — CONTRACT Reviewed by FE approved; see FE BUILD constraints)
+- [x] Reuse existing **preview player** for stitched `assembled_reel` — **no** new stitch UI / B-roll strip. (confirmed at FE signoff — no new route)
+- [x] EN/ES: `facelessWaitingForClips`, `facelessMissingVoiceover`, `failure.fingerprintMismatch` (signoff)
+- [x] No Cliente routes · no FFmpeg / clip-list details in UI. (confirmed at FE signoff)
+- [x] **CONTRACT Phase B Reviewed by FE** — approved 2026-08-31
 
 ### Backend / API (nextjs-backend) — Phase B
 
 **Concrete consumers:** FE Assemble enablement · worker stitch path · downstream US-9.2/10.1/11.1 (unchanged output shape).
 
-- [x] CONTRACT Phase B amendment: faceless resolve rules, fingerprint shape, error codes, concat seam, fixtures. (`CONTRACT.md` § Phase B — 2026-08-31; FE Reviewed pending)
+- [x] CONTRACT Phase B amendment: faceless resolve rules, fingerprint shape, error codes, concat seam, fixtures. (`CONTRACT.md` § Phase B — 2026-08-31; Reviewed by FE approved)
 - [ ] Extend **`resolveAssemblyInputs`** (or sibling): for faceless, load up to **8** completed owned `asset_role = broll` outputs ordered by job **`created_at ASC`**; talking-head path unchanged (ignore broll).
 - [ ] Zero completed broll → degrade to Phase A primary if present, else `ASSEMBLY_INPUTS_INCOMPLETE`.
 - [ ] Extend **`input_fingerprint`** with ordered broll asset ids + path tag (`primary` vs `broll_stitch`) — CONTRACT exact string.

@@ -1502,11 +1502,14 @@
         "assembling": "Ensamblando…"
       },
       "failure": {
-        "staleTimeout": "El ensamblado expiró mientras se procesaba."
+        "staleTimeout": "El ensamblado expiró mientras se procesaba.",
+        "fingerprintMismatch": "Los insumos del ensamblado cambiaron de forma inesperada. Intenta ensamblar de nuevo."
       },
       "errors": {
         "inputsIncomplete": "Faltan insumos de ensamblado para este Reel.",
         "facelessNoPrimary": "Los Reels faceless necesitan un video primario completado antes del ensamblado.",
+        "facelessWaitingForClips": "Los Reels de video sin rostro necesitan clips B-roll completados (o un video primario) antes del ensamblado.",
+        "facelessMissingVoiceover": "El ensamblado de video sin rostro necesita un voiceover antes de continuar.",
         "missingAudio": "El video primario no tiene audio — genera un voiceover primero.",
         "unauthenticated": "Inicia sesión para continuar.",
         "forbidden": "No tienes acceso a eso.",
@@ -1523,6 +1526,8 @@
         "errors": {
           "inputsIncomplete": "Faltan insumos de ensamblado para este Reel.",
           "facelessNoPrimary": "Los Reels faceless necesitan un video primario completado antes del ensamblado.",
+          "facelessWaitingForClips": "Los Reels de video sin rostro necesitan clips B-roll completados (o un video primario) antes del ensamblado.",
+          "facelessMissingVoiceover": "El ensamblado de video sin rostro necesita un voiceover antes de continuar.",
           "missingAudio": "El video primario no tiene audio — genera un voiceover primero.",
           "unauthenticated": "Inicia sesión para continuar.",
           "forbidden": "No tienes acceso a eso.",

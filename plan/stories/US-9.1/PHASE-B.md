@@ -89,7 +89,7 @@ See [`TASKS.md`](./TASKS.md) § Phase B checklist.
 
 - [x] SPEC-REVIEW.md amendment (spec-guardian — S3.M10 B-roll stitch + editing_hints partial)
 - [x] SECURITY.md amendment (security-architect — concat injection, multi-asset IDOR, tenancy)
-- [x] CONTRACT.md Phase B section (nextjs-backend) — FE Reviewed **pending**
+- [x] CONTRACT.md Phase B section (nextjs-backend) — Reviewed by FE **approved** (2026-08-31)
 - [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend)
 - [ ] VALIDATION.md Phase B (requirements-validator)
 - [ ] QA.md Phase B (qa-engineer)
