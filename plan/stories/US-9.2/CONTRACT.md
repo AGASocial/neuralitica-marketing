@@ -1,15 +1,18 @@
-Reviewed by FE: yes — 2026-08-30 — nextjs-frontend.
+Reviewed by FE: yes — 2026-08-30 — nextjs-frontend (Phase A).  
+**Phase B — Reviewed by FE: pending** — nextjs-frontend (Operator `coverFrameSec` InputNumber + Apply/Re-brand wire).
 
 # API Contract — US-9.2 Add subtitles, logo, and cover
 
 **Story:** US-9.2  
-**Status:** Frozen — 2026-08-30 (Reviewed by FE: yes — 2026-08-30 — nextjs-frontend)  
-**Security:** `plan/stories/US-9.2/SECURITY.md` (APPROVE WITH CONDITIONS — reconciled below)  
-**Spec review:** `plan/stories/US-9.2/SPEC-REVIEW.md` (GAPS — resolved by this contract)  
+**Status:** Phase A frozen — 2026-08-30 · **Phase B section frozen — 2026-08-31** (Reviewed by FE: **pending** — BUILD blocked until FE sign-off)  
+**Security:** `plan/stories/US-9.2/SECURITY.md` (Phase A + Phase B APPROVE WITH CONDITIONS — 8 Phase B conditions reconciled in § Phase B)  
+**Spec review:** `plan/stories/US-9.2/SPEC-REVIEW.md` (Phase A GAPS closed) · `plan/stories/US-9.2/SPEC-REVIEW-PHASE-B.md` (**ALIGNED**)  
+**Phase B prep:** `plan/stories/US-9.2/PHASE-B.md` (PO B1–B15)  
 **Pattern:** `plan/stories/US-9.1/CONTRACT.md` (extends assembly pipeline; second-pass branding on Fly worker)  
-**Depends on:** US-9.1 ✅ assembled base + worker poll seam · US-5.1 ✅ `on_screen_text` beats · US-5.2 ✅ beat line bounds · US-2.2 ✅ Ficha viva `/profile` · US-3.3 ✅ `validateAndPrepareMediaUpload` · US-14.5 ✅ `requireOperator()` / `requireActive()`  
+**Depends on:** US-9.1 ✅ assembled base + worker poll seam · US-5.1 ✅ `on_screen_text` + `voiceover_text` · US-5.2 ✅ beat line bounds + `countVoiceoverWords` tokenizer · US-9.3 Phase A ✅ VO audio (timestamps **not** required) · US-2.2 ✅ Ficha viva `/profile` · US-3.3 ✅ `validateAndPrepareMediaUpload` · US-14.5 ✅ `requireOperator()` / `requireActive()`  
 **ADR:** `docs/adr/0003-worker-flyio-ffmpeg.md` — Vercel orchestrator INSERT + enqueue; Fly FFmpeg + branding status writes  
-**Feature branch:** `feature/US-9.2-subtitles-logo-cover`  
+**Feature branch (Phase A):** `feature/US-9.2-subtitles-logo-cover` (merged)  
+**Feature branch (Phase B):** `feature/US-9.2-phase-b-subtitle-cover` · sprint `US-9.2-B`  
 **Error envelope style:** same class as US-9.1 / US-8.4 (`ok: true` vs `{ ok: false, error: { code, fields?, messageKey? } }`)
 
 **This document is CONTRACT ONLY.** Zod mirrors live in `lib/contracts/branding-job.ts` (BUILD) and extensions to `lib/contracts/media-assets.ts`, `lib/contracts/assembly-job.ts`, `lib/contracts/profile.ts`. Extensions to `lib/assembly/**` and worker modules are specified here and applied during BUILD.
@@ -43,7 +46,7 @@ Reviewed by FE: yes — 2026-08-30 — nextjs-frontend.
 
 | Topic | SECURITY condition | **Frozen in this contract** |
 |-------|-------------------|----------------------------|
-| Branding trigger input | `{ assemblyJobId, subtitlesEnabled?, logoEnabled? }` only | § `applyBrandingForAssembly` · § Forbidden request keys |
+| Branding trigger input | Phase A: `{ assemblyJobId, subtitlesEnabled?, logoEnabled? }` · **Phase B:** optional **`coverFrameSec?`** numeric `0–45` (SECURITY Phase B supersedes Phase A forbid on apply) | § `applyBrandingForAssembly` · § Phase B · § Forbidden request keys |
 | Operator gate | `requireOperator("handler")` first on apply/re-brand | § Orchestrator step 1 · § branded video serve |
 | Cliente gate | `requireActive("handler")` on logo + defaults | § Logo Server Actions · § `updateAssemblyConfigDefaults` |
 | Assembly tenancy | `(assemblyJobId, client_id)` + `status = completed` → 404 | § Orchestrator step 2 |
@@ -73,12 +76,12 @@ Reviewed by FE: yes — 2026-08-30 — nextjs-frontend.
 
 | Phase | Scope | Closes |
 |-------|-------|--------|
-| **A (US-9.2 BUILD — ship first)** | DDL (`logo_asset_id`, `assembly_config`, branding columns, `client_logo` / `cover_frame` enums); logo upload/remove + `updateAssemblyConfigDefaults` on Ficha; branding worker pass (ASS burn-in + logo overlay + cover @ 1s); auto-chain after assembly `completed`; Operator branding panel + toggles; idempotency; `[SEC]` upload + subtitle sanitize; mobile safe-zone typography | USER_STORIES § US-9.2 AC rows |
-| **B (follow-up BUILD slice — explicit PO pull-in)** | VO-proportional beat timing from `voiceover_text`; Operator per-reel `coverFrameSec` override on manual apply; bundled second font weight; preview thumbnail strip | SPEC polish — not required for AC closure |
+| **A (US-9.2 BUILD — CLOSED)** | DDL (`logo_asset_id`, `assembly_config`, branding columns, `client_logo` / `cover_frame` enums); logo upload/remove + `updateAssemblyConfigDefaults` on Ficha; branding worker pass (ASS burn-in + logo overlay + cover @ 1s); auto-chain after assembly `completed`; Operator branding panel + toggles; idempotency; `[SEC]` upload + subtitle sanitize; mobile safe-zone typography | USER_STORIES § US-9.2 AC rows (all five remain **[x]**) |
+| **B (US-9.2-B — this amendment)** | **Only:** (1) VO-proportional beat timing from `voiceover_text` word partitions (fallback equal split); (2) Operator per-reel optional **`coverFrameSec`** on manual Apply / Re-brand (Zod `0–45`, seek clamp). **Out of this slice (further defer):** bundled second font weight · preview thumbnail strip · Cliente Ficha `coverFrameSec` UI · TTS/ASR timestamps | Phase A deferred S3.M10 polish only — **no** new USER_STORIES AC checkboxes |
 
-**VALIDATION note (binding):** Phase A closes USER_STORIES § US-9.2 AC and completes the **subtitles/logo/cover** slice deferred from US-9.1 partial S3.M10 closure. **VALIDATION.md** must record remaining S3.M10 items: US-9.1 Phase B B-roll/`editing_hints`, weekly auto-brand (ADR-0001), VO-synced subtitle timing (US-9.2 Phase B).
+**VALIDATION note (binding):** Phase A closes USER_STORIES § US-9.2 AC and completes the **subtitles/logo/cover** slice deferred from US-9.1 partial S3.M10 closure. Phase B VALIDATION must re-verify **[SEC]** sanitization + cover bounds on the VO-timing / Operator-override path, and mark the two Phase A deferrals (**VO-synced timing**, **Operator `coverFrameSec`**) **closed**. Remaining S3.M10 elsewhere: weekly auto-brand (ADR-0001), further font/thumbnail polish.
 
-**Partial narrative closure:** Phase A subtitle timing uses **equal beat split** from `target_duration_sec` only — **not** VO word-align. VALIDATION records this explicitly against USER_STORIES BE owner row wording.
+**Partial narrative closure:** Phase A subtitle timing uses **equal beat split** from `target_duration_sec` only. Phase B labels timing **VO-proportional beat timing from `voiceover_text`** — **not** TTS lip/word sync, **not** measured audio alignment. VALIDATION must not claim true A/V word sync.
 
 ---
 
@@ -109,7 +112,7 @@ US-9.2 ships a **second-pass FFmpeg branding pipeline** on US-9.1 **`assembled_r
 **Forbidden surfaces (BUILD veto):**
 
 - Any Route Handler / Server Action that UPDATEs `branding_status`, `output_media_asset_id`, `cover_media_asset_id`, or `pre_branding_output_media_asset_id` from request JSON.
-- Client-supplied `onScreenText`, `logoAssetId`, `coverFrameSec` (manual trigger), URLs, `brandingConfig`, `brandingFingerprint`, `status`, `force`, `skipIdempotency`.
+- Client-supplied `onScreenText`, `logoAssetId`, URLs, `brandingConfig`, `brandingFingerprint`, `status`, `force`, `skipIdempotency`, beat timings, VO text, paths, fonts. **Phase B exception:** optional numeric **`coverFrameSec`** on Operator `applyBrandingForAssembly` only (Zod `0–45`) — see § Phase B.
 - FFmpeg `spawn` / `exec` on Vercel Route Handlers or Server Actions.
 - HTTP(S) `fetch` of asset bytes in `lib/assembly/**` branding path.
 - Raw beat text or unsanitized strings in FFmpeg argv or `-drawtext` with interpolated user strings.
@@ -281,6 +284,7 @@ export const brandingConfigSnapshotSchema = assemblyConfigSchema.extend({
 **Fingerprint (server-only):**
 
 ```ts
+// Phase A formula — **superseded by Phase B** (§ Phase B — voiceoverTimingHash + fingerprint delta)
 branding_fingerprint = sha256(
   preBrandingOutputMediaAssetId + "|" +
   stableStringify(branding_config) + "|" +
@@ -288,15 +292,18 @@ branding_fingerprint = sha256(
 ).hex(); // 64 lowercase hex chars
 ```
 
+**Phase B:** append `|` + `branding_config.voiceoverTimingHash` (see § Phase B). Snapshot gains `voiceoverTimingHash`.
+
 | Scenario | Behavior |
 |----------|----------|
 | `branding_status = completed` with same fingerprint on same row | Return `{ ok: true, assemblyJobId, brandingStatus: "completed", idempotent: true, outputMediaAssetId, coverMediaAssetId }` — **no** duplicate FFmpeg |
 | `queued` / `processing` branding on same row | Return `{ ok: true, idempotent: true, inFlight: true }` — **no** duplicate enqueue |
 | Prior branding **`failed`** for same fingerprint | **Allow** re-run — Operator **Re-brand** |
 | `on_screen_text` / toggle / logo FK change | New `subtitleSourceHash` or config → new fingerprint → re-brand allowed |
+| **Phase B:** VO tokens change | New `voiceoverTimingHash` → new fingerprint → re-brand allowed |
 | Partial unique index violation on concurrent complete | Loser treats as idempotent read of winner |
 
-**Client cannot supply:** `brandingFingerprint`, `brandingConfig`, `preBrandingOutputMediaAssetId`, `force`, `skipIdempotency`.
+**Client cannot supply:** `brandingFingerprint`, `brandingConfig`, `preBrandingOutputMediaAssetId`, `force`, `skipIdempotency`, `voiceoverTimingHash`, `subtitleSourceHash`.
 
 ---
 
@@ -391,9 +398,9 @@ export async function createBrandingJobForAssembly(input: {
 | 1 | If `source = operator_manual`: `requireOperator("handler")` — resolve `clientId`. If `auto_chain`: caller already verified worker/orchestrator context; load job unscoped then verify tenancy |
 | 2 | Load assembly `WHERE id = $assemblyJobId AND client_id = $clientId AND status = 'completed'` — missing/incomplete → **`NOT_FOUND`** (404) |
 | 3 | Require `output_media_asset_id IS NOT NULL` |
-| 4 | Load linked script `on_screen_text`, `target_duration_sec` server-side |
+| 4 | Load linked script `on_screen_text`, `target_duration_sec` server-side (**Phase B:** also `voiceover_text`) |
 | 5 | Resolve client defaults from `neuramark_business_profiles.assembly_config` (or server defaults) |
-| 6 | Merge Operator overrides: `subtitlesEnabled ?? defaults.subtitlesEnabled`, `logoEnabled ?? defaults.logoEnabled`; **`coverFrameSec`** always from client defaults snapshot (Phase A — no Operator override) |
+| 6 | Merge Operator overrides: `subtitlesEnabled ?? defaults.subtitlesEnabled`, `logoEnabled ?? defaults.logoEnabled`; **`coverFrameSec`**: Phase A = client defaults only; **Phase B** = Operator override when provided on `operator_manual`, else defaults (auto-chain never takes request cover) |
 | 7 | `resolveSubtitleBeats` + `sanitizeSubtitleBeats` — on sanitize fail → return error **`SUBTITLE_SANITIZE_FAILED`** (manual) or mark branding **`failed`** (auto-chain — CONTRACT: same error path) |
 | 8 | Compute effective burn-in: `subtitlesEnabled && sanitizedBeats.length > 0` |
 | 9 | Resolve logo: when `logoEnabled`, read profile `logo_asset_id`; NULL → skip overlay (no error) |
@@ -411,7 +418,8 @@ export async function createBrandingJobForAssembly(input: {
 export async function applyBrandingForAssembly(
   input: ApplyBrandingForAssemblyRequest,
 ): Promise<ApplyBrandingForAssemblyResult>;
-// Request: { assemblyJobId: uuid, subtitlesEnabled?: boolean, logoEnabled?: boolean } strict
+// Phase A: { assemblyJobId, subtitlesEnabled?, logoEnabled? } strict
+// Phase B: + optional coverFrameSec? (number 0–45) — see § Phase B — Trigger schema amend
 ```
 
 Scan raw input with **`findForbiddenBrandingKeys`** before Zod parse → **`FORBIDDEN_FIELDS`**.
@@ -611,6 +619,8 @@ export function extractCoverFrameArgs(input: {
 
 `-ss` value from **`branding_config.coverFrameSec`** (numeric, pre-validated). Default **1.0**.
 
+**Phase B:** clamp seek via `clampCoverSeekSec` to `[0, max(0, durationSec - 0.05)]` before building args — see § Phase B — Cover seek clamp.
+
 ---
 
 ## Logo upload / remove — Cliente Server Actions
@@ -762,14 +772,17 @@ Add `"client_logo"` to `mediaUploadAssetTypeSchema`.
 
 **File:** `lib/assembly/find-forbidden-branding-keys.ts`
 
+**Phase A list (historical).** **Phase B supersedes:** remove `coverFrameSec` / `cover_frame_sec` from forbidden; add VO/timing/path/hash keys — canonical list in § Phase B — Forbidden keys amend.
+
 ```ts
+// Phase A snapshot — do not implement as-is after Phase B BUILD
 export const FORBIDDEN_BRANDING_AUTHORITY_KEYS = [
   "onScreenText",
   "on_screen_text",
   "logoAssetId",
   "logo_asset_id",
-  "coverFrameSec",
-  "cover_frame_sec",
+  "coverFrameSec", // Phase B: REMOVED from forbidden — allowed as Zod number on apply
+  "cover_frame_sec", // Phase B: REMOVED from forbidden
   "coverMediaAssetId",
   "cover_media_asset_id",
   "preBrandingOutputMediaAssetId",
@@ -931,35 +944,497 @@ Logo upload errors reuse `mediaUploadErrorCodeSchema` from US-3.3 where applicab
 
 - **US-9.1** primary assembly re-run
 - **Soft subtitles** / WebVTT sidecar
-- **STT / ASR** subtitle generation
-- **VO-synced beat timing** (Phase B)
-- **Custom font upload** (Phase B)
-- **Operator `coverFrameSec` override** on manual apply (Phase B)
+- **STT / ASR** subtitle generation · **TTS / provider word-level timestamps**
+- **Custom / second font weight** / font upload — **further defer** (not US-9.2-B)
+- **Preview thumbnail strip** — **further defer** (not US-9.2-B)
+- **Cliente `/profile` `coverFrameSec` UI** — Operator override only in Phase B; client default stays Zod **1.0**
 - **Cliente** branded video preview (US-11.1)
 - **US-10.1** QA agent body · **US-11.x** approval UI
 - **Weekly auto-branding cron** (integrations-engineer / ADR-0001)
 - **System placeholder watermark** when logo missing
 - **Live FFmpeg in CI** — args builder unit tests + mocked spawn only
 - **`branding_status = skipped` emission** in Phase A auto-chain
+- **New story ID** — Phase B remains **US-9.2** / sprint `US-9.2-B`
+
+**Phase B pulls in (see § Phase B below):** VO word-partition beat timing · Operator optional `coverFrameSec` on Apply / Re-brand.
 
 ---
 
-## Reviewed by FE
+## Reviewed by FE (Phase A)
 
 **Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend.
 
 **Verdict:** Accept — DTOs, Server Actions, poll extension, and surface routing are implementable against existing `/profile` and `/operator/scripts` patterns.
 
-**BUILD notes (FE):**
+**BUILD notes (FE) — Phase A (shipped):**
 
-- **Cliente `/profile`:** Add **Marca / Brand** section below interview sections in `LivingProfileView` / new `ProfileBrandingSection` client component — **outside** Ficha edit/save chrome (immediate mutations like `AvatarReferencesSection`). Hidden `<input type="file">` + Button upload; `FormData` → `uploadClientLogo`; `removeClientLogo` with `ConfirmDialog`; `InputSwitch` toggles call `updateAssemblyConfigDefaults` on change. Logo preview via `branding.logoPreviewUrl`. Render only when `result.exists === true`. Do **not** expose `coverFrameSec` in Cliente UI (Phase A — server default only).
-- **Operator `/operator/scripts`:** Extend `OperatorAssemblyPanel` (or sibling block in same expand row) with branding status `Tag`, `Checkbox` toggles seeded from `job.brandingConfig ?? { subtitlesEnabled: true, logoEnabled: true }`, **Apply branding** / **Re-brand** via `applyBrandingForAssembly({ assemblyJobId, subtitlesEnabled, logoEnabled })`, Re-brand confirm dialog mirroring `AssemblyReassembleConfirmDialog`. Preview `<video>` src rules per § Batch DTO; pending banner when assembly `completed` and branding null/queued. **Download cover** as link to `/api/media/assets/{coverMediaAssetId}` when set.
+- **Cliente `/profile`:** Add **Marca / Brand** section below interview sections in `LivingProfileView` / new `ProfileBrandingSection` client component — **outside** Ficha edit/save chrome (immediate mutations like `AvatarReferencesSection`). Hidden `<input type="file">` + Button upload; `FormData` → `uploadClientLogo`; `removeClientLogo` with `ConfirmDialog`; `InputSwitch` toggles call `updateAssemblyConfigDefaults` on change. Logo preview via `branding.logoPreviewUrl`. Render only when `result.exists === true`. Do **not** expose `coverFrameSec` in Cliente UI (Phase A — server default only; **Phase B still no Cliente cover control**).
+- **Operator `/operator/scripts`:** Extend `OperatorAssemblyPanel` (or sibling block in same expand row) with branding status `Tag`, `Checkbox` toggles seeded from `job.brandingConfig ?? { subtitlesEnabled: true, logoEnabled: true }`, **Apply branding** / **Re-brand** via `applyBrandingForAssembly({ assemblyJobId, subtitlesEnabled, logoEnabled })`, Re-brand confirm dialog mirroring `AssemblyReassembleConfirmDialog`. Preview `<video>` src rules per § Batch DTO; pending banner when assembly `completed` and branding null/queued. **Download cover** as link to `/api/media/assets/{coverMediaAssetId}` when set. **Phase B:** add cover `InputNumber` — see § Phase B — FE enablement.
 - **Poll:** Extend `operatorAssemblyJobStatusDtoSchema` + `mergePolledStatus` in `OperatorAssemblyPanel`; poll while assembly **or** branding in-flight (`queued`/`processing`); reuse `ASSEMBLY_JOB_POLL_INTERVAL_MS_DEFAULT`.
 - **Types:** Import from `lib/contracts/profile` (`branding` block), `lib/contracts/assembly-job` (extended DTO), `lib/contracts/branding-job` (`assemblyConfigSchema` for toggle types only).
 - **i18n:** `profile.branding.*`, `scripts.branding.*` EN + ES; map `brandingFailureReason` messageKeys (e.g. `scripts.branding.failure.subtitleSanitize`) like assembly failure reasons.
 - **Out of scope:** Cliente branded video player; FFmpeg details; storage keys in UI.
 
-**Disputes:** None blocking BUILD.
+**Disputes:** None blocking Phase A BUILD.
+
+---
+
+# Phase B — VO-proportional beat timing + Operator `coverFrameSec`
+
+**Status:** Frozen — 2026-08-31 (BE authored) · **Reviewed by FE: pending**  
+**Sprint:** `US-9.2-B` · branch `feature/US-9.2-phase-b-subtitle-cover`  
+**Sources:** `PHASE-B.md` (B1–B15) · `SPEC-REVIEW-PHASE-B.md` (ALIGNED) · `SECURITY.md` Phase B (8 conditions)  
+**DB:** **None** — reuse `assembly_config` / `branding_config` JSON (`coverFrameSec` already present).  
+**Phase A floors:** Remain binding. Phase B **extends**; does not weaken sanitizer, spawn, owned-asset, or Operator-gate rules.
+
+**Acceptance boundary (narrow — binding):** Phase B ships **only** VO word-partition subtitle timing + Operator optional `coverFrameSec`. **Further defer (not US-9.2-B):** second font weight · preview thumbnail strip · Cliente Ficha cover UI · TTS/ASR timestamps.
+
+**Terminology (Phase B):** Prefer **Cover frame / frame second** (i18n) · **texto en pantalla** · Voiceover/VO (timing source). Do **not** claim “lip-sync” or “word-aligned audio” in UI. Do **not** expose VO raw text, ASS body, or FFmpeg argv in DTOs.
+
+---
+
+## Phase B — SECURITY reconciliation (8 conditions)
+
+| # | Condition | Frozen here |
+|---|-----------|-------------|
+| 1 | Anti–cover-injection: optional `coverFrameSec` numeric Zod `min(0).max(45)`; invalid → `VALIDATION_ERROR`; argv uses number + duration clamp | § Trigger schema · § Cover seek clamp |
+| 2 | Anti–VO-in-ASS/argv: `voiceover_text` for word counts only → numeric timings; never ASS Dialogue or argv | § VO timing · § `buildAssFromBeats` |
+| 3 | Anti–subtitle-injection: same Phase A sanitizer → ASS temp → path-only; timing path must not bypass | § ASS dialogue source |
+| 4 | Anti–client-authority: allow typed cover number only; forbid beat/VO/path/URL/font/snapshot/hash | § Forbidden keys amend |
+| 5 | Anti–shell-injection: `spawn` args-array, `shell: false` | Re-assert Phase A |
+| 6 | Anti–client-paths/SSRF: server temp + Storage SDK only | Re-assert Phase A |
+| 7 | Anti–timing/fingerprint-forgery: server `computeVoProportionalBeatTimings` + `voiceoverTimingHash` in fingerprint | § Timing hash · § Fingerprint delta |
+| 8 | Anti–auto-chain cover smuggle: profile defaults only — no request `coverFrameSec` | § Trigger · auto-chain |
+
+---
+
+## Phase B — `computeVoProportionalBeatTimings()` (frozen)
+
+**File (BUILD):** `lib/assembly/compute-vo-proportional-beat-timings.ts` (pure — no I/O)
+
+```ts
+export type AssBeatTiming = {
+  startSec: number;
+  endSec: number;
+};
+
+/** Same tokenizer as US-5.2 `countVoiceoverWords`. */
+export function tokenizeVoiceoverWords(voiceoverText: string): string[] {
+  return voiceoverText.trim().split(/\s+/).filter(Boolean);
+}
+
+export function computeVoProportionalBeatTimings(params: {
+  beatCount: number;
+  targetDurationSec: number;
+  voiceoverText: string;
+}): AssBeatTiming[];
+```
+
+### Algorithm (binding)
+
+1. **`tokens`** = `tokenizeVoiceoverWords(voiceoverText)` (whitespace split after trim; empty segments dropped).
+2. **Fallback equal split** when `tokens.length === 0` **OR** `beatCount <= 0` **OR** `targetDurationSec <= 0`:
+   - If `beatCount <= 0`: return `[]`.
+   - Else: Phase A equal split — `duration = targetDurationSec / beatCount`; beat *i* → `{ startSec: i * duration, endSec: (i + 1) * duration }` for `i ∈ [0, beatCount)`; **last `endSec` forced to `targetDurationSec`** (float drift).
+3. **Contiguous partition** of `tokens` into `beatCount` buckets:
+   - `base = Math.floor(tokens.length / beatCount)`
+   - `remainder = tokens.length % beatCount`
+   - Bucket *i* length = `base + (i < remainder ? 1 : 0)` (remainder spread to **leading** buckets)
+   - Buckets are contiguous slices in token order (no reordering).
+4. **Duration:** `duration_i = (bucket_i.length / tokens.length) * targetDurationSec`.
+5. **Cumulative:** `start_0 = 0`; `end_i = start_i + duration_i`; `start_{i+1} = end_i`. **Force `end_{beatCount-1} = targetDurationSec`**.
+6. Empty buckets (length 0) still produce a timing interval of **0** duration at the cumulative cursor (caller may skip empty **on-screen** beats before burn-in — empty sanitized beat list still skips ASS entirely per Phase A).
+
+### Explicit outs
+
+- **No** TTS / CosyVoice / ElevenLabs word timestamps  
+- **No** ASR from VO audio  
+- **No** client-supplied `beatTimings` / cue lists  
+- **No** separate cue-list schema  
+
+**Label for VALIDATION / UI:** **VO-proportional beat timing from `voiceover_text`** — script-word proxy, not A/V alignment.
+
+---
+
+## Phase B — `voiceoverTimingHash` + fingerprint delta
+
+**File (BUILD):** same module as timing helper (or `lib/assembly/branding-fingerprint.ts`)
+
+### Hash input (frozen)
+
+```ts
+voiceoverTimingHash = sha256(
+  tokenizeVoiceoverWords(voiceoverText).join("\n")
+).hex(); // 64 lowercase hex
+```
+
+| Case | Input to sha256 |
+|------|-----------------|
+| VO with tokens | Tokens joined by `\n` (token text as returned by tokenizer — no lowercasing) |
+| Empty VO / zero tokens | sha256 of empty string `""` → stable empty hash |
+
+**Semantics:** Hash of the **normalized VO token list** (not partition lengths alone). Changing VO whitespace that does not change tokens → same hash. Changing any token → new hash → new fingerprint.
+
+`subtitleSourceHash` remains sha256 of sanitized **on_screen** beats joined by `\n` (Phase A unchanged).
+
+### Snapshot field
+
+Extend `brandingConfigSnapshotSchema`:
+
+```ts
+export const brandingConfigSnapshotSchema = assemblyConfigSchema.extend({
+  subtitleBeatCount: z.number().int().min(0).max(8),
+  subtitleSourceHash: z.string().length(64),
+  voiceoverTimingHash: z.string().length(64), // Phase B — server-only
+});
+```
+
+DTO may continue to expose only `{ subtitlesEnabled, logoEnabled, coverFrameSec }` to FE — **do not** expose `voiceoverTimingHash` / `subtitleSourceHash` in Operator panel DTO (server fingerprint internals).
+
+### Fingerprint formula (Phase B supersedes Phase A string)
+
+```ts
+branding_fingerprint = sha256(
+  preBrandingOutputMediaAssetId + "|" +
+  stableStringify(branding_config) + "|" +
+  branding_config.subtitleSourceHash + "|" +
+  branding_config.voiceoverTimingHash
+).hex();
+```
+
+| Change | Effect |
+|--------|--------|
+| On-screen beats change | New `subtitleSourceHash` → new fingerprint |
+| VO tokens change (same on-screen) | New `voiceoverTimingHash` → new fingerprint → re-brand allowed |
+| Operator `coverFrameSec` / toggles | New `branding_config` via `stableStringify` → new fingerprint |
+| Client supplies hash / fingerprint | **Forbidden** → `FORBIDDEN_FIELDS` |
+
+---
+
+## Phase B — ASS dialogue source (re-assert)
+
+| Input | Role |
+|-------|------|
+| Sanitized **`on_screen_text`** beats | **Sole** ASS Dialogue text |
+| **`voiceover_text`** | Word **counts / partition** for numeric `AssBeatTiming[]` only |
+| Client beat text / VO / timings | **Forbidden** on apply |
+
+Pipeline unchanged: sanitize → `buildAssFromBeats` → temp `.ass` → **path-only** in argv. Timing math is numeric-only.
+
+---
+
+## Phase B — `buildAssFromBeats()` signature delta
+
+**File:** `lib/assembly/ffmpeg/build-ass-from-beats.ts` (extend)
+
+```ts
+export function buildAssFromBeats(input: {
+  sanitizedBeats: string[];
+  targetDurationSec: number;
+  outputAssPath: string;
+  /** Phase B: when omitted or empty, equal-split (Phase A). When present, length must equal sanitizedBeats.length. */
+  beatTimings?: AssBeatTiming[];
+}): { assContent: string; beatTimings: AssBeatTiming[] };
+```
+
+| Rule | Detail |
+|------|--------|
+| Explicit timings provided | Use them for Dialogue start/end; **do not** re-tokenize VO inside ASS builder |
+| Missing / invalid length | Fall back to Phase A equal split from `targetDurationSec` / `sanitizedBeats.length` |
+| Dialogue text | `sanitizedBeats[i]` only — never VO substrings |
+| Typography | Phase A constants unchanged (DejaVu Sans Bold, 48px, etc.) |
+
+**Caller (worker / orchestrator):** load `voiceover_text` with script; `timings = computeVoProportionalBeatTimings({ beatCount: sanitizedBeats.length, targetDurationSec, voiceoverText })`; pass into `buildAssFromBeats`.
+
+---
+
+## Phase B — Trigger schema amend (`applyBrandingForAssembly`)
+
+**Thin Server Action** — request shape (strict Zod):
+
+```ts
+export const applyBrandingForAssemblyRequestSchema = z
+  .object({
+    assemblyJobId: z.string().uuid(),
+    subtitlesEnabled: z.boolean().optional(),
+    logoEnabled: z.boolean().optional(),
+    coverFrameSec: z
+      .number({ error: "VALIDATION_ERROR" })
+      .finite()
+      .min(0)
+      .max(45)
+      .optional(),
+  })
+  .strict();
+```
+
+| Field | Rule |
+|-------|------|
+| `coverFrameSec` | Optional **number** only; `0–45` inclusive; reject NaN / Infinity / non-number → **`VALIDATION_ERROR`** (field `coverFrameSec`) — **no** enqueue |
+| Manual merge | When `source = operator_manual` and `coverFrameSec` provided → snapshot uses Operator value; else client `assembly_config.coverFrameSec` (default **1.0**) |
+| Auto-chain | **`createBrandingJobForAssembly({ …, source: "auto_chain" })`** — **never** accepts request `coverFrameSec`; always profile / server defaults |
+| Gate | **`requireOperator("handler")` first** (unchanged) |
+
+**Orchestrator signature delta:**
+
+```ts
+export async function createBrandingJobForAssembly(input: {
+  assemblyJobId: string;
+  subtitlesEnabled?: boolean;
+  logoEnabled?: boolean;
+  coverFrameSec?: number; // operator_manual only — ignored/absent on auto_chain
+  source: "auto_chain" | "operator_manual";
+}): Promise<CreateBrandingJobForAssemblyResult>;
+```
+
+Step 4 (load script): also load **`voiceover_text`** with `on_screen_text` + `target_duration_sec` from owned linked `neuramark_reel_scripts` row.
+
+Step 6 (merge): Phase B — `coverFrameSec` from Operator override when provided on manual path; else defaults.
+
+Step 10: include `voiceoverTimingHash` in snapshot + fingerprint.
+
+---
+
+## Phase B — Cover seek clamp
+
+**File:** `lib/assembly/ffmpeg/extract-cover-frame-args.ts` (extend) + worker caller
+
+```ts
+export function clampCoverSeekSec(input: {
+  coverFrameSec: number;
+  durationSec: number;
+}): number {
+  const maxSeek = Math.max(0, input.durationSec - 0.05);
+  return Math.min(Math.max(0, input.coverFrameSec), maxSeek);
+}
+```
+
+| Rule | Detail |
+|------|--------|
+| Snapshot value | Zod-validated `branding_config.coverFrameSec` (number) |
+| `durationSec` preference | **Measured** branded file duration when available; else `target_duration_sec` from script |
+| Clamp window | **`[0, max(0, durationSec - 0.05)]`** |
+| Argv | `-ss` stringified from **clamped number** only — never raw request string |
+
+```ts
+extractCoverFrameArgs({
+  localBrandedPath,
+  localCoverPath,
+  coverFrameSec: clampCoverSeekSec({ coverFrameSec: snapshot.coverFrameSec, durationSec }),
+});
+```
+
+---
+
+## Phase B — Forbidden keys amend
+
+**File:** `lib/assembly/find-forbidden-branding-keys.ts`
+
+**Remove from forbidden (Phase B allow as typed Zod number on apply):**
+
+- `coverFrameSec`
+- `cover_frame_sec`
+
+**Still forbidden (Phase A retained + Phase B additions):**
+
+```ts
+export const FORBIDDEN_BRANDING_AUTHORITY_KEYS = [
+  "onScreenText",
+  "on_screen_text",
+  "voiceoverText",
+  "voiceover_text",
+  "beatTimings",
+  "beat_timings",
+  "subtitleBeats",
+  "subtitle_beats",
+  "logoAssetId",
+  "logo_asset_id",
+  "coverMediaAssetId",
+  "cover_media_asset_id",
+  "preBrandingOutputMediaAssetId",
+  "pre_branding_output_media_asset_id",
+  "brandingConfig",
+  "branding_config",
+  "assemblyConfig",
+  "assembly_config",
+  "brandingFingerprint",
+  "branding_fingerprint",
+  "brandingStatus",
+  "branding_status",
+  "voiceoverTimingHash",
+  "voiceover_timing_hash",
+  "subtitleSourceHash",
+  "subtitle_source_hash",
+  "clientId",
+  "client_id",
+  "status",
+  "outputMediaAssetId",
+  "output_media_asset_id",
+  "fontPath",
+  "font",
+  "beatText",
+  "force",
+  "skipIdempotency",
+  "skip_idempotency",
+  // paths / argv authority
+  "tempPath",
+  "assPath",
+  "ffmpegArgs",
+  "localBasePath",
+  "storageKey",
+  "storage_key",
+  // any http(s) URL keys
+  "baseVideoUrl",
+  "logoUrl",
+  "assetUrl",
+] as const;
+```
+
+Scan raw input with **`findForbiddenBrandingKeys`** **before** Zod parse → **`FORBIDDEN_FIELDS`**.
+
+---
+
+## Phase B — Zod / contract mirror deltas
+
+| Export / file | Change |
+|---------------|--------|
+| `applyBrandingForAssemblyRequestSchema` (`lib/contracts/branding-job.ts`) | Add optional `coverFrameSec: z.number().finite().min(0).max(45)` |
+| `brandingConfigSnapshotSchema` | Add `voiceoverTimingHash: z.string().length(64)` |
+| `assemblyConfigSchema` | Unchanged (`coverFrameSec` already `0–45`) |
+| Operator DTO `brandingConfig` | Still `{ subtitlesEnabled, logoEnabled, coverFrameSec }` only — seed FE InputNumber |
+| `AssBeatTiming` type | Exported from contracts or assembly pure module for FE-unrelated worker tests |
+
+---
+
+## Phase B — Error codes (additive)
+
+| Code | When |
+|------|------|
+| `VALIDATION_ERROR` | `coverFrameSec` non-number / NaN / &lt;0 / &gt;45; field map `{ coverFrameSec: "…" }` |
+| `FORBIDDEN_FIELDS` | VO / beat timings / paths / hashes / snapshot JSON / removed-key regressions |
+| *(unchanged)* | `SUBTITLE_SANITIZE_FAILED`, `FORBIDDEN`, `NOT_FOUND`, … |
+
+No new error code required for equal-split fallback (silent, expected).
+
+---
+
+## Phase B — FE enablement (Operator only)
+
+**Surface:** `/operator/scripts` — existing branding section in `OperatorAssemblyPanel`.
+
+| Element | Rule |
+|---------|------|
+| Control | PrimeReact **`InputNumber`** — seconds, **step 0.1**, min **0**, max **45** |
+| Seed | `job.brandingConfig?.coverFrameSec` ?? client default from profile batch if exposed ?? **1.0** |
+| Wire | `applyBrandingForAssembly({ assemblyJobId, subtitlesEnabled, logoEnabled, coverFrameSec })` on Apply / Re-brand |
+| Busy | Disable while branding in-flight / panel busy (same as toggles) |
+| i18n | EN/ES **`scripts.branding.coverFrame*`** (label, hint, validation) — not raw key as sole copy |
+| Continuity | **Do not** rebuild subtitle/logo toggles |
+| Out | **No** Cliente Ficha cover control · **No** thumbnail strip · **No** second font UI |
+
+**Reviewed by FE: pending** — nextjs-frontend must sign off this Phase B section before BUILD.
+
+---
+
+## Phase B — Fixtures
+
+### Apply with cover override
+
+```json
+{
+  "assemblyJobId": "c3d4e5f6-a7b8-9012-cdef-123456789abc",
+  "subtitlesEnabled": true,
+  "logoEnabled": true,
+  "coverFrameSec": 2.5
+}
+```
+
+### Validation — cover out of range
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "fields": { "coverFrameSec": "scripts.branding.coverFrame.invalid" }
+  }
+}
+```
+
+### Forbidden — VO text on apply
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "FORBIDDEN_FIELDS",
+    "fields": { "voiceoverText": "forbidden" }
+  }
+}
+```
+
+### Timing helper example (unit)
+
+- `voiceoverText = "one two three four five six"`, `beatCount = 3`, `targetDurationSec = 30`
+- Tokens = 6; buckets = [2, 2, 2]; durations = [10, 10, 10]
+- Timings = `[{0,10},{10,20},{20,30}]`
+
+---
+
+## Phase B — Test files (BUILD)
+
+| File | Covers |
+|------|--------|
+| `lib/assembly/compute-vo-proportional-beat-timings.test.ts` | Partition math; remainder spread; empty VO → equal split; `beatCount === 0` → `[]`; last end === target; hash stability |
+| `lib/assembly/ffmpeg/build-ass-from-beats.test.ts` (extend) | Explicit timings in Dialogue timestamps; VO fixture string **absent** from `assContent`; equal-split fallback |
+| `lib/assembly/ffmpeg/extract-cover-frame-args.test.ts` (extend) | Clamp to `duration − 0.05`; `-ss` numeric only |
+| `lib/assembly/find-forbidden-branding-keys.test.ts` (extend) | `coverFrameSec` **not** forbidden; `voiceoverText` / `beatTimings` / `voiceoverTimingHash` / paths **forbidden** |
+| `lib/assembly/branding-fingerprint.test.ts` (or create) | Same on-screen + changed VO tokens → new fingerprint; same VO → sticky |
+| `lib/assembly/actions/apply-branding-for-assembly.test.ts` (extend) | `coverFrameSec: -1` / `46` / `"1;rm"` → `VALIDATION_ERROR` or Zod fail; valid merge into snapshot; Cliente 403 |
+
+---
+
+## Phase B — Security test matrix (additive)
+
+| Test | Expect |
+|------|--------|
+| `coverFrameSec` string / filter metacharacters | Rejected (not number) |
+| `coverFrameSec: -1` or `46` | `VALIDATION_ERROR` — no enqueue |
+| Valid `coverFrameSec` in bounds | Accepted; appears as **number** in cover `-ss` only |
+| VO injection fixture in `voiceover_text` | **Not** in ASS Dialogue or branding/cover argv |
+| On-screen ASS metacharacter fixture | Still sanitized / `SUBTITLE_SANITIZE_FAILED` |
+| Forbidden `voiceoverText` / `beatTimings` / `fontPath` / `brandingConfig` / path keys | `FORBIDDEN_FIELDS` |
+| Mocked spawn | `string[]`, `shell: false` |
+| Cliente `applyBrandingForAssembly` | `403` |
+| Fingerprint: VO token change, same on-screen | New fingerprint |
+| Auto-chain | Ignores any smuggled request cover (no request body) |
+
+---
+
+## Phase B — Acceptance mapping (for validator)
+
+Same USER_STORIES § US-9.2 AC (do **not** uncheck Phase A; **no** new checkboxes):
+
+| Deferred item (Phase A) | Phase B proof |
+|-------------------------|---------------|
+| VO-synced subtitle timing | `computeVoProportionalBeatTimings` + ASS timings; equal fallback; VALIDATION labels proxy not lip-sync |
+| Operator per-reel `coverFrameSec` | InputNumber → apply schema → snapshot → clamp seek |
+| `[SEC]` subtitle sanitize | Re-verify on VO-timing path — VO never in ASS/argv |
+
+---
+
+## Phase B — Reviewed by FE
+
+**Reviewed by FE: pending** — nextjs-frontend.
+
+**Sign-off checklist for FE:**
+
+- [ ] Operator `InputNumber` seed + Apply/Re-brand wire matches § Phase B — FE enablement
+- [ ] Optional `coverFrameSec` on `applyBrandingForAssembly` request shape accepted
+- [ ] i18n keys `scripts.branding.coverFrame*` (EN/ES) — no lip-sync copy
+- [ ] No Cliente cover control; no thumbnail strip; toggles reused
+
+When signed: replace this line with `Reviewed by FE: yes — YYYY-MM-DD — nextjs-frontend` and clear the header **pending** flag.
 
 ---
 
@@ -967,4 +1442,5 @@ Logo upload errors reuse `mediaUploadErrorCodeSchema` from US-3.3 where applicab
 
 | Date | Change |
 |------|--------|
+| 2026-08-31 | **Phase B freeze** — VO word-partition timings + `voiceoverTimingHash` fingerprint; optional Operator `coverFrameSec` on apply; seek clamp; forbidden-keys amend; narrow scope (no second font / thumbnail); FE Reviewed pending |
 | 2026-08-30 | Initial freeze — branding pipeline DDL, orchestrator, worker seam, ASS/FFmpeg graph, Cliente logo actions, DTOs, media serve; resolves SPEC-REVIEW + SECURITY gaps |
