@@ -1,6 +1,6 @@
 # US-9.1 — Assemble final 9:16 Reel
 
-**Status:** Phase A **CLOSED** (2026-08-30) — VALIDATION `03dff73` · QA `5c0ec7e` · 5/5 AC. **Phase B PREP** (2026-08-31) — faceless B-roll stitch; US-8.5 ✅. Canonical Phase B doc: [`PHASE-B.md`](./PHASE-B.md).
+**Status:** Phase A **CLOSED** (2026-08-30) — VALIDATION `03dff73` · QA `5c0ec7e` · 5/5 AC. **Phase B CLOSED** (2026-08-31) — faceless B-roll stitch; VALIDATION PASS WITH NOTES `6d13f4b` (5/5 AC + 16/16); QA APPROVE WITH CONDITIONS `37d0dcb` (0 Critical/High); fix `1106420`. Canonical Phase B doc: [`PHASE-B.md`](./PHASE-B.md).
 
 **As a** System, **I want** to combine voice, avatar/B-roll, template, and timing, **so that** output is Instagram-ready vertical video.
 
@@ -69,7 +69,7 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; long-lived third-par
 | Phase | Scope | Closes |
 |-------|-------|--------|
 | **A (CLOSED 2026-08-30)** | DDL + orchestrator + worker FFmpeg **normalize path**: completed **primary** → **1080×1920** → trim/pad → **`assembled_reel`**. Talking-head + manual primary. Idempotency + Operator UI. | US-9.1 AC 5/5 |
-| **B (PREP 2026-08-31 — same story `US-9.1-B`)** | **Faceless** path: stitch up to **8** completed owned **`asset_role = broll`** clips + voiceover mux; optional safe numeric cold-open trim; **degrade** to Phase A primary path or incomplete when zero broll. Full rewind FX still out. Details + freezes: [`PHASE-B.md`](./PHASE-B.md). | SPEC §3 S3.M10 B-roll stitch handoff from US-8.5; re-validate US-9.1 SEC/duration AC on stitch path |
+| **B (CLOSED 2026-08-31 — same story `US-9.1-B`)** | **Faceless** path: stitch up to **8** completed owned **`asset_role = broll`** clips + voiceover mux; optional safe numeric cold-open trim; **degrade** to Phase A primary path or incomplete when zero broll. Full rewind FX still out. Details + freezes: [`PHASE-B.md`](./PHASE-B.md). | SPEC §3 S3.M10 B-roll stitch handoff from US-8.5; re-validate US-9.1 SEC/duration AC on stitch path — **5/5 + 16/16 PASS** |
 
 **VALIDATION note (binding):** Phase A VALIDATION documented partial S3.M10 (no B-roll stitch). Phase B VALIDATION must close that gap for stitch + note remaining rewind-FX defer if still out.
 
@@ -140,16 +140,16 @@ Full table in [`PHASE-B.md`](./PHASE-B.md). Do not reopen without PO + SECURITY:
 
 - [x] SPEC-REVIEW.md · SECURITY.md · CONTRACT.md · BUILD · VALIDATION.md · QA.md
 
-### Phase B (active)
+### Phase B (CLOSED 2026-08-31)
 
-- [ ] SPEC-REVIEW.md amendment (S3.M10 B-roll stitch)
-- [ ] SECURITY.md amendment (concat / multi-asset tenancy)
-- [ ] CONTRACT.md Phase B section + **Reviewed by FE**
-- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend)
-- [ ] VALIDATION.md Phase B
-- [ ] QA.md Phase B
+- [x] SPEC-REVIEW.md amendment (S3.M10 B-roll stitch) — `SPEC-REVIEW-PHASE-B.md`
+- [x] SECURITY.md amendment (concat / multi-asset tenancy)
+- [x] CONTRACT.md Phase B section + **Reviewed by FE**
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend) — `c3a9c19` · `80652c2` · fix `1106420`
+- [x] VALIDATION-PHASE-B.md — PASS WITH NOTES `6d13f4b` (5/5 + 16/16)
+- [x] QA-PHASE-B.md — APPROVE WITH CONDITIONS `37d0dcb` (0 Critical/High)
 
-**Next after Phase B PREP:** spec-guardian **SPEC-REVIEW** → security-architect **SECURITY** → nextjs-backend **CONTRACT**.
+**Phase B CLOSED.** Residual out: rewind FX · weekly auto-assemble · live FFmpeg E2E smoke. Non-blocking QA follow-ups: atomic worker claim · companion emission on jobs SELECT error.
 
 ---
 

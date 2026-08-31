@@ -71,16 +71,16 @@
 | Phase | Deliverables |
 |-------|----------------|
 | **A** ✅ | DDL · orchestrator · Phase A FFmpeg graph · worker loop · Operator UI · idempotency · duration AC · SEC guards |
-| **B** PREP | Faceless B-roll concat · fingerprint + resolver · degrade · thin FE Assemble gate · optional numeric cold-open · see [`PHASE-B.md`](./PHASE-B.md) |
+| **B** ✅ CLOSED | Faceless B-roll concat · fingerprint + resolver · degrade · thin FE Assemble gate · optional numeric cold-open · see [`PHASE-B.md`](./PHASE-B.md) |
 
 **Phase B branch:** `feature/US-9.1-phase-b-broll-stitch` · **Depends on:** US-8.5 ✅ · Phase A ✅  
 **Phase B freezes:** [`PHASE-B.md`](./PHASE-B.md) B1–B14 (do not contradict in BUILD).
 
 ---
 
-## Phase B checklist (PREP 2026-08-31)
+## Phase B checklist (CLOSED 2026-08-31)
 
-### Frontend (nextjs-frontend) — Phase B
+### Frontend (nextjs-frontend) — Phase B ✅
 
 **Consumer:** `/operator/scripts` assembly panel (existing).
 
@@ -91,28 +91,28 @@
 - [x] No Cliente routes · no FFmpeg / clip-list details in UI. (confirmed at FE signoff)
 - [x] **CONTRACT Phase B Reviewed by FE** — approved 2026-08-31
 
-### Backend / API (nextjs-backend) — Phase B
+### Backend / API (nextjs-backend) — Phase B ✅
 
 **Concrete consumers:** FE Assemble enablement · worker stitch path · downstream US-9.2/10.1/11.1 (unchanged output shape).
 
 - [x] CONTRACT Phase B amendment: faceless resolve rules, fingerprint shape, error codes, concat seam, fixtures. (`CONTRACT.md` § Phase B — 2026-08-31; Reviewed by FE approved)
 - [x] **B12:** week-batch null-job readiness companion via `mapNullJobAssemblyReadinessDto` / `getAssemblyJobsForReelScripts` — `canAssemble` when faceless resolve would succeed (broll+VO) with no assembly row. (2026-08-31)
 - [x] Unit tests: first-time faceless `canAssemble=true` (`assembly-readiness.phase-b.test.ts`). (2026-08-31)
-- [ ] Extend **`resolveAssemblyInputs`** (or sibling): for faceless, load up to **8** completed owned `asset_role = broll` outputs ordered by job **`created_at ASC`**; talking-head path unchanged (ignore broll).
-- [ ] Zero completed broll → degrade to Phase A primary if present, else `ASSEMBLY_INPUTS_INCOMPLETE`.
-- [ ] Extend **`input_fingerprint`** with ordered broll asset ids + path tag (`primary` vs `broll_stitch`) — CONTRACT exact string.
-- [ ] Orchestrator: pass broll asset id list / path into assembly row or worker-readable fields per CONTRACT (lean: fingerprint + nullable `primary_video_asset_id` when stitch-only).
-- [ ] Unit tests: faceless stitch resolve, degrade, talking-head ignores broll, ownership fail-closed, forbidden keys unchanged.
+- [x] Extend **`resolveAssemblyInputs`** (or sibling): for faceless, load up to **8** completed owned `asset_role = broll` outputs ordered by job **`created_at ASC`**; talking-head path unchanged (ignore broll).
+- [x] Zero completed broll → degrade to Phase A primary if present, else `ASSEMBLY_INPUTS_INCOMPLETE`.
+- [x] Extend **`input_fingerprint`** with ordered broll asset ids + path tag (`primary` vs `broll_stitch`) — CONTRACT exact string.
+- [x] Orchestrator: pass broll asset id list / path into assembly row or worker-readable fields per CONTRACT (lean: fingerprint + nullable `primary_video_asset_id` when stitch-only).
+- [x] Unit tests: faceless stitch resolve, degrade, talking-head ignores broll, ownership fail-closed, forbidden keys unchanged.
 - [x] **DDL required (CONTRACT Option A):** nullable `primary_video_asset_id` + `broll_asset_ids uuid[]` + `assembly_path_tag` — BUILD migration (clip-set determinism).
 
-### Worker / FFmpeg (media-pipeline-engineer) — Phase B
+### Worker / FFmpeg (media-pipeline-engineer) — Phase B ✅
 
-- [ ] Implement **`lib/assembly/ffmpeg/build-broll-concat-args.ts`** — pure `string[]` from local clip paths + voiceover + target/tolerance (+ optional cold-open seconds); **no** script text in argv.
-- [ ] Wire **`runAssemblyJob`** faceless/`broll_stitch` branch: download owned clips → concat/normalize 1080×1920 → trim/pad → upload → UPDATE job.
-- [ ] FFmpeg via existing **`runFfmpeg` / `spawn(..., { shell: false })`** only; temp under assembly workspace; cleanup `finally`.
-- [ ] Partial clip sets OK; never wait for failed/queued broll jobs.
-- [ ] Golden tests for concat args; mocked spawn; grep: no `fetch(` / no shell interpolation.
-- [ ] Optional: safe integer parse of `cold_open_notes` for lead trim only — CONTRACT bounds; skip if unparsable.
+- [x] Implement **`lib/assembly/ffmpeg/build-broll-concat-args.ts`** — pure `string[]` from local clip paths + voiceover + target/tolerance (+ optional cold-open seconds); **no** script text in argv.
+- [x] Wire **`runAssemblyJob`** faceless/`broll_stitch` branch: download owned clips → concat/normalize 1080×1920 → trim/pad → upload → UPDATE job.
+- [x] FFmpeg via existing **`runFfmpeg` / `spawn(..., { shell: false })`** only; temp under assembly workspace; cleanup `finally`.
+- [x] Partial clip sets OK; never wait for failed/queued broll jobs.
+- [x] Golden tests for concat args; mocked spawn; grep: no `fetch(` / no shell interpolation.
+- [x] Optional: safe integer parse of `cold_open_notes` for lead trim only — CONTRACT bounds; skip if unparsable.
 
 ### Security (security-architect — Phase B amend)
 
@@ -121,15 +121,15 @@
 - [x] Fingerprint / IDOR parity with Phase A
 - [x] No SiliconFlow CDN fetch at assembly time
 
-### Phase B contract-first sequence
+### Phase B contract-first sequence ✅ CLOSED
 
 1. **product-owner** — Phase B PREP ✅ (`PHASE-B.md` · this checklist · SPRINT-STATE)
-2. **spec-guardian** — SPEC-REVIEW amendment (S3.M10 stitch)
-3. **security-architect** — SECURITY.md amendment
-4. **nextjs-backend** — CONTRACT.md Phase B + **Reviewed by FE**
-5. **BUILD** — media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend
-6. **requirements-validator** — VALIDATION.md Phase B
-7. **qa-engineer** — QA.md Phase B
+2. **spec-guardian** — SPEC-REVIEW amendment (S3.M10 stitch) ✅
+3. **security-architect** — SECURITY.md amendment ✅
+4. **nextjs-backend** — CONTRACT.md Phase B + **Reviewed by FE** ✅
+5. **BUILD** — media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend ✅ (`c3a9c19` · `80652c2` · fix `1106420`)
+6. **requirements-validator** — VALIDATION-PHASE-B.md ✅ PASS WITH NOTES `6d13f4b` (5/5 + 16/16)
+7. **qa-engineer** — QA-PHASE-B.md ✅ APPROVE WITH CONDITIONS `37d0dcb` (0 Critical/High)
 
 ---
 
