@@ -162,3 +162,93 @@ Phase B adds **no** new USER_STORIES checkboxes. Canonical Phase A AC re-asserte
 | **SECURITY Phase B** | **8 / 8** |
 | **Tests** | **44 pass / 0 fail** |
 | **Next gate** | QA.md Phase B |
+
+---
+
+# Validation Report — US-9.2 Phase B-M1
+
+**Story:** US-9.2 — Worker `voiceoverTimingHash` re-check  
+**Sprint label:** `US-9.2-B-M1`  
+**Branch:** `feature/US-9.2-b-m1-voiceover-timing-hash`  
+**Build refs:** media `1b2a8e7` · BE `00df642`  
+**Validator:** requirements-validator  
+**Date:** 2026-08-31  
+**Sources:** `PHASE-B-M1.md` (M1-1…M1-10) · `CONTRACT.md` § Phase B-M1 · `SECURITY.md` Phase B-M1 (4 conditions + 4 additive `[SEC]`)  
+**Scope:** Lean integrity fast-follow only — **do not** add/uncheck USER_STORIES § US-9.2 AC (verified untouched).
+
+### Verdict: PASS WITH NOTES
+
+Worker re-checks live VO hash before `mkdtemp` / ASS / spawn; mismatch and malformed fail closed with sanitized keys and zero FFmpeg; legacy empty/missing skips; match proceeds. Closes QA-PHASE-B Medium #1 at the VALIDATION gate.
+
+---
+
+### Acceptance Criteria
+
+| Criterion | Status | Evidence |
+|-----------|--------|----------|
+| Mismatch → `failed` + `BRANDING_FAILURE_VOICEOVER_TIMING_HASH` + **no spawn** | **PASS** | Guard `run-branding-job.ts:169–183`; fail key `52–53` = `scripts.branding.failure.voiceoverTimingHashMismatch`; test `run-branding-job.test.ts:206–262` (`ffmpegCalled === false`, reason matches export) |
+| Match → proceeds past guard | **PASS** | Same file `265–331` — `ffmpegCalled === true`, `branding_status === completed`, no failed update |
+| Legacy empty/missing → skip re-check | **PASS** | Raw field via `rawVoiceoverTimingHash` / `readRawVoiceoverTimingHash` (`branding-job-row.ts:77–97`, `167`); skip when absent/null/`""` (`run-branding-job.ts:184–192` else-branch only for non-empty malformed); test `334–396` completes with VO present and key absent |
+| Malformed non-empty → `BRANDING_FAILURE_CONFIG`, no spawn | **PASS** | `run-branding-job.ts:184–191`; test `399–445` (`not-a-valid-64-hex-hash` → CONFIG, `ffmpegCalled === false`) |
+| Guard placement: after subtitle-hash, before `mkdtemp`/ASS/spawn | **PASS** | Subtitle check `164–167` → VO guard `169–192` → `mkdtemp` `199–200` → proportional timings/ASS `226–238` |
+| Reuse `computeVoiceoverTimingHash(voiceoverText)` | **PASS** | Import + call `run-branding-job.ts:11–14`, `176` — no forked formula |
+| Enforce only on 64 lowercase hex (`/^[0-9a-f]{64}$/`) | **PASS** | `VOICEOVER_TIMING_HASH_HEX_RE` `branding-job-row.ts:68`; soft-default must not false-enforce — guard uses **raw** field (`171`) |
+| Fail constant exact string (CONTRACT) | **PASS** | Export `00df642` / `run-branding-job.ts:52–53`; asserted in mismatch test |
+| VO still not in ASS Dialogue / argv | **PASS** | Unchanged path: Dialogue from `sanitizedBeats` only (`build-ass-from-beats.ts:62–63`); VO → token counts for timings only (`compute-vo-proportional-beat-timings.ts:50–68`); argv paths-only (`build-reel-v1-branding-args.ts`). Mismatch path never reaches ASS/spawn |
+| No new apply fields / FE / DB | **PASS** | FE none; `voiceoverTimingHash` still forbidden (`lib/contracts/branding-job.ts:213`); no migration |
+| USER_STORIES AC not unchecked | **PASS** | `git diff HEAD -- plan/USER_STORIES.md` empty; five Phase A AC remain `[x]` |
+
+### SECURITY Phase B-M1 (additive `[SEC]`)
+
+| Criterion | Status | Evidence |
+|-----------|--------|----------|
+| **[SEC] Worker `voiceoverTimingHash` re-check** | **PASS** | Placement + compare + fail + legacy skip — above |
+| **[SEC] No new client authority** | **PASS** | Worker-only; forbidden keys unchanged |
+| **[SEC] VO still never ASS/argv** | **PASS** | Code path + mismatch zero-spawn; see note |
+| **[SEC] Sanitized failure only** | **PASS** | `failBrandingJob` persists i18n code only (`62–70`); tests assert key strings, not VO/digests |
+
+### Convention Compliance
+
+- Server-only worker path; no Client Components / Supabase in FE for M1 (FE out of scope).
+- No new user-facing copy required (PO M1-9 — optional i18n later).
+- Endpoints unchanged — no speculative APIs.
+
+### Test execution
+
+```bash
+npx tsx --test lib/branding/run-branding-job.test.ts
+```
+
+| Metric | Result |
+|--------|--------|
+| Tests | **9 pass / 0 fail** |
+| M1 cases | mismatch · match · legacy skip · malformed CONFIG |
+
+### Gaps (what blocks PASS)
+
+**None blocking.** Non-blocking notes:
+
+1. **Match-path M1 test** does not re-assert VO substrings absent from ASS body/argv (relies on unchanged Phase B code path + mismatch zero-spawn). Lean OK; QA may spot-check if desired.
+2. **`PHASE-B-M1.md` / README gate checkboxes** may still lag BUILD/VALIDATION ticks — docs hygiene for PO after CLOSE.
+
+### Scope Creep
+
+**None.** No FOR UPDATE SKIP LOCKED, second font, thumbnail, Cliente cover UI, hash-formula change, or new story ID.
+
+### Recommended Next Actions
+
+| Action | Agent |
+|--------|-------|
+| Lean QA — close QA-PHASE-B Medium #1 | **qa-engineer** |
+| Tick BUILD/VALIDATION gates; CLOSE M1 note (keep USER_STORIES AC checked) | **product-owner** |
+
+### Summary for orchestrator (B-M1)
+
+| Field | Value |
+|-------|-------|
+| **Verdict** | **PASS WITH NOTES** |
+| **Must-verify 1–6** | **All PASS** |
+| **SECURITY M1 `[SEC]`** | **4 / 4** |
+| **Tests** | **9 pass / 0 fail** |
+| **USER_STORIES AC** | **Untouched** |
+| **Next gate** | QA lean (M1) |

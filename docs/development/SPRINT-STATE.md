@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: US-9.2-B-M1
-story_status: VALIDATE
-feature_branch: feature/US-9.2-b-m1-voiceover-timing-hash
-last_completed_story: US-7.3-B
+current_story: US-9.2-B-M2
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-9.2-B-M1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T19:30:00Z
+updated_at: 2026-08-31T19:55:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -30,9 +30,9 @@ updated_at: 2026-08-31T19:30:00Z
 | US-8.7 HeyGen adapter (high tier) | done | FE `a18d4cb` · BE `299d638` · VALIDATION `602995c` (5/5 AC; 22/22) · QA `fc19d0a` · fix `b3a9377` · CLOSE `89d0119` FF-merge to main |
 | US-8.5 Wan B-roll adapter | done | BUILD `f7cf726` · VALIDATION `14a74f5` (6/6 AC; 39/39) · QA `8617ae7` · fix `e75e1b7` · CLOSE `6c66f7d` FF-merge to main (stitch → US-9.1 Phase B) |
 | US-9.1 Phase B faceless B-roll stitch | done | BUILD `c3a9c19` · FE `80652c2` · fix `1106420` · VALIDATION `6d13f4b` (5/5 + 16/16) · QA `37d0dcb` · CLOSE `9a95b55` FF-merge to main |
-| US-9.2 Phase B VO-sync + coverFrameSec | done | BE `95419c1` · FE `8f365bf` · VALIDATION `6db2cba` (2/2; 44/44) · QA `02bfa3b` · CLOSE `7783de2` FF-merge to main |
+| US-9.2 Phase B VO-sync + coverFrameSec | done (B+M1) | BE `95419c1` · FE `8f365bf` · CLOSE `7783de2`; **M1 CLOSED** `1b2a8e7`/`00df642` worker VO-hash re-check |
 
-**Sprint 7 provider + faceless stitch + branding Phase B + US-7.3-B spend backfill complete.** Next SELECT: **US-9.2-B QA M1** (worker `voiceoverTimingHash` re-check — recommended). Alternates: high-tier B-roll (`ltx_broll_high`), or US-7.3-B QA M1 (fail-closed `finalize` on complete).
+**Sprint 7 provider + faceless stitch + branding Phase B + US-7.3-B + US-9.2-B-M1 complete.** Next SELECT: **US-9.2-B-M2** (branding poll claim race — recommended). Alternates: `ltx_broll_high`, or US-7.3-B QA M1 (fail-closed finalize).
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -75,6 +75,7 @@ updated_at: 2026-08-31T19:30:00Z
 
 ## Historial reciente
 
+- 2026-08-31 · US-9.2-B-M1 CLOSE: VALIDATION PASS WITH NOTES; QA APPROVE; worker VO-hash re-check `1b2a8e7`/`00df642`; Medium #1 closed → SELECT **US-9.2-B-M2** (branding poll claim race).
 - 2026-08-31 · US-7.3-B CLOSE: VALIDATION PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical/High, M1 non-blocking); FE `1add7ed` · BE `d3b2e03` · media `3f3653c`; video/TTS/B-roll actuals + Operator poll cost on `/operator/scripts`; US-7.4 Phase B auto-expand realized → SELECT **US-9.2-B QA M1** (`voiceoverTimingHash` worker re-check).
 - 2026-08-31 · US-7.3-B BUILD: FE `1add7ed` (poll cost merge) · BE `d3b2e03` (GET cost DTO + TTS duration) · media `3f3653c` (async_update duration + closed reason); next VALIDATE.
 - 2026-08-31 · US-7.3-B PREP: `PHASE-B.md` + README/TASKS freezes (B1–B18); branch `feature/US-7.3-phase-b-spend-backfill`; most writers already exist — BUILD = duration + poll cost refresh + TTS duration; no `/operator/production`; next SPEC-REVIEW.

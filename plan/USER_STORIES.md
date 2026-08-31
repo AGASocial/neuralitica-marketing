@@ -950,7 +950,7 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | Subtitle generation from on-screen text + VO; logo placement; cover frame extract at 1s |
 | **DB** | `business_profiles.logo_asset_id`; assembly config JSON |
 
-**Acceptance criteria** *(Phase A CLOSED 2026-08-30 — 5/5 AC; Phase B VO-sync + `coverFrameSec` CLOSED 2026-08-31 — VALIDATION PASS WITH NOTES `6db2cba` (2/2 deferred; 44/44); QA APPROVE WITH CONDITIONS `02bfa3b` (0 Critical/High); Phase A AC stay checked; residual: second font / thumbnail strip / Cliente cover UI / worker VO-hash re-check Medium still out)*
+**Acceptance criteria** *(Phase A CLOSED 2026-08-30 — 5/5 AC; Phase B VO-sync + `coverFrameSec` CLOSED 2026-08-31 — VALIDATION PASS WITH NOTES `6db2cba` (2/2 deferred; 44/44); QA APPROVE WITH CONDITIONS `02bfa3b` (0 Critical/High); Phase B-M1 CLOSED 2026-08-31 — worker `voiceoverTimingHash` re-check (VALIDATION PASS WITH NOTES · QA APPROVE; Medium #1 closed; media `1b2a8e7` · BE `00df642`); Phase A AC stay checked; residual: second font / thumbnail strip / Cliente cover UI / poll claim race Medium #2)*
 - [x] Subtitles readable on mobile safe zone
 - [x] Logo optional; default template if missing
 - [x] Cover image exported for manual IG upload

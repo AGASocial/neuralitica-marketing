@@ -1,7 +1,7 @@
 # US-9.2 Phase B-M1 — Worker `voiceoverTimingHash` re-check
 
 **Story ID:** **US-9.2** (same story — **not** a new `US-9.x` ID). Sprint label: **`US-9.2-B-M1`**.  
-**Status:** CONTRACT frozen / BUILD unblocked  
+**Status:** **CLOSED** (2026-08-31) — VALIDATION PASS WITH NOTES · QA APPROVE (Medium #1 closed; M2 poll race out of scope) · media `1b2a8e7` · BE `00df642` · docs `8c4e8da`  
 **Branch:** `feature/US-9.2-b-m1-voiceover-timing-hash`  
 **Source:** [`QA-PHASE-B.md`](./QA-PHASE-B.md) Finding **Medium #1**
 
@@ -91,17 +91,17 @@ See [`TASKS.md`](./TASKS.md) § Phase B-M1 checklist.
 
 ---
 
-## Gates (Phase B-M1)
+## Gates (Phase B-M1) — CLOSED 2026-08-31
 
 - [x] PREP — this file + TASKS Phase B-M1 checklist + README note
 - [x] SECURITY.md lean amend (security-architect — integrity re-check; sanitized fail)
 - [x] CONTRACT.md amend (nextjs-backend — worker step + fail code; FE Reviewed N/A or waive)
-- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend)
-- [ ] VALIDATION lean (requirements-validator)
-- [ ] QA lean (qa-engineer — M1 closed)
-- [ ] PO CLOSE M1 note
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend) — media `1b2a8e7` · BE `00df642`
+- [x] VALIDATION lean (requirements-validator) — PASS WITH NOTES
+- [x] QA lean (qa-engineer) — APPROVE; Medium #1 CLOSED; M2 poll race still open / out of scope
+- [x] PO CLOSE M1 — this status + README / TASKS gates (USER_STORIES AC unchanged)
 
-**Next gate:** **BUILD** (media-pipeline-engineer ∥ nextjs-backend) — CONTRACT Phase B-M1 frozen; FE Reviewed N/A.
+**Status:** **CLOSED.** Residual: QA-PHASE-B Medium #2 (poll claim race) — separate SELECT.
 
 ---
 

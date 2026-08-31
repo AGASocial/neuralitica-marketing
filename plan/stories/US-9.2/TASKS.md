@@ -5,7 +5,7 @@
 **Acceptance criteria:** `plan/USER_STORIES.md` § US-9.2 (source of truth — Phase A AC stay **[x]**; Phase B closes deferred polish only — do **not** uncheck)  
 **Implementers:** **media-pipeline-engineer** + **nextjs-backend** + **nextjs-frontend** (`docs/development/AGENT-ROSTER.md` Phase 4). **No content-agents-engineer** · **No integrations-engineer** in default BUILD.  
 **Canonical terms:** **Ensamblado** · **Paquete de guion** · **texto en pantalla** · **Ficha viva** · **Reel 9:16** · **download-and-own**. Avoid CONTEXT _Evitar_ list in product-facing copy.  
-**Active slice:** **Phase B-M1 PREP** — [`PHASE-B-M1.md`](./PHASE-B-M1.md) · branch `feature/US-9.2-b-m1-voiceover-timing-hash` · sprint `US-9.2-B-M1`. Phase B ✅ CLOSED — [`PHASE-B.md`](./PHASE-B.md).
+**Active slice:** none (Phase A/B/B-M1 ✅ CLOSED). Last: **Phase B-M1 CLOSED** — [`PHASE-B-M1.md`](./PHASE-B-M1.md) · branch `feature/US-9.2-b-m1-voiceover-timing-hash` · sprint `US-9.2-B-M1`. Phase B ✅ CLOSED — [`PHASE-B.md`](./PHASE-B.md).
 
 ## Out of scope (do not implement here)
 
@@ -121,7 +121,7 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 |-------|----------------|
 | **A** ✅ | DDL · logo upload Ficha · assembly_config defaults · branding worker · auto-chain · Operator panel · cover export · idempotency · SEC guards · mobile safe-zone AC |
 | **B** ✅ CLOSED | VO-proportional timing from `voiceover_text` · Operator per-reel `coverFrameSec` override · SEC re-verify. **Out residual:** second font · thumbnail strip · Cliente cover UI |
-| **B-M1** PREP | Worker `voiceoverTimingHash` re-check before VO-proportional timings (QA-PHASE-B Medium #1). **CONTRACT amend required.** FE/DB none. |
+| **B-M1** ✅ CLOSED | Worker `voiceoverTimingHash` re-check before VO-proportional timings (QA-PHASE-B Medium #1). FE/DB none. media `1b2a8e7` · BE `00df642` · docs `8c4e8da` |
 
 ### Phase B PO freezes (binding — full table in PHASE-B.md)
 
@@ -178,16 +178,16 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 
 ---
 
-## Phase B-M1 checklist (PREP — unchecked)
+## Phase B-M1 checklist (CLOSED 2026-08-31)
 
-**Source:** [`PHASE-B-M1.md`](./PHASE-B-M1.md) · QA-PHASE-B Medium #1.  
-**CONTRACT:** nextjs-backend must amend worker step + fail code before BUILD (PO does not rewrite CONTRACT in PREP).
+**Source:** [`PHASE-B-M1.md`](./PHASE-B-M1.md) · QA-PHASE-B Medium #1 CLOSED.  
+**Evidence:** VALIDATION PASS WITH NOTES · QA APPROVE · media `1b2a8e7` · BE `00df642` · docs `8c4e8da`.
 
-### Frontend (nextjs-frontend) — Phase B-M1
+### Frontend (nextjs-frontend) — Phase B-M1 ✅
 
-- [ ] **None** — no UI; optional later i18n for fail key (generic failed OK).
+- [x] **None** — no UI; optional later i18n for fail key (generic failed OK).
 
-### Backend / API (nextjs-backend) — Phase B-M1
+### Backend / API (nextjs-backend) — Phase B-M1 ✅
 
 **Concrete consumers:** Fly branding worker unit tests · Operator failed-status display (existing).
 
@@ -196,16 +196,16 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 - [x] Unit test: VO text mutated vs snapshot hash → job **`failed`**, reason = fail key, **FFmpeg runner never called**. *(media-pipeline owns `run-branding-job.test.ts` with the worker guard — avoid duplicate.)*
 - [x] Unit test: matching hash still proceeds (no false fail) — can share existing happy-path fixture. *(media-pipeline.)*
 
-### Worker / media pipeline (media-pipeline-engineer) — Phase B-M1
+### Worker / media pipeline (media-pipeline-engineer) — Phase B-M1 ✅
 
 - [x] In `runBrandingJob` (subtitle/VO path): after `subtitleSourceHash` check and **before** `mkdtemp` / ASS / spawn — if `config.voiceoverTimingHash.length === 64`, recompute hash from live `voiceoverText`; mismatch → `failBrandingJob` + return.
 - [x] Legacy empty hash → **skip** re-check (M1-6).
 - [x] Reuse `computeVoiceoverTimingHash` — do not fork formula.
 - [x] **spawn args-array only** — no VO strings in argv (unchanged).
 
-### Database — Phase B-M1
+### Database — Phase B-M1 ✅
 
-- [ ] **None.**
+- [x] **None.**
 
 ---
 
@@ -298,13 +298,13 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 | **spec-guardian** | SPEC-REVIEW Phase B amendment ✅ |
 | **security-architect** | SECURITY amend (numeric cover on trigger; VO never in argv) ✅ |
 
-### Phase B-M1 (active PREP)
+### Phase B-M1 ✅ CLOSED
 | Agent | Owns |
 |-------|------|
-| **media-pipeline-engineer** | Worker VO-hash re-check before proportional timings / spawn |
-| **nextjs-backend** | CONTRACT amend (fail code + worker step); fail constant; mismatch unit tests |
+| **media-pipeline-engineer** | Worker VO-hash re-check before proportional timings / spawn ✅ `1b2a8e7` |
+| **nextjs-backend** | CONTRACT amend (fail code + worker step); fail constant; mismatch unit tests ✅ `00df642` |
 | **nextjs-frontend** | None |
-| **security-architect** | SECURITY lean amend (integrity re-check AC) |
+| **security-architect** | SECURITY lean amend (integrity re-check AC) ✅ |
 | **spec-guardian** | Skip (M1-10 — no SPEC drift) |
 
 ---
@@ -338,10 +338,12 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 - [x] QA-PHASE-B.md — APPROVE WITH CONDITIONS `02bfa3b` (0 Critical/High)
 - [x] PO CLOSE Phase B note in USER_STORIES / SPRINT-STATE
 
-### Phase B-M1 — PREP (active)
+### Phase B-M1 — ✅ CLOSED 2026-08-31
 - [x] PREP — [`PHASE-B-M1.md`](./PHASE-B-M1.md) + this TASKS Phase B-M1 checklist
-- [ ] SECURITY.md lean amend (security-architect)
-- [ ] CONTRACT.md amend (nextjs-backend — worker step + fail code; FE Reviewed waive/N/A)
-- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend)
-- [ ] VALIDATION lean · QA lean · PO CLOSE M1
-- [ ] Do **not** check/uncheck USER_STORIES § US-9.2 AC
+- [x] SECURITY.md lean amend (security-architect)
+- [x] CONTRACT.md amend (nextjs-backend — worker step + fail code; FE Reviewed waive/N/A)
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend) — media `1b2a8e7` · BE `00df642`
+- [x] VALIDATION lean — PASS WITH NOTES
+- [x] QA lean — APPROVE (Medium #1 CLOSED; M2 poll race still open / out of scope)
+- [x] PO CLOSE M1
+- [x] Do **not** check/uncheck USER_STORIES § US-9.2 AC

@@ -35,7 +35,7 @@ Phase B correctly closes both Phase A deferrals under the frozen trust model: **
 
 | # | Severity | Location | Issue | Why it matters | Recommended fix |
 |---|----------|----------|-------|----------------|-----------------|
-| 1 | **Medium** | `lib/branding/run-branding-job.ts:148–206` | Worker re-checks `subtitleSourceHash` against live on-screen text (`:158–161`) but **does not** recompute / compare `voiceoverTimingHash` before `computeVoProportionalBeatTimings` from live `voiceoverText`. | If `voiceover_text` changes between enqueue and Fly run, ASS Dialogue timestamps follow the **new** VO while `branding_config.voiceoverTimingHash` (and fingerprint) still describe the **old** partition. Not injection (VO still counts-only), but breaks Phase B fingerprint integrity parallel to the subtitle-hash guard. | After loading script VO, `computeVoiceoverTimingHash(voiceoverText)` and fail the job (sanitized code) when ≠ `config.voiceoverTimingHash`. Add a unit test for mismatch → no spawn / failed. |
+| 1 | **Medium** | `lib/branding/run-branding-job.ts` (was `:148–206`) | ~~Worker did not re-check `voiceoverTimingHash` before VO-proportional timings.~~ | Fingerprint integrity gap vs subtitle-hash guard. | **CLOSED by US-9.2-B-M1** (`1b2a8e7` / `00df642`) — see § Phase B-M1 below. |
 | 2 | **Medium** | `lib/branding/poll-branding-jobs.ts:25–43`, `apply-branding-job-update.ts`, `run-branding-job.ts` claim path | **Carry-forward (Phase A QA Finding 1):** poll lacks `FOR UPDATE SKIP LOCKED`; claim does not verify rows affected before FFmpeg. | Concurrent workers can still duplicate branding spend. Unchanged by Phase B; not cross-tenant. | Same Phase A fix: atomic claim / zero-row → skip spawn. |
 
 ### Low
@@ -119,3 +119,73 @@ Phase B correctly closes both Phase A deferrals under the frozen trust model: **
 | **Medium / Low** | **2 / 2** |
 | **Stop CLOSE?** | **No** — CLOSE Phase B allowed |
 | **Next** | product-owner CLOSE Phase B in SPRINT-STATE; implementers optionally land Finding 1 (VO-hash worker re-check) as follow-up |
+
+---
+---
+
+# QA Report — US-9.2 Phase B-M1 (Worker `voiceoverTimingHash` re-check)
+
+**Story:** US-9.2 — Phase B-M1 lean integrity fast-follow  
+**Sprint label:** `US-9.2-B-M1`  
+**Branch:** `feature/US-9.2-b-m1-voiceover-timing-hash`  
+**BUILD refs:** media `1b2a8e7` · BE constant `00df642` · docs `8c4e8da`  
+**Validation:** PASS WITH NOTES — `VALIDATION-PHASE-B.md` § Phase B-M1  
+**CONTRACT / SECURITY:** Phase B-M1 frozen (4 conditions)  
+**Reviewer:** qa-engineer  
+**Date:** 2026-08-31  
+**Scope:** Lean — VO-hash worker guard only. Do not check USER_STORIES AC.
+
+### Verdict: APPROVE
+
+M1 closes QA-PHASE-B **Medium #1**. Worker re-checks live VO vs raw snapshot `voiceoverTimingHash` after the subtitle-hash guard and before `mkdtemp` / ASS / spawn. Mismatch and malformed non-empty fail closed with sanitized i18n codes and **zero** FFmpeg. Legacy Phase A missing/empty/null skips without soft-default false-enforce. No Critical / High. **Close recommendation (Phase B-M1): YES.**
+
+---
+
+## Finding status (carry-forward)
+
+| # | Severity | Status | Notes |
+|---|----------|--------|-------|
+| **1** | Medium (Phase B) | **CLOSED** | `run-branding-job.ts:169–192` + `rawVoiceoverTimingHash` / `readRawVoiceoverTimingHash`; unit tests mismatch / match / legacy skip / malformed |
+| **2** | Medium (Phase A poll claim) | **OPEN — out of scope** | `FOR UPDATE SKIP LOCKED` / claim race unchanged; not blocking M1 CLOSE |
+| 3–4 | Low (Phase B) | Unchanged | Client clamp / `prefer-const` — out of M1 |
+
+---
+
+## Hunt results (M1)
+
+| Risk | Result | Evidence |
+|------|--------|----------|
+| Bypass of VO-hash guard | **PASS** | Guard after subtitle hash (`164–167`), before `mkdtemp` (`199`); early `return` on mismatch/malformed |
+| Soft-default false-enforce on Phase A | **PASS** | Guard uses `rawVoiceoverTimingHash`, not soft-defaulted `config.voiceoverTimingHash` (`171`); legacy-missing test completes |
+| Spawn after fail | **PASS** | Mismatch/malformed tests: `ffmpegCalled === false` |
+| Client authority | **PASS** | No apply/FE/DB delta; `voiceoverTimingHash` still in `FORBIDDEN_BRANDING_AUTHORITY_KEYS` |
+| Secrets in fail messages | **PASS** | `failBrandingJob` persists `scripts.branding.failure.voiceoverTimingHashMismatch` / `…configError` only — no VO, digests, argv |
+
+---
+
+## Checks Run
+
+| Command | Result |
+|---------|--------|
+| `npx tsx --test lib/branding/run-branding-job.test.ts` | **9 pass / 0 fail** (~334 ms) — includes 4 Phase B-M1 cases |
+| Manual review vs SECURITY Phase B-M1 (4) + CONTRACT § Phase B-M1 | Completed |
+
+---
+
+## What Was Not Covered
+
+- Live Fly worker E2E with mutated VO between enqueue and run  
+- Poll claim race (Finding 2)  
+- Optional EN/ES copy for the new fail key (PO M1-9 — deferred)
+
+---
+
+## Gate summary (Phase B-M1)
+
+| Field | Value |
+|-------|-------|
+| **Verdict** | **APPROVE** |
+| **Critical / High** | **0 / 0** |
+| **Stop CLOSE M1?** | **No** |
+| **QA-PHASE-B Medium #1** | **CLOSED** |
+| **Next** | product-owner CLOSE M1 in SPRINT-STATE; Medium #2 remains backlog |
