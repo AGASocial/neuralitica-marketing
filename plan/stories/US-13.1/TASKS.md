@@ -84,7 +84,7 @@ upsertReelMetrics({
 
 - [x] `SPEC-REVIEW.md` — spec-guardian
 - [x] `SECURITY.md` — security-architect
-- [x] `CONTRACT.md` frozen — Zod in `lib/contracts/reel-metrics.ts` + calendar DTO delta · **Reviewed by FE** pending
+- [x] `CONTRACT.md` frozen — Zod in `lib/contracts/reel-metrics.ts` + calendar DTO delta · **Reviewed by FE** approved — 2026-08-31
 - [ ] Open questions in README § resolved in CONTRACT
 
 ---

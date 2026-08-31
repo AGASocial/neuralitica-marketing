@@ -1,7 +1,7 @@
 # API Contract — US-13.1 Record basic post metrics manually
 
 **Story:** US-13.1  
-**Status:** Frozen — 2026-08-31 · **Reviewed by FE:** pending — nextjs-frontend  
+**Status:** Frozen — 2026-08-31 · **Reviewed by FE:** approved — 2026-08-31 — nextjs-frontend  
 **Security:** `plan/stories/US-13.1/SECURITY.md` (APPROVE WITH CONDITIONS — 14 conditions reconciled below)  
 **Spec review:** `plan/stories/US-13.1/SPEC-REVIEW.md` (GAPS — 6 Low closed below)  
 **Pattern:** US-12.2 mark-published Sidebar · US-12.1 calendar read · manual Metrics Lite (no analytics stack)  
@@ -434,22 +434,36 @@ Reuse **`neuramark_agent_rate_limits`** (US-4.1 table).
 | Consumer | Route / component | Contract surface |
 |----------|-------------------|------------------|
 | Calendar Sidebar | `components/calendar/OperatorCalendarView.tsx` | Metrics section |
-| Metrics form | Same (optional child) | Five `InputNumber` fields + Save |
+| Metrics form | `ReelMetricsSection` child (recommended) | Five `InputNumber` fields + Save |
 | Save CTA | Same | Calls `upsertReelMetrics`; disabled when `metrics?.editable === false` |
 | Read-only state | Same | Show values + window-expired copy; hide Save |
 | `recordedAt` | Same | Formatted when non-null |
-| Success | Same | Toast + refresh week via `getOperatorCalendarForWeek` |
+| Success | Same | Toast or inline success + refresh week via `router.refresh()` |
 | i18n | `messages/en.json` + `es.json` | **`calendar.metrics.*`** EN/ES |
 | Types | FE imports | `lib/contracts/reel-metrics.ts` + `lib/contracts/calendar.ts` |
+| Error mapper | `components/calendar/map-reel-metrics-error.ts` | Map codes / `messageKey` via `REEL_METRICS_MESSAGE_KEYS` |
 
 **Section gating (UX only — server enforces):**
 
 - Show metrics section: `pipelineStatus === 'published'` **and** `assembledReelId != null`
 - Hide for draft / generating / qa / pending / approved / rejected
 - Pre-fill from `selectedSlot.metrics` when non-null; default **0** when counters absent
-- Save disabled when `metrics.editable === false`
+- Save disabled when `metrics.editable === false`; all `InputNumber` fields disabled in read-only state
 
 **Do not** add `/operator/metrics` route.
+
+### FE implementation notes (BUILD)
+
+- **Placement:** Sidebar block after published-on / IG link row, before deep-link CTAs — same scroll context as US-12.2 publish metadata.
+- **Component split:** Optional `ReelMetricsSection.tsx` client child (mirrors `MarkPublishedDialog` extraction) keeps `OperatorCalendarView` readable; props: `slot`, `copy`, `locale`, `onSuccess`.
+- **InputNumber:** `useGrouping={false}` `min={0}` `max={REEL_METRICS_MAX_VALUE}`; allow `null` while editing — submit passes through to Server Action (Zod blank → 0). Disable inputs when `!metrics?.editable`.
+- **Mutation body:** `{ assembledReelId: slot.assembledReelId, views, likes, comments, saves, dms }` — **never** `slotId` or `client_id`.
+- **Pending:** `useTransition` on Save; disable form while pending (US-12.2 pattern).
+- **Success:** Close/hold Sidebar; merge returned `metrics` into `selectedSlot` optional; **`router.refresh()`** required minimum for week RSC re-fetch.
+- **Errors:** `mapReelMetricsError` — field keys `views` / `likes` / `comments` / `saves` / `dms` on `VALIDATION_ERROR`; server banner for `NOT_PUBLISHED`, `EDIT_WINDOW_EXPIRED`, `RATE_LIMITED`, auth codes.
+- **recordedAt:** Format with `Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' })` when non-null; omit row when null.
+- **i18n keys (EN/ES):** `calendar.metrics.title`, `views`, `likes`, `comments`, `saves`, `dms`, `recordedAtLabel`, `save`, `savePending`, `success`, `editWindowExpired`, `errors.{notFound,notPublished,editWindowExpired,rateLimited,validation,forbidden,forbiddenFields,internal,unauthenticated}` — wire from `app/(app)/operator/calendar/page.tsx` copy props.
+- **Disputes:** none.
 
 ---
 
@@ -651,18 +665,28 @@ Reuse **`neuramark_agent_rate_limits`** (US-4.1 table).
 
 ## Reviewed by FE
 
-**Reviewed by FE:** pending — nextjs-frontend
+**Reviewed by FE:** approved — 2026-08-31 — nextjs-frontend
+
+**Verdict:** Accept — extend existing `OperatorCalendarView` Sidebar with inline metrics section (optional `ReelMetricsSection` child) against frozen `upsertReelMetrics` / `ReelMetricsDto` / `CalendarSlotDetailDto.metrics` in contract modules. Matches US-12.2 `useTransition` + `router.refresh()` + error-mapper patterns; no new route.
+
+### FE signoff notes (non-blocking)
+
+- **Surface:** No new route — metrics form lives in Sidebar when published + `assembledReelId`. Operator may edit any active client's published Reel (not limited to `sessionClientId`).
+- **DTO assumption:** BE emits non-null `metrics` snapshot whenever `pipelineStatus === 'published'` and `assembledReelId` is set; FE may defensively default counters to 0 if null during BUILD overlap.
+- **Read-only UX:** When `metrics.editable === false`, disable all inputs, hide Save, show `calendar.metrics.editWindowExpired` copy; still display counter values and `recordedAt` when present.
+- **Success feedback:** PrimeReact `Toast` (optional, cf. scripts page) or inline `Message` severity success — either satisfies CONTRACT.
+- **PrimeReact `InputNumber`:** Frozen per PO Q4 — not plain `InputText`; integer-only via `min`/`max` and server Zod.
 
 **FE signoff checklist (blocking BUILD):**
 
-- [ ] **Metrics section:** Sidebar when `pipelineStatus === 'published'` + `assembledReelId`.
-- [ ] **Form:** Five PrimeReact `InputNumber` fields; blank → 0 on submit.
-- [ ] **Save CTA:** Calls `upsertReelMetrics`; disabled when `metrics.editable === false`.
-- [ ] **Read-only:** Expired window shows values + copy; no Save.
-- [ ] **Success:** Toast + refresh week via `getOperatorCalendarForWeek`.
-- [ ] **Errors:** Map codes to `calendar.metrics.*` i18n keys.
-- [ ] **Types:** Import from `lib/contracts/reel-metrics.ts` + `calendar.ts` only.
-- [ ] **i18n:** `calendar.metrics.*` EN/ES.
+- [x] **Metrics section:** Sidebar when `pipelineStatus === 'published'` + `assembledReelId`.
+- [x] **Form:** Five PrimeReact `InputNumber` fields; blank → 0 on submit (server Zod coalesce).
+- [x] **Save CTA:** Calls `upsertReelMetrics`; disabled when `metrics.editable === false`.
+- [x] **Read-only:** Expired window shows values + copy; no Save.
+- [x] **Success:** Toast or inline success + refresh week via `router.refresh()`.
+- [x] **Errors:** Map codes to `calendar.metrics.*` i18n keys via `REEL_METRICS_MESSAGE_KEYS`.
+- [x] **Types:** Import from `lib/contracts/reel-metrics.ts` + `calendar.ts` only.
+- [x] **i18n:** `calendar.metrics.*` EN/ES.
 
 ---
 
