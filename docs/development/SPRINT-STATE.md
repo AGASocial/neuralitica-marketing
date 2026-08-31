@@ -63,7 +63,7 @@ updated_at: 2026-08-31T14:00:00Z
 
 ## Historial reciente
 
-- 2026-08-31 · US-13.2 CLOSE: 3/3 AC checked; VALIDATION PASS WITH NOTES `6fa9ad8` (98/98); QA APPROVE WITH CONDITIONS `7ff873e` (0 Critical/High, 1 Medium non-blocking: brief-read clientId parity → Phase B); FF-merge pending; Phase 5 → SELECT **phase integration** (recommended — Sprint 7 stories complete), **US-8.7**, or **US-8.5**.
+- 2026-08-31 · US-13.2 CLOSE: 3/3 AC checked; VALIDATION PASS WITH NOTES `6fa9ad8` (98/98); QA APPROVE WITH CONDITIONS `7ff873e` (0 Critical/High, 1 Medium non-blocking: brief-read clientId parity → Phase B); FF-merge `6f06c42` to main; **Sprint 7 complete**; Phase 5 → SELECT **phase integration** (recommended), **US-8.7**, or **US-8.5**.
 - 2026-08-31 · US-13.2 SELECT → PREP. Branch `feature/US-13.2-strategy-insights` from main; deps US-13.1 ✅ · US-4.1 ✅; README + TASKS in `plan/stories/US-13.2/`.
 - 2026-08-31 · US-13.1 CLOSE: 5/5 AC checked; VALIDATION PASS WITH NOTES `1e90f5f` (37/37); QA APPROVE WITH CONDITIONS `d9f829b` (0 Critical/High, 4 Low); fix `d544a47` (editable default); FF-merge `d544a47` to main; Phase 5 → SELECT **US-13.2** (recommended), US-8.7, or phase integration.
 - 2026-08-30 · US-13.1 SELECT → PREP. Branch `feature/US-13.1-reel-metrics` from main; deps US-12.2 ✅.
