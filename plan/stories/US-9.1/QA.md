@@ -116,3 +116,105 @@ Phase A implements the frozen CONTRACT/SECURITY model: Operator-gated pointer-on
 | Blockers for merge? | **No** — no Critical/High; Medium items are hardening/UX, not exploitable bypass |
 | Recommend CLOSE Phase A? | **YES** |
 | Conditions before production traffic | (1) Manual or Fly smoke with real FFmpeg; (2) track Finding 1 worker claim hardening in backlog; (3) add IDOR route tests (Finding 3) in next slice |
+
+---
+
+# QA Report — US-9.1 Phase B-M2 (Assembly poll atomic claim)
+
+**Story:** US-9.1 — sprint `US-9.1-B-M2`  
+**Branch:** `feature/US-9.1-b-m2-assembly-poll-claim`  
+**BUILD commit:** `2a69b24` · SECURITY/CONTRACT freeze `db8e246`  
+**CONTRACT:** § Phase B-M2 frozen (FE Reviewed N/A)  
+**SECURITY:** Phase B-M2 APPROVE WITH CONDITIONS (5 conditions)  
+**Reviewer:** qa-engineer  
+**Date:** 2026-08-31  
+**Scope:** Atomic `queued`→`processing` claim, runner early-exit gate, poll `queued`-only predicate. Closes **Phase A Medium #1** and **QA-PHASE-B Medium #1**.
+
+### Verdict: APPROVE
+
+M2 correctly closes the assembly worker claim race: `applyAssemblyJobUpdate` uses conditional `.eq("status", "queued").select("id")` and returns `idempotent: true` on zero rows; `runAssemblyJob` returns before temp/download/spawn on lost claim or peer `processing` at entry; `pollQueuedAssemblyJobsBatch` remains `status = 'queued'` only with stale sweeper pre-tick. Mirrors CLOSED US-9.2-B-M2 branding pattern. No new Critical, High, or Medium findings.
+
+**Close recommendation (Phase B-M2): YES** — merge and mark M2 gates complete.
+
+---
+
+## Findings (Phase B-M2)
+
+### Closed (this sprint)
+
+| # | Prior | Location | Resolution |
+|---|-------|----------|------------|
+| 1 | **Medium** (Phase A QA + QA-PHASE-B) | `poll-assembly-jobs.ts`, `apply-assembly-job-update.ts`, `run-assembly-job.ts` | **CLOSED** — atomic conditional UPDATE + RETURNING; runner gate; queued-only poll |
+
+### Low
+
+| # | Severity | Location | Issue | Why it matters | Recommended fix |
+|---|----------|----------|-------|----------------|-----------------|
+| 1 | **Low** | `lib/assembly/assembly-jobs.test.ts:340-406` | CONTRACT § Phase B-M2 lists applier fixtures (`processing` patch on `queued` vs lost race → `idempotent` true/false); only terminal-completed idempotency is tested at applier level. | Runner-level M2 tests cover the security gate; applier-only regressions would lack a direct red test. | Add `applyAssemblyJobUpdate` unit tests for won/lost processing claim (mirror branding applier tests). |
+
+### Informational (non-blocking)
+
+| Topic | Status | Notes |
+|-------|--------|-------|
+| Broll stitch M2 path | **Covered indirectly** | Claim gate runs before `assembly_path_tag` branch; primary-path M2 tests suffice. |
+| `completed` rows-affected / double auto-chain | **Pre-existing** | `onAssemblyJobCompleted` still fires without inspecting UPDATE row count on `completed` — out of M2 scope; not introduced here. |
+| Live FFmpeg / Fly concurrency smoke | **Deferred** | Mocked lost-claim tests only; manual multi-replica smoke optional before prod traffic. |
+
+---
+
+## Security control verification (Phase B-M2)
+
+| Control (CONTRACT / SECURITY.md Phase B-M2) | Status | Evidence |
+|---------------------------------------------|--------|----------|
+| Atomic claim `queued`→`processing` via conditional UPDATE + RETURNING | **PASS** | `apply-assembly-job-update.ts:106-133` |
+| Lost race → `idempotent: true`, no throw | **PASS** | `apply-assembly-job-update.ts:118-125` |
+| Runner exit before mkdtemp/download/spawn on lost claim | **PASS** | `run-assembly-job.ts:106-118`; test "lost claim → no spawn" |
+| Peer `processing` at entry → early return (no resume) | **PASS** | `run-assembly-job.ts:106-108`; test "peer owns row" |
+| Poll candidate set `status = 'queued'` only | **PASS** | `poll-assembly-jobs.ts:28` |
+| Stale sweeper before batch SELECT | **PASS** | `poll-assembly-jobs.ts:22` |
+| No new client authority / endpoints | **PASS** | Diff limited to worker modules + docs |
+| Lost claim does not fire `onAssemblyJobCompleted` | **PASS** | Early return before FFmpeg/complete path |
+| Phase A/B floors unchanged | **PASS** | No DTO/FE/DDL changes in BUILD commit |
+
+---
+
+## Checks run
+
+| Command | Result |
+|---------|--------|
+| `npx tsx --test lib/assembly/*.test.ts lib/assembly/ffmpeg/*.test.ts` | **71 pass / 0 fail** (~362 ms) |
+| `npx tsx --test lib/assembly/run-assembly-job.test.ts lib/assembly/run-assembly-job.phase-b.test.ts` | **Included above — M2 tests pass** |
+| `npm run lint` (scoped assembly files) | **Not run (pre-existing)** — `next lint` fails: no `pages`/`app` directory in repo root |
+| Live Fly multi-replica claim smoke | **Not run** — out of lean M2 scope |
+
+---
+
+## What was not covered
+
+- Applier-level unit tests for processing claim win/lose (Finding 1 Low).
+- Live concurrent Fly replica or dev in-process + poll overlap smoke.
+- Full-repo lint/build green (pre-existing failures).
+
+---
+
+## Finding counts (Phase B-M2 — new only)
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 0 |
+| Medium | 0 |
+| Low | 1 |
+| Closed (prior Medium) | 1 |
+
+---
+
+## Phase B-M2 close gate
+
+| Question | Answer |
+|----------|--------|
+| QA verdict | **APPROVE** |
+| Blockers for merge? | **No** |
+| Recommend CLOSE M2? | **YES** |
+| Closes QA Phase A Medium #1? | **YES** |
+| Closes QA-PHASE-B Medium #1? | **YES** |

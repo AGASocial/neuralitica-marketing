@@ -1,7 +1,7 @@
 # US-9.1 Phase B-M2 — Assembly poll claim race
 
 **Story ID:** **US-9.1** (same story — **not** a new `US-9.x` ID). Sprint label: **`US-9.1-B-M2`**.  
-**Status:** **PREP** (2026-08-31)  
+**Status:** **CLOSED** (2026-08-31)  
 **Branch:** `feature/US-9.1-b-m2-assembly-poll-claim`  
 **Source:** [`QA.md`](./QA.md) Finding **Medium #1** · [`QA-PHASE-B.md`](./QA-PHASE-B.md) Finding **Medium #1** (Phase A carry-forward)
 
@@ -104,17 +104,17 @@ See [`TASKS.md`](./TASKS.md) § Phase B-M2 checklist.
 
 ---
 
-## Gates (Phase B-M2)
+## Gates (Phase B-M2) — CLOSED 2026-08-31
 
 - [x] PREP — this file + TASKS Phase B-M2 checklist + README note
-- [ ] SECURITY.md lean amend (security-architect — worker claim AC)
-- [ ] CONTRACT.md amend (nextjs-backend — atomic claim + poll `queued`-only; FE Reviewed N/A)
-- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend)
-- [ ] VALIDATION lean (requirements-validator)
-- [ ] QA lean (qa-engineer) — close QA Phase A Medium #1 + QA-PHASE-B Medium #1
-- [ ] PO CLOSE M2 — README / TASKS gates (USER_STORIES AC unchanged)
+- [x] SECURITY.md lean amend (security-architect — worker claim AC — `db8e246`)
+- [x] CONTRACT.md amend (nextjs-backend — atomic claim + poll `queued`-only; FE Reviewed N/A — `db8e246`)
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend) — `2a69b24`
+- [x] VALIDATION lean (requirements-validator) — PASS WITH NOTES (`VALIDATION-PHASE-B-M2.md`; 24/24)
+- [x] QA lean (qa-engineer) — APPROVE; QA Phase A Medium #1 + QA-PHASE-B Medium #1 CLOSED (1 Low non-blocking)
+- [x] PO CLOSE M2 — README / TASKS gates (USER_STORIES AC unchanged)
 
-**Status:** **PREP** — next gate SECURITY lean amend.
+**Status:** **CLOSED.** Residual Low: optional `apply-assembly-job-update.test.ts` applier fixtures (mirror branding applier tests).
 
 ---
 

@@ -133,7 +133,7 @@
 
 ---
 
-## Phase B-M2 — Assembly poll claim race — PREP
+## Phase B-M2 — Assembly poll claim race — ✅ CLOSED 2026-08-31
 
 **Sprint:** `US-9.1-B-M2` · **Branch:** `feature/US-9.1-b-m2-assembly-poll-claim` · **PREP:** [`PHASE-B-M2.md`](./PHASE-B-M2.md)
 
@@ -145,19 +145,19 @@
 - [x] **`runAssemblyJob`** — if claim returns `idempotent: true`, or row already `processing` at entry → return **before** `mkdtemp` / download / FFmpeg (M2-4).
 - [x] **`pollQueuedAssemblyJobsBatch`** — confirm candidate filter **`status = 'queued'`** only; do **not** poll `processing` (M2-5; align CONTRACT diagram).
 - [x] **Unit test** — simulated lost claim / concurrent claim → **zero** `runFfmpeg` / spawn invocations; winner path unchanged (`run-assembly-job.test.ts` Phase B-M2).
-- [ ] **CONTRACT amend** — § Poll runtime + `runAssemblyJob` step 1: atomic claim semantics, idempotent skip, `queued`-only poll predicate (**nextjs-backend**).
+- [x] **CONTRACT amend** — § Poll runtime + `runAssemblyJob` step 1: atomic claim semantics, idempotent skip, `queued`-only poll predicate (**nextjs-backend** — `db8e246`).
 
 ### Frontend
 
-- [ ] **None** (M2-9).
+- [x] **None** (M2-9).
 
 ### Database
 
-- [ ] **None** — conditional UPDATE on existing `neuramark_assembled_reels` row.
+- [x] **None** — conditional UPDATE on existing `neuramark_assembled_reels` row.
 
 ### Security
 
-- [ ] **SECURITY.md lean amend** — close `[SEC] Worker job claim` AC (mirror US-9.2-B-M2 branding claim for **`status`**; security-architect).
+- [x] **SECURITY.md lean amend** — close `[SEC] Worker job claim` AC (mirror US-9.2-B-M2 branding claim for **`status`**; security-architect — `db8e246`).
 
 ---
 
@@ -172,16 +172,16 @@
 
 ---
 
-## Gate checklist — Phase B-M2
+## Gate checklist — Phase B-M2 — ✅ CLOSED 2026-08-31
 
 - [x] PREP — [`PHASE-B-M2.md`](./PHASE-B-M2.md) + this checklist + README note
-- [ ] SECURITY.md lean amend (security-architect)
-- [ ] CONTRACT.md amend (nextjs-backend — atomic claim; FE Reviewed N/A)
-- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend)
-- [ ] VALIDATION lean (requirements-validator)
-- [ ] QA lean (qa-engineer) — close QA Phase A Medium #1 + QA-PHASE-B Medium #1
-- [ ] PO CLOSE M2
-- [ ] Do **not** check/uncheck USER_STORIES § US-9.1 AC
+- [x] SECURITY.md lean amend (security-architect — `db8e246`)
+- [x] CONTRACT.md amend (nextjs-backend — atomic claim; FE Reviewed N/A — `db8e246`)
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend) — `2a69b24`
+- [x] VALIDATION lean — PASS WITH NOTES (`VALIDATION-PHASE-B-M2.md`; 24/24)
+- [x] QA lean — APPROVE (1 Low; QA Phase A Medium #1 + QA-PHASE-B Medium #1 CLOSED)
+- [x] PO CLOSE M2
+- [x] Do **not** check/uncheck USER_STORIES § US-9.1 AC
 
 ---
 
