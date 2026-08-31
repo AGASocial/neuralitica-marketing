@@ -20,6 +20,7 @@ import { createManualUploadAdapter } from "@/lib/providers/video/manual-upload-a
 import { createMusetalkLowAdapter } from "@/lib/providers/video/musetalk-low-adapter";
 import { createSadtalkerLowAdapter } from "@/lib/providers/video/sadtalker-low-adapter";
 import { createSiliconflowCosyvoice2Adapter } from "@/lib/providers/tts/siliconflow-cosyvoice2-adapter";
+import { createLtxBrollHighAdapter } from "@/lib/providers/video/ltx-broll-high-adapter";
 import { createSiliconflowWan21TurboAdapter } from "@/lib/providers/video/siliconflow-wan21-turbo-adapter";
 
 const STUB_VIDEO_KEYS = [
@@ -157,6 +158,22 @@ function buildBootstrapCatalog(): ProviderCatalogRow[] {
       envKeyName: "HEYGEN_API_KEY",
     },
     {
+      key: "ltx_broll_high",
+      assetRole: "broll",
+      tier: "high",
+      active: false,
+      costModel: {
+        billingUnit: "per_clip",
+        unitCostCents: 126,
+        metadata: {
+          clipDurationSec: 5,
+          model: "ltx-2.3-pro",
+          vendor: "fal",
+        },
+      },
+      envKeyName: "FAL_API_KEY",
+    },
+    {
       key: "manual",
       assetRole: "talking_head",
       tier: "low",
@@ -220,6 +237,23 @@ export function createProviderRegistry(
 
   if (catalogKeys.has(DEFAULT_LOW_TIER_PROVIDER_KEYS.manual)) {
     registry.registerVideo(createManualUploadAdapter());
+  }
+
+  if (catalogKeys.has("ltx_broll_high")) {
+    registry.registerVideo(
+      createLtxBrollHighAdapter({
+        defaultEstimateCents: estimateCentsFromCatalog(
+          catalog,
+          "ltx_broll_high",
+          126,
+        ),
+        unitCostCentsPerClip: unitCostCentsFromCatalog(
+          catalog,
+          "ltx_broll_high",
+          126,
+        ),
+      }),
+    );
   }
 
   if (catalogKeys.has(DEFAULT_LOW_TIER_PROVIDER_KEYS.tts)) {
