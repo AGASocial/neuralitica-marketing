@@ -3,14 +3,24 @@ import "server-only";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export type WeeklyCycleRunMode = "cron" | "operator";
-type RunStatus = "planned" | "running" | "completed" | "failed" | "dry_run";
-export type AcquireWeeklyCycleRunResult = {
-  outcome: "CREATED" | "ALREADY_EXISTS";
-  runId: string;
-  status: RunStatus;
-  clientId: string;
-  weekStart: string;
-};
+export type WeeklyCycleRunStatus = "planned" | "running" | "completed" | "failed" | "dry_run";
+export type AcquireWeeklyCycleRunResult =
+  | {
+      outcome: "CREATED" | "ALREADY_EXISTS";
+      runId: string;
+      status: "dry_run";
+      replan: "ALLOWED";
+      clientId: string;
+      weekStart: string;
+    }
+  | {
+      outcome: "ALREADY_EXISTS";
+      runId: string;
+      status: Exclude<WeeklyCycleRunStatus, "dry_run">;
+      replan: "BLOCKED";
+      clientId: string;
+      weekStart: string;
+    };
 
 export async function acquireWeeklyCycleRun(
   params: { clientId: string; weekStart: string; mode: WeeklyCycleRunMode },
@@ -23,7 +33,7 @@ export async function acquireWeeklyCycleRun(
     .select("id,status")
     .maybeSingle();
   if (insertError) throw new Error("WEEKLY_CYCLE_ACQUIRE_FAILED");
-  if (inserted) return { outcome: "CREATED", runId: inserted.id, status: inserted.status as RunStatus, clientId: params.clientId, weekStart: params.weekStart };
+  if (inserted) return { outcome: "CREATED", runId: inserted.id, status: "dry_run", replan: "ALLOWED", clientId: params.clientId, weekStart: params.weekStart };
 
   const { data: existing, error } = await supabase
     .from("neuramark_weekly_cycle_runs")
@@ -32,5 +42,9 @@ export async function acquireWeeklyCycleRun(
     .eq("week_start", params.weekStart)
     .single();
   if (error || !existing) throw new Error("WEEKLY_CYCLE_ACQUIRE_FAILED");
-  return { outcome: "ALREADY_EXISTS", runId: existing.id, status: existing.status as RunStatus, clientId: params.clientId, weekStart: params.weekStart };
+  const status = existing.status as WeeklyCycleRunStatus;
+  if (status === "dry_run") {
+    return { outcome: "ALREADY_EXISTS", runId: existing.id, status, replan: "ALLOWED", clientId: params.clientId, weekStart: params.weekStart };
+  }
+  return { outcome: "ALREADY_EXISTS", runId: existing.id, status, replan: "BLOCKED", clientId: params.clientId, weekStart: params.weekStart };
 }

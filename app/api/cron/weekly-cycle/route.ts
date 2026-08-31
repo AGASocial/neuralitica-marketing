@@ -29,7 +29,11 @@ export async function handleWeeklyCycleCron(
   let body: unknown = null;
   const text = await request.text();
   if (text.trim()) {
-    try { body = JSON.parse(text); } catch { body = null; }
+    try {
+      body = JSON.parse(text);
+    } catch {
+      return Response.json({ error: "INVALID_JSON" }, { status: 400, headers });
+    }
   }
   if (findForbiddenWeeklyCycleCronKeys(body).length > 0) return Response.json({ error: "FORBIDDEN_FIELDS" }, { status: 400, headers });
   const result = await dependencies.runBatch({ weekStart: dependencies.resolveWeekStart(), mode: "cron", dryRun: true });

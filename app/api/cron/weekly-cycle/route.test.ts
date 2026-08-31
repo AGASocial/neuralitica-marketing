@@ -15,6 +15,11 @@ const requestWithBody = (method: "GET" | "POST", body: unknown) => ({
   headers: new Headers({ authorization: "Bearer valid" }),
   text: async () => JSON.stringify(body),
 }) as Request;
+const requestWithRawBody = (method: "GET" | "POST", body: string) => ({
+  method,
+  headers: new Headers({ authorization: "Bearer valid" }),
+  text: async () => body,
+}) as Request;
 
 describe("weekly cycle cron route", () => {
   it("runs a valid request and always supplies dryRun true", async () => withServerOnlyStub(async () => {
@@ -27,6 +32,22 @@ describe("weekly cycle cron route", () => {
     assert.equal(response.status, 200);
     assert.equal(response.headers.get("cache-control"), "no-store");
     assert.deepEqual(received, { weekStart: "2026-08-31", mode: "cron", dryRun: true });
+  }));
+
+  it("rejects authenticated malformed non-empty JSON for GET and POST", async () => withServerOnlyStub(async () => {
+    const { handleWeeklyCycleCron } = await import("./route");
+    for (const method of ["GET", "POST"] as const) {
+      let calls = 0;
+      const response = await handleWeeklyCycleCron(requestWithRawBody(method, "{\"clientId\":"), {
+        verify: () => ({ ok: true }),
+        resolveWeekStart: () => { throw new Error("must not resolve week"); },
+        runBatch: async () => { calls += 1; return summary; },
+      });
+      assert.equal(response.status, 400);
+      assert.deepEqual(await response.json(), { error: "INVALID_JSON" });
+      assert.equal(response.headers.get("cache-control"), "no-store");
+      assert.equal(calls, 0);
+    }
   }));
 
   it("does not call batch after missing or wrong authentication", async () => withServerOnlyStub(async () => {

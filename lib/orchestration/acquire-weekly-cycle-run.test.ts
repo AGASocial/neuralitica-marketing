@@ -47,6 +47,7 @@ describe("acquireWeeklyCycleRun", () => {
     const second = await acquireWeeklyCycleRun(params, ledger.createClient);
     assert.equal(first.outcome, "CREATED");
     assert.equal(second.outcome, "ALREADY_EXISTS");
+    assert.equal(second.replan, "ALLOWED");
     assert.equal(second.runId, first.runId);
     assert.equal(ledger.insertCount(), 1);
   }));
@@ -60,4 +61,29 @@ describe("acquireWeeklyCycleRun", () => {
     assert.equal(new Set(results.map((item) => item.runId)).size, 1);
     assert.equal(ledger.insertCount(), 1);
   }));
+
+  for (const status of ["planned", "running", "completed", "failed"] as const) {
+    it(`marks existing ${status} run as non-replannable`, async () => withServerOnlyStub(async () => {
+      const { acquireWeeklyCycleRun } = await import("./acquire-weekly-cycle-run");
+      const createClient = () => ({
+        from: () => ({
+          upsert: () => ({ select: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }),
+          select: () => {
+            const chain = {
+              eq: () => chain,
+              single: async () => ({ data: { id: "22222222-2222-4222-8222-222222222222", status }, error: null }),
+            };
+            return chain;
+          },
+        }),
+      });
+      const result = await acquireWeeklyCycleRun(
+        { clientId: "11111111-1111-4111-8111-111111111111", weekStart: "2026-08-31", mode: "cron" },
+        createClient as never,
+      );
+      assert.equal(result.outcome, "ALREADY_EXISTS");
+      assert.equal(result.status, status);
+      assert.equal(result.replan, "BLOCKED");
+    }));
+  }
 });
