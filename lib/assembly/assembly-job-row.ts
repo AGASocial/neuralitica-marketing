@@ -1,7 +1,11 @@
 import "server-only";
 
-import type { AssemblyJobStatus } from "@/lib/contracts/assembly-job";
-import { ASSEMBLY_TEMPLATE_REEL_V1_BASIC } from "@/lib/contracts/assembly-job";
+import type { AssemblyJobStatus, AssemblyPathTag } from "@/lib/contracts/assembly-job";
+import {
+  ASSEMBLY_PATH_TAG_BROLL_STITCH,
+  ASSEMBLY_PATH_TAG_PRIMARY,
+  ASSEMBLY_TEMPLATE_REEL_V1_BASIC,
+} from "@/lib/contracts/assembly-job";
 import type {
   BrandingConfigSnapshot,
   BrandingJobStatus,
@@ -14,8 +18,10 @@ export type AssemblyJobRow = {
   reelScriptId: string;
   templateId: typeof ASSEMBLY_TEMPLATE_REEL_V1_BASIC;
   status: AssemblyJobStatus;
-  primaryVideoAssetId: string;
+  primaryVideoAssetId: string | null;
   voiceoverAssetId: string | null;
+  brollAssetIds: string[];
+  assemblyPathTag: AssemblyPathTag;
   outputMediaAssetId: string | null;
   scriptUpdatedAt: string;
   inputFingerprint: string;
@@ -32,11 +38,25 @@ export type AssemblyJobRow = {
 };
 
 const ASSEMBLY_JOB_SELECT =
-  "id, client_id, reel_script_id, template_id, status, primary_video_asset_id, voiceover_asset_id, output_media_asset_id, script_updated_at, input_fingerprint, target_duration_sec, actual_duration_sec, failure_reason, branding_status, branding_config, branding_fingerprint, pre_branding_output_media_asset_id, cover_media_asset_id, created_at, updated_at";
+  "id, client_id, reel_script_id, template_id, status, primary_video_asset_id, voiceover_asset_id, broll_asset_ids, assembly_path_tag, output_media_asset_id, script_updated_at, input_fingerprint, target_duration_sec, actual_duration_sec, failure_reason, branding_status, branding_config, branding_fingerprint, pre_branding_output_media_asset_id, cover_media_asset_id, created_at, updated_at";
 
 export const ASSEMBLY_JOB_SELECT_COLUMNS = ASSEMBLY_JOB_SELECT;
 
 export const ASSEMBLY_JOBS_TABLE = "neuramark_assembled_reels" as const;
+
+function parseBrollAssetIds(raw: unknown): string[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return raw.filter((id): id is string => typeof id === "string");
+}
+
+function parseAssemblyPathTag(raw: unknown): AssemblyPathTag {
+  if (raw === ASSEMBLY_PATH_TAG_BROLL_STITCH) {
+    return ASSEMBLY_PATH_TAG_BROLL_STITCH;
+  }
+  return ASSEMBLY_PATH_TAG_PRIMARY;
+}
 
 export function mapAssemblyJobRow(
   raw: Record<string, unknown>,
@@ -47,7 +67,6 @@ export function mapAssemblyJobRow(
     typeof raw.reel_script_id !== "string" ||
     typeof raw.template_id !== "string" ||
     typeof raw.status !== "string" ||
-    typeof raw.primary_video_asset_id !== "string" ||
     typeof raw.script_updated_at !== "string" ||
     typeof raw.input_fingerprint !== "string" ||
     typeof raw.target_duration_sec !== "number" ||
@@ -58,6 +77,23 @@ export function mapAssemblyJobRow(
   }
 
   if (raw.template_id !== ASSEMBLY_TEMPLATE_REEL_V1_BASIC) {
+    return null;
+  }
+
+  const assemblyPathTag = parseAssemblyPathTag(raw.assembly_path_tag);
+  const primaryVideoAssetId =
+    typeof raw.primary_video_asset_id === "string"
+      ? raw.primary_video_asset_id
+      : null;
+  const brollAssetIds = parseBrollAssetIds(raw.broll_asset_ids);
+
+  if (assemblyPathTag === ASSEMBLY_PATH_TAG_PRIMARY && !primaryVideoAssetId) {
+    return null;
+  }
+  if (
+    assemblyPathTag === ASSEMBLY_PATH_TAG_BROLL_STITCH &&
+    (brollAssetIds.length < 1 || brollAssetIds.length > 8)
+  ) {
     return null;
   }
 
@@ -81,11 +117,13 @@ export function mapAssemblyJobRow(
     reelScriptId: raw.reel_script_id,
     templateId: ASSEMBLY_TEMPLATE_REEL_V1_BASIC,
     status: raw.status as AssemblyJobStatus,
-    primaryVideoAssetId: raw.primary_video_asset_id,
+    primaryVideoAssetId,
     voiceoverAssetId:
       typeof raw.voiceover_asset_id === "string"
         ? raw.voiceover_asset_id
         : null,
+    brollAssetIds,
+    assemblyPathTag,
     outputMediaAssetId:
       typeof raw.output_media_asset_id === "string"
         ? raw.output_media_asset_id

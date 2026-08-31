@@ -1,23 +1,23 @@
 /**
- * US-9.1 assembly worker — mocked ffmpeg spawn and runAssemblyJob.
+ * US-9.1 Phase B — runAssemblyJob broll_stitch + degrade branch.
  */
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import Module from "node:module";
 import { afterEach, describe, it } from "node:test";
 
-import {
-  NEURAMARK_ASSEMBLY_DURATION_TOLERANCE_SEC_DEFAULT,
-} from "@/lib/contracts/assembly-job";
+import { NEURAMARK_ASSEMBLY_DURATION_TOLERANCE_SEC_DEFAULT } from "@/lib/contracts/assembly-job";
 
 const CLIENT_ID = "11111111-1111-4111-8111-111111111111";
 const OTHER_CLIENT_ID = "22222222-2222-4222-8222-222222222222";
 const REEL_SCRIPT_ID = "33333333-3333-4333-8333-333333333333";
 const JOB_ID = "44444444-4444-4444-8444-444444444444";
-const PRIMARY_ASSET_ID = "55555555-5555-4555-8555-555555555555";
 const VOICEOVER_ASSET_ID = "66666666-6666-4666-8666-666666666666";
 const OUTPUT_ASSET_ID = "77777777-7777-4777-8777-777777777777";
+const BROLL_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const BROLL_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const PRIMARY_ASSET_ID = "55555555-5555-4555-8555-555555555555";
 
 type NodeModuleLoad = {
   _load: (
@@ -27,18 +27,20 @@ type NodeModuleLoad = {
   ) => unknown;
 };
 
-function withServerOnlyStub<T>(run: () => T | Promise<T>): Promise<T> {
-  const nodeModule = Module as unknown as NodeModuleLoad;
-  const originalLoad = nodeModule._load.bind(nodeModule);
-  nodeModule._load = function (request, parent, isMain) {
-    if (request === "server-only") {
-      return {};
-    }
-    return originalLoad(request, parent, isMain);
-  };
-  return Promise.resolve(run()).finally(() => {
-    nodeModule._load = originalLoad;
-  });
+function fingerprint(parts: {
+  primary: string;
+  voiceover: string;
+  broll: string[];
+  pathTag: string;
+}): string {
+  const payload = [
+    parts.primary,
+    parts.voiceover,
+    "reel_v1_basic",
+    parts.broll.join(","),
+    parts.pathTag,
+  ].join("|");
+  return createHash("sha256").update(payload).digest("hex");
 }
 
 function clearAssemblyModuleCache() {
@@ -61,98 +63,135 @@ function loadAssemblyModule<T = Record<string, unknown>>(
   return require(relativePath) as T;
 }
 
-describe("runFfmpeg spawn contract", () => {
-  it("invokes spawn with args array and shell false", async () => {
-    await withServerOnlyStub(async () => {
-      const calls: Array<{ cmd: string; args: string[]; options: unknown }> =
-        [];
-
-      const fakeSpawn = (
-        cmd: string,
-        args: readonly string[],
-        options: { shell?: boolean },
-      ) => {
-        calls.push({ cmd, args: [...args], options });
-        return {
-          stderr: { on: () => undefined },
-          on: (event: string, cb: (code: number) => void) => {
-            if (event === "close") {
-              cb(0);
-            }
-          },
-        } as ReturnType<typeof spawn>;
-      };
-
-      const { runFfmpeg } = loadAssemblyModule<{ runFfmpeg: Function }>(
-        "./run-ffmpeg.ts",
-      );
-
-      const result = await runFfmpeg(
-        ["-y", "-i", "/tmp/primary.mp4", "/tmp/out.mp4"],
-        { spawnImpl: fakeSpawn as typeof spawn },
-      );
-
-      assert.equal(result.exitCode, 0);
-      assert.equal(calls.length, 1);
-      assert.equal(calls[0]?.cmd, "ffmpeg");
-      assert.deepEqual(calls[0]?.args, [
-        "-y",
-        "-i",
-        "/tmp/primary.mp4",
-        "/tmp/out.mp4",
-      ]);
-      assert.deepEqual(calls[0]?.options, { shell: false });
-    });
-  });
-});
-
-describe("readAssemblyJobPollMode", () => {
-  it("defaults to in_process outside production", () => {
-    const { readAssemblyJobPollMode } = loadAssemblyModule<{
-      readAssemblyJobPollMode: Function;
-    }>("./assembly-job-config-readers.ts");
-
-    assert.equal(readAssemblyJobPollMode({}, "development"), "in_process");
-    assert.equal(readAssemblyJobPollMode({ ASSEMBLY_JOB_POLL_MODE: "fly" }), "fly");
-  });
-});
-
-describe("enqueueAssemblyJob dev seam", () => {
-  afterEach(() => {
-    delete process.env.ASSEMBLY_JOB_POLL_MODE;
-  });
-
-  it("no-ops when fly mode", () => {
-    withServerOnlyStub(() => {
-      process.env.ASSEMBLY_JOB_POLL_MODE = "fly";
-      const { readAssemblyJobPollMode } = loadAssemblyModule<{
-        readAssemblyJobPollMode: Function;
-      }>("./assembly-job-config-readers.ts");
-      const { enqueueAssemblyJob } = loadAssemblyModule<{
-        enqueueAssemblyJob: (id: string) => void;
-      }>("./enqueue-assembly-job.ts");
-
-      assert.equal(readAssemblyJobPollMode(process.env), "fly");
-      assert.doesNotThrow(() => enqueueAssemblyJob(JOB_ID));
-    });
-  });
-});
-
-describe("runAssemblyJob mocked pipeline", () => {
+describe("runAssemblyJob Phase B", () => {
   afterEach(() => {
     delete process.env.NEURAMARK_ASSEMBLY_DURATION_TOLERANCE_SEC;
   });
 
-  it("fails without spawn when input asset client_id mismatches job", async () => {
+  it("broll_stitch uses persisted ids, concat args, shell:false spawn", async () => {
+    process.env.NEURAMARK_ASSEMBLY_DURATION_TOLERANCE_SEC = String(
+      NEURAMARK_ASSEMBLY_DURATION_TOLERANCE_SEC_DEFAULT,
+    );
+
+    const storage = new Map<string, Buffer>();
+    storage.set(`${BROLL_A}.mp4`, Buffer.from("clip-a"));
+    storage.set(`${BROLL_B}.mp4`, Buffer.from("clip-b"));
+    storage.set(
+      `neuramark/${CLIENT_ID}/${REEL_SCRIPT_ID}/${VOICEOVER_ASSET_ID}.mp3`,
+      Buffer.from("vo"),
+    );
+
+    const fp = fingerprint({
+      primary: "",
+      voiceover: VOICEOVER_ASSET_ID,
+      broll: [BROLL_A, BROLL_B],
+      pathTag: "broll_stitch",
+    });
+
     await withAssemblyMocks(
       {
-        assemblyJobs: [baseJobRow({ status: "queued" })],
+        assemblyJobs: [
+          baseJobRow({
+            primary_video_asset_id: null,
+            voiceover_asset_id: VOICEOVER_ASSET_ID,
+            broll_asset_ids: [BROLL_A, BROLL_B],
+            assembly_path_tag: "broll_stitch",
+            input_fingerprint: fp,
+          }),
+        ],
         mediaAssets: [
           {
-            id: PRIMARY_ASSET_ID,
+            id: BROLL_A,
+            client_id: CLIENT_ID,
+            asset_type: "generated_video",
+            storage_key: `${BROLL_A}.mp4`,
+          },
+          {
+            id: BROLL_B,
+            client_id: CLIENT_ID,
+            asset_type: "generated_video",
+            storage_key: `${BROLL_B}.mp4`,
+          },
+          {
+            id: VOICEOVER_ASSET_ID,
+            client_id: CLIENT_ID,
+            asset_type: "voiceover",
+            storage_key: `neuramark/${CLIENT_ID}/${REEL_SCRIPT_ID}/${VOICEOVER_ASSET_ID}.mp3`,
+          },
+        ],
+        insertedMediaAssetId: OUTPUT_ASSET_ID,
+        storage,
+        coldOpenNotes: "2",
+      },
+      async ({ updates }) => {
+        let spawnArgs: string[] | null = null;
+        const { runAssemblyJob } = loadAssemblyModule<{
+          runAssemblyJob: Function;
+        }>("./run-assembly-job.ts");
+
+        await runAssemblyJob(JOB_ID, {
+          runFfmpeg: async (args: string[]) => {
+            spawnArgs = args;
+            const outputPath = args.at(-1);
+            if (typeof outputPath === "string") {
+              await writeFile(outputPath, Buffer.from("fake-output-mp4"));
+            }
+            return { exitCode: 0, stderr: "" };
+          },
+          probeLocalMediaFile: async (filePath: string) => {
+            if (filePath.endsWith("output.mp4")) {
+              return { durationSec: 29.9, hasAudioStream: true };
+            }
+            return { durationSec: 20, hasAudioStream: false };
+          },
+        });
+
+        assert.ok(Array.isArray(spawnArgs));
+        assert.equal(spawnArgs?.[0], "-y");
+        assert.ok(spawnArgs?.includes("concat"));
+        assert.ok(spawnArgs?.includes("-ss"));
+        assert.ok(spawnArgs?.includes("2"));
+        assert.ok(spawnArgs?.includes("1:a:0"));
+        assert.ok(!spawnArgs?.some((a) => a.includes("http")));
+
+        const completed = updates.find((u) => u.status === "completed");
+        assert.ok(completed);
+        assert.equal(completed?.output_media_asset_id, OUTPUT_ASSET_ID);
+      },
+    );
+  });
+
+  it("cross-tenant broll clip → failed without spawn", async () => {
+    const fp = fingerprint({
+      primary: "",
+      voiceover: VOICEOVER_ASSET_ID,
+      broll: [BROLL_A],
+      pathTag: "broll_stitch",
+    });
+
+    await withAssemblyMocks(
+      {
+        assemblyJobs: [
+          baseJobRow({
+            primary_video_asset_id: null,
+            voiceover_asset_id: VOICEOVER_ASSET_ID,
+            broll_asset_ids: [BROLL_A],
+            assembly_path_tag: "broll_stitch",
+            input_fingerprint: fp,
+          }),
+        ],
+        mediaAssets: [
+          {
+            id: BROLL_A,
             client_id: OTHER_CLIENT_ID,
             asset_type: "generated_video",
-            storage_key: `${PRIMARY_ASSET_ID}.mp4`,
+            storage_key: `${BROLL_A}.mp4`,
+          },
+          {
+            id: VOICEOVER_ASSET_ID,
+            client_id: CLIENT_ID,
+            asset_type: "voiceover",
+            storage_key: `neuramark/${CLIENT_ID}/${REEL_SCRIPT_ID}/${VOICEOVER_ASSET_ID}.mp3`,
           },
         ],
       },
@@ -169,10 +208,6 @@ describe("runAssemblyJob mocked pipeline", () => {
             ffmpegCalled = true;
             return { exitCode: 0, stderr: "" };
           },
-          probeLocalMediaFile: async () => ({
-            durationSec: 30,
-            hasAudioStream: true,
-          }),
         });
 
         assert.equal(ffmpegCalled, false);
@@ -186,17 +221,31 @@ describe("runAssemblyJob mocked pipeline", () => {
     );
   });
 
-  it("completes with mocked ffmpeg and probe", async () => {
+  it("degrade primary path uses Phase A builder (no concat)", async () => {
     process.env.NEURAMARK_ASSEMBLY_DURATION_TOLERANCE_SEC = String(
       NEURAMARK_ASSEMBLY_DURATION_TOLERANCE_SEC_DEFAULT,
     );
 
     const storage = new Map<string, Buffer>();
-    storage.set(`${PRIMARY_ASSET_ID}.mp4`, Buffer.from("fake-primary-bytes"));
+    storage.set(`${PRIMARY_ASSET_ID}.mp4`, Buffer.from("primary"));
+
+    const fp = fingerprint({
+      primary: PRIMARY_ASSET_ID,
+      voiceover: "",
+      broll: [],
+      pathTag: "primary",
+    });
 
     await withAssemblyMocks(
       {
-        assemblyJobs: [baseJobRow({ status: "queued" })],
+        assemblyJobs: [
+          baseJobRow({
+            primary_video_asset_id: PRIMARY_ASSET_ID,
+            assembly_path_tag: "primary",
+            broll_asset_ids: null,
+            input_fingerprint: fp,
+          }),
+        ],
         mediaAssets: [
           {
             id: PRIMARY_ASSET_ID,
@@ -208,47 +257,34 @@ describe("runAssemblyJob mocked pipeline", () => {
         insertedMediaAssetId: OUTPUT_ASSET_ID,
         storage,
       },
-      async ({ updates }) => {
+      async () => {
         let spawnArgs: string[] | null = null;
-        const { runAssemblyJob } = loadAssemblyModule<{ runAssemblyJob: Function }>(
-          "./run-assembly-job.ts",
-        );
+        const { runAssemblyJob } = loadAssemblyModule<{
+          runAssemblyJob: Function;
+        }>("./run-assembly-job.ts");
 
         await runAssemblyJob(JOB_ID, {
           runFfmpeg: async (args: string[]) => {
             spawnArgs = args;
             const outputPath = args.at(-1);
             if (typeof outputPath === "string") {
-              await writeFile(outputPath, Buffer.from("fake-output-mp4"));
+              await writeFile(outputPath, Buffer.from("out"));
             }
             return { exitCode: 0, stderr: "" };
           },
-          probeLocalMediaFile: async (filePath: string) => {
-            if (filePath.endsWith("output.mp4")) {
-              return { durationSec: 29.9, hasAudioStream: true };
-            }
-            return { durationSec: 29.9, hasAudioStream: true };
-          },
+          probeLocalMediaFile: async () => ({
+            durationSec: 29.9,
+            hasAudioStream: true,
+          }),
         });
 
-        assert.ok(Array.isArray(spawnArgs));
-        assert.equal(spawnArgs?.[0], "-y");
+        assert.ok(spawnArgs);
+        assert.ok(!spawnArgs?.includes("concat"));
         assert.ok(spawnArgs?.includes("0:a:0?"));
-
-        const completed = updates.find((u) => u.status === "completed");
-        assert.ok(completed);
-        assert.equal(completed?.output_media_asset_id, OUTPUT_ASSET_ID);
-        assert.equal(completed?.actual_duration_sec, 29.9);
       },
     );
   });
 });
-
-function primaryPathFingerprint() {
-  const { createHash } = require("node:crypto");
-  const payload = `${PRIMARY_ASSET_ID}||reel_v1_basic||primary`;
-  return createHash("sha256").update(payload).digest("hex");
-}
 
 function baseJobRow(overrides: Record<string, unknown> = {}) {
   return {
@@ -263,7 +299,12 @@ function baseJobRow(overrides: Record<string, unknown> = {}) {
     assembly_path_tag: "primary",
     output_media_asset_id: null,
     script_updated_at: "2026-08-30T12:00:00.000Z",
-    input_fingerprint: primaryPathFingerprint(),
+    input_fingerprint: fingerprint({
+      primary: PRIMARY_ASSET_ID,
+      voiceover: "",
+      broll: [],
+      pathTag: "primary",
+    }),
     target_duration_sec: 30,
     actual_duration_sec: null,
     failure_reason: null,
@@ -279,6 +320,7 @@ async function withAssemblyMocks(
     mediaAssets: Array<Record<string, unknown>>;
     insertedMediaAssetId?: string;
     storage?: Map<string, Buffer>;
+    coldOpenNotes?: string | null;
   },
   run: (ctx: {
     updates: Array<Record<string, unknown>>;
@@ -294,7 +336,7 @@ async function withAssemblyMocks(
     if (request === "server-only") {
       return {};
     }
-    if (request.includes("supabase/server")) {
+    if (String(request).includes("supabase/server")) {
       return {
         isSupabaseConfigured: () => true,
         createServerSupabaseClient: () => ({
@@ -305,12 +347,28 @@ async function withAssemblyMocks(
             if (table === "neuramark_media_assets") {
               return createMediaAssetsQuery(options);
             }
+            if (table === "neuramark_reel_scripts") {
+              return {
+                select: () => ({
+                  eq: () => ({
+                    eq: () => ({
+                      maybeSingle: async () => ({
+                        data: {
+                          cold_open_notes: options.coldOpenNotes ?? null,
+                        },
+                        error: null,
+                      }),
+                    }),
+                  }),
+                }),
+              };
+            }
             throw new Error(`Unexpected table ${table}`);
           },
         }),
       };
     }
-    if (request.includes("get-media-storage")) {
+    if (String(request).includes("get-media-storage")) {
       return {
         getMediaStorage: () => ({
           assertSafeKey: () => undefined,
@@ -366,10 +424,7 @@ function createAssemblyQuery(
         eq: (_col: string, id: string) => ({
           in: async (_statusCol: string, statuses: string[]) => {
             const target = rows.find((row) => row.id === id);
-            if (
-              target &&
-              statuses.includes(String(target.status))
-            ) {
+            if (target && statuses.includes(String(target.status))) {
               Object.assign(target, patch);
             }
             return { error: null };

@@ -190,6 +190,26 @@ describe("findForbiddenAssemblyKeys", () => {
     });
     assert.ok(keys.includes("primaryVideoAssetId"));
   });
+
+  it("rejects Phase B broll/path authority keys", async () => {
+    const { findForbiddenAssemblyKeys } = loadAssemblyModule(
+      "@/lib/assembly/find-forbidden-assembly-keys",
+    );
+    for (const key of [
+      "brollAssetIds",
+      "clipPaths",
+      "pathTag",
+      "assemblyPathTag",
+      "coldOpenTrimSec",
+      "concatListPath",
+    ]) {
+      const keys = findForbiddenAssemblyKeys({
+        reelScriptId: REEL_SCRIPT_ID,
+        [key]: "x",
+      });
+      assert.ok(keys.includes(key), `expected forbid ${key}`);
+    }
+  });
 });
 
 describe("computeAssemblyInputFingerprint", () => {
@@ -200,6 +220,42 @@ describe("computeAssemblyInputFingerprint", () => {
       voiceoverAssetId: VOICEOVER_ASSET_ID,
     });
     assert.match(fp, /^[0-9a-f]{64}$/);
+  });
+
+  it("five-part formula includes ordered broll ids and path_tag", () => {
+    const { createHash } = require("node:crypto");
+    const { computeAssemblyInputFingerprint } = require("@/lib/assembly/compute-input-fingerprint");
+    const brollA = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const brollB = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    const fp = computeAssemblyInputFingerprint({
+      primaryVideoAssetId: null,
+      voiceoverAssetId: VOICEOVER_ASSET_ID,
+      orderedBrollAssetIds: [brollA, brollB],
+      pathTag: "broll_stitch",
+    });
+    const expected = createHash("sha256")
+      .update(`|${VOICEOVER_ASSET_ID}|reel_v1_basic|${brollA},${brollB}|broll_stitch`)
+      .digest("hex");
+    assert.equal(fp, expected);
+
+    const fpPrimary = computeAssemblyInputFingerprint({
+      primaryVideoAssetId: PRIMARY_ASSET_ID,
+      voiceoverAssetId: null,
+      orderedBrollAssetIds: [],
+      pathTag: "primary",
+    });
+    const expectedPrimary = createHash("sha256")
+      .update(`${PRIMARY_ASSET_ID}||reel_v1_basic||primary`)
+      .digest("hex");
+    assert.equal(fpPrimary, expectedPrimary);
+
+    const fpReordered = computeAssemblyInputFingerprint({
+      primaryVideoAssetId: null,
+      voiceoverAssetId: VOICEOVER_ASSET_ID,
+      orderedBrollAssetIds: [brollB, brollA],
+      pathTag: "broll_stitch",
+    });
+    assert.notEqual(fp, fpReordered);
   });
 });
 
@@ -403,7 +459,10 @@ describe("assembly security grep guards", () => {
           continue;
         }
         const content = readFileSync(full, "utf8");
-        if (content.includes("neuramark_assembled_reels")) {
+        // Flag status writers: .from(assembled_reels) ... .update( within a short window.
+        const writeRe =
+          /\.from\(\s*["']neuramark_assembled_reels["']\s*\)[\s\S]{0,500}?\.update\s*\(/g;
+        if (writeRe.test(content)) {
           offenders.push(path.relative(repoRoot, full));
         }
       }

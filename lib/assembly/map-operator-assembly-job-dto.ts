@@ -37,6 +37,7 @@ export async function mapOperatorAssemblyJobDto(
     clientId: options.clientId,
     reelScriptId: job.reelScriptId,
     modalidad: options.modalidad,
+    targetDurationSec: job.targetDurationSec,
   });
 
   const scriptChangedSinceJob =

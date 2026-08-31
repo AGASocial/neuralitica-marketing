@@ -9,6 +9,20 @@ import { assembledReelAssetMetadataSchema } from "@/lib/contracts/media-assets";
 
 export const ASSEMBLY_TEMPLATE_REEL_V1_BASIC = "reel_v1_basic" as const;
 
+/** US-9.1 Phase B — fingerprint / row path tags (exact strings). */
+export const ASSEMBLY_PATH_TAG_PRIMARY = "primary" as const;
+export const ASSEMBLY_PATH_TAG_BROLL_STITCH = "broll_stitch" as const;
+
+export const assemblyPathTagSchema = z.enum([
+  ASSEMBLY_PATH_TAG_PRIMARY,
+  ASSEMBLY_PATH_TAG_BROLL_STITCH,
+]);
+
+export type AssemblyPathTag = z.infer<typeof assemblyPathTagSchema>;
+
+/** Max completed broll clips stitched in Phase B (align US-8.5). */
+export const ASSEMBLY_BROLL_CLIP_MAX = 8 as const;
+
 export const NEURAMARK_ASSEMBLY_DURATION_TOLERANCE_SEC_DEFAULT = 2 as const;
 export const NEURAMARK_ASSEMBLY_STALE_TIMEOUT_MIN_DEFAULT = 30 as const;
 export const ASSEMBLY_JOB_POLL_INTERVAL_MS_DEFAULT = 3000 as const;
@@ -94,6 +108,25 @@ export const FORBIDDEN_ASSEMBLY_AUTHORITY_KEYS = [
   "primaryVideoUrl",
   "voiceoverUrl",
   "assetUrl",
+  // US-9.1 Phase B — clip / path authority
+  "brollAssetIds",
+  "broll_asset_ids",
+  "clipPaths",
+  "clip_paths",
+  "clipUrls",
+  "clip_urls",
+  "concatList",
+  "concat_list",
+  "concatListPath",
+  "concat_list_path",
+  "ffmpegArgs",
+  "ffmpeg_args",
+  "pathTag",
+  "path_tag",
+  "assemblyPathTag",
+  "assembly_path_tag",
+  "coldOpenTrimSec",
+  "cold_open_trim_sec",
 ] as const;
 
 export const assembleReelForScriptRequestSchema = z

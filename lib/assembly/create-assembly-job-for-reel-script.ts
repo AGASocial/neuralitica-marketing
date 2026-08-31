@@ -127,6 +127,8 @@ export async function createAssemblyJobForClientTrusted(
       clientId,
       reelScriptId,
       modalidad: script.modalidad,
+      targetDurationSec: script.package.targetDurationSec,
+      coldOpenNotes: script.package.coldOpenNotes ?? null,
     });
     if (!inputs.ok) {
       return assemblyInputsIncompleteError(inputs.messageKey);
@@ -136,6 +138,8 @@ export async function createAssemblyJobForClientTrusted(
       primaryVideoAssetId: inputs.primaryVideoAssetId,
       voiceoverAssetId: inputs.voiceoverAssetId,
       templateId: ASSEMBLY_TEMPLATE_REEL_V1_BASIC,
+      orderedBrollAssetIds: inputs.brollAssetIds,
+      pathTag: inputs.pathTag,
     });
 
     const existing = await findIdempotentAssemblyJob({
@@ -182,6 +186,9 @@ export async function createAssemblyJobForClientTrusted(
         status: "queued",
         primary_video_asset_id: inputs.primaryVideoAssetId,
         voiceover_asset_id: inputs.voiceoverAssetId,
+        broll_asset_ids:
+          inputs.pathTag === "broll_stitch" ? inputs.brollAssetIds : null,
+        assembly_path_tag: inputs.pathTag,
         script_updated_at: scriptUpdatedAt,
         input_fingerprint: inputFingerprint,
         target_duration_sec: script.package.targetDurationSec,
