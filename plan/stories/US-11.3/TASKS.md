@@ -133,7 +133,7 @@ GET /api/media/assets/[assetId]?disposition=attachment
 
 - [ ] `SPEC-REVIEW.md` — ALIGNED
 - [ ] `SECURITY.md` — APPROVE (download tenancy + approved-only export)
-- [ ] `CONTRACT.md` frozen — Zod in `lib/contracts/approval.ts` · **Reviewed by FE: yes**
+- [x] `CONTRACT.md` frozen — Zod in `lib/contracts/approval.ts` · **Reviewed by FE: yes**
 - [ ] Open questions in README § resolved in CONTRACT
 
 ---

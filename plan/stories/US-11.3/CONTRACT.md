@@ -1,7 +1,7 @@
 # API Contract — US-11.3 Approve and mark ready to publish
 
 **Story:** US-11.3  
-**Status:** Frozen — 2026-08-30 · **Reviewed by FE:** pending — nextjs-frontend  
+**Status:** Frozen — 2026-08-30 · **Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend  
 **Extends:** [US-11.1 CONTRACT](../US-11.1/CONTRACT.md) · [US-11.2 CONTRACT](../US-11.2/CONTRACT.md) (read-only consumption of `approved`; no decide/list-pending changes)  
 **Security:** `plan/stories/US-11.3/SECURITY.md` (APPROVE WITH CONDITIONS — 12 conditions reconciled below)  
 **Spec review:** `plan/stories/US-11.3/SPEC-REVIEW.md` (ALIGNED — 5 Low gaps closed below)  
@@ -638,7 +638,17 @@ Book your free consult today.
 
 ## Reviewed by FE
 
-**Reviewed by FE:** pending — nextjs-frontend.
+**Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend
+
+### FE signoff notes (non-blocking)
+
+- **Signoff:** yes — contract is FE-implementable against existing `/approvals` patterns (`ApprovalsListView`, `ApprovalPackageView`, RSC + Server Actions, `AppShell` layout).
+- **Types/helpers:** `ApprovedListItemDto`, `ReadyToPublishPackageDto`, `listApprovedApprovals` result types, and `mediaAttachmentDownloadUrl` / `captionExportUrl` / `buildReadyToPublishDownloadUrls` in `lib/contracts/approval.ts` are sufficient for BUILD; detail pages derive download hrefs via helpers (no separate action DTO required).
+- **Approve UX:** add PrimeReact `ConfirmDialog` before existing `decideApproval(…, 'approved')`; reject/request-changes two-step flows unchanged.
+- **Post-approve panel:** after `status === 'approved'`, render download CTAs using contract URL helpers + link to `/ready-to-publish/[approvalId]`; stay on `/approvals/[approvalId]`.
+- **TASKS.md drift:** FE BUILD must use `mediaAttachmentDownloadUrl(video.assetId)` — not `previewUrl + '?disposition=attachment'` (preview URL regex excludes query string).
+- **Export error UX:** caption/video downloads use authenticated GET `<a href>` per contract; 404/401/429 cannot be mapped inline on navigation — acceptable V1; optional fetch-and-blob wrapper is out of scope unless VALIDATION asks.
+- **Disputes:** none.
 
 ### FE signoff checklist (blocking BUILD)
 
