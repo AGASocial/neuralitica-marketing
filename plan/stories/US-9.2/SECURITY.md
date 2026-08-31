@@ -713,3 +713,85 @@ Phase A/B `[SEC]` remain binding. Additive only:
 | **Next gate** | CONTRACT.md Phase B-M1 amend (worker step + fail code) — then BUILD |
 
 **CONTRACT may proceed:** **Yes.** Do not start CONTRACT in this security turn.
+
+---
+---
+
+# Security Design Review — US-9.2 Phase B-M2
+
+**Story:** US-9.2 Phase B-M2 — Branding poll atomic claim  
+**Sprint label:** `US-9.2-B-M2`  
+**Date:** 2026-08-31  
+**Reviewer:** security-architect  
+**Branch:** `feature/US-9.2-b-m2-branding-poll-claim`  
+**Sources:** `plan/stories/US-9.2/PHASE-B-M2.md` (PO M2-1…M2-11), Phase A/B/B-M1 sections above, `plan/stories/US-9.1/SECURITY.md` (`[SEC] Worker job claim`), `plan/stories/US-9.2/QA.md` Medium #1 · `plan/stories/US-9.2/QA-PHASE-B.md` Medium #2  
+**Status:** Binding **lean amend** — worker integrity / spend control only. Phase A/B/M1 floors **remain in force**; this section does **not** rewrite them. Do not treat as CONTRACT.md. Do not check off `USER_STORIES.md` AC.  
+**Primary implementers:** **media-pipeline-engineer** (poll + runner gate). **nextjs-backend** (applier rows-affected + CONTRACT amend + lost-claim test). **FE: none.**
+
+---
+
+## Verdict: APPROVE WITH CONDITIONS
+
+M2 closes a worker race gap: concurrent Fly replicas or dev in-process + poll overlap can both reach FFmpeg on the same `queued` row because poll SELECT lacks atomic claim and the applier does not treat zero-row UPDATE as lost race. Fix mirrors US-9.1 poll-runtime **intent** (conditional `UPDATE … WHERE branding_status = 'queued' RETURNING`; skip on zero rows) — **branding only**; US-9.1 assembly claim stays separate backlog.
+
+**Confirmed (M2-8):** no new client authority, endpoints, or trust boundaries; claim is worker-only via existing `applyBrandingJobUpdate` applier; integrity / compute spend — not IDOR.
+
+No REDESIGN. No veto of M2-1…M2-11. **Next gate:** CONTRACT amend (§ Poll runtime + `runBrandingJob` step 1) → BUILD.
+
+**Condition count (Phase B-M2):** **5**
+
+---
+
+### Binding conditions (Phase B-M2)
+
+1. **Atomic claim (M2-2):** `queued` → `processing` via conditional **`UPDATE … WHERE id = $1 AND status = 'completed' AND branding_status = 'queued'`** with `.select('id')` / `RETURNING`. **Zero rows** ⇒ lost race — not an error.
+2. **Applier contract (M2-3):** `applyBrandingJobUpdate` for processing claim: when UPDATE matches **0 rows**, return **`{ ok: true, idempotent: true, brandingStatus: <current or null> }`** — **do not throw**; do not report `idempotent: false` on lost race.
+3. **Runner gate (M2-4):** `runBrandingJob`: after claim attempt, if **`idempotent === true`** → **return immediately** (no `mkdtemp`, no Storage download, no spawn). If initial load shows **`branding_status === 'processing'`** before claim (peer owns row) → **return** — no resume-from-poll.
+4. **Poll predicate (M2-5):** `pollQueuedBrandingJobsBatch` selects **`branding_status = 'queued'`** only — drop `processing` from candidate set. Stale `processing` remains **`markStaleBrandingJobsFailed`** → Operator re-brand; do not poll-resume mid-FFmpeg.
+5. **Closed write surface (M2-8):** claim stays inside **`import "server-only"`** branding applier only — no new browser-callable routes; `pre_branding_output_media_asset_id` snapshot on successful claim only (M2-7).
+
+---
+
+### Abuse cases (M2 delta)
+
+- *As a concurrent worker, I both SELECT the same `queued` row and run FFmpeg* → **Blocked:** one conditional UPDATE wins; loser gets zero rows → `idempotent: true` → no spawn.
+- *As dev in-process `enqueueBrandingJob` + Fly poll on same row* → **Blocked:** atomic claim — one FFmpeg winner; loser exits silently (M2-6).
+- *As a malicious actor, I trigger duplicate branding via a new client endpoint* → **Blocked:** M2 adds **no** client surface; existing Operator-only trigger unchanged.
+- *As a worker, I resume another replica's mid-`processing` job from poll* → **Blocked:** poll `queued`-only; peer `processing` at runner entry → early return (M2-4, M2-5).
+
+---
+
+### Security Acceptance Criteria (Phase B-M2 — additive for VALIDATION)
+
+Phase A/B/M1 `[SEC]` remain binding. Additive only:
+
+- [ ] **[SEC] (Phase B-M2) Branding worker atomic job claim:** Before download / temp dir / FFmpeg, claim via conditional **`UPDATE neuramark_assembled_reels SET branding_status = 'processing' … WHERE id = $1 AND status = 'completed' AND branding_status = 'queued'`** with **`RETURNING` / `.select('id')`**. **Zero rows updated** ⇒ **`{ ok: true, idempotent: true }`** — **no** spawn. Mirror US-9.1 `[SEC] Worker job claim` intent for **`branding_status`** (not assembly `status`).
+- [ ] **[SEC] (Phase B-M2) Lost-race applier semantics:** `applyBrandingJobUpdate` processing claim inspects rows affected / RETURNING — lost race returns **`idempotent: true`**, not throw and not **`idempotent: false`**. Terminal / illegal transitions keep existing idempotent behavior.
+- [ ] **[SEC] (Phase B-M2) Runner early-exit gate:** `runBrandingJob` returns before **`mkdtemp`**, Storage download, or **`spawn`** when claim returns **`idempotent: true`** or when row is already **`processing`** at entry (peer worker). Unit test: simulated lost claim → **zero** FFmpeg invocations.
+- [ ] **[SEC] (Phase B-M2) Poll `queued`-only:** `pollQueuedBrandingJobsBatch` candidate set is **`branding_status = 'queued'`** only — **`processing`** excluded from poll SELECT. Stale sweeper owns stuck **`processing`**; no poll-driven mid-job resume.
+- [ ] **[SEC] (Phase B-M2) No new client authority:** M2 adds **no** apply/trigger fields, endpoints, or FE surface. Branding status writes remain worker-only via existing applier; claim is not client-triggerable.
+
+---
+
+### Vetoes (Phase B-M2)
+
+| If implementers… | Verdict |
+|---|---|
+| Proceed to download / FFmpeg when conditional claim UPDATE affects **zero rows** | **REJECT** |
+| Return **`idempotent: false`** or throw on lost claim race | **REJECT** |
+| Poll **`processing`** rows for concurrent FFmpeg (resume-from-poll) | **REJECT** |
+| Add browser-callable claim or branding-status mutation for M2 | **REJECT** |
+| Bundle US-9.1 assembly poll claim changes in this branch | **REJECT** (scope — M2-11) |
+
+---
+
+### Gate summary (Phase B-M2)
+
+| Field | Value |
+|---|---|
+| **Verdict** | **APPROVE WITH CONDITIONS** |
+| **Condition count** | **5** |
+| **Veto** | No |
+| **Next gate** | CONTRACT.md Phase B-M2 amend (atomic claim + poll predicate + runner step 1) — then BUILD |
+
+**CONTRACT may proceed:** **Yes.** FE Reviewed **N/A** (M2-9).

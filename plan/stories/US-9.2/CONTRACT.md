@@ -1,20 +1,22 @@
 Reviewed by FE: yes — 2026-08-30 — nextjs-frontend (Phase A).  
 **Phase B — Reviewed by FE: yes — 2026-08-31 — nextjs-frontend** (Operator `coverFrameSec` InputNumber + Apply/Re-brand wire).  
-**Phase B-M1 — Reviewed by FE: N/A — no FE surface** (PO M1-9; waiver — see § Phase B-M1). Contract frozen / BUILD unblocked without FE signoff.
+**Phase B-M1 — Reviewed by FE: N/A — no FE surface** (PO M1-9; waiver — see § Phase B-M1). Contract frozen / BUILD unblocked without FE signoff.  
+**Phase B-M2 — Reviewed by FE: N/A — no FE surface** (PO M2-9; waiver — see § Phase B-M2). Contract frozen / BUILD unblocked without FE signoff.
 
 # API Contract — US-9.2 Add subtitles, logo, and cover
 
 **Story:** US-9.2  
-**Status:** Phase A frozen — 2026-08-30 · **Phase B section frozen — 2026-08-31** (Reviewed by FE: **yes — 2026-08-31**) · **Phase B-M1 section frozen — 2026-08-31** (FE Reviewed **N/A** — BUILD unblocked)  
+**Status:** Phase A frozen — 2026-08-30 · **Phase B section frozen — 2026-08-31** (Reviewed by FE: **yes — 2026-08-31**) · **Phase B-M1 section frozen — 2026-08-31** (FE Reviewed **N/A** — BUILD unblocked) · **Phase B-M2 section frozen — 2026-08-31** (FE Reviewed **N/A** — BUILD unblocked)  
 **Security:** `plan/stories/US-9.2/SECURITY.md` (Phase A + Phase B + **Phase B-M1** APPROVE WITH CONDITIONS — 4 M1 conditions reconciled in § Phase B-M1)  
-**Spec review:** `plan/stories/US-9.2/SPEC-REVIEW.md` (Phase A GAPS closed) · `plan/stories/US-9.2/SPEC-REVIEW-PHASE-B.md` (**ALIGNED**) · Phase B-M1: **no SPEC drift** (PO M1-10 — skip full SPEC-REVIEW)  
-**Phase B prep:** `plan/stories/US-9.2/PHASE-B.md` (PO B1–B15) · **Phase B-M1 prep:** `plan/stories/US-9.2/PHASE-B-M1.md` (PO M1-1…M1-10)  
+**Spec review:** `plan/stories/US-9.2/SPEC-REVIEW.md` (Phase A GAPS closed) · `plan/stories/US-9.2/SPEC-REVIEW-PHASE-B.md` (**ALIGNED**) · Phase B-M1: **no SPEC drift** (PO M1-10 — skip full SPEC-REVIEW) · Phase B-M2: **no SPEC drift** (PO M2-10 — skip full SPEC-REVIEW)  
+**Phase B prep:** `plan/stories/US-9.2/PHASE-B.md` (PO B1–B15) · **Phase B-M1 prep:** `plan/stories/US-9.2/PHASE-B-M1.md` (PO M1-1…M1-10) · **Phase B-M2 prep:** `plan/stories/US-9.2/PHASE-B-M2.md` (PO M2-1…M2-11)  
 **Pattern:** `plan/stories/US-9.1/CONTRACT.md` (extends assembly pipeline; second-pass branding on Fly worker)  
 **Depends on:** US-9.1 ✅ assembled base + worker poll seam · US-5.1 ✅ `on_screen_text` + `voiceover_text` · US-5.2 ✅ beat line bounds + `countVoiceoverWords` tokenizer · US-9.3 Phase A ✅ VO audio (timestamps **not** required) · US-2.2 ✅ Ficha viva `/profile` · US-3.3 ✅ `validateAndPrepareMediaUpload` · US-14.5 ✅ `requireOperator()` / `requireActive()`  
 **ADR:** `docs/adr/0003-worker-flyio-ffmpeg.md` — Vercel orchestrator INSERT + enqueue; Fly FFmpeg + branding status writes  
 **Feature branch (Phase A):** `feature/US-9.2-subtitles-logo-cover` (merged)  
 **Feature branch (Phase B):** `feature/US-9.2-phase-b-subtitle-cover` · sprint `US-9.2-B`  
 **Feature branch (Phase B-M1):** `feature/US-9.2-b-m1-voiceover-timing-hash` · sprint `US-9.2-B-M1`  
+**Feature branch (Phase B-M2):** `feature/US-9.2-b-m2-branding-poll-claim` · sprint `US-9.2-B-M2`  
 **Error envelope style:** same class as US-9.1 / US-8.4 (`ok: true` vs `{ ok: false, error: { code, fields?, messageKey? } }`)
 
 **This document is CONTRACT ONLY.** Zod mirrors live in `lib/contracts/branding-job.ts` (BUILD) and extensions to `lib/contracts/media-assets.ts`, `lib/contracts/assembly-job.ts`, `lib/contracts/profile.ts`. Extensions to `lib/assembly/**` and worker modules are specified here and applied during BUILD.
@@ -80,7 +82,8 @@ Reviewed by FE: yes — 2026-08-30 — nextjs-frontend (Phase A).
 |-------|-------|--------|
 | **A (US-9.2 BUILD — CLOSED)** | DDL (`logo_asset_id`, `assembly_config`, branding columns, `client_logo` / `cover_frame` enums); logo upload/remove + `updateAssemblyConfigDefaults` on Ficha; branding worker pass (ASS burn-in + logo overlay + cover @ 1s); auto-chain after assembly `completed`; Operator branding panel + toggles; idempotency; `[SEC]` upload + subtitle sanitize; mobile safe-zone typography | USER_STORIES § US-9.2 AC rows (all five remain **[x]**) |
 | **B (US-9.2-B — CLOSED)** | **Only:** (1) VO-proportional beat timing from `voiceover_text` word partitions (fallback equal split); (2) Operator per-reel optional **`coverFrameSec`** on manual Apply / Re-brand (Zod `0–45`, seek clamp). **Out of this slice (further defer):** bundled second font weight · preview thumbnail strip · Cliente Ficha `coverFrameSec` UI · TTS/ASR timestamps | Phase A deferred S3.M10 polish only — **no** new USER_STORIES AC checkboxes |
-| **B-M1 (US-9.2-B-M1 — this amendment)** | Worker re-check of **`voiceoverTimingHash`** vs live script VO after subtitle-hash guard, before `mkdtemp` / ASS / spawn. Fail constant + unit test. **No** FE · **No** DB · **No** new USER_STORIES AC | Closes QA-PHASE-B Medium #1 only — see § Phase B-M1 |
+| **B-M1 (US-9.2-B-M1 — CLOSED)** | Worker re-check of **`voiceoverTimingHash`** vs live script VO after subtitle-hash guard, before `mkdtemp` / ASS / spawn. Fail constant + unit test. **No** FE · **No** DB · **No** new USER_STORIES AC | Closes QA-PHASE-B Medium #1 only — see § Phase B-M1 |
+| **B-M2 (US-9.2-B-M2 — this amendment)** | Atomic **`queued` → `processing`** claim via conditional UPDATE + RETURNING; **`idempotent: true`** on lost race; **`runBrandingJob`** early return before temp / download / FFmpeg; poll batch **`branding_status = 'queued'`** only. **No** FE · **No** DB · **No** new USER_STORIES AC | Closes QA Phase A Finding 1 + QA-PHASE-B Medium #2 — see § Phase B-M2 |
 
 **VALIDATION note (binding):** Phase A closes USER_STORIES § US-9.2 AC and completes the **subtitles/logo/cover** slice deferred from US-9.1 partial S3.M10 closure. Phase B VALIDATION must re-verify **[SEC]** sanitization + cover bounds on the VO-timing / Operator-override path, and mark the two Phase A deferrals (**VO-synced timing**, **Operator `coverFrameSec`**) **closed**. Remaining S3.M10 elsewhere: weekly auto-brand (ADR-0001), further font/thumbnail polish.
 
@@ -1579,10 +1582,242 @@ if (isPresent64LowerHex(snapshotHash)) {
 
 ---
 
+# Phase B-M2 — Atomic branding claim + queued-only poll
+
+**Status:** Frozen — 2026-08-31 (BE authored) · **Reviewed by FE: N/A — no FE surface** (PO M2-9 waiver) · **BUILD unblocked** (no FE signoff required)  
+**Sprint:** `US-9.2-B-M2` · branch `feature/US-9.2-b-m2-branding-poll-claim`  
+**Sources:** `PHASE-B-M2.md` (M2-1…M2-11) · `SECURITY.md` Phase B-M2 (lean amend — worker claim AC) · QA Phase A Finding 1 · QA-PHASE-B Medium #2  
+**DB:** **None** — claim via conditional UPDATE on existing `neuramark_assembled_reels` row (optional SQL RPC at implementer discretion; not required).  
+**FE:** **None** — Operator panel unchanged; stale-`processing` → `failed` path already surfaced.  
+**Phase A/B/M1 floors:** Remain binding. This section **amends** `applyBrandingJobUpdate`, `pollQueuedBrandingJobsBatch`, and `runBrandingJob` step 1 — does **not** rewrite hash formula, fingerprint, apply schema, or VO-hash guard.
+
+**Acceptance boundary (narrow — binding):** Close branding poll claim race — exactly one worker may proceed from `queued` to FFmpeg per row; concurrent Fly replicas or dev in-process + poll overlap exit silently on lost claim. **Do not** add or uncheck USER_STORIES § US-9.2 AC. **Do not** bundle US-9.1 assembly poll claim (separate backlog).
+
+---
+
+## Phase B-M2 — SECURITY reconciliation (lean)
+
+| # | Condition | Frozen here |
+|---|-----------|-------------|
+| 1 | Claim is **worker-only** — no new client authority, endpoints, or DTO fields | § Out of scope · § Claim mechanism |
+| 2 | Integrity / spend control — prevents duplicate FFmpeg and orphaned `branded-*` / `cover-*` assets | § Runner gate · § Poll batch |
+| 3 | Lost claim returns **`idempotent: true`** — **no throw**; loser must not download or spawn | § Applier contract |
+| 4 | Stale `processing` remains worker-only via `markStaleBrandingJobsFailed` — no mid-`processing` auto-resume from poll | § Poll batch · § Stale policy |
+
+---
+
+## Phase B-M2 — Claim mechanism (frozen)
+
+**File (BUILD):** `lib/branding/apply-branding-job-update.ts` (extend existing applier)
+
+**Intent (mirror US-9.1 CONTRACT § Poll runtime):** Per-job atomic claim via conditional UPDATE — not batch `FOR UPDATE SKIP LOCKED` on SELECT (Supabase JS has no first-class SKIP LOCKED; per-row UPDATE is the correctness gate).
+
+**SQL semantics (binding):**
+
+```sql
+UPDATE neuramark_assembled_reels
+SET
+  branding_status = 'processing',
+  updated_at = now(),
+  pre_branding_output_media_asset_id = COALESCE(
+    pre_branding_output_media_asset_id,
+    output_media_asset_id
+  )
+WHERE
+  id = $assemblyJobId
+  AND status = 'completed'
+  AND branding_status = 'queued'
+RETURNING id;
+```
+
+**Supabase JS equivalent (binding behavior, not module name):**
+
+```ts
+const { data, error } = await supabase
+  .from("neuramark_assembled_reels")
+  .update({
+    branding_status: "processing",
+    updated_at: new Date().toISOString(),
+  pre_branding_output_media_asset_id: /* copy output when not yet set — M2-7 */,
+  })
+  .eq("id", assemblyJobId)
+  .eq("status", "completed")
+  .eq("branding_status", "queued")
+  .select("id");
+
+// data.length === 0 ⇒ lost race (another worker claimed first)
+```
+
+| Rule | Detail |
+|------|--------|
+| Predicate | **`status = 'completed'`** AND **`branding_status = 'queued'`** — only `queued` rows are claimable |
+| Side effect | On successful claim, set `pre_branding_output_media_asset_id = output_media_asset_id` when not yet set (existing M1/M2-7 behavior — unchanged) |
+| Zero rows | Lost race — **do not throw**; return idempotent success (§ Applier contract) |
+| Optional RPC | Implementer may use raw SQL / RPC instead of Supabase `.update().select()` — PO requires M2-2…M2-5 behavior, not a specific module |
+
+---
+
+## Phase B-M2 — `applyBrandingJobUpdate` amend (processing claim)
+
+**File (BUILD):** `lib/branding/apply-branding-job-update.ts`
+
+**Amends** § `applyBrandingJobUpdate` — sole branding status writer (Phase A). Terminal / illegal transitions keep existing idempotent behavior.
+
+### `processing` claim patch — rows-affected contract
+
+When `patch.brandingStatus === "processing"`:
+
+| Outcome | Return shape |
+|---------|--------------|
+| UPDATE matches **≥ 1 row** | `{ ok: true, jobId, brandingStatus: "processing", idempotent: false }` |
+| UPDATE matches **0 rows** (lost race — peer claimed, row already `processing` / terminal, or assembly no longer `completed`) | `{ ok: true, jobId, brandingStatus: <current from re-load or null>, idempotent: true }` — **do not throw** |
+| Supabase / DB error | Throw (unchanged) |
+
+**Binding fix:** Today’s implementation issues conditional `.eq("branding_status", currentStatus)` but **does not** inspect rows affected and always returns `idempotent: false` on no error. BUILD **must** use `.select("id")` (or equivalent RETURNING) and treat **zero returned rows** as lost claim.
+
+**Other patches (`completed`, `failed`):** Unchanged — still require prior `processing` (or allowed transition); terminal no-op remains `idempotent: true`.
+
+**Only invokers:** Unchanged — `runBrandingJob`, `markStaleBrandingJobsFailed`, orchestrator `writeBrandingQueuedState` (`queued` only).
+
+---
+
+## Phase B-M2 — Poll batch amend (`queued`-only)
+
+**File (BUILD):** `lib/branding/poll-branding-jobs.ts`
+
+**Amends** § Poll runtime — branding worker extension (Phase A). Supersedes the illustrative `FOR UPDATE SKIP LOCKED` SELECT on `branding_status IN ('queued', 'processing')`.
+
+### `pollQueuedBrandingJobsBatch` predicate (frozen)
+
+```ts
+// Candidate set — queued ONLY
+.from(BRANDING_JOBS_TABLE)
+.select("id")
+.eq("status", "completed")
+.eq("branding_status", "queued")   // NOT .in(["queued", "processing"])
+.order("updated_at", { ascending: true })
+.limit(limit);
+```
+
+| Rule | Detail |
+|------|--------|
+| Candidate set | **`branding_status = 'queued'`** only — drop `processing` from poll `.in(...)` |
+| Stuck `processing` | Owned by **`markStaleBrandingJobsFailed()`** each tick **before** batch SELECT — stale → `failed` → Operator **Re-brand** |
+| No mid-`processing` resume | Poll must **not** re-enter `runBrandingJob` for rows already `processing` (avoids double FFmpeg without lease columns) |
+| Per-row claim | Correctness gate is **`runBrandingJob` → `applyBrandingJobUpdate` processing claim** (§ Claim mechanism), not SELECT locking |
+| Dev overlap | `enqueueBrandingJob` fire-and-forget + Fly poll on same row: atomic claim ensures **one** FFmpeg winner; loser exits silently (optional debug/info log) |
+
+**Stale sweep (re-assert):** `markStaleBrandingJobsFailed()` runs each tick before poll — unchanged threshold `NEURAMARK_BRANDING_STALE_TIMEOUT_MIN` (default 15).
+
+---
+
+## Phase B-M2 — `runBrandingJob` step 1 amend (runner gate)
+
+**File (BUILD):** `lib/branding/run-branding-job.ts`
+
+**Amends** § `runBrandingJob()` step 1 and placement **before** Phase B-M1 VO-hash guard / `mkdtemp` / download / spawn.
+
+### Step sequence (binding)
+
+| Step | Action |
+|------|--------|
+| 0 | Load job; if missing or terminal `branding_status` → **return** |
+| 0b | If assembly `status !== 'completed'` → `failBrandingJob` + **return** (unchanged) |
+| **1a** | If `branding_status === 'processing'` **at entry** (before claim attempt) → **return immediately** — another worker owns the row; **no** resume-from-poll |
+| **1b** | If `branding_status === 'queued'` → `applyBrandingJobUpdate({ patch: { brandingStatus: "processing" }, source: "worker" })` |
+| **1c** | If claim result `idempotent === true` → **return immediately** — lost race; **zero** `mkdtemp`, Storage download, or FFmpeg spawn |
+| 2+ | Re-load job + `branding_config`; continue existing path (tenancy, subtitle hash, VO-hash guard per § Phase B-M1, temp dir, download, spawn, complete) |
+
+```ts
+// Pseudocode — exact helper structure free at BUILD
+const job = await loadBrandingJobByIdUnscoped(assemblyJobId);
+if (!job || isTerminalBrandingStatus(job.brandingStatus)) return;
+if (job.status !== "completed") { await failBrandingJob(...); return; }
+
+if (job.brandingStatus === "processing") {
+  return; // peer worker — no resume
+}
+
+if (job.brandingStatus === "queued") {
+  const claim = await applyBrandingJobUpdate({
+    assemblyJobId: job.id,
+    patch: { brandingStatus: "processing" },
+    source: "worker",
+  });
+  if (claim.idempotent) {
+    return; // lost race — silent exit
+  }
+}
+
+// ... existing M1 guards, mkdtemp, download, spawn ...
+```
+
+| Rule | Detail |
+|------|--------|
+| Lost claim | **Silent exit** — optional `console.debug` / info log; **no** `failed` status (not an error — expected concurrency) |
+| Winner | Exactly one worker proceeds to FFmpeg for a given `queued` → `processing` transition |
+| M1 guards | VO-hash / subtitle-hash re-checks remain **after** successful claim, **before** `mkdtemp` (unchanged) |
+
+---
+
+## Phase B-M2 — Unit test fixture requirement (BUILD)
+
+**File (BUILD):** `lib/branding/run-branding-job.test.ts` (extend)
+
+| Fixture | Expect |
+|---------|--------|
+| Simulated lost claim — `applyBrandingJobUpdate` returns `{ idempotent: true }` for `processing` patch | **`runBrandingJob` returns** without `mkdtemp`, Storage download, or FFmpeg spawn |
+| Simulated entry with `branding_status === 'processing'` before claim | **Return** without spawn (peer owns row) |
+| Happy path — claim returns `{ idempotent: false, brandingStatus: "processing" }` | Proceeds to existing success path (may be covered by prior tests) |
+| Optional concurrent-claim integration / double-call | Exactly **one** spawn winner per row |
+
+**File (BUILD):** `lib/branding/apply-branding-job-update.test.ts` (extend or create)
+
+| Fixture | Expect |
+|---------|--------|
+| `processing` patch when row already `processing` / not `queued` | `{ ok: true, idempotent: true }` — zero rows updated |
+| `processing` patch when row `queued` + assembly `completed` | `{ ok: true, idempotent: false, brandingStatus: "processing" }`; `pre_branding_output_media_asset_id` set when absent |
+
+---
+
+## Phase B-M2 — Out of scope (explicit)
+
+| Topic | Why |
+|-------|-----|
+| US-9.1 assembly poll claim | Same pattern — **separate** story / sprint (M2-11) |
+| Batch `FOR UPDATE SKIP LOCKED` on poll SELECT | Optional implementer choice; per-job UPDATE is the PO-required gate |
+| Mid-`processing` auto-resume from poll | Stale sweeper → `failed` → Operator re-brand |
+| New USER_STORIES AC / unchecking Phase A/B/M1 AC | Out |
+| Hash formula / fingerprint / VO-timing guards | Closed M1 — untouched |
+| New endpoints / DTOs / FE | M2-8 / M2-9 |
+
+---
+
+## Phase B-M2 — Acceptance mapping (for validator)
+
+Same USER_STORIES § US-9.2 AC (do **not** uncheck Phase A/B/M1; **no** new checkboxes):
+
+| QA finding | Phase B-M2 proof |
+|------------|------------------|
+| QA Phase A Finding 1 (poll claim race) | Lost claim → **zero** FFmpeg; winner completes happy path |
+| QA-PHASE-B Medium #2 (carry-forward) | Poll `queued`-only; atomic claim; `idempotent` skip on 0 rows |
+| Stale sweeper regression | Stuck `processing` still → `failed`; queued-only poll does not starve legitimate work |
+
+---
+
+## Phase B-M2 — Reviewed by FE
+
+**Reviewed by FE: N/A — no FE surface** (PO M2-9).
+
+**Waiver:** Phase B-M2 hardens worker claim + poll predicate only. No DTO, Server Action, Route Handler, or UI change. FE signoff **not required**. Contract frozen; **BUILD unblocked**.
+
+---
+
 ## Changelog
 
 | Date | Change |
 |------|--------|
+| 2026-08-31 | **Phase B-M2 freeze** — atomic `queued`→`processing` claim via conditional UPDATE + RETURNING; `idempotent: true` on lost race; `runBrandingJob` early return before temp/download/spawn; poll `queued`-only; FE Reviewed N/A; BUILD unblocked |
 | 2026-08-31 | **Phase B-M1 freeze** — worker `voiceoverTimingHash` re-check after subtitle-hash guard; fail key `scripts.branding.failure.voiceoverTimingHashMismatch`; legacy empty/missing skip; FE Reviewed N/A; BUILD unblocked |
 | 2026-08-31 | **Phase B FE sign-off** — approved; BUILD constraints for Operator InputNumber + optional `coverFrameSec` wire + i18n; BUILD unblocked |
 | 2026-08-31 | **Phase B freeze** — VO word-partition timings + `voiceoverTimingHash` fingerprint; optional Operator `coverFrameSec` on apply; seek clamp; forbidden-keys amend; narrow scope (no second font / thumbnail) |
