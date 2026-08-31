@@ -1,6 +1,6 @@
 # US-11.2 — Request controlled revision round
 
-**Status:** PREP — README + TASKS + PO freezes (2026-08-30). Next: `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` (not created in PREP).
+**Status:** CLOSED Phase A (2026-08-30) — VALIDATION PASS WITH NOTES `e4f12fb` (105/105) · QA APPROVE WITH CONDITIONS `84902c8` (0 Critical/High) · 5/5 AC. Operator grant UI + change history → Phase B; ready/download → US-11.3.
 
 **As a** Client, **I want** to request specific changes (not unlimited loops), **so that** I can correct content without scope creep.
 
@@ -112,15 +112,15 @@ _Evitar:_ “change request ticket”; admin/staff; exposing pipeline job contro
 ## Gates (orchestrator)
 
 - [x] PREP — README + TASKS + PO freezes
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend) + FE signoff
-- [ ] BUILD
-- [ ] VALIDATION.md
-- [ ] QA.md
-- [ ] CLOSE — check USER_STORIES § US-11.2 AC
+- [x] SPEC-REVIEW.md (spec-guardian) — ALIGNED `ffe58e5`
+- [x] SECURITY.md (security-architect) — APPROVE WITH CONDITIONS `28f93e6`
+- [x] CONTRACT.md (nextjs-backend) — Frozen `38d4a1d`; Reviewed by FE: **yes** `237bdea`
+- [x] BUILD (nextjs-frontend `9c60ff1` · nextjs-backend `8072392`/`088eafa` · content-agents-engineer `f0e4569` · media-pipeline-engineer `dd90242`)
+- [x] VALIDATION.md — **PASS WITH NOTES** `e4f12fb` (105/105)
+- [x] QA.md — **APPROVE WITH CONDITIONS** `84902c8` · CLOSE yes
+- [x] CLOSE Phase A — 5/5 AC checked; ready/download → US-11.3
 
-**Next after PREP:** SPEC-REVIEW → SECURITY → CONTRACT.
+**Next:** SELECT **US-11.3** (recommended) or US-8.5.
 
 ---
 

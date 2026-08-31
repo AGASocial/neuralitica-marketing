@@ -121,7 +121,7 @@ await routeApprovalChangeRequest({ approvalId, assembledReelId, changeRequest })
 - [x] Extend `decideApprovalForClient`: when `request_changes`, validate `changeRequest` (≥1 tag, note lengths); gate re-check; **atomic** persist (status `changes_requested`, increment count, append JSON round, set `decided_at`/`decided_by`, summary → `client_feedback`).
 - [x] Implement **`routeApprovalChangeRequest`** (`import "server-only"`) — resolve `assembled_reel_id` → `reel_script_id`; apply tag expansion; enqueue existing regen/job helpers (no new Cliente endpoints).
 - [x] Implement **`requeueApprovalAfterRevision`** — `changes_requested` → `pending_client`; clear decide fields; `revalidatePath("/approvals")`.
-- [ ] Wire requeue hook from caption-complete (caption-only) and from branding/QA-complete (media paths) — coordinate with media-pipeline-engineer.
+- [x] Wire requeue hook from caption-complete (caption-only) and from branding/QA-complete (media paths) — coordinate with media-pipeline-engineer.
 - [x] **`operatorGrantExtraRevision`** Server Action: `requireOperator`, scoped load, set `extra_revision_granted = true`, audit reason append.
 - [x] Extend `compose-approval-package.ts` / list DTO with revision fields.
 - [x] Tests: atomic limit (concurrent double-submit); `request_changes` happy path; limit exceeded; forbidden smuggle; gate not ready; tag validation; routing unit tests (expansion table); operator grant consumes on next request.

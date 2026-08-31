@@ -1061,12 +1061,12 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | Increment `revision_count`; route feedback to script/caption/assembly as tagged fields |
 | **DB** | `approvals.revision_count`, `change_requests` JSON |
 
-**Acceptance criteria**
-- [ ] V1 max 1 client revision round per Reel (configurable)
-- [ ] Exceeded limit requires operator intervention
-- [ ] Change request triggers only affected downstream steps
-- [ ] [SEC] Revision limit is enforced server-side atomically (increment + check in one transaction); concurrent or replayed change requests cannot exceed the round limit
-- [ ] [SEC] Change-request text is validated (length cap) and treated as data through the pipeline — including when injected into agent prompts (same prompt-injection containment as US-4.1)
+**Acceptance criteria** *(Phase A CLOSED 2026-08-30 — operator grant UI + change-request history list deferred Phase B; concurrent race test deferred — atomic RPC binding)*
+- [x] V1 max 1 client revision round per Reel (configurable)
+- [x] Exceeded limit requires operator intervention
+- [x] Change request triggers only affected downstream steps
+- [x] [SEC] Revision limit is enforced server-side atomically (increment + check in one transaction); concurrent or replayed change requests cannot exceed the round limit
+- [x] [SEC] Change-request text is validated (length cap) and treated as data through the pipeline — including when injected into agent prompts (same prompt-injection containment as US-4.1)
 
 **Depends on:** US-11.1
 
