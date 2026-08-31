@@ -12,8 +12,11 @@ export type AcquireWeeklyCycleRunResult = {
   weekStart: string;
 };
 
-export async function acquireWeeklyCycleRun(params: { clientId: string; weekStart: string; mode: WeeklyCycleRunMode }): Promise<AcquireWeeklyCycleRunResult> {
-  const supabase = createServerSupabaseClient();
+export async function acquireWeeklyCycleRun(
+  params: { clientId: string; weekStart: string; mode: WeeklyCycleRunMode },
+  createClient: typeof createServerSupabaseClient = createServerSupabaseClient,
+): Promise<AcquireWeeklyCycleRunResult> {
+  const supabase = createClient();
   const { data: inserted, error: insertError } = await supabase
     .from("neuramark_weekly_cycle_runs")
     .upsert({ client_id: params.clientId, week_start: params.weekStart, status: "dry_run", mode: params.mode, step_log: [], started_at: new Date().toISOString() }, { onConflict: "client_id,week_start", ignoreDuplicates: true })

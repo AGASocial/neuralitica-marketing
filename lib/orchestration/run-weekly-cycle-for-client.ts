@@ -9,12 +9,27 @@ export type RunWeeklyCycleForClientResult =
   | { ok: true; runId: string; weekStart: string; clientId: string; status: "dry_run"; acquireOutcome: "CREATED" | "ALREADY_EXISTS"; plan: WeeklyCycleStepPlan }
   | { ok: false; error: { code: "INTERNAL_ERROR" } };
 
-export async function runWeeklyCycleForClient(params: RunWeeklyCycleForClientParams): Promise<RunWeeklyCycleForClientResult> {
+type RunWeeklyCycleForClientDependencies = {
+  acquire: typeof acquireWeeklyCycleRun;
+  persist: typeof persistWeeklyCycleRunPlan;
+  plan: typeof planWeeklyCycleSteps;
+};
+
+const defaultDependencies: RunWeeklyCycleForClientDependencies = {
+  acquire: acquireWeeklyCycleRun,
+  persist: persistWeeklyCycleRunPlan,
+  plan: planWeeklyCycleSteps,
+};
+
+export async function runWeeklyCycleForClient(
+  params: RunWeeklyCycleForClientParams,
+  dependencies: RunWeeklyCycleForClientDependencies = defaultDependencies,
+): Promise<RunWeeklyCycleForClientResult> {
   if (params.dryRun !== true) return { ok: false, error: { code: "INTERNAL_ERROR" } };
   try {
-    const acquired = await acquireWeeklyCycleRun(params);
-    const plan = planWeeklyCycleSteps(params);
-    await persistWeeklyCycleRunPlan(acquired.runId, plan.steps);
+    const acquired = await dependencies.acquire(params);
+    const plan = dependencies.plan(params);
+    await dependencies.persist(acquired.runId, plan.steps);
     return { ok: true, runId: acquired.runId, weekStart: params.weekStart, clientId: params.clientId, status: "dry_run", acquireOutcome: acquired.outcome, plan };
   } catch {
     return { ok: false, error: { code: "INTERNAL_ERROR" } };

@@ -12,18 +12,34 @@ export type ListEligibleClientsForWeeklyCycleResult = {
   skipped: WeeklyCycleIneligibleClient[];
 };
 
-export async function listEligibleClientsForWeeklyCycle(): Promise<ListEligibleClientsForWeeklyCycleResult> {
-  const supabase = createServerSupabaseClient();
+type EligibilityDependencies = {
+  createClient: typeof createServerSupabaseClient;
+  getProfile: typeof getBusinessProfileForAgents;
+};
+
+const defaultDependencies: EligibilityDependencies = {
+  createClient: createServerSupabaseClient,
+  getProfile: getBusinessProfileForAgents,
+};
+
+export async function listEligibleClientsForWeeklyCycle(
+  dependencies: EligibilityDependencies = defaultDependencies,
+): Promise<ListEligibleClientsForWeeklyCycleResult> {
+  const supabase = dependencies.createClient();
   const { data, error } = await supabase
     .from("neuramark_clients")
-    .select("id")
+    .select("id,active")
     .eq("active", true)
     .order("created_at", { ascending: true });
   if (error) throw new Error("WEEKLY_CYCLE_CLIENT_ENUMERATION_FAILED");
 
   const result: ListEligibleClientsForWeeklyCycleResult = { eligible: [], skipped: [] };
-  for (const row of (data ?? []) as Array<{ id: string }>) {
-    const profile = await getBusinessProfileForAgents(row.id);
+  for (const row of (data ?? []) as Array<{ id: string; active?: boolean }>) {
+    if (row.active === false) {
+      result.skipped.push({ clientId: row.id, skipReason: "INACTIVE" });
+      continue;
+    }
+    const profile = await dependencies.getProfile(row.id);
     if (!profile.exists) {
       result.skipped.push({ clientId: row.id, skipReason: "loadFailed" in profile ? "PROFILE_LOAD_FAILED" : "PROFILE_MISSING" });
     } else if (profile.visualModeSummary === null) {

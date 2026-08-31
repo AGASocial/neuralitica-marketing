@@ -54,11 +54,11 @@ Concrete consumers: **Vercel Cron** · **Operator manual trigger (Phase B)** · 
 
 ### Tests (Phase A)
 
-- [ ] Cron auth: valid secret 200; invalid 401; no secret 401.
-- [ ] Eligibility: active+profile → eligible; missing profile → skipped.
-- [ ] Idempotency: second acquire same client+week → no duplicate row.
-- [ ] Dry-run: plan returned; mock spend orchestrators **not** called.
-- [ ] Forbidden body fields rejected on any future manual route stub.
+- [x] Cron auth: valid secret 200; invalid 401; no secret 401.
+- [x] Eligibility: active+profile → eligible; missing profile → skipped.
+- [x] Idempotency: second acquire same client+week → no duplicate row.
+- [x] Dry-run: plan returned; mock spend orchestrators **not** called.
+- [x] Forbidden body fields rejected on any future manual route stub.
 
 ---
 
