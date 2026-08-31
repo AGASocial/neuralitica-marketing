@@ -1,6 +1,7 @@
 # US-13.2 — Surface top themes for next strategy cycle
 
-**Status:** PREP (2026-08-31) — README + TASKS · gates pending  
+**Status:** CLOSED (2026-08-31) — VALIDATION PASS WITH NOTES `6fa9ad8` (98/98, 3/3 AC) · QA APPROVE WITH CONDITIONS `7ff873e` (0 Critical/High, 1 Medium non-blocking) · PO AC check-off. BE `4649b83` · agents `ead2932` · FE `0419e5a` · CONTRACT `6e3f858`/`1951683`. **Deferral (Phase B):** `getLatestContentStrategy` clientId parity for multi-client selector. Phase 5 integration → recommended next.
+
 **As a** System, **I want** to pass performance signals into the next Content Strategy run, **so that** weekly planning improves over time.
 
 Ship **Strategy Performance Insights V1 (Phase A)**: aggregate **Métricas lite** from the last **4 weeks** by slot **`tema`** (resolved server-side from approved strategy brief via script join); inject a **numeric metrics summary** into the Content Strategy agent prompt when data exists; show an **Insights** snippet (top **3** themes) on `/operator/strategy`. Graceful empty state when no qualifying metrics yet.
@@ -127,15 +128,15 @@ GROUP BY normalized_tema_key
 ## Gates (orchestrator)
 
 - [x] PREP — README + TASKS + PO freezes
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend) — Reviewed by FE
-- [ ] BUILD (nextjs-backend + content-agents-engineer + nextjs-frontend)
-- [ ] VALIDATION.md
-- [ ] QA.md
-- [ ] CLOSE — 3/3 AC checked in USER_STORIES.md (product-owner)
+- [x] SPEC-REVIEW.md — ALIGNED `a8f4c85`
+- [x] SECURITY.md — APPROVE WITH CONDITIONS `27cc215`
+- [x] CONTRACT.md — frozen `6e3f858` · Reviewed by FE `1951683`
+- [x] BUILD — BE `4649b83` · agents `ead2932` · FE `0419e5a`
+- [x] VALIDATION.md — PASS WITH NOTES `6fa9ad8` (3/3 AC, 98/98 tests)
+- [x] QA.md — APPROVE WITH CONDITIONS `7ff873e` (0 Critical/High; Medium: brief-read clientId parity → Phase B)
+- [x] CLOSE — 3/3 AC checked in USER_STORIES.md (product-owner)
 
-**Next:** SPEC-REVIEW → SECURITY → CONTRACT (freeze aggregator + DTO + prompt block) → BUILD.
+**Next:** FF-merge to main · Phase 5 integration report · or SELECT US-8.7 / US-8.5.
 
 ---
 

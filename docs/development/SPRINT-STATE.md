@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 5
-current_story: US-13.2
-story_status: QA
-feature_branch: feature/US-13.2-strategy-insights
-last_completed_story: US-13.1
+current_story: null
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-13.2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T13:30:00Z
+updated_at: 2026-08-31T14:00:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1)
@@ -20,7 +20,7 @@ updated_at: 2026-08-31T13:30:00Z
 | US-12.1 Weekly calendar view | done | BE `9ac84dc` · FE `de2fe1e` · fix `79546ab` · VALIDATION `d642e70` · QA `80766dc` · CLOSE `722e5e0` (5/5 AC; mark published → US-12.2) |
 | US-12.2 Mark manual publication done | done | BE `6e0fcf0` · FE `513632e` · DB `f62a1a2` · VALIDATION `ceacf10` · QA `8b3536f` · CLOSE `f148e2d` (4/4 AC; metrics → US-13.1) |
 | US-13.1 Record basic post metrics manually | done | BE `7880a3c` · FE `6eb7c81` · DB `7880a3c` · fix `d544a47` · VALIDATION `1e90f5f` · QA `d9f829b` · CLOSE `d544a47` (5/5 AC; strategy insights → US-13.2) |
-| US-13.2 Surface top themes for next strategy cycle | SPEC | branch `feature/US-13.2-strategy-insights` · ALIGNED `SPEC-REVIEW.md` · SECURITY next |
+| US-13.2 Surface top themes for next strategy cycle | done | BE `4649b83` · agents `ead2932` · FE `0419e5a` · CONTRACT `6e3f858`/`1951683` · VALIDATION `6fa9ad8` · QA `7ff873e` · CLOSE pending FF-merge (3/3 AC; brief-read clientId parity → Phase B) |
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -63,6 +63,7 @@ updated_at: 2026-08-31T13:30:00Z
 
 ## Historial reciente
 
+- 2026-08-31 · US-13.2 CLOSE: 3/3 AC checked; VALIDATION PASS WITH NOTES `6fa9ad8` (98/98); QA APPROVE WITH CONDITIONS `7ff873e` (0 Critical/High, 1 Medium non-blocking: brief-read clientId parity → Phase B); FF-merge pending; Phase 5 → SELECT **phase integration** (recommended — Sprint 7 stories complete), **US-8.7**, or **US-8.5**.
 - 2026-08-31 · US-13.2 SELECT → PREP. Branch `feature/US-13.2-strategy-insights` from main; deps US-13.1 ✅ · US-4.1 ✅; README + TASKS in `plan/stories/US-13.2/`.
 - 2026-08-31 · US-13.1 CLOSE: 5/5 AC checked; VALIDATION PASS WITH NOTES `1e90f5f` (37/37); QA APPROVE WITH CONDITIONS `d9f829b` (0 Critical/High, 4 Low); fix `d544a47` (editable default); FF-merge `d544a47` to main; Phase 5 → SELECT **US-13.2** (recommended), US-8.7, or phase integration.
 - 2026-08-30 · US-13.1 SELECT → PREP. Branch `feature/US-13.1-reel-metrics` from main; deps US-12.2 ✅.
