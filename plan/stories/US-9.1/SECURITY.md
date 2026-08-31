@@ -585,3 +585,86 @@ Before Phase B BUILD, verify CONTRACT Phase B amendment:
 | **Condition count** | **10** |
 | **Veto** | No |
 | **Next gate** | CONTRACT.md Phase B amendment |
+
+---
+---
+
+# Security Design Review — US-9.1 Phase B-M2
+
+**Story:** US-9.1 Phase B-M2 — Assembly poll atomic claim  
+**Sprint label:** `US-9.1-B-M2`  
+**Date:** 2026-08-31  
+**Reviewer:** security-architect  
+**Branch:** `feature/US-9.1-b-m2-assembly-poll-claim`  
+**Sources:** `plan/stories/US-9.1/PHASE-B-M2.md` (PO M2-1…M2-11), Phase A/B sections above, **CLOSED** `plan/stories/US-9.2/SECURITY.md` Phase B-M2 (mirror pattern), `plan/stories/US-9.1/QA.md` Medium #1 · `plan/stories/US-9.1/QA-PHASE-B.md` Medium #1  
+**Status:** Binding **lean amend** — worker integrity / spend control only. Phase A/B floors **remain in force**; this section does **not** rewrite them. Do not treat as CONTRACT.md. Do not check off `USER_STORIES.md` AC.  
+**Primary implementers:** **media-pipeline-engineer** (poll + runner gate). **nextjs-backend** (applier rows-affected + CONTRACT amend + lost-claim test). **FE: none.**
+
+---
+
+## Verdict: APPROVE WITH CONDITIONS
+
+M2 closes a worker race gap: concurrent Fly replicas or dev in-process + poll overlap can both reach FFmpeg on the same `queued` assembly row because poll SELECT lacks atomic claim and the applier does not treat zero-row UPDATE as lost race. Fix mirrors **CLOSED** US-9.2-B-M2 branding claim pattern — conditional **`UPDATE … WHERE status = 'queued' RETURNING`**; skip on zero rows — **assembly only**; US-9.2 branding claim stays closed on its branch (M2-11).
+
+**Confirmed (M2-8):** no new client authority, endpoints, or trust boundaries; claim is worker-only via existing `applyAssemblyJobUpdate` applier; integrity / compute spend — not IDOR.
+
+No REDESIGN. No veto of M2-1…M2-11. **Next gate:** CONTRACT amend (§ Poll runtime + `runAssemblyJob` step 1) → BUILD.
+
+**Condition count (Phase B-M2):** **5**
+
+---
+
+### Binding conditions (Phase B-M2)
+
+1. **Atomic claim (M2-2):** `queued` → `processing` via conditional **`UPDATE neuramark_assembled_reels SET status = 'processing', updated_at = now() WHERE id = $1 AND status = 'queued'`** with `.select('id')` / `RETURNING`. **Zero rows** ⇒ lost race — not an error.
+2. **Applier contract (M2-3):** `applyAssemblyJobUpdate` for processing claim: when UPDATE matches **0 rows**, return **`{ ok: true, idempotent: true, status: <current or queued> }`** — **do not throw**; do not report `idempotent: false` on lost race.
+3. **Runner gate (M2-4):** `runAssemblyJob`: after claim attempt, if **`idempotent === true`** → **return immediately** (no `mkdtemp`, no Storage download, no spawn). If initial load shows **`status === 'processing'`** before claim (peer owns row) → **return** — no resume-from-poll.
+4. **Poll predicate (M2-5):** `pollQueuedAssemblyJobsBatch` selects **`status = 'queued'`** only — drop `processing` from candidate set (CONTRACT amend must match). Stale `processing` remains **`markStaleAssemblyJobsFailed`** → Operator re-assemble; do not poll-resume mid-FFmpeg.
+5. **Closed write surface (M2-8):** claim stays inside **`import "server-only"`** assembly applier only — no new browser-callable routes; `onAssemblyJobCompleted` fires only on successful **`completed`** transition (M2-7) — lost claim must **not** trigger branding auto-chain.
+
+---
+
+### Abuse cases (M2 delta)
+
+- *As a concurrent worker, I both SELECT the same `queued` row and run FFmpeg* → **Blocked:** one conditional UPDATE wins; loser gets zero rows → `idempotent: true` → no spawn.
+- *As dev in-process `enqueueAssemblyJob` + Fly poll on same row* → **Blocked:** atomic claim — one FFmpeg winner; loser exits silently (M2-6).
+- *As a malicious actor, I trigger duplicate assembly via a new client endpoint* → **Blocked:** M2 adds **no** client surface; existing Operator-only trigger unchanged.
+- *As a worker, I resume another replica's mid-`processing` job from poll* → **Blocked:** poll `queued`-only; peer `processing` at runner entry → early return (M2-4, M2-5).
+- *As a lost-claim worker, I still fire `onAssemblyJobCompleted` / branding auto-chain* → **Blocked:** auto-chain only on successful **`completed`** transition; lost claim exits before FFmpeg (M2-7).
+
+---
+
+### Security Acceptance Criteria (Phase B-M2 — additive for VALIDATION)
+
+Phase A/B `[SEC]` remain binding. Additive only — **closes** Phase A `[SEC] Worker job claim` for assembly `status`:
+
+- [ ] **[SEC] (Phase B-M2) Assembly worker atomic job claim:** Before download / temp dir / FFmpeg, claim via conditional **`UPDATE neuramark_assembled_reels SET status = 'processing', updated_at = now() … WHERE id = $1 AND status = 'queued'`** with **`RETURNING` / `.select('id')`**. **Zero rows updated** ⇒ **`{ ok: true, idempotent: true }`** — **no** spawn. Satisfies Phase A `[SEC] Worker job claim` via per-job conditional UPDATE (not poll SELECT alone).
+- [ ] **[SEC] (Phase B-M2) Lost-race applier semantics:** `applyAssemblyJobUpdate` processing claim inspects rows affected / RETURNING — lost race returns **`idempotent: true`**, not throw and not **`idempotent: false`**. Terminal / illegal transitions keep existing idempotent behavior.
+- [ ] **[SEC] (Phase B-M2) Runner early-exit gate:** `runAssemblyJob` returns before **`mkdtemp`**, Storage download, or **`spawn`** when claim returns **`idempotent: true`** or when row is already **`processing`** at entry (peer worker). Unit test: simulated lost claim → **zero** FFmpeg invocations.
+- [ ] **[SEC] (Phase B-M2) Poll `queued`-only:** `pollQueuedAssemblyJobsBatch` candidate set is **`status = 'queued'`** only — **`processing`** excluded from poll SELECT. Stale sweeper owns stuck **`processing`**; no poll-driven mid-job resume.
+- [ ] **[SEC] (Phase B-M2) No new client authority:** M2 adds **no** assemble/trigger fields, endpoints, or FE surface. Assembly status writes remain worker-only via existing applier; claim is not client-triggerable.
+
+---
+
+### Vetoes (Phase B-M2)
+
+| If implementers… | Verdict |
+|---|---|
+| Proceed to download / FFmpeg when conditional claim UPDATE affects **zero rows** | **REJECT** |
+| Return **`idempotent: false`** or throw on lost claim race | **REJECT** |
+| Poll **`processing`** rows for concurrent FFmpeg (resume-from-poll) | **REJECT** |
+| Add browser-callable claim or assembly-status mutation for M2 | **REJECT** |
+| Bundle US-9.2 branding poll claim changes in this branch | **REJECT** (scope — M2-11) |
+
+---
+
+### Gate summary (Phase B-M2)
+
+| Field | Value |
+|---|---|
+| **Verdict** | **APPROVE WITH CONDITIONS** |
+| **Condition count** | **5** |
+| **Veto** | No |
+| **Next gate** | CONTRACT.md Phase B-M2 amend (atomic claim + poll predicate + runner step 1) — then BUILD |
+
+**CONTRACT may proceed:** **Yes.** FE Reviewed **N/A** (M2-9).

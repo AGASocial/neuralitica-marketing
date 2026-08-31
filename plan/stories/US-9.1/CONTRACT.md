@@ -1,10 +1,11 @@
 Reviewed by FE (Phase A): yes — 2026-08-30 — nextjs-frontend.  
-Reviewed by FE (Phase B): **approved** — 2026-08-31 — nextjs-frontend (Assemble enablement + faceless readiness DTO).
+Reviewed by FE (Phase B): **approved** — 2026-08-31 — nextjs-frontend (Assemble enablement + faceless readiness DTO).  
+Reviewed by FE (Phase B-M2): **N/A — no FE surface** (PO M2-9 waiver; BUILD unblocked).
 
 # API Contract — US-9.1 Assemble final 9:16 Reel
 
 **Story:** US-9.1  
-**Status:** Phase A frozen — 2026-08-30 (Reviewed by FE). **Phase B amendment frozen — 2026-08-31** (Reviewed by FE — approved).  
+**Status:** Phase A frozen — 2026-08-30 (Reviewed by FE). **Phase B amendment frozen — 2026-08-31** (Reviewed by FE — approved). **Phase B-M2 section frozen — 2026-08-31** (FE Reviewed **N/A** — BUILD unblocked).  
 **Security:** `plan/stories/US-9.1/SECURITY.md` (Phase A + Phase B APPROVE WITH CONDITIONS — 10 Phase B conditions reconciled below)  
 **Spec review:** `plan/stories/US-9.1/SPEC-REVIEW.md` (Phase A) · `plan/stories/US-9.1/SPEC-REVIEW-PHASE-B.md` (Phase B GAPS — resolved by § Phase B)  
 **Pattern:** `plan/stories/US-8.4/CONTRACT.md` (poll seam, Operator DTOs, forbidden keys, migration SQL verbatim)  
@@ -12,6 +13,7 @@ Reviewed by FE (Phase B): **approved** — 2026-08-31 — nextjs-frontend (Assem
 **ADR:** `docs/adr/0003-worker-flyio-ffmpeg.md` — Vercel orchestrator INSERT + enqueue; Fly FFmpeg + status writes  
 **Feature branch (Phase A):** `feature/US-9.1-assemble-reel`  
 **Feature branch (Phase B):** `feature/US-9.1-phase-b-broll-stitch`  
+**Feature branch (Phase B-M2):** `feature/US-9.1-b-m2-assembly-poll-claim` · sprint `US-9.1-B-M2`  
 **Error envelope style:** same class as US-8.4 / US-9.3 (`ok: true` vs `{ ok: false, error: { code, fields?, messageKey? } }`)
 
 **This document is CONTRACT ONLY.** Zod mirrors live in `lib/contracts/assembly-job.ts` (BUILD stubs committed with this freeze). Extensions to `lib/contracts/reel-script.ts` (`assemblyByReelScriptId` on week load) and `lib/contracts/media-assets.ts` (`assembled_reel` type + storage regex) are specified here and applied during BUILD.
@@ -67,7 +69,8 @@ Reviewed by FE (Phase B): **approved** — 2026-08-31 — nextjs-frontend (Assem
 | Phase | Scope | Closes |
 |-------|-------|--------|
 | **A (US-9.1 BUILD — ✅ shipped)** | `neuramark_assembled_reels` migration; `assembled_reel` enum + storage CHECK; `createAssemblyJobForReelScript`; Phase A FFmpeg **`reel_v1_basic`** (1080×1920 normalize/mux); Fly worker loop + dev in-process seam; Operator UI + poll; idempotency; duration ± tolerance AC; SEC guards | USER_STORIES § US-9.1 AC rows (9:16, duration tolerance, idempotency, `[SEC]` FFmpeg + SSRF) |
-| **B (US-9.1-B — this amendment → BUILD next)** | Faceless multi-clip B-roll stitch via `build-broll-concat-args`; persist ordered `broll_asset_ids`; fingerprint + `path_tag`; voiceover mux; numeric `cold_open_notes` trim; zero-broll degrade; FE Assemble enablement | SPEC §3 S3.M10 B-roll stitch handoff from US-8.5; same 5 USER_STORIES AC re-validated on stitch path — **no new checkboxes** |
+| **B (US-9.1-B — ✅ shipped)** | Faceless multi-clip B-roll stitch via `build-broll-concat-args`; persist ordered `broll_asset_ids`; fingerprint + `path_tag`; voiceover mux; numeric `cold_open_notes` trim; zero-broll degrade; FE Assemble enablement | SPEC §3 S3.M10 B-roll stitch handoff from US-8.5; same 5 USER_STORIES AC re-validated on stitch path — **no new checkboxes** |
+| **B-M2 (US-9.1-B-M2 — this amendment → BUILD next)** | Atomic **`queued` → `processing`** claim via conditional UPDATE + RETURNING; **`idempotent: true`** on lost race; **`runAssemblyJob`** early return before temp / download / FFmpeg; poll batch **`status = 'queued'`** only. **No** FE · **No** DB · **No** new USER_STORIES AC | Closes QA Phase A Finding 1 + QA-PHASE-B Medium #1 — see § Phase B-M2 |
 
 **VALIDATION note (Phase B — binding):** Phase B closes faceless B-roll stitch + optional numeric cold-open. **Residual S3.M10 (document, do not SPEC-amend):** full rewind FX / free-text `editing_hints`; weekly auto-assemble (ADR-0001). Subtitles/logo/cover remain US-9.2 ✅. Do **not** uncheck Phase A AC.
 
@@ -1349,10 +1352,263 @@ Signoff checklist:
 
 ---
 
+# Phase B-M2 — Atomic assembly claim + queued-only poll
+
+**Status:** Frozen — 2026-08-31 (spec-guardian) · **Reviewed by FE: N/A — no FE surface** (PO M2-9 waiver) · **BUILD unblocked** (no FE signoff required)  
+**Sprint:** `US-9.1-B-M2` · branch `feature/US-9.1-b-m2-assembly-poll-claim`  
+**Sources:** `PHASE-B-M2.md` (M2-1…M2-11) · `SECURITY.md` Phase B-M2 (lean amend — worker claim AC) · QA Phase A Finding 1 · QA-PHASE-B Medium #1  
+**DB:** **None** — claim via conditional UPDATE on existing `neuramark_assembled_reels` row (optional SQL RPC at implementer discretion; not required).  
+**FE:** **None** — Operator panel unchanged; stale-`processing` → `failed` path already surfaced.  
+**Phase A/B floors:** Remain binding. This section **amends** `applyAssemblyJobUpdate`, `pollQueuedAssemblyJobsBatch`, and `runAssemblyJob` step 1 — does **not** rewrite fingerprint, broll concat, resolve rules, or DTO shapes.
+
+**Acceptance boundary (narrow — binding):** Close assembly poll claim race — exactly one worker may proceed from `queued` to FFmpeg per row; concurrent Fly replicas or dev in-process + poll overlap exit silently on lost claim. **Do not** add or uncheck USER_STORIES § US-9.1 AC. **Do not** bundle US-9.2 branding poll claim (CLOSED US-9.2-B-M2 — mirror pattern only).
+
+---
+
+## Phase B-M2 — SECURITY reconciliation (lean)
+
+| # | Condition | Frozen here |
+|---|-----------|-------------|
+| 1 | Claim is **worker-only** — no new client authority, endpoints, or DTO fields | § Out of scope · § Claim mechanism |
+| 2 | Integrity / spend control — prevents duplicate FFmpeg and orphaned `assembled_reel` assets | § Runner gate · § Poll batch |
+| 3 | Lost claim returns **`idempotent: true`** — **no throw**; loser must not download or spawn | § Applier contract |
+| 4 | Stale `processing` remains worker-only via `markStaleAssemblyJobsFailed` — no mid-`processing` auto-resume from poll | § Poll batch · § Stale policy |
+| 5 | `onAssemblyJobCompleted` fires only on **successful** `completed` transition — lost claim must **not** trigger branding auto-chain | § Runner gate · M2-7 |
+
+---
+
+## Phase B-M2 — Claim mechanism (frozen)
+
+**File (BUILD):** `lib/assembly/apply-assembly-job-update.ts` (extend existing applier)
+
+**Intent:** Per-job atomic claim via conditional UPDATE — not batch `FOR UPDATE SKIP LOCKED` on SELECT (Supabase JS has no first-class SKIP LOCKED; per-row UPDATE is the correctness gate). Mirror **CLOSED** US-9.2-B-M2 branding claim pattern for **`status`** (not `branding_status`).
+
+**SQL semantics (binding):**
+
+```sql
+UPDATE neuramark_assembled_reels
+SET
+  status = 'processing',
+  updated_at = now()
+WHERE
+  id = $assemblyJobId
+  AND status = 'queued'
+RETURNING id;
+```
+
+**Supabase JS equivalent (binding behavior, not module name):**
+
+```ts
+const { data, error } = await supabase
+  .from("neuramark_assembled_reels")
+  .update({
+    status: "processing",
+    updated_at: new Date().toISOString(),
+  })
+  .eq("id", assemblyJobId)
+  .eq("status", "queued")
+  .select("id");
+
+// data.length === 0 ⇒ lost race (another worker claimed first)
+```
+
+| Rule | Detail |
+|------|--------|
+| Predicate | **`status = 'queued'`** only — only `queued` rows are claimable |
+| Zero rows | Lost race — **do not throw**; return idempotent success (§ Applier contract) |
+| Optional RPC | Implementer may use raw SQL / RPC instead of Supabase `.update().select()` — PO requires M2-2…M2-5 behavior, not a specific module |
+
+---
+
+## Phase B-M2 — `applyAssemblyJobUpdate` amend (processing claim)
+
+**File (BUILD):** `lib/assembly/apply-assembly-job-update.ts`
+
+**Amends** § `applyAssemblyJobUpdate` — sole status writer (Phase A). Terminal / illegal transitions keep existing idempotent behavior.
+
+### Step table — `processing` claim patch
+
+| Step | Action |
+|------|--------|
+| 1 | Load job row (service-role) — unchanged |
+| 2 | If current status is terminal (`completed` \| `failed`) → return `{ ok: true, idempotent: true, status: <current> }` — unchanged |
+| 3 | If transition `queued` → `processing` is not allowed from loaded status → return `{ ok: true, idempotent: true, status: <current> }` — unchanged |
+| 4 | Issue conditional UPDATE: `SET status = 'processing', updated_at = now()` **WHERE** `id = $assemblyJobId AND status = 'queued'` with `.select("id")` (RETURNING) |
+| 5 | If UPDATE returns **≥ 1 row** → `{ ok: true, jobId, status: "processing", idempotent: false }` |
+| 6 | If UPDATE returns **0 rows** (lost race — peer claimed, row already `processing` / terminal, or status changed) → re-load row (optional) → `{ ok: true, jobId, status: <current or "queued">, idempotent: true }` — **do not throw** |
+| 7 | Supabase / DB error → throw (unchanged) |
+
+### Rows-affected contract (binding)
+
+When `patch.status === "processing"`:
+
+| Outcome | Return shape |
+|---------|--------------|
+| UPDATE matches **≥ 1 row** | `{ ok: true, jobId, status: "processing", idempotent: false }` |
+| UPDATE matches **0 rows** (lost race) | `{ ok: true, jobId, status: <current from re-load or queued>, idempotent: true }` — **do not throw** |
+| Supabase / DB error | Throw (unchanged) |
+
+**Binding fix:** Current implementation issues `.in("status", ["queued", "processing"])` but **does not** inspect rows affected and always returns `idempotent: false` on no error. BUILD **must** use `.eq("status", "queued").select("id")` for the claim path and treat **zero returned rows** as lost claim.
+
+**Other patches (`completed`, `failed`):** Unchanged — still use `.in("status", ["queued", "processing"])` or equivalent conditional on prior status; terminal no-op remains `idempotent: true`. **`onAssemblyJobCompleted`** fires only when `completed` patch succeeds with **≥ 1 row** updated (M2-7).
+
+**Only invokers:** Unchanged — `runAssemblyJob`, `markStaleAssemblyJobsFailed`. **Zero** browser-callable paths.
+
+---
+
+## Phase B-M2 — Poll batch amend (`queued`-only)
+
+**File (BUILD):** `lib/assembly/poll-assembly-jobs.ts`
+
+**Amends** § Poll runtime — Fly worker vs dev in-process. Supersedes illustrative diagram prose `status IN ('queued','processing')` on worker SELECT.
+
+### `pollQueuedAssemblyJobsBatch` step table (frozen)
+
+| Step | Action |
+|------|--------|
+| 1 | If Supabase not configured → return (unchanged) |
+| 2 | `markStaleAssemblyJobsFailed()` — **before** batch SELECT (unchanged) |
+| 3 | SELECT candidate ids: **`status = 'queued'`** only — **not** `.in(["queued", "processing"])` |
+| 4 | Order by `updated_at ASC`, limit batch size (default 5) |
+| 5 | For each id: `await runAssemblyJob(jobId)` — try/catch per row (unchanged) |
+
+### Predicate (frozen)
+
+```ts
+// Candidate set — queued ONLY
+.from(ASSEMBLY_JOBS_TABLE)
+.select("id")
+.eq("status", "queued")   // NOT .in(["queued", "processing"])
+.order("updated_at", { ascending: true })
+.limit(limit);
+```
+
+| Rule | Detail |
+|------|--------|
+| Candidate set | **`status = 'queued'`** only — drop `processing` from poll predicate |
+| Stuck `processing` | Owned by **`markStaleAssemblyJobsFailed()`** each tick **before** batch SELECT — stale → `failed` → Operator **Re-assemble** |
+| No mid-`processing` resume | Poll must **not** re-enter `runAssemblyJob` for rows already `processing` (avoids double FFmpeg without lease columns) |
+| Per-row claim | Correctness gate is **`runAssemblyJob` → `applyAssemblyJobUpdate` processing claim** (§ Claim mechanism), not SELECT locking |
+| Dev overlap | `enqueueAssemblyJob` fire-and-forget + Fly poll on same row: atomic claim ensures **one** FFmpeg winner; loser exits silently (optional debug/info log) |
+
+**Stale sweep (re-assert):** `markStaleAssemblyJobsFailed()` runs each tick before poll — unchanged threshold `NEURAMARK_ASSEMBLY_STALE_TIMEOUT_MIN` (default 30).
+
+**Worker loop (unchanged):** `runAssemblyWorkerLoop()` → `pollQueuedAssemblyJobsBatch()` → sleep `ASSEMBLY_JOB_POLL_INTERVAL_MS`.
+
+---
+
+## Phase B-M2 — `runAssemblyJob` step 1 amend (runner gate)
+
+**File (BUILD):** `lib/assembly/run-assembly-job.ts`
+
+**Amends** § `runAssemblyJob()` step 1 and placement **before** fingerprint recompute / `mkdtemp` / download / spawn (primary + broll_stitch paths).
+
+### Step sequence (binding)
+
+| Step | Action |
+|------|--------|
+| 0 | Load job; if missing or terminal (`completed` \| `failed`) → **return** |
+| **1a** | If `status === 'processing'` **at entry** (before claim attempt) → **return immediately** — another worker owns the row; **no** resume-from-poll |
+| **1b** | If `status === 'queued'` → `applyAssemblyJobUpdate({ patch: { status: "processing" }, source: "worker" })` |
+| **1c** | If claim result `idempotent === true` → **return immediately** — lost race; **zero** `mkdtemp`, Storage download, or FFmpeg spawn |
+| 2 | Re-load job; if missing or terminal → **return** |
+| 3 | Defensive fingerprint recompute from persisted FKs — unchanged (§ Phase B faceless branch) |
+| 4+ | Branch `assembly_path_tag` → `runPrimaryPath` \| `runBrollStitchPath` — unchanged |
+
+```ts
+// Pseudocode — exact helper structure free at BUILD
+const job = await loadAssemblyJobByIdUnscoped(assemblyJobId);
+if (!job || isTerminalAssemblyJobStatus(job.status)) return;
+
+if (job.status === "processing") {
+  return; // peer worker — no resume
+}
+
+if (job.status === "queued") {
+  const claim = await applyAssemblyJobUpdate({
+    assemblyJobId: job.id,
+    patch: { status: "processing" },
+    source: "worker",
+  });
+  if (claim.idempotent) {
+    return; // lost race — silent exit
+  }
+}
+
+const activeJob = await loadAssemblyJobByIdUnscoped(assemblyJobId);
+// ... fingerprint guard, mkdtemp, download, spawn ...
+```
+
+| Rule | Detail |
+|------|--------|
+| Lost claim | **Silent exit** — optional `console.debug` / info log; **no** `failed` status (not an error — expected concurrency) |
+| Winner | Exactly one worker proceeds to FFmpeg for a given `queued` → `processing` transition |
+| Fingerprint guard | Remains **after** successful claim, **before** `mkdtemp` (unchanged) |
+| Auto-chain | `onAssemblyJobCompleted` only on successful `completed` patch — lost claim must **not** fire branding enqueue (M2-7) |
+
+---
+
+## Phase B-M2 — Unit test fixture requirement (BUILD)
+
+**File (BUILD):** `lib/assembly/run-assembly-job.test.ts` or `run-assembly-job.phase-b.test.ts` (extend)
+
+| Fixture | Expect |
+|---------|--------|
+| Simulated lost claim — `applyAssemblyJobUpdate` returns `{ idempotent: true }` for `processing` patch | **`runAssemblyJob` returns** without `mkdtemp`, Storage download, or FFmpeg spawn |
+| Simulated entry with `status === 'processing'` before claim | **Return** without spawn (peer owns row) |
+| Happy path — claim returns `{ idempotent: false, status: "processing" }` | Proceeds to existing success path (primary + broll_stitch) |
+| Optional concurrent-claim / double-call | Exactly **one** spawn winner per row |
+
+**File (BUILD):** `lib/assembly/apply-assembly-job-update.test.ts` (extend or create)
+
+| Fixture | Expect |
+|---------|--------|
+| `processing` patch when row already `processing` / not `queued` | `{ ok: true, idempotent: true }` — zero rows updated |
+| `processing` patch when row `queued` | `{ ok: true, idempotent: false, status: "processing" }` |
+
+---
+
+## Phase B-M2 — Out of scope (explicit)
+
+| Topic | Why |
+|-------|-----|
+| US-9.2 branding poll claim | **CLOSED** US-9.2-B-M2 — separate branch; do not bundle branding changes here (M2-11) |
+| Batch `FOR UPDATE SKIP LOCKED` on poll SELECT | Optional implementer choice; per-job UPDATE is the PO-required gate (M2-3) |
+| Mid-`processing` auto-resume from poll | Stale sweeper → `failed` → Operator re-assemble |
+| Enqueue-time audio probe (QA Phase A Medium #2) | Separate follow-up — not M2 |
+| Readiness companion on jobs SELECT error (QA-PHASE-B Medium #2) | Separate follow-up — not M2 |
+| New USER_STORIES AC / unchecking Phase A/B AC | Out |
+| Faceless stitch / fingerprint / broll concat | Closed Phase B — untouched |
+| New endpoints / DTOs / FE | M2-8 / M2-9 |
+
+---
+
+## Phase B-M2 — Acceptance mapping (for validator)
+
+Same USER_STORIES § US-9.1 AC (do **not** uncheck Phase A/B; **no** new checkboxes):
+
+| QA finding | Phase B-M2 proof |
+|------------|------------------|
+| QA Phase A Finding 1 (poll claim race) | Lost claim → **zero** FFmpeg; winner completes happy path (primary + faceless stitch) |
+| QA-PHASE-B Medium #1 (carry-forward) | Poll `queued`-only; atomic claim; `idempotent` skip on 0 rows |
+| Stale sweeper regression | Stuck `processing` still → `failed`; queued-only poll does not starve legitimate work |
+| Auto-chain regression | Lost claim does **not** invoke `onAssemblyJobCompleted` |
+
+---
+
+## Phase B-M2 — Reviewed by FE
+
+**Reviewed by FE: N/A — no FE surface** (PO M2-9).
+
+**Waiver:** Phase B-M2 hardens worker claim + poll predicate only. No DTO, Server Action, Route Handler, or UI change. FE signoff **not required**. Contract frozen; **BUILD unblocked**.
+
+---
+
 ## Changelog
 
 | Date | Change |
 |------|--------|
+| 2026-08-31 | **Phase B-M2 freeze** — atomic `queued`→`processing` claim via conditional UPDATE + RETURNING; `idempotent: true` on lost race; `runAssemblyJob` early return before temp/download/spawn; poll `queued`-only; FE Reviewed N/A; BUILD unblocked |
 | 2026-08-31 | **Reviewed by FE (Phase B)** — approved; i18n messageKeys; FE BUILD constraints on `canAssemble` readiness DTO |
 | 2026-08-31 | **Phase B freeze** — faceless broll resolve (ASC, max 8); persist `broll_asset_ids` + `assembly_path_tag`; fingerprint five-part + `path_tag`; `buildBrollConcatArgs` concat demuxer; degrade/voiceover/cold-open bounds; Zod/test/FE readiness; SECURITY 10 conditions. FE Phase B review **pending** |
 | 2026-08-30 | Reviewed by FE — nextjs-frontend signoff; BUILD unblocked for FE slice |
