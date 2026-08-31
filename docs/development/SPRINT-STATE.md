@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: US-9.2-B
-story_status: PREP
-feature_branch: feature/US-9.2-phase-b-subtitle-cover
-last_completed_story: US-9.1-B
+current_story: US-7.3-B
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-9.2-B
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T17:45:00Z
+updated_at: 2026-08-31T18:10:03Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -30,8 +30,9 @@ updated_at: 2026-08-31T17:45:00Z
 | US-8.7 HeyGen adapter (high tier) | done | FE `a18d4cb` · BE `299d638` · VALIDATION `602995c` (5/5 AC; 22/22) · QA `fc19d0a` · fix `b3a9377` · CLOSE `89d0119` FF-merge to main |
 | US-8.5 Wan B-roll adapter | done | BUILD `f7cf726` · VALIDATION `14a74f5` (6/6 AC; 39/39) · QA `8617ae7` · fix `e75e1b7` · CLOSE `6c66f7d` FF-merge to main (stitch → US-9.1 Phase B) |
 | US-9.1 Phase B faceless B-roll stitch | done | BUILD `c3a9c19` · FE `80652c2` · fix `1106420` · VALIDATION `6d13f4b` (5/5 + 16/16) · QA `37d0dcb` · CLOSE `9a95b55` FF-merge to main |
+| US-9.2 Phase B VO-sync + coverFrameSec | done | BE `95419c1` · FE `8f365bf` · VALIDATION `6db2cba` (2/2; 44/44) · QA `02bfa3b` · CLOSE `7783de2` FF-merge to main |
 
-**Sprint 7 provider + faceless stitch complete.** Active: **US-9.2 Phase B PREP** (VO-synced subtitle timing + `coverFrameSec`). Alternates: high-tier B-roll (`ltx_broll_high`), or **US-7.3 Phase B** video/TTS/B-roll spend backfill.
+**Sprint 7 provider + faceless stitch + branding Phase B complete.** Next SELECT: **US-7.3 Phase B** (video/TTS/B-roll spend backfill — recommended). Alternates: high-tier B-roll (`ltx_broll_high`), or QA M1 worker `voiceoverTimingHash` re-check fast-follow.
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -57,7 +58,7 @@ updated_at: 2026-08-31T17:45:00Z
 | US-8.3 Manual video upload fallback | done | FE `fc6deca` · BE `eaa974a` · fixes `f3f78af`/`b2fb1cc` · VALIDATION `2f5edc0` · QA `a58faeb` · CLOSE `d8baafb` |
 | US-9.3 Text-to-speech for voiceover | done | Phase A `dfdd08b` · adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813` · VALIDATION `1715048` · QA `e9c1833` · CLOSE 5/6 AC (ElevenLabs Phase B defer) |
 | US-9.1 Assemble final 9:16 Reel | done (A+B) | Phase A `4853871` · CLOSE 5/5 AC; **Phase B CLOSED** `9a95b55` FF-merge (VALIDATION `6d13f4b` 5/5+16/16; QA `37d0dcb`; fix `1106420`) |
-| US-9.2 Add subtitles, logo, and cover | Phase A done · **B PREP** | Phase A CLOSE `92b196a` (5/5 AC). **Phase B PREP:** VO-sync + `coverFrameSec` — `PHASE-B.md` · branch `feature/US-9.2-phase-b-subtitle-cover` |
+| US-9.2 Add subtitles, logo, and cover | done (A+B) | Phase A CLOSE `92b196a` (5/5 AC). **Phase B CLOSED** `7783de2` FF-merge (VALIDATION `6db2cba` 2/2+44/44; QA `02bfa3b`; VO-sync + `coverFrameSec`) |
 | US-10.1 Run automated QA | done | agents `0b56c9e`/`75802d6` · BE `5e50115` · FE `b5e0941` · VALIDATION `d95555d` · QA `a6ba923` · CLOSE `b7a3bb9` (6/6 AC; override → US-10.2) |
 | US-10.2 Operator override with reason | done | BE `a9cc533` · FE `0c6bfb0` · VALIDATION `d7e3cd5` · QA `3da5547` · CLOSE `c9b97e5` (7/7 AC; approval render → US-11.1) |
 | US-11.1 Present Reel package for client approval | done | BE `d830b0f` · FE `defd9ff` · VALIDATION `633c6f5` · QA `3f39db9` · CLOSE `4f11d38` (5/5 AC; request-changes → US-11.2) |
@@ -74,6 +75,7 @@ updated_at: 2026-08-31T17:45:00Z
 
 ## Historial reciente
 
+- 2026-08-31 · US-9.2 Phase B CLOSE: VALIDATION PASS WITH NOTES `6db2cba` (2/2 deferred; 44/44); QA APPROVE WITH CONDITIONS `02bfa3b` (0 Critical/High); FF-merge `7783de2` to main; VO-sync + `coverFrameSec` complete → SELECT **US-7.3 Phase B** (recommended), `ltx_broll_high`, or VO-hash M1 fast-follow.
 - 2026-08-31 · US-9.1 Phase B CLOSE: VALIDATION PASS WITH NOTES `6d13f4b` (5/5 AC + 16/16); QA APPROVE WITH CONDITIONS `37d0dcb` (0 Critical/High); fix `1106420`; FF-merge `9a95b55` to main; faceless path complete (Wan → stitch) → SELECT **US-9.2 Phase B** (recommended), high-tier B-roll, or US-7.3 Phase B spend.
 - 2026-08-31 · US-9.1 Phase B PREP: `PHASE-B.md` + README/TASKS freezes (B1–B14); branch `feature/US-9.1-phase-b-broll-stitch`; sprint `US-9.1-B` / PREP; next SPEC-REVIEW → SECURITY → CONTRACT.
 - 2026-08-31 · US-8.5 CLOSE: 6/6 AC checked; VALIDATION PASS WITH NOTES `14a74f5` (39/39); QA APPROVE WITH CONDITIONS `8617ae7` (H1/M1 fixed `e75e1b7`); FF-merge `6c66f7d` to main; **Sprint 7 provider backlog complete** → SELECT **US-9.1 Phase B** faceless B-roll stitch (recommended), or high-tier B-roll when added.
