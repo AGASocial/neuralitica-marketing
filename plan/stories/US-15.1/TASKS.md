@@ -30,27 +30,27 @@ Concrete consumers: **Vercel Cron** · **Operator manual trigger (Phase B)** · 
 
 ### Route Handler + auth
 
-- [ ] **`app/api/cron/weekly-cycle/route.ts`** — `GET` or `POST` (CONTRACT freezes); `export const dynamic = "force-dynamic"`; `Cache-Control: no-store`.
-- [ ] **`CRON_SECRET`** — validate `Authorization: Bearer ${CRON_SECRET}`; missing/wrong → **401**; constant-time compare; never log secret.
-- [ ] **Vercel Cron config** — `vercel.json` crons entry → `/api/cron/weekly-cycle` (schedule CONTRACT freezes — e.g. weekly Monday UTC).
-- [ ] **Dry-run precedence** — env `WEEKLY_CYCLE_DRY_RUN=true` and/or query `dryRun=1`; live spend **blocked** when dry-run active.
+- [x] **`app/api/cron/weekly-cycle/route.ts`** — `GET` or `POST` (CONTRACT freezes); `export const dynamic = "force-dynamic"`; `Cache-Control: no-store`.
+- [x] **`CRON_SECRET`** — validate `Authorization: Bearer ${CRON_SECRET}`; missing/wrong → **401**; constant-time compare; never log secret.
+- [x] **Vercel Cron config** — `vercel.json` crons entry → `/api/cron/weekly-cycle` (schedule CONTRACT freezes — e.g. weekly Monday UTC).
+- [x] **Dry-run precedence** — env `WEEKLY_CYCLE_DRY_RUN=true` and/or query `dryRun=1`; live spend **blocked** when dry-run active.
 
 ### Eligibility + week resolution
 
-- [ ] **`listEligibleClientsForWeeklyCycle()`** — server-only; query `neuramark_clients.active = true`; for each, `getBusinessProfileForAgents(clientId)` → require `exists && visualModeSummary !== null`; return skip reasons for ineligible.
-- [ ] **`resolveWeekStartForCycle(referenceDate?)`** — ISO Monday UTC string; shared with strategy/scripts modules (`trendWeekStartSchema`).
+- [x] **`listEligibleClientsForWeeklyCycle()`** — server-only; query `neuramark_clients.active = true`; for each, `getBusinessProfileForAgents(clientId)` → require `exists && visualModeSummary !== null`; return skip reasons for ineligible.
+- [x] **`resolveWeekStartForCycle(referenceDate?)`** — ISO Monday UTC string; shared with strategy/scripts modules (`trendWeekStartSchema`).
 
 ### Idempotency ledger
 
 - [ ] **Migration `neuramark_weekly_cycle_runs`** — columns: `id`, `client_id`, `week_start`, `status` (`planned`|`running`|`completed`|`failed`|`dry_run`), `mode` (`cron`|`operator`), `step_log` JSONB, `started_at`, `finished_at`, `created_at`; unique index `neuramark_weekly_cycle_runs_client_week_uidx` on `(client_id, week_start)`.
-- [ ] **`acquireWeeklyCycleRun()`** — insert or return existing; prevent concurrent live runs for same client+week.
+- [x] **`acquireWeeklyCycleRun()`** — insert or return existing; prevent concurrent live runs for same client+week.
 
 ### Dry-run orchestrator
 
-- [ ] **`lib/orchestration/run-weekly-cycle-for-client.ts`** — `import "server-only"`; params `{ clientId, weekStart, invokedBy: "system", dryRun: boolean }`.
-- [ ] **Step planner** — ordered steps: `strategy` → `scripts` → `captions` → `primary_video` → `tts` → `broll` → `assembly` → `branding` → `qa` → `approval`; dry-run returns plan JSON only.
-- [ ] **No spend in dry-run** — assert no calls to LLM adapters, `create*VideoJobs`, assembly/branding enqueue, QA LLM when `dryRun=true`.
-- [ ] **`runWeeklyCycleBatch()`** — cron entry: loop eligible clients; collect per-client results; aggregate HTTP 200 summary.
+- [x] **`lib/orchestration/run-weekly-cycle-for-client.ts`** — `import "server-only"`; params `{ clientId, weekStart, invokedBy: "system", dryRun: boolean }`.
+- [x] **Step planner** — ordered steps: `strategy` → `scripts` → `captions` → `primary_video` → `tts` → `broll` → `assembly` → `branding` → `qa` → `approval`; dry-run returns plan JSON only.
+- [x] **No spend in dry-run** — assert no calls to LLM adapters, `create*VideoJobs`, assembly/branding enqueue, QA LLM when `dryRun=true`.
+- [x] **`runWeeklyCycleBatch()`** — cron entry: loop eligible clients; collect per-client results; aggregate HTTP 200 summary.
 
 ### Tests (Phase A)
 
