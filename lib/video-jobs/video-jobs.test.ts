@@ -290,6 +290,7 @@ describe("retry override consumption", () => {
     createResult: { ok: true; jobId: string; status: "queued"; estimatedCostCents: number; attempt: number } | { ok: false; error: { code: string } };
     onConsume?: () => void;
     onCreate?: () => void;
+    failedJobOverrides?: Record<string, unknown>;
   }) {
     const nodeModule = Module as unknown as NodeModuleLoad;
     const originalLoad = nodeModule._load.bind(nodeModule);
@@ -299,6 +300,7 @@ describe("retry override consumption", () => {
     const failedJobRow = baseVideoJobRow({
       status: "failed",
       attempt: 1,
+      ...options.failedJobOverrides,
     });
 
     const mockAdapter = {
@@ -381,6 +383,30 @@ describe("retry override consumption", () => {
           },
         };
       }
+      if (req.includes("create-broll-video-jobs")) {
+        return {
+          createBrollVideoJobs: async () => {
+            createCalled = true;
+            options.onCreate?.();
+            if (!options.createResult.ok) {
+              return options.createResult;
+            }
+            return {
+              ok: true,
+              jobs: [
+                {
+                  jobId: options.createResult.jobId,
+                  status: options.createResult.status,
+                  estimatedCostCents: options.createResult.estimatedCostCents,
+                  beatIndex: 0,
+                  attempt: options.createResult.attempt,
+                },
+              ],
+              skipped: [],
+            };
+          },
+        };
+      }
       return originalLoad(request, parent, isMain);
     };
 
@@ -457,6 +483,45 @@ describe("retry override consumption", () => {
         assert.equal(mocks.wasCreateCalled(), true);
         assert.equal(mocks.wasConsumeCalled(), true);
         assert.equal(consumeAfterCreate, true);
+      } finally {
+        mocks.restore();
+      }
+    });
+  });
+
+  it("retries failed ltx_broll_high broll jobs via createBrollVideoJobs", async () => {
+    await withServerOnlyStub(async () => {
+      const mocks = installRetryVideoJobMocks({
+        failedJobOverrides: {
+          provider_key: "ltx_broll_high",
+          provider_tier: "high",
+          asset_role: "broll",
+          estimated_cost_cents: 126,
+        },
+        createResult: {
+          ok: true,
+          jobId: "88888888-8888-4888-8888-888888888888",
+          status: "queued",
+          estimatedCostCents: 126,
+          attempt: 2,
+        },
+      });
+
+      try {
+        clearVideoJobModuleCache();
+        const { retryVideoJob } = loadVideoJobModule(
+          "./actions/retry-video-job.ts",
+        );
+
+        const result = await retryVideoJob({
+          failedJobId: JOB_ID,
+          confirmRetry: true,
+          confirmEstimateCents: 10,
+        });
+
+        assert.equal(result.ok, true);
+        assert.equal(mocks.wasCreateCalled(), true);
+        assert.equal(mocks.wasConsumeCalled(), true);
       } finally {
         mocks.restore();
       }

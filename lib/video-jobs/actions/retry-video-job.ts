@@ -7,7 +7,7 @@ import {
   type PreviewRetryVideoJobEstimateSuccess,
   type RetryVideoJobResult,
 } from "@/lib/contracts/video-job";
-import { WAN_PROVIDER_KEY } from "@/lib/contracts/siliconflow-wan21-turbo";
+import { isAllowedBrollProviderPair } from "@/lib/contracts/ltx-broll-high";
 import { isAuthGuardError, requireOperator } from "@/lib/auth/require-user";
 import { initializeProviderRegistryFromCatalog } from "@/lib/providers/create-provider-registry";
 import { resolveProviderForJob } from "@/lib/providers/resolve-provider-for-job";
@@ -117,14 +117,16 @@ export async function previewRetryVideoJobEstimate(
     };
   }
 
-  /** B-roll retry must stay on Wan — never promote to talking-head. */
+  /** B-roll retry stays on the failed job's provider — never promote to talking-head. */
   const providerKey = isBroll
-    ? failedJob.providerKey === WAN_PROVIDER_KEY
-      ? WAN_PROVIDER_KEY
-      : providerResult.decision.providerKey
+    ? failedJob.providerKey
     : providerResult.decision.providerKey;
 
-  if (isBroll && providerKey !== WAN_PROVIDER_KEY) {
+  const providerTier = isBroll
+    ? failedJob.providerTier
+    : providerResult.decision.providerTier;
+
+  if (isBroll && !isAllowedBrollProviderPair(providerKey, providerTier)) {
     return {
       ok: true,
       estimatedCostCents: failedJob.estimatedCostCents,
@@ -139,7 +141,7 @@ export async function previewRetryVideoJobEstimate(
     reelScriptId: failedJob.reelScriptId,
     clientId: failedJob.clientId,
     providerKey,
-    providerTier: isBroll ? "low" : providerResult.decision.providerTier,
+    providerTier,
     assetRole: isBroll ? "broll" : "primary",
     targetDurationSec: isBroll ? 5 : script.package.targetDurationSec,
     voiceoverAssetId: failedJob.voiceoverAssetId ?? undefined,
@@ -263,7 +265,12 @@ export async function retryVideoJob(
   }
 
   if (failedJob.assetRole === "broll") {
-    if (failedJob.providerKey !== WAN_PROVIDER_KEY) {
+    if (
+      !isAllowedBrollProviderPair(
+        failedJob.providerKey,
+        failedJob.providerTier,
+      )
+    ) {
       return videoJobMutationError("JOB_NOT_RETRYABLE");
     }
 
