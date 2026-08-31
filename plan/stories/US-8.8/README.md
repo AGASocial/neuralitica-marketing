@@ -1,12 +1,12 @@
 # US-8.8 — LTX B-roll adapter (high tier, P1)
 
-**Status:** PREP (2026-08-31) — README + TASKS; branch `feature/US-8.8-ltx-broll-high`; next SPEC-REVIEW → SECURITY → CONTRACT.
+**Status:** CLOSED (2026-08-31) — VALIDATION PASS WITH NOTES (7/7 AC; 68/68) · QA initial REJECT H1/M1 fixed `4584573` → re-verdict **APPROVE** · PO AC check-off. Phase A `5aa1392` · Phase B `4835f2d` · retry fix `4584573` · CONTRACT `7b3ff74`.
 
 **As a** System, **I want** short B-roll clips via LTX on FAL when quality tier is high, **so that** faceless Reels can use higher-polish visuals without forcing low-tier Wan.
 
 Ship **server-only FAL LTX `VideoProviderAdapter`** for catalog key **`ltx_broll_high`**: implement **`createLtxBrollHighAdapter`** behind **`FAL_API_KEY`**; wire in **`getProviderRegistry()`** / **`initializeProviderRegistryFromCatalog()`**; implement **`estimateCost`** from catalog **`per_clip`** (**126¢** / ~$1.26); pipe **`createJob` / `getJobStatus` / `fetchAsset`** through US-8.1 normalizers; **`videoAssetRole: broll`**; cover with **mocked-HTTP unit tests only**. **Phase B (same story):** **activate** catalog row; **extend** existing **`createBrollVideoJobs`** orchestrator to accept high-tier LTX (today hardcoded Wan-only); budget + graceful degrade unchanged. **Multi-clip stitch remains US-9.1 Phase B** — this story produces owned clips only. **FE optional preview strip deferred** (no FE AC — same as US-8.5).
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.8 (7 AC — unchecked in PREP).
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-8.8 (7/7 checked at CLOSE; stitch = US-9.1 Phase B handoff).
 
 **This folder:** [`plan/stories/US-8.8/`](./) — `README.md` · `TASKS.md` (gates: `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md` — create when story enters sprint).
 
@@ -92,16 +92,16 @@ _Evitar:_ client-supplied `provider_key`; long-lived third-party `output_url` as
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 S3.M9 Video Provider / B-roll)
-- [ ] SECURITY.md (security-architect — FAL SSRF, key redaction, tier floor)
+- [x] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 S3.M9 Video Provider / B-roll)
+- [x] SECURITY.md (security-architect — FAL SSRF, key redaction, tier floor)
 - [x] CONTRACT.md (nextjs-backend — freeze FAL endpoints/schemas; **Reviewed by FE: N/A**)
-- [ ] BUILD Phase A (media-pipeline-engineer + nextjs-backend)
-- [ ] BUILD Phase B (BE orchestrator extension + DB activate)
-- [ ] VALIDATION.md (requirements-validator)
-- [ ] QA.md (qa-engineer)
-- [ ] CLOSE — 7/7 AC checked in USER_STORIES.md (product-owner)
+- [x] BUILD Phase A (media-pipeline-engineer + nextjs-backend) — `5aa1392`
+- [x] BUILD Phase B (BE orchestrator extension + DB activate) — `4835f2d`
+- [x] VALIDATION.md (requirements-validator) — PASS WITH NOTES (7/7 AC)
+- [x] QA.md (qa-engineer) — initial REJECT → fix `4584573` → re-verdict APPROVE
+- [x] CLOSE — 7/7 AC checked in USER_STORIES.md (product-owner)
 
-**Status:** CONTRACT frozen — BUILD unblocked. **Next:** BUILD Phase A → Phase B → VALIDATION.
+**Status:** CLOSED. **Next:** FF-merge `feature/US-8.8-ltx-broll-high` to main; SELECT B-roll Operator generate UI, PLAN F7 cron, or QA follow-ups.
 
 ---
 

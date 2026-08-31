@@ -929,15 +929,15 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **BE** | FAL LTX adapter: image/text prompt → short clip; `provider_key` `ltx_broll_high`; env `FAL_API_KEY`; extend `createBrollVideoJobs` for high-tier policy path |
 | **DB** | Migration: activate `ltx_broll_high` catalog row (`active = true`); reuse `video_jobs.asset_role = broll` |
 
-**Acceptance criteria**
+**Acceptance criteria** *(CLOSED 2026-08-31 — VALIDATION PASS WITH NOTES (7/7 AC; 68/68); QA initial REJECT H1/M1 fixed `4584573` → re-verdict APPROVE; Phase A `5aa1392` · Phase B `4835f2d` · retry fix `4584573`; stitch handoff = US-9.1 Phase B ✅)*
 
-- [ ] Never the silent default when `provider_tier = low` — tier floor unchanged; Wan remains low-tier B-roll
-- [ ] Default B-roll provider when `provider_tier = high`, script marks `needs_broll`, and catalog row is active
-- [ ] Clips max duration per policy (3–5s); LTX catalog documents 5s cap (`ltx-2.3-pro`)
-- [ ] Estimated cost ~$1.26/clip at research baseline (126¢ `per_clip` from catalog seed)
-- [ ] Failed B-roll does not block talking-head primary (graceful degrade — same independence as US-8.5)
-- [ ] Multiple B-roll clips may be stitched in assembly (US-9.1) *(produce N `broll` assets; stitch = US-9.1 Phase B handoff)*
-- [ ] [SEC] LTX adapter follows US-8.1 contract: server-only `FAL_API_KEY`, untrusted-response handling, B-roll cost counted against Reel cumulative budget (US-7.1)
+- [x] Never the silent default when `provider_tier = low` — tier floor unchanged; Wan remains low-tier B-roll
+- [x] Default B-roll provider when `provider_tier = high`, script marks `needs_broll`, and catalog row is active
+- [x] Clips max duration per policy (3–5s); LTX catalog documents 5s cap (`ltx-2.3-pro`)
+- [x] Estimated cost ~$1.26/clip at research baseline (126¢ `per_clip` from catalog seed)
+- [x] Failed B-roll does not block talking-head primary (graceful degrade — same independence as US-8.5)
+- [x] Multiple B-roll clips may be stitched in assembly (US-9.1) *(produce N `broll` assets; stitch = US-9.1 Phase B handoff)*
+- [x] [SEC] LTX adapter follows US-8.1 contract: server-only `FAL_API_KEY`, untrusted-response handling, B-roll cost counted against Reel cumulative budget (US-7.1)
 
 **Depends on:** US-8.1, US-7.2, US-8.5, US-X.4
 

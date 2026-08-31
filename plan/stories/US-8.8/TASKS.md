@@ -165,16 +165,16 @@ Concrete consumers: **`createBrollVideoJobs`** · US-8.4 poller · **`estimateVi
 
 ### Phase A — LTX adapter
 
-- [ ] **`lib/contracts/ltx-broll-high.ts`** — env key, FAL API paths, model id `ltx-2.3-pro`, duration caps, MIME/host allowlists, fetch limits.
-- [ ] **`lib/providers/video/ltx-broll-high-adapter.ts`** — implement **`VideoProviderAdapter`** for **`ltx_broll_high`** / **`broll`**.
-- [ ] **`estimateCost`** — **126¢** × clipCount (default 1); from catalog / projection.
-- [ ] **`createJob`** — validate image + prompt + duration clamp; POST FAL LTX; return opaque `externalJobId`.
-- [ ] **`getJobStatus`** — poll FAL; **`normalizeVideoJobStatusResult`**; allowlisted `rawOutputUrl` only when terminal.
-- [ ] **`fetchAsset`** — **`validateProviderOutputUrl`** → download → Storage → **`storedMediaAssetSchema`**; job context map for poller L1.
-- [ ] **Registry** — register **`createLtxBrollHighAdapter`** when catalog contains `ltx_broll_high`; bootstrap estimate **126**.
-- [ ] **[SEC] `server-only`**; token never logged/returned; untrusted JSON sanitized; FAL output URL allowlist; opaque **`external_job_id`**.
-- [ ] **`lib/providers/video/ltx-broll-high-adapter.test.ts`** — mocked HTTP round-trip; missing env; duration clamp; sanitized errors; estimate **126**.
-- [ ] **Update registry / policy tests** — `getVideoAdapter("ltx_broll_high")` when row present; high + needsBroll selects LTX **after** activate.
+- [x] **`lib/contracts/ltx-broll-high.ts`** — env key, FAL API paths, model id `ltx-2.3-pro`, duration caps, MIME/host allowlists, fetch limits.
+- [x] **`lib/providers/video/ltx-broll-high-adapter.ts`** — implement **`VideoProviderAdapter`** for **`ltx_broll_high`** / **`broll`**.
+- [x] **`estimateCost`** — **126¢** × clipCount (default 1); from catalog / projection.
+- [x] **`createJob`** — validate image + prompt + duration clamp; POST FAL LTX; return opaque `externalJobId`.
+- [x] **`getJobStatus`** — poll FAL; **`normalizeVideoJobStatusResult`**; allowlisted `rawOutputUrl` only when terminal.
+- [x] **`fetchAsset`** — **`validateProviderOutputUrl`** → download → Storage → **`storedMediaAssetSchema`**; job context map for poller L1.
+- [x] **Registry** — register **`createLtxBrollHighAdapter`** when catalog contains `ltx_broll_high`; bootstrap estimate **126**.
+- [x] **[SEC] `server-only`**; token never logged/returned; untrusted JSON sanitized; FAL output URL allowlist; opaque **`external_job_id`**.
+- [x] **`lib/providers/video/ltx-broll-high-adapter.test.ts`** — mocked HTTP round-trip; missing env; duration clamp; sanitized errors; estimate **126**.
+- [x] **Update registry / policy tests** — `getVideoAdapter("ltx_broll_high")` when row present; high + needsBroll selects LTX **after** activate.
 
 ### Phase B — Activate catalog + orchestrator unlock
 
@@ -197,49 +197,52 @@ Concrete consumers: **`createBrollVideoJobs`** · US-8.4 poller · **`estimateVi
 All objects keep `neuramark_` prefix.
 
 - [x] **Activate migration** — `ltx_broll_high.active = true` (Phase B).
-- [ ] **No DDL** on `neuramark_video_jobs` unless CONTRACT finds a gap.
-- [ ] RLS deny-by-default unchanged; service-role Node only.
-- [ ] No secrets in catalog rows — `env_key_name` only.
+- [x] **No DDL** on `neuramark_video_jobs` unless CONTRACT finds a gap.
+- [x] RLS deny-by-default unchanged; service-role Node only.
+- [x] No secrets in catalog rows — `env_key_name` only.
 
 ---
 
 ## Media / provider checklist
 
-- [ ] FAL LTX HTTP only under `lib/providers/**` (except tests).
-- [ ] **`videoAssetRole: "broll"`** on adapter — never `primary`.
-- [ ] Download-and-own storage key shape flat **`{uuid}.mp4`** per US-8.5 CONTRACT amendment.
-- [ ] Poller L1 job context map parity with Wan.
-- [ ] Duration clamp **≤ 5s** enforced server-side.
-- [ ] Cost estimate uses catalog **126¢**/clip.
+- [x] FAL LTX HTTP only under `lib/providers/**` (except tests).
+- [x] **`videoAssetRole: "broll"`** on adapter — never `primary`.
+- [x] Download-and-own storage key shape flat **`{uuid}.mp4`** per US-8.5 CONTRACT amendment.
+- [x] Poller L1 job context map parity with Wan.
+- [x] Duration clamp **≤ 5s** enforced server-side.
+- [x] Cost estimate uses catalog **126¢**/clip.
 
 ---
 
 ## Tests checklist
 
-- [ ] Adapter mocked HTTP: create → poll → fetchAsset happy path.
-- [ ] Missing `FAL_API_KEY` → `PROVIDER_CONFIG_MISSING`.
-- [ ] Estimate: 1 clip = **126¢**; 3 clips = **378¢**.
-- [ ] Duration > 5s clamped (lean: **clamp**).
-- [ ] Output host reject (SSRF).
-- [ ] Policy: `provider_tier=high` + `needsBroll` + active → `ltx_broll_high`.
-- [ ] Policy: `provider_tier=low` + `needsBroll` → **never** `ltx_broll_high`.
-- [ ] Degrade: primary job succeeds when LTX adapter throws / status `failed`.
-- [ ] Budget: B-roll blocked does not mark primary failed.
-- [ ] Job rows persist **`asset_role = broll`** + **`provider_key = ltx_broll_high`**.
+- [x] Adapter mocked HTTP: create → poll → fetchAsset happy path.
+- [x] Missing `FAL_API_KEY` → `PROVIDER_CONFIG_MISSING`.
+- [x] Estimate: 1 clip = **126¢**; 3 clips = **378¢**.
+- [x] Duration > 5s clamped (lean: **clamp**).
+- [x] Output host reject (SSRF).
+- [x] Policy: `provider_tier=high` + `needsBroll` + active → `ltx_broll_high`.
+- [x] Policy: `provider_tier=low` + `needsBroll` → **never** `ltx_broll_high`.
+- [x] Degrade: primary job succeeds when LTX adapter throws / status `failed`.
+- [x] Budget: B-roll blocked does not mark primary failed.
+- [x] Job rows persist **`asset_role = broll`** + **`provider_key = ltx_broll_high`**.
+- [x] **`retryVideoJob`** LTX B-roll parent retry via `isAllowedBrollProviderPair` — `video-jobs.test.ts` (fix `4584573`).
 
 ---
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian — **GAPS**)
-- [ ] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
+- [x] SPEC-REVIEW.md (spec-guardian — **GAPS**)
+- [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
 - [x] CONTRACT.md authored (nextjs-backend; **Reviewed by FE: N/A**)
-- [ ] BUILD Phase A (media-pipeline-engineer + nextjs-backend)
-- [x] BUILD Phase B (BE orchestrator + DB activate)
-- [ ] VALIDATION.md (requirements-validator) — note stitch → US-9.1 ✅
-- [ ] QA.md (qa-engineer)
+- [x] BUILD Phase A (media-pipeline-engineer + nextjs-backend) — `5aa1392`
+- [x] BUILD Phase B (BE orchestrator + DB activate) — `4835f2d`
+- [x] QA fix retry parity — `4584573` (`isAllowedBrollProviderPair` in `retry-video-job.ts` + `video-jobs.test.ts`)
+- [x] VALIDATION.md (requirements-validator) — PASS WITH NOTES (7/7 AC)
+- [x] QA.md (qa-engineer) — initial REJECT → re-verdict APPROVE after `4584573`
+- [x] CLOSE — 7/7 AC checked in USER_STORIES.md (product-owner)
 
-**Status:** CONTRACT frozen — BUILD unblocked. **Next:** BUILD Phase A → Phase B → VALIDATION.
+**Status:** CLOSED (2026-08-31). **Next:** FF-merge to main.
 
 ---
 
