@@ -34,6 +34,8 @@ const FORBIDDEN_TTS_SYNTHESIS_KEY_SET = new Set(
     "confirm_generation",
     "actualCostCents",
     "actual_cost_cents",
+    "durationSec",
+    "duration_sec",
   ].map((key) => key.toLowerCase()),
 );
 

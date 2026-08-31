@@ -178,12 +178,12 @@ export type ReelWeekCostSummary = {
 - [ ] Pass **`durationSec`** into `finalizeGenerationCost({ mode: "async_update" })` when persist/probe has duration; else null.
 - [ ] Completed spend row: actual **or** closed `actualCostUnavailableReason` — never null/null after successful complete.
 - [ ] Missing `spendEventId` on complete: log; **do not** invent a late INSERT of actual-only.
-- [ ] **TTS trusted path:** persist `durationSec` on spend INSERT (Operator path already does).
-- [ ] **Do not** rewrite manual upload `finalizeGenerationCost` (already actual 0).
-- [ ] **Do not** migrate TTS to `finalizeGenerationCost` this slice.
-- [ ] Operator poll route: include **`OperatorProductionJobCostDto`** (or freeze equivalent) — **`requireOperator` already**; **no** cost on Cliente payloads.
-- [ ] Grep/tests: no client request Zod accepts `actualCostCents`; video/TTS forbidden keys still reject.
-- [ ] Tests: poller complete → ledger actual; fail/cancel → estimate-only unchanged; duration set when known; TTS trusted duration; poll DTO Operator-only.
+- [x] **TTS trusted path:** persist `durationSec` on spend INSERT (Operator path already does).
+- [x] **Do not** rewrite manual upload `finalizeGenerationCost` (already actual 0).
+- [x] **Do not** migrate TTS to `finalizeGenerationCost` this slice.
+- [x] Operator poll route: include **`OperatorProductionJobCostDto`** (or freeze equivalent) — **`requireOperator` already**; **no** cost on Cliente payloads.
+- [x] Grep/tests: no client request Zod accepts `actualCostCents`; video/TTS forbidden keys still reject.
+- [x] Tests: poller complete → ledger actual; fail/cancel → estimate-only unchanged; duration set when known; TTS trusted duration; poll DTO Operator-only. (BE: TTS trusted duration, poll DTO Operator-only, forbidden keys, Cliente 403, weekly/rollup/budget grep. Poller complete/fail/cancel/duration remain media.)
 
 ### Worker / media pipeline (media-pipeline-engineer) — Phase B
 

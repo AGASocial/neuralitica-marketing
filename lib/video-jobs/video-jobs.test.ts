@@ -188,6 +188,20 @@ describe("find-forbidden-keys", () => {
         status: "completed",
       }).includes("status"),
     );
+
+    assert.ok(
+      findForbiddenVideoJobKeys({
+        reelScriptId: REEL_SCRIPT_ID,
+        actualCostCents: 0,
+      }).includes("actualCostCents"),
+    );
+
+    assert.ok(
+      findForbiddenVideoJobKeys({
+        reelScriptId: REEL_SCRIPT_ID,
+        durationSec: 28.5,
+      }).includes("durationSec"),
+    );
   });
 });
 
@@ -967,8 +981,8 @@ describe("GET /api/video-jobs/[jobId] IDOR", () => {
         }
         if (req.includes("map-operator-video-job-dto")) {
           return {
-            mapOperatorVideoJobStatusDto: async (job: { id: string }) => ({
-              status: "processing",
+            mapOperatorVideoJobSummaryDto: async (job: { id: string }) => ({
+              status: "completed",
               jobId: job.id,
               reelScriptId: REEL_SCRIPT_ID,
               attempt: 1,
@@ -976,8 +990,15 @@ describe("GET /api/video-jobs/[jobId] IDOR", () => {
               failureReason: null,
               canRetry: false,
               retryBlockedReasonKey: null,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
+              createdAt: "2026-08-31T16:00:00.000Z",
+              updatedAt: "2026-08-31T16:05:00.000Z",
+              cost: {
+                jobId: job.id,
+                reelScriptId: REEL_SCRIPT_ID,
+                estimatedCostCents: 18,
+                actualCostCents: 18,
+                costStatus: "actual",
+              },
             }),
           };
         }
@@ -1001,6 +1022,83 @@ describe("GET /api/video-jobs/[jobId] IDOR", () => {
           { params: Promise.resolve({ jobId: JOB_ID }) },
         );
         assert.equal(ownRes.status, 200);
+        const ownBody = (await ownRes.json()) as {
+          cost?: { costStatus?: string; actualCostCents?: number };
+          cost_model?: unknown;
+          envKeyName?: unknown;
+        };
+        assert.equal(ownBody.cost?.costStatus, "actual");
+        assert.equal(ownBody.cost?.actualCostCents, 18);
+        assert.equal("cost_model" in ownBody, false);
+        assert.equal("envKeyName" in ownBody, false);
+        assert.equal(ownBody.cost && "cost_model" in ownBody.cost, false);
+      } finally {
+        nodeModule._load = originalLoad;
+        clearVideoJobModuleCache();
+      }
+    });
+  });
+});
+
+describe("GET /api/video-jobs/[jobId] Cliente 403 (US-7.3-B)", () => {
+  it("returns 403 without cost JSON for non-operator", async () => {
+    await withServerOnlyStub(async () => {
+      const nodeModule = Module as unknown as NodeModuleLoad;
+      const originalLoad = nodeModule._load.bind(nodeModule);
+
+      nodeModule._load = function (request, parent, isMain) {
+        if (request === "server-only") return {};
+        const req = String(request);
+        if (req.includes("require-user")) {
+          return {
+            requireOperator: async () => {
+              const err = Object.assign(new Error("forbidden"), { status: 403 });
+              throw err;
+            },
+            isAuthGuardError: (error: unknown) =>
+              Boolean(
+                error &&
+                  typeof error === "object" &&
+                  "status" in error &&
+                  (error as { status: number }).status === 403,
+              ),
+            authGuardResponse: () =>
+              new Response(
+                JSON.stringify({ error: { code: "FORBIDDEN" } }),
+                {
+                  status: 403,
+                  headers: { "Content-Type": "application/json" },
+                },
+              ),
+          };
+        }
+        if (req.includes("load-video-job")) {
+          return {
+            loadVideoJobScoped: async () => {
+              throw new Error("must not load job after Cliente 403");
+            },
+          };
+        }
+        return originalLoad(request, parent, isMain);
+      };
+
+      try {
+        clearVideoJobModuleCache();
+        const { GET } = loadVideoJobModule(
+          "../../app/api/video-jobs/[jobId]/route.ts",
+        );
+
+        const res = await GET(
+          new Request(`http://localhost/api/video-jobs/${JOB_ID}`),
+          { params: Promise.resolve({ jobId: JOB_ID }) },
+        );
+        assert.equal(res.status, 403);
+        const body = (await res.json()) as Record<string, unknown>;
+        const raw = JSON.stringify(body);
+        assert.match(raw, /FORBIDDEN/);
+        assert.doesNotMatch(raw, /actualCostCents/);
+        assert.doesNotMatch(raw, /estimatedCostCents/);
+        assert.doesNotMatch(raw, /"cost"/);
       } finally {
         nodeModule._load = originalLoad;
         clearVideoJobModuleCache();

@@ -31,6 +31,7 @@ function resolveCostStatus(params: {
 export async function buildOperatorProductionJobCostDto(
   job: VideoJobRow,
 ): Promise<OperatorProductionJobCostDto> {
+  let estimatedCostCents = job.estimatedCostCents;
   let actualCostCents = job.actualCostCents;
   let unavailableReason: ActualCostUnavailableReason | null = null;
 
@@ -52,22 +53,31 @@ export async function buildOperatorProductionJobCostDto(
         actual_cost_unavailable_reason: string | null;
         estimated_cost_cents: number;
       };
-      if (actualCostCents === null && row.actual_cost_cents !== null) {
-        actualCostCents = row.actual_cost_cents;
+      // Ledger-wins when spendEventId is present (US-7.3 Phase B).
+      if (
+        typeof row.estimated_cost_cents === "number" &&
+        Number.isSafeInteger(row.estimated_cost_cents) &&
+        row.estimated_cost_cents >= 0
+      ) {
+        estimatedCostCents = row.estimated_cost_cents;
       }
+      actualCostCents =
+        typeof row.actual_cost_cents === "number" ? row.actual_cost_cents : null;
       if (
         row.actual_cost_unavailable_reason === "usage_missing" ||
         row.actual_cost_unavailable_reason === "catalog_cost_model_unsupported" ||
         row.actual_cost_unavailable_reason === "provider_no_billing"
       ) {
         unavailableReason = row.actual_cost_unavailable_reason;
+      } else {
+        unavailableReason = null;
       }
     }
   }
 
   const costStatus = resolveCostStatus({
     status: job.status,
-    estimatedCostCents: job.estimatedCostCents,
+    estimatedCostCents,
     actualCostCents,
     unavailableReason,
   });
@@ -75,7 +85,7 @@ export async function buildOperatorProductionJobCostDto(
   return {
     jobId: job.id,
     reelScriptId: job.reelScriptId,
-    estimatedCostCents: job.estimatedCostCents,
+    estimatedCostCents,
     actualCostCents,
     costStatus,
     ...(unavailableReason ? { unavailableReasonKey: unavailableReason } : {}),

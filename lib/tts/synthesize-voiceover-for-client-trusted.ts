@@ -146,7 +146,7 @@ export async function synthesizeVoiceoverForClientTrusted(
       supersedesAssetId: priorVoiceoverAssetId,
     });
 
-    if (!inserted.ok) {
+    if (!inserted) {
       return ttsVoiceoverInternalError();
     }
 
@@ -157,6 +157,7 @@ export async function synthesizeVoiceoverForClientTrusted(
       jobKind,
       estimatedCostCents: estimate.estimatedCostCents,
       actualCostCents: storedAsset.actualCostCents ?? estimate.estimatedCostCents,
+      durationSec: storedAsset.durationSec ?? null,
       operatorClientId: params.clientId,
       providerKey,
     });
@@ -164,7 +165,7 @@ export async function synthesizeVoiceoverForClientTrusted(
     return {
       ok: true,
       reelScriptId: params.reelScriptId,
-      voiceoverAssetId: inserted.assetId,
+      voiceoverAssetId: inserted.mediaAssetId,
       providerKey,
       idempotent: false,
     };

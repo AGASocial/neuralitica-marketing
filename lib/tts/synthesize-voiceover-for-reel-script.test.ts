@@ -55,6 +55,7 @@ type MockOptions = {
   priorVoiceoverAssetId?: string | null;
   budgetOk?: boolean;
   synthesizeThrows?: boolean;
+  durationSec?: number;
   onSynthesize?: () => void;
   onSpend?: () => void;
 };
@@ -64,6 +65,7 @@ function installMocks(options: MockOptions = {}) {
   const originalLoad = nodeModule._load.bind(nodeModule);
   let synthesizeCalled = false;
   let spendCalled = false;
+  let lastSpend: Record<string, unknown> | null = null;
 
   const mockAdapter = {
     estimateCost: async () => ({ estimatedCostCents: 1 }),
@@ -78,6 +80,7 @@ function installMocks(options: MockOptions = {}) {
         mimeType: "audio/mpeg",
         sizeBytes: 1024,
         actualCostCents: 1,
+        durationSec: options.durationSec,
       };
     },
   };
@@ -179,8 +182,9 @@ function installMocks(options: MockOptions = {}) {
 
     if (req.includes("record-reel-spend-event")) {
       return {
-        recordReelSpendEvent: async () => {
+        recordReelSpendEvent: async (params: Record<string, unknown>) => {
           spendCalled = true;
+          lastSpend = params;
           options.onSpend?.();
           return { spendEventId: "spend-1" };
         },
@@ -196,6 +200,7 @@ function installMocks(options: MockOptions = {}) {
     },
     wasSynthesizeCalled: () => synthesizeCalled,
     wasSpendCalled: () => spendCalled,
+    lastSpend: () => lastSpend,
   };
 }
 
@@ -312,6 +317,67 @@ describe("synthesizeVoiceoverForReelScript", () => {
       if (result.ok) {
         assert.equal(result.jobKind, "tts_regenerate");
       }
+    });
+  });
+
+  it("rejects actualCostCents on synthesize payload (US-7.3-B)", async () => {
+    await withServerOnlyStub(async () => {
+      const mocks = installMocks();
+      const { synthesizeVoiceoverForReelScript } = loadTtsModule(
+        "../tts/synthesize-voiceover-for-reel-script",
+      );
+      const result = await synthesizeVoiceoverForReelScript({
+        reelScriptId: REEL_SCRIPT_ID,
+        actualCostCents: 0,
+      });
+      mocks.restore();
+      assert.equal(result.ok, false);
+      if (!result.ok) {
+        assert.equal(result.error.code, "FORBIDDEN_FIELDS");
+      }
+      assert.equal(mocks.wasSpendCalled(), false);
+    });
+  });
+
+  it("rejects durationSec on synthesize payload (US-7.3-B)", async () => {
+    await withServerOnlyStub(async () => {
+      const mocks = installMocks();
+      const { synthesizeVoiceoverForReelScript } = loadTtsModule(
+        "../tts/synthesize-voiceover-for-reel-script",
+      );
+      const result = await synthesizeVoiceoverForReelScript({
+        reelScriptId: REEL_SCRIPT_ID,
+        durationSec: 12.5,
+      });
+      mocks.restore();
+      assert.equal(result.ok, false);
+      if (!result.ok) {
+        assert.equal(result.error.code, "FORBIDDEN_FIELDS");
+      }
+    });
+  });
+});
+
+describe("synthesizeVoiceoverForClientTrusted duration (US-7.3-B)", () => {
+  afterEach(() => {
+    clearTtsModuleCache();
+  });
+
+  it("persists durationSec on spend INSERT when adapter knows duration", async () => {
+    await withServerOnlyStub(async () => {
+      const mocks = installMocks({ durationSec: 12.5 });
+      const { synthesizeVoiceoverForClientTrusted } = loadTtsModule(
+        "../tts/synthesize-voiceover-for-client-trusted",
+      );
+      const result = await synthesizeVoiceoverForClientTrusted({
+        clientId: CLIENT_ID,
+        reelScriptId: REEL_SCRIPT_ID,
+        invokedBy: "revision",
+      });
+      mocks.restore();
+      assert.equal(result.ok, true);
+      assert.equal(mocks.wasSpendCalled(), true);
+      assert.equal(mocks.lastSpend()?.durationSec, 12.5);
     });
   });
 });
