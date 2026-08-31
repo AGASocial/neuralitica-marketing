@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: US-8.7
-story_status: PREP
-feature_branch: feature/US-8.7-heygen-adapter
-last_completed_story: US-13.2
+current_story: null
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-8.7
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T15:50:00Z
+updated_at: 2026-08-31T16:15:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -27,8 +27,8 @@ updated_at: 2026-08-31T15:50:00Z
 
 | Story | Status | Notes |
 |-------|--------|-------|
-| US-8.7 HeyGen adapter (high tier) | PREP | branch `feature/US-8.7-heygen-adapter` · README+TASKS · Phase A adapter → Phase B activate/orchestrator/FE · deps US-8.1 ✅ · US-3.3 ✅ · US-5.1 ✅ · US-X.4 ✅ |
-| US-8.5 Wan B-roll adapter | pending | after US-8.7 or parallel backlog |
+| US-8.7 HeyGen adapter (high tier) | done | FE `a18d4cb` · BE `299d638` · VALIDATION `602995c` (5/5 AC; 22/22) · QA `fc19d0a` · fix `b3a9377` · CLOSE `89d0119` FF-merge to main |
+| US-8.5 Wan B-roll adapter | pending | **recommended next** after US-8.7 |
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -71,6 +71,7 @@ updated_at: 2026-08-31T15:50:00Z
 
 ## Historial reciente
 
+- 2026-08-31 · US-8.7 CLOSE: 5/5 AC checked; VALIDATION PASS WITH NOTES `602995c` (22/22); QA APPROVE WITH CONDITIONS `fc19d0a` (0 Critical/High; M1/M2 fixed `b3a9377`); FF-merge `89d0119` to main; Provider P1 → SELECT **US-8.5** Wan B-roll (recommended).
 - 2026-08-31 · US-8.7 PREP: README + TASKS in `plan/stories/US-8.7/` — Phase A (adapter) then Phase B (activate catalog + orchestrator + operator FE); next SPEC-REVIEW → SECURITY → CONTRACT.
 - 2026-08-31 · Fase 5 integration CONNECTED `bf0ae66`; SELECT **US-8.7** HeyGen adapter; branch `feature/US-8.7-heygen-adapter`.
 - 2026-08-31 · US-13.2 CLOSE: 3/3 AC checked; VALIDATION PASS WITH NOTES `6fa9ad8` (98/98); QA APPROVE WITH CONDITIONS `7ff873e` (0 Critical/High, 1 Medium non-blocking: brief-read clientId parity → Phase B); FF-merge `6f06c42` to main; **Sprint 7 complete**; Phase 5 → SELECT **phase integration** (recommended), **US-8.7**, or **US-8.5**.
