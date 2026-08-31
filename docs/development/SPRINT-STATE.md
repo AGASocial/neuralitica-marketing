@@ -20,7 +20,7 @@ updated_at: 2026-08-31T14:00:00Z
 | US-12.1 Weekly calendar view | done | BE `9ac84dc` · FE `de2fe1e` · fix `79546ab` · VALIDATION `d642e70` · QA `80766dc` · CLOSE `722e5e0` (5/5 AC; mark published → US-12.2) |
 | US-12.2 Mark manual publication done | done | BE `6e0fcf0` · FE `513632e` · DB `f62a1a2` · VALIDATION `ceacf10` · QA `8b3536f` · CLOSE `f148e2d` (4/4 AC; metrics → US-13.1) |
 | US-13.1 Record basic post metrics manually | done | BE `7880a3c` · FE `6eb7c81` · DB `7880a3c` · fix `d544a47` · VALIDATION `1e90f5f` · QA `d9f829b` · CLOSE `d544a47` (5/5 AC; strategy insights → US-13.2) |
-| US-13.2 Surface top themes for next strategy cycle | done | BE `4649b83` · agents `ead2932` · FE `0419e5a` · CONTRACT `6e3f858`/`1951683` · VALIDATION `6fa9ad8` · QA `7ff873e` · CLOSE pending FF-merge (3/3 AC; brief-read clientId parity → Phase B) |
+| US-13.2 Surface top themes for next strategy cycle | done | BE `4649b83` · agents `ead2932` · FE `0419e5a` · VALIDATION `6fa9ad8` · QA `7ff873e` · CLOSE `6f06c42` FF-merge to main (3/3 AC; brief-read clientId parity → Phase B) |
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
