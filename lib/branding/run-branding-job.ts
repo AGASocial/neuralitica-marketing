@@ -45,6 +45,8 @@ export const BRANDING_FAILURE_STORAGE =
   "scripts.branding.failure.storageError" as const;
 export const BRANDING_FAILURE_SUBTITLE_HASH =
   "scripts.branding.failure.subtitleHashMismatch" as const;
+export const BRANDING_FAILURE_VOICEOVER_TIMING_HASH =
+  "scripts.branding.failure.voiceoverTimingHashMismatch" as const;
 
 export type RunBrandingJobDeps = {
   runFfmpeg?: (args: string[]) => Promise<{ exitCode: number; stderr: string }>;

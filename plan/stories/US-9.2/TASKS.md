@@ -5,7 +5,7 @@
 **Acceptance criteria:** `plan/USER_STORIES.md` § US-9.2 (source of truth — Phase A AC stay **[x]**; Phase B closes deferred polish only — do **not** uncheck)  
 **Implementers:** **media-pipeline-engineer** + **nextjs-backend** + **nextjs-frontend** (`docs/development/AGENT-ROSTER.md` Phase 4). **No content-agents-engineer** · **No integrations-engineer** in default BUILD.  
 **Canonical terms:** **Ensamblado** · **Paquete de guion** · **texto en pantalla** · **Ficha viva** · **Reel 9:16** · **download-and-own**. Avoid CONTEXT _Evitar_ list in product-facing copy.  
-**Active slice:** **Phase B ✅ CLOSED** — [`PHASE-B.md`](./PHASE-B.md) · branch `feature/US-9.2-phase-b-subtitle-cover` · sprint `US-9.2-B`.
+**Active slice:** **Phase B-M1 PREP** — [`PHASE-B-M1.md`](./PHASE-B-M1.md) · branch `feature/US-9.2-b-m1-voiceover-timing-hash` · sprint `US-9.2-B-M1`. Phase B ✅ CLOSED — [`PHASE-B.md`](./PHASE-B.md).
 
 ## Out of scope (do not implement here)
 
@@ -47,7 +47,8 @@
 | Topic | Decision |
 |-------|----------|
 | Branch (Phase A) | **`feature/US-9.2-subtitles-logo-cover`** (merged) |
-| Branch (Phase B) | **`feature/US-9.2-phase-b-subtitle-cover`** |
+| Branch (Phase B) | **`feature/US-9.2-phase-b-subtitle-cover`** (merged) |
+| Branch (Phase B-M1) | **`feature/US-9.2-b-m1-voiceover-timing-hash`** |
 | Subtitle source | **`on_screen_text`** newline beats from linked `reel_script_id` — no STT |
 | Subtitle mode V1 | **Burn-in only** — FFmpeg subtitles/ASS or drawtext on output MP4 |
 | Beat timing V1 | Equal split (Phase A ✅). **Phase B:** VO word-partition — see PHASE-B.md |
@@ -119,7 +120,8 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 | Phase | Deliverables |
 |-------|----------------|
 | **A** ✅ | DDL · logo upload Ficha · assembly_config defaults · branding worker · auto-chain · Operator panel · cover export · idempotency · SEC guards · mobile safe-zone AC |
-| **B** ✅ CLOSED | VO-proportional timing from `voiceover_text` · Operator per-reel `coverFrameSec` override · SEC re-verify. **Out residual:** second font · thumbnail strip · Cliente cover UI · worker VO-hash re-check (QA M1) |
+| **B** ✅ CLOSED | VO-proportional timing from `voiceover_text` · Operator per-reel `coverFrameSec` override · SEC re-verify. **Out residual:** second font · thumbnail strip · Cliente cover UI |
+| **B-M1** PREP | Worker `voiceoverTimingHash` re-check before VO-proportional timings (QA-PHASE-B Medium #1). **CONTRACT amend required.** FE/DB none. |
 
 ### Phase B PO freezes (binding — full table in PHASE-B.md)
 
@@ -173,6 +175,37 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 ### Database — Phase B ✅
 
 - [x] **None** — reuse `assembly_config` / `branding_config` JSON.
+
+---
+
+## Phase B-M1 checklist (PREP — unchecked)
+
+**Source:** [`PHASE-B-M1.md`](./PHASE-B-M1.md) · QA-PHASE-B Medium #1.  
+**CONTRACT:** nextjs-backend must amend worker step + fail code before BUILD (PO does not rewrite CONTRACT in PREP).
+
+### Frontend (nextjs-frontend) — Phase B-M1
+
+- [ ] **None** — no UI; optional later i18n for fail key (generic failed OK).
+
+### Backend / API (nextjs-backend) — Phase B-M1
+
+**Concrete consumers:** Fly branding worker unit tests · Operator failed-status display (existing).
+
+- [x] **CONTRACT.md amend** — worker step: after VO load / subtitle-hash guard, compare `computeVoiceoverTimingHash(voiceoverText)` to `config.voiceoverTimingHash`; freeze fail code string; note changelog.
+- [x] Export **`BRANDING_FAILURE_VOICEOVER_TIMING_HASH`** = `scripts.branding.failure.voiceoverTimingHashMismatch` (parallel to `BRANDING_FAILURE_SUBTITLE_HASH` in `lib/branding/run-branding-job.ts`).
+- [ ] Unit test: VO text mutated vs snapshot hash → job **`failed`**, reason = fail key, **FFmpeg runner never called**. *(media-pipeline owns `run-branding-job.test.ts` with the worker guard — avoid duplicate.)*
+- [ ] Unit test: matching hash still proceeds (no false fail) — can share existing happy-path fixture. *(media-pipeline.)*
+
+### Worker / media pipeline (media-pipeline-engineer) — Phase B-M1
+
+- [ ] In `runBrandingJob` (subtitle/VO path): after `subtitleSourceHash` check and **before** `mkdtemp` / ASS / spawn — if `config.voiceoverTimingHash.length === 64`, recompute hash from live `voiceoverText`; mismatch → `failBrandingJob` + return.
+- [ ] Legacy empty hash → **skip** re-check (M1-6).
+- [ ] Reuse `computeVoiceoverTimingHash` — do not fork formula.
+- [ ] **spawn args-array only** — no VO strings in argv (unchanged).
+
+### Database — Phase B-M1
+
+- [ ] **None.**
 
 ---
 
@@ -265,6 +298,15 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 | **spec-guardian** | SPEC-REVIEW Phase B amendment ✅ |
 | **security-architect** | SECURITY amend (numeric cover on trigger; VO never in argv) ✅ |
 
+### Phase B-M1 (active PREP)
+| Agent | Owns |
+|-------|------|
+| **media-pipeline-engineer** | Worker VO-hash re-check before proportional timings / spawn |
+| **nextjs-backend** | CONTRACT amend (fail code + worker step); fail constant; mismatch unit tests |
+| **nextjs-frontend** | None |
+| **security-architect** | SECURITY lean amend (integrity re-check AC) |
+| **spec-guardian** | Skip (M1-10 — no SPEC drift) |
+
 ---
 
 ## Carry-forwards / reuse (do not reinvent)
@@ -295,3 +337,11 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 - [x] VALIDATION-PHASE-B.md — PASS WITH NOTES `6db2cba` (2/2 deferred; 44/44); Phase A AC stay [x]
 - [x] QA-PHASE-B.md — APPROVE WITH CONDITIONS `02bfa3b` (0 Critical/High)
 - [x] PO CLOSE Phase B note in USER_STORIES / SPRINT-STATE
+
+### Phase B-M1 — PREP (active)
+- [x] PREP — [`PHASE-B-M1.md`](./PHASE-B-M1.md) + this TASKS Phase B-M1 checklist
+- [ ] SECURITY.md lean amend (security-architect)
+- [ ] CONTRACT.md amend (nextjs-backend — worker step + fail code; FE Reviewed waive/N/A)
+- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend)
+- [ ] VALIDATION lean · QA lean · PO CLOSE M1
+- [ ] Do **not** check/uncheck USER_STORIES § US-9.2 AC
