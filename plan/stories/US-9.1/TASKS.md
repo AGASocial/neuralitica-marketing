@@ -93,13 +93,13 @@
 
 **Concrete consumers:** FE Assemble enablement · worker stitch path · downstream US-9.2/10.1/11.1 (unchanged output shape).
 
-- [ ] CONTRACT Phase B amendment: faceless resolve rules, fingerprint shape, error codes, concat seam, fixtures.
+- [x] CONTRACT Phase B amendment: faceless resolve rules, fingerprint shape, error codes, concat seam, fixtures. (`CONTRACT.md` § Phase B — 2026-08-31; FE Reviewed pending)
 - [ ] Extend **`resolveAssemblyInputs`** (or sibling): for faceless, load up to **8** completed owned `asset_role = broll` outputs ordered by job **`created_at ASC`**; talking-head path unchanged (ignore broll).
 - [ ] Zero completed broll → degrade to Phase A primary if present, else `ASSEMBLY_INPUTS_INCOMPLETE`.
 - [ ] Extend **`input_fingerprint`** with ordered broll asset ids + path tag (`primary` vs `broll_stitch`) — CONTRACT exact string.
 - [ ] Orchestrator: pass broll asset id list / path into assembly row or worker-readable fields per CONTRACT (lean: fingerprint + nullable `primary_video_asset_id` when stitch-only).
 - [ ] Unit tests: faceless stitch resolve, degrade, talking-head ignores broll, ownership fail-closed, forbidden keys unchanged.
-- [ ] **No new DDL** unless CONTRACT proves lineage column needed (lean: none).
+- [x] **DDL required (CONTRACT Option A):** nullable `primary_video_asset_id` + `broll_asset_ids uuid[]` + `assembly_path_tag` — BUILD migration (clip-set determinism).
 
 ### Worker / FFmpeg (media-pipeline-engineer) — Phase B
 
@@ -112,10 +112,10 @@
 
 ### Security (security-architect — Phase B amend)
 
-- [ ] Multi-clip ownership / tenancy before each Storage read
-- [ ] Concat demuxer / filter_complex injection surface (paths only)
-- [ ] Fingerprint / IDOR parity with Phase A
-- [ ] No SiliconFlow CDN fetch at assembly time
+- [x] Multi-clip ownership / tenancy before each Storage read (`SECURITY.md` Phase B)
+- [x] Concat demuxer / filter_complex injection surface (paths only)
+- [x] Fingerprint / IDOR parity with Phase A
+- [x] No SiliconFlow CDN fetch at assembly time
 
 ### Phase B contract-first sequence
 
