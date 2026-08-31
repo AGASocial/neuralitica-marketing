@@ -394,3 +394,242 @@ When CONTRACT.md lands, security-architect re-runs the spot-check checklist; **e
 **APPROVE WITH CONDITIONS** — US-9.2 extends the project's highest-risk surface (SECURITY_BASELINE Top 5: **FFmpeg injection** + **malicious uploads**) with **drawtext/subtitle burn-in** and **Cliente logo upload**. The PO design correctly inherits US-9.1's **spawn-only, owned-asset, worker-only status** model, US-3.3's **shared upload stack** for logos, and a **strict Operator/Cliente split** (Cliente owns brand file + defaults; Operator owns apply/re-brand). Conditions are the frozen CONTRACT items: ASS sanitization pipeline, pointer-only triggers, closed branding writes, tenancy on cover export, and type-specific serve auth. Satisfying them closes injection, SSRF, IDOR, and client-authority bypass without blocking US-10.1 / US-11.x downstream consumption.
 
 **CONTRACT may proceed:** **Yes** (after spec-guardian SPEC-REVIEW and FE review line in CONTRACT).
+
+---
+---
+
+# Security Design Review — US-9.2 Phase B (VO-synced timing + Operator coverFrameSec)
+
+**Story:** US-9.2 Phase B — VO-proportional subtitle beat timing + per-reel Operator `coverFrameSec` override  
+**Sprint label:** `US-9.2-B`  
+**Date:** 2026-08-31  
+**Reviewer:** security-architect  
+**Branch:** `feature/US-9.2-phase-b-subtitle-cover`  
+**Sources:** `plan/stories/US-9.2/PHASE-B.md` (PO B1–B15), Phase A section above, `plan/SECURITY_BASELINE.md` (§9 FFmpeg / Top 5 injection), `plan/stories/US-9.2/CONTRACT.md` Phase A (forbidden keys + ASS path), `docs/adr/0003-worker-flyio-ffmpeg.md`  
+**Status:** Binding amendment to US-9.2 SECURITY. Phase A floors **remain in force** — Phase B **extends** them; it does not replace or weaken them. Do not treat this file as CONTRACT.md. Do not check off `USER_STORIES.md` AC here.  
+**Primary implementers:** **media-pipeline-engineer** (`buildAssFromBeats` timings, cover seek clamp). **nextjs-backend** (`computeVoProportionalBeatTimings`, apply schema `coverFrameSec?`, fingerprint, forbidden-keys amend, CONTRACT Phase B). **nextjs-frontend** (Operator `InputNumber` only — no path/text authority).
+
+---
+
+## Verdict: APPROVE WITH CONDITIONS
+
+Phase B shape is correct and inherits Phase A controls: **same** Operator-gated branding trigger; **sanitized `on_screen_text` → ASS temp file → path-only in argv**; **`spawn('ffmpeg', args[], { shell: false })`** on **server temp paths**; **Storage SDK** + owned assets only — **no client-supplied paths/URLs**. Phase B adds only:
+
+1. **VO word-partition timing** — `voiceover_text` loaded server-side and used **solely** to compute **numeric** start/end seconds; VO string **never** enters ASS Dialogue lines or FFmpeg argv.
+2. **Optional Operator `coverFrameSec`** — **numeric-only**, Zod **`min(0).max(45)`**, merged into server `branding_config` snapshot; extract `-ss` from that number (then duration clamp). Auto-chain still uses **client defaults only**.
+
+No REDESIGN. No veto of PO freezes B1–B15. **Phase A trigger freeze that forbade `coverFrameSec` on apply is superseded by this amendment** (B11) — all other Phase A forbidden keys remain. CONTRACT Phase B amendment may proceed after encoding the conditions below.
+
+**Condition count (Phase B):** **8** binding conditions (must land in CONTRACT Phase B + BUILD; see § Conditions before BUILD — Phase B).
+
+**Phase A floors that remain absolute (do not weaken):** `requireOperator("handler")` first on apply/re-brand; sanitize → ASS → path-only; spawn args-array / `shell: false`; Storage SDK only (no branding-time HTTP fetch); worker-only status writes; IDOR **404**; DTO closed (no `storage_key` / ASS body / ffmpeg argv / VO or on-screen text); ADR-0003; shared logo upload stack; no client font paths.
+
+**This phase owns:** `computeVoProportionalBeatTimings()`; `buildAssFromBeats` explicit-timing path + equal-split fallback; `applyBrandingForAssembly` optional **`coverFrameSec?`**; forbidden-keys amend (allow numeric cover only); `voiceoverTimingHash` / fingerprint extension; Operator cover `InputNumber`; cover seek clamp vs measured duration.
+
+**This phase does not own:** Custom / second font upload (still deferred); TTS/ASR word timestamps; soft subtitle tracks; Cliente `/profile` cover UI; new story ID; unchecking Phase A AC; US-11.x video-serve widen.
+
+**Phase A text superseded (apply carefully):** Phase A § Assets boundary #2 and trigger schema that listed `coverFrameSec` as **forbidden on apply** — **Phase B allows optional number only**. Phase A BUILD veto #4 (“client-supplied `coverFrameSec` on branding action”) is **narrowed**: client-supplied **non-numeric / out-of-bounds / string** cover remains **REJECT**; valid Zod number on Operator apply is **ALLOWED**.
+
+---
+
+### Threat Summary (US-9.2 Phase B–specific)
+
+| Threat | Impact | Mitigation in Phase B |
+|---|---|---|
+| **`coverFrameSec` injection / filter escape** | Hostile string in `-ss` or filtergraph | Trigger accepts **optional number only** via strict Zod **`min(0).max(45)`**; out-of-range → **`VALIDATION_ERROR`** before enqueue. Worker `-ss` from snapshot **number**; clamp to `[0, max(0, durationSec - 0.05)]`. **Never** stringify raw request text into argv |
+| **VO text in ASS Dialogue / argv** | Injection via `voiceover_text` (same class as Phase A beat injection) | VO used **only** for whitespace-token **word counts** → numeric durations. ASS Dialogue = sanitized **`on_screen_text`** beats only. Unit tests: VO injection fixtures must not appear in ASS body or argv |
+| **Client-supplied beat timings / cue list** | Attacker controls when text appears or smuggles timing side-channels | **No** client timings, cue JSON, or TTS timestamps. Server `computeVoProportionalBeatTimings` only; empty VO → Phase A equal split |
+| **Forbidden-field regression** | Re-open beat/asset/URL/font authority while adding cover | Amend `findForbiddenBrandingKeys`: **remove** `coverFrameSec` / `cover_frame_sec` from forbidden for apply. **Still forbid** beat text, asset ids, URLs, fonts, snapshot JSON, paths, fingerprint overrides |
+| **FFmpeg shell / path authority** | RCE via shell or client paths | Unchanged: **`spawn(..., { shell: false })`**; temp basenames under job UUID dir; **no** client-supplied paths, `storage_key` as path segment, or URLs as `-i` |
+| **Sanitizer bypass via timing path** | New code path skips ASS escape | Timing math is orthogonal; **same** Phase A sanitizer runs before ASS write — mandatory re-verify on VO-timing path |
+| **Fingerprint forgery / sticky wrong timings** | Skip re-brand when VO changed | Server **`voiceoverTimingHash`** (sha256 of normalized VO token list or CONTRACT-frozen partition input) in fingerprint; client cannot supply |
+| **Auto-chain cover smuggling** | Cliente forces exotic cover second without Operator | Auto-chain copies **`assembly_config`** defaults only — **no** request `coverFrameSec` on auto path |
+
+**Residual risk accepted (Phase B):** VO word partition is approximate (not TTS-aligned) — product residual, not a trust-boundary gap. Operator may choose any cover second in **0–45**; duration clamp prevents seek-past-EOF abuse. Malicious owned media bytes remain supply-chain risk bounded by Phase A upload/owned-asset floors.
+
+---
+
+## Assets and Trust Boundaries (Phase B delta)
+
+| Asset | Sensitivity | Trust boundary |
+|---|---|---|
+| `voiceover_text` (script row) | **Untrusted text** — Medium–High | Loaded server-side for owned script; **tokenized for counts only**; never ASS Dialogue; never argv |
+| Computed beat timings (`AssBeatTiming[]`) | Medium — numeric only | Server helper output; floats/ints into ASS timestamp fields — not free text |
+| Operator `coverFrameSec` (request) | Medium — untrusted number | Zod-bounded; merged into server snapshot; extract uses number + clamp |
+| `voiceoverTimingHash` | Medium | Server-only fingerprint input |
+| Sanitized `on_screen_text` beats | Medium–High | **Unchanged** Phase A pipeline — sole ASS Dialogue source |
+
+**Boundaries (unchanged topology + Phase B rules):**
+
+1. **Browser (Operator) → `applyBrandingForAssembly`** — Untrusted: `assemblyJobId`, optional booleans, optional **`coverFrameSec` number**. **`requireOperator("handler")` first**. Still **no** beat text, VO text, asset ids, URLs, fonts, paths, snapshot JSON.
+2. **Resolver / timing** — Load `on_screen_text` + `voiceover_text` from owned linked script; sanitize on-screen → ASS; VO → `computeVoProportionalBeatTimings` numerics only.
+3. **Worker** — Same spawn/temp/owned-asset floors; ASS path-only; cover `-ss` from snapshot number + duration clamp.
+4. **Auto-chain** — Profile defaults only; **no** Operator cover override parameter.
+
+---
+
+## Abuse Cases Considered (Phase B)
+
+- *As a malicious actor, I POST `{ coverFrameSec: "; rm -rf /" }` or a string with filtergraph metacharacters* → **Blocked:** Zod **number** only; non-number → validation error; never interpolated as string into argv.
+- *As a malicious actor, I POST `{ coverFrameSec: -5 }` or `99999`* → **Blocked:** Zod **`min(0).max(45)`** → **`VALIDATION_ERROR`** before enqueue; worker also clamps seek.
+- *As a malicious actor, I put ASS overrides / `-vf` payloads in `voiceover_text` expecting them in Dialogue* → **Blocked:** VO never written to ASS Dialogue; only word counts drive numeric times; on-screen sanitizer unchanged for Dialogue text.
+- *As a malicious actor, I POST `{ beatTimings: [...], voiceoverText: "..." }` on apply* → **Blocked:** forbidden fields; VO/timings resolved server-side only.
+- *As a malicious actor, I POST `{ onScreenText: "injected" }` hoping Phase B relaxes forbids* → **Blocked:** still forbidden; beats from owned script only.
+- *As a malicious actor, I POST `{ fontPath: "/evil.ttf" }` or a client temp path* → **Blocked:** forbidden; bundled font constant only; **no client-supplied paths**.
+- *As a malicious actor, I POST `{ brandingConfig: { … } }` snapshot* → **Blocked:** forbidden; snapshot server-built.
+- *As a Cliente, I set cover via apply now that Operator override exists* → **Blocked:** **`requireOperator`** → **403**; no Cliente cover UI (B9).
+- *As a malicious actor, I use `exec("ffmpeg " + coverFrameSec)`* → **VETO / REJECT** — args-array only.
+- *As a malicious actor, I skip sanitizer because timings come from a “new” helper* → **Blocked by design:** Phase B **must** call the same sanitizer before ASS write; VALIDATION re-verifies `[SEC]` on this path.
+
+---
+
+## Security Acceptance Criteria (Phase B — checkbox format)
+
+Phase A `[SEC]` criteria above remain binding. Items below are **additive** for Phase B BUILD. Story `[SEC]` subtitle sanitization **must be re-validated** against the VO-timing + cover-override path.
+
+**Inherited (re-assert — do not weaken):**
+
+- [ ] **[SEC] Subtitle text is escaped/sanitized before being passed to the renderer** *(USER_STORIES US-9.2 — applies to VO-timing ASS path)*
+- [ ] **[SEC] FFmpeg invoked with argument arrays, never shell string interpolation; inputs from validated owned `media_assets` only** *(US-9.1 / Phase A — applies to cover extract + branding pass)*
+- [ ] **[SEC] `applyBrandingForAssembly`: `requireOperator("handler")` as first await** *(Phase A — unchanged)*
+- [ ] **[SEC] No branding-time URL fetch; Storage SDK + validated keys only** *(Phase A SSRF floor)*
+
+**Added for Phase B (binding):**
+
+- [ ] **[SEC] (Phase B) Operator `coverFrameSec` numeric-only:** `applyBrandingForAssembly` input schema allows optional **`coverFrameSec`** as Zod **`number().min(0).max(45)`** only (finite; reject NaN/Infinity). Non-number / out-of-range → **`VALIDATION_ERROR`** — **no** enqueue. Merge into server **`branding_config`** snapshot. Auto-chain **must not** accept request cover — profile defaults only
+- [ ] **[SEC] (Phase B) Cover extract argv:** `-ss` (or equivalent) from **numeric** snapshot `coverFrameSec` only; then clamp seek to **`[0, max(0, durationSec - 0.05)]`** using measured branded duration when available else `target_duration_sec`. **Forbidden:** raw request strings, script fields, or paths in cover argv beyond server temp output path
+- [ ] **[SEC] (Phase B) VO text never in ASS Dialogue or FFmpeg argv:** `voiceover_text` used **only** inside **`computeVoProportionalBeatTimings`** for whitespace-token partition / word counts → **numeric** start/end. ASS Dialogue lines = sanitized **`on_screen_text`** beats only. Grep/tests: VO fixture strings must not appear in ASS file body or branding/cover argv
+- [ ] **[SEC] (Phase B) `on_screen_text` sanitization unchanged and mandatory:** same Phase A sanitizer → **`buildAssFromBeats`** (with optional explicit timings) → temp `.ass` → **path-only** in argv. Timing path must not bypass sanitize. Empty VO / `totalWords === 0` → equal-split fallback (Phase A)
+- [ ] **[SEC] (Phase B) Forbidden-keys amend:** remove **`coverFrameSec`** / **`cover_frame_sec`** from apply forbidden authority keys. **Still reject** at least: `onScreenText`, `on_screen_text`, `voiceoverText`, `voiceover_text`, `beatTimings`, `subtitleBeats`, `logoAssetId`, `logo_asset_id`, `fontPath`, `font`, `brandingConfig`, `assemblyConfig`, `clientId`, `client_id`, status/FK fields, any URL field, any path field (`tempPath`, `assPath`, `ffmpegArgs`, …), `voiceoverTimingHash`, `subtitleSourceHash`, `force`, `skipIdempotency` → **`FORBIDDEN_FIELDS`**
+- [ ] **[SEC] (Phase B) FFmpeg args-array + no client paths:** branding and cover extract continue **`spawn('ffmpeg', args, { shell: false })`** via pure builders. Allowed paths: server temp workspace under **`/tmp/neuramark-branding/{assemblyJobId}/`** with fixed basenames + bundled font constant. **Forbidden:** client-supplied paths, original filenames, `storage_key` as filesystem path, URLs as `-i`
+- [ ] **[SEC] (Phase B) Timing + fingerprint server-only:** no client beat timings / cue lists / TTS timestamps. **`voiceoverTimingHash`** (CONTRACT-frozen input) included in **`branding_fingerprint`** so VO-driven timing changes invalidate idempotency; client cannot supply hash or fingerprint
+- [ ] **[SEC] (Phase B) Automated security tests cover at least:** (1) `coverFrameSec` string / `-1` / `46` rejected; (2) valid `coverFrameSec` within bounds accepted and appears as **number** in cover args only; (3) VO injection fixture not in ASS Dialogue or argv; (4) on-screen ASS metacharacter fixture still sanitized; (5) forbidden beat/VO/path/URL/font/snapshot keys rejected; (6) mocked spawn receives **array** not string, `shell: false`; (7) Cliente **403** on apply; (8) fingerprint changes when VO tokens change (same on-screen beats)
+
+---
+
+## Design Concerns and Required Changes (Phase B)
+
+### Frozen design choices (must land in CONTRACT Phase B)
+
+#### B-1. Trigger schema amend — **optional numeric cover only** (APPROVE)
+
+| Rule | Detail |
+|---|---|
+| Manual input | **`{ assemblyJobId, subtitlesEnabled?, logoEnabled?, coverFrameSec? }`** |
+| `coverFrameSec` | Optional **number** `0–45` inclusive |
+| Gate | **`requireOperator("handler")` first** |
+| Auto-chain | Client **`assembly_config`** defaults only — no request cover |
+
+**Condition:** CONTRACT documents amended **`findForbiddenBrandingKeys`** (cover keys allowed as typed number; all other Phase A forbids retained + VO/timing keys listed).
+
+#### B-2. VO timing — **counts only, never dialogue** (APPROVE WITH CONDITIONS)
+
+| Rule | Detail |
+|---|---|
+| Source | Server-loaded `voiceover_text` from owned script |
+| Algorithm | Contiguous whitespace-token partition into `beatCount` buckets; durations proportional; fallback equal split |
+| ASS Dialogue | Sanitized **`on_screen_text`** only |
+| Forbidden | VO string in ASS body, filtergraph, or argv |
+
+**Condition:** CONTRACT freezes helper signature + hash input for `voiceoverTimingHash`.
+
+#### B-3. Subtitle sanitization — **re-assert** (APPROVE)
+
+Phase A sanitizer + ASS temp file + path-only argv remain mandatory on the VO-timing code path.
+
+#### B-4. FFmpeg / paths — **unchanged floor** (APPROVE)
+
+`spawn` args-array, `shell: false`, server temp paths only, bundled font, Storage SDK — **no client-supplied paths**.
+
+#### B-5. Cover extract — **numeric + clamp** (APPROVE WITH CONDITIONS)
+
+| Rule | Detail |
+|---|---|
+| Input | Snapshot number from Zod-validated Operator override or client default |
+| Runtime | Clamp to branded file duration window |
+| Forbidden | String passthrough from request |
+
+---
+
+### Vetoes (Phase B — would block BUILD)
+
+| If implementers… | Verdict |
+|---|---|
+| Pass `voiceover_text` (or any VO substring) into ASS Dialogue or FFmpeg argv | **REJECT** |
+| Skip or weaken `on_screen_text` sanitizer on the timing path | **REJECT** |
+| Accept non-numeric / unbounded `coverFrameSec` (string, NaN, &lt;0, &gt;45) into enqueue or argv | **REJECT** |
+| Accept client beat timings, cue lists, VO text, paths, URLs, fonts, or snapshot JSON on apply | **REJECT** |
+| Use shell-string / `exec` for branding or cover extract | **REJECT** |
+| Use client-supplied filesystem paths or URLs as FFmpeg `-i` / subtitle path | **REJECT** |
+| Auto-chain honors client request body `coverFrameSec` | **REJECT** |
+| Client-supplied `voiceoverTimingHash` / fingerprint override | **REJECT** |
+
+---
+
+## Future-Proofing Notes (Phase B)
+
+- **Custom fonts** remain a **new story** with upload validation — do not accept font paths from profile JSON or Operator apply.
+- **TTS/ASR alignment** (if ever added) must still feed **numeric** cue times only — never raw provider transcript blobs into ASS without the sanitizer.
+- **Cliente cover UI** (if later) must use the same Zod bounds via Server Action — never trust raw query/body strings in the worker.
+- **Multi-tenancy:** VO/on-screen still loaded only from scripts owned by job `client_id`.
+
+---
+
+## CONTRACT Spot-Check Checklist (Phase B section)
+
+Before Phase B BUILD, verify CONTRACT Phase B amendment:
+
+- [ ] Apply input `{ assemblyJobId, subtitlesEnabled?, logoEnabled?, coverFrameSec? }` + Zod `0–45`
+- [ ] Forbidden-keys list amended (cover allowed; VO/beat/path/URL/font/snapshot still forbidden)
+- [ ] `computeVoProportionalBeatTimings` signature + equal-split fallback
+- [ ] `voiceoverTimingHash` / fingerprint formula frozen
+- [ ] `buildAssFromBeats` accepts explicit timings; Dialogue = sanitized on-screen only
+- [ ] Cover extract: numeric `-ss` + duration clamp
+- [ ] `spawn` / `shell: false` + no client paths re-asserted
+- [ ] Auto-chain: profile defaults only (no Operator cover)
+- [ ] Security test matrix for cover Zod, VO-not-in-ASS, sanitizer re-verify, forbidden keys, args-array
+- [ ] **Reviewed by FE** line for Operator cover `InputNumber`
+- [ ] Phase A floors explicitly still binding; Phase A AC remain checked
+
+---
+
+## Conditions before BUILD — Phase B (binding — condition count = 8)
+
+1. **Anti–cover-injection:** optional Operator `coverFrameSec` is **numeric-only**, Zod **`min(0).max(45)`**; invalid → **`VALIDATION_ERROR`**; cover argv uses number + duration clamp — never raw strings.
+2. **Anti–VO-in-ASS/argv:** `voiceover_text` used **only** for word-count partition → numeric timings; **never** ASS Dialogue or FFmpeg argv.
+3. **Anti–subtitle-injection (re-assert):** `on_screen_text` still sanitized → ASS temp → path-only; timing path must not bypass sanitizer.
+4. **Anti–client-authority / forbidden fields:** allow typed cover number only; still forbid beat/VO text, timings, asset ids, URLs, fonts, snapshot JSON, paths, hash overrides.
+5. **Anti–shell-injection:** branding + cover extract via **`spawn` args-array**, `shell: false` only.
+6. **Anti–client-paths/SSRF:** no client-supplied paths or URLs as FFmpeg inputs; server temp basenames + Storage SDK only.
+7. **Anti–timing/fingerprint-forgery:** server-only VO timing helper + **`voiceoverTimingHash`** in fingerprint; no client cue lists.
+8. **Anti–auto-chain cover smuggle:** auto-chain uses profile defaults only — no request `coverFrameSec`.
+
+---
+
+## BUILD vetoes (Phase B summary)
+
+1. **`voiceover_text` (or VO substrings) in ASS Dialogue or FFmpeg argv.**
+2. **Skipping/weakening `on_screen_text` sanitization on the VO-timing path.**
+3. **Non-numeric or out-of-bounds `coverFrameSec` accepted into enqueue or interpolated as string into argv.**
+4. **Client-supplied beat timings, VO/on-screen text, paths, URLs, fonts, or branding snapshot JSON on apply.**
+5. **Shell-string or `exec`-based FFmpeg for branding/cover.**
+6. **Client-supplied filesystem paths or HTTP(S) URLs as branding/cover inputs.**
+7. **Auto-chain consuming request-body `coverFrameSec`.**
+8. **Client-overridable `voiceoverTimingHash` / `branding_fingerprint`.**
+
+---
+
+## Verdict Rationale (Phase B)
+
+**APPROVE WITH CONDITIONS** — Phase B correctly extends the Phase A branding trust model with **numeric-only** Operator cover override and **VO-derived numeric timings** without opening new text-injection, shell, or client-path surfaces. Primary new risks are **`coverFrameSec` string/filter escape**, **VO leakage into ASS/argv**, and **forbidden-field regression** while amending the trigger schema — all addressable with the **8 conditions** above. Phase A sanitizer + spawn + owned-asset floors remain the injection/SSRF backbone.
+
+**CONTRACT Phase B may proceed:** **Yes** (after/with SPEC-REVIEW Phase B). **Next gate:** nextjs-backend CONTRACT Phase B section + FE Reviewed line → BUILD.
+
+### Gate summary (Phase B)
+
+| Field | Value |
+|---|---|
+| **Verdict** | **APPROVE WITH CONDITIONS** |
+| **Condition count** | **8** |
+| **Veto** | No |
+| **Next gate** | CONTRACT.md Phase B amendment |
