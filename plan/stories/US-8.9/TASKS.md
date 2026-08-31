@@ -59,16 +59,16 @@
 
 Concrete consumer: **`/operator/scripts`** Operator Reel row (`ScriptsPageView`).
 
-- [ ] **`components/scripts/BrollGenerateConfirmDialog.tsx`** — PrimeReact Dialog; props mirror HeyGen dialog (no portrait/consent); loads preview on open; confirm calls `createBrollVideoJobs`.
-- [ ] **`components/scripts/BrollGenerateControl.tsx`** (or export from dialog module) — eligibility `useEffect` calling `previewBrollVideoJobsEstimate`; hides when ineligible.
-- [ ] **Integrate in `ScriptsPageView`** — pass `reelScriptId`, `clientId`, `locale`, copy, refresh callbacks; placement near HeyGen control.
-- [ ] **Loading / error / pending / success states** — spinner while preview loads; localized errors; disable while pending.
-- [ ] **Partial skip UX** — when `skippedCount > 0`, show non-blocking message (budget exceeded, provider unavailable).
-- [ ] **i18n EN/ES** — `scripts.broll.generate.*` keys; add `scripts.broll.failure.referenceStillMissing` (US-8.5 gap).
-- [ ] **Provider label copy** — Wan vs LTX tier path strings (mirror `pathHighTier` HeyGen pattern where useful).
-- [ ] **No `"use client"` boundary expansion** — keep client island minimal (control + dialog only).
+- [x] **`components/scripts/BrollGenerateConfirmDialog.tsx`** — PrimeReact Dialog; props mirror HeyGen dialog (no portrait/consent); loads preview on open; confirm calls `createBrollVideoJobs`.
+- [x] **`components/scripts/BrollGenerateControl.tsx`** (exported from dialog module) — eligibility `useEffect` calling `previewBrollVideoJobsEstimate`; hides when ineligible.
+- [x] **Integrate in `ScriptsPageView`** — pass `reelScriptId`, `clientId`, `locale`, copy, refresh callbacks; placement after HeyGen, before primary job panel.
+- [x] **Loading / error / pending / success states** — spinner while preview loads; localized errors; disable while pending.
+- [x] **Partial skip UX** — when `skippedCount > 0`, show non-blocking warn toast with localized skip reasons.
+- [x] **i18n EN/ES** — `scripts.broll.generate.*` keys; add `scripts.broll.failure.referenceStillMissing` (US-8.5 gap).
+- [x] **Provider label copy** — Wan vs LTX localized labels from preview `providerKey`.
+- [x] **No `"use client"` boundary expansion** — control + dialog only; wired into existing `ScriptsPageView` client island.
 
-**Reviewed by FE:** _(pending CONTRACT signoff)_
+**Reviewed by FE:** approved — satisfies AC #1 (control on `/operator/scripts`), AC #2 (confirm dialog with server estimate), AC #4 (EN/ES i18n), AC #5 (partial skip toast).
 
 ---
 

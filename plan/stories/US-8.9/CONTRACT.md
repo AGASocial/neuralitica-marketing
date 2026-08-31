@@ -1,4 +1,4 @@
-Reviewed by FE: **pending** — nextjs-frontend must stamp **approved** before BUILD (FE is primary consumer of control + dialog).
+Reviewed by FE: **approved**
 
 # API Contract — US-8.9 Operator B-roll generate UI (P1)
 

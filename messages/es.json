@@ -1411,6 +1411,46 @@
         }
       }
     },
+    "broll": {
+      "generate": {
+        "button": "Generar B-roll",
+        "title": "Confirmar generación de B-roll",
+        "confirm": "Generar B-roll",
+        "cancel": "Cancelar",
+        "loading": "Cargando estimación de B-roll…",
+        "loadError": "No pudimos cargar la estimación de B-roll. Inténtalo más tarde.",
+        "estimated": "Costo estimado",
+        "clipCount": "Clips",
+        "providerLabel": "Proveedor",
+        "providerWan": "Wan (nivel bajo)",
+        "providerLtx": "LTX B-roll (nivel alto)",
+        "ineligible": "La generación de B-roll no está disponible para este Reel.",
+        "toastSuccess": "Jobs de generación de B-roll en cola ({count} clips).",
+        "toastPartial": "{created} clips en cola; {skipped} omitidos.",
+        "toastSkippedAll": "No se encolaron clips de B-roll.",
+        "errors": {
+          "unauthenticated": "Inicia sesión para continuar.",
+          "forbidden": "No tienes acceso a la generación de B-roll.",
+          "notFound": "No se encontró ese guion de Reel.",
+          "validation": "Revisa la solicitud e inténtalo de nuevo.",
+          "forbiddenFields": "Solicitud de B-roll no válida.",
+          "budgetExceeded": "Bloqueado — superaría el presupuesto del Reel.",
+          "providerUnavailable": "El proveedor de B-roll no está disponible en este momento.",
+          "referenceStillMissing": "Se requiere una imagen de referencia antes de generar B-roll.",
+          "brollUnavailable": "La generación de B-roll no está disponible para este Reel.",
+          "internal": "Algo salió mal. Inténtalo más tarde."
+        }
+      },
+      "blocked": {
+        "jobInFlight": "Ya hay un job de generación de B-roll en curso.",
+        "referenceStillMissing": "Se requiere una imagen de referencia.",
+        "providerUnavailable": "El proveedor de B-roll no está disponible.",
+        "budgetExceeded": "El presupuesto del Reel no cubre la generación de B-roll."
+      },
+      "failure": {
+        "referenceStillMissing": "Se requiere una imagen de referencia antes de generar B-roll."
+      }
+    },
     "heygen": {
       "button": "Generar con HeyGen",
       "title": "Confirmar generación con HeyGen",

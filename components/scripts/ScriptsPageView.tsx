@@ -43,6 +43,12 @@ import {
   type ManualVideoUploadCopy,
 } from "@/components/scripts/ManualVideoUploadDialog";
 import {
+  BrollGenerateControl,
+  formatBrollGenerateTemplate,
+  type BrollGenerateConfirmCopy,
+  type BrollGenerateOutcome,
+} from "@/components/scripts/BrollGenerateConfirmDialog";
+import {
   HeygenGenerateControl,
   type HeygenGenerateConfirmCopy,
 } from "@/components/scripts/HeygenGenerateConfirmDialog";
@@ -226,6 +232,7 @@ type ScriptsPageCopy = {
     toastOverrideSuccess: string;
   };
   heygen: HeygenGenerateConfirmCopy;
+  broll: BrollGenerateConfirmCopy;
   voiceover: OperatorVoiceoverCopy;
   assembly: OperatorAssemblyCopy & {
     reassembleConfirm: AssemblyReassembleConfirmCopy;
@@ -975,6 +982,35 @@ export function ScriptsPageView({
     router.refresh();
   }
 
+  function handleBrollGenerateSuccess(outcome: BrollGenerateOutcome) {
+    if (outcome.kind === "full") {
+      toastRef.current?.show({
+        severity: "success",
+        summary: formatBrollGenerateTemplate(copy.broll.toastSuccess, {
+          count: outcome.createdCount,
+        }),
+        life: 4000,
+      });
+    } else {
+      toastRef.current?.show({
+        severity: "success",
+        summary: formatBrollGenerateTemplate(copy.broll.toastPartial, {
+          created: outcome.createdCount,
+          skipped: outcome.skippedCount,
+        }),
+        life: 5000,
+      });
+      if (outcome.skipMessages.length > 0) {
+        toastRef.current?.show({
+          severity: "warn",
+          summary: outcome.skipMessages.join(" "),
+          life: 6000,
+        });
+      }
+    }
+    router.refresh();
+  }
+
   function handleVideoJobOverrideSuccess() {
     toastRef.current?.show({
       severity: "success",
@@ -1491,6 +1527,8 @@ export function ScriptsPageView({
                 onRequestVideoJobOverride={openOverrideDialog}
                 onHeygenGenerateSuccess={handleHeygenGenerateSuccess}
                 onHeygenGenerateError={handleVideoJobMutationError}
+                onBrollGenerateSuccess={handleBrollGenerateSuccess}
+                onBrollGenerateError={handleVideoJobMutationError}
                 onManualUploadSuccess={(job) => {
                   if (row.scriptId) {
                     handleManualUploadSuccess(row.scriptId, job);
@@ -1678,6 +1716,8 @@ type ReelDetailPanelProps = {
   onRequestVideoJobOverride: (failedJobId: string) => void;
   onHeygenGenerateSuccess: () => void;
   onHeygenGenerateError: (message: string) => void;
+  onBrollGenerateSuccess: (outcome: BrollGenerateOutcome) => void;
+  onBrollGenerateError: (message: string) => void;
   onManualUploadSuccess: (job: OperatorVideoJobSummaryDto) => void;
   onVoiceoverSuccess: (result: SynthesizeVoiceoverForReelScriptSuccess) => void;
   onVoiceoverToastSuccess: (summary: string) => void;
@@ -1721,6 +1761,8 @@ function ReelDetailPanel({
   onRequestVideoJobOverride,
   onHeygenGenerateSuccess,
   onHeygenGenerateError,
+  onBrollGenerateSuccess,
+  onBrollGenerateError,
   onManualUploadSuccess,
   onVoiceoverSuccess,
   onVoiceoverToastSuccess,
@@ -1802,6 +1844,17 @@ function ReelDetailPanel({
           disabled={isBusy}
           onSuccess={onHeygenGenerateSuccess}
           onError={onHeygenGenerateError}
+        />
+      ) : null}
+      {row.scriptId ? (
+        <BrollGenerateControl
+          reelScriptId={row.scriptId}
+          clientId={clientId}
+          locale={locale}
+          copy={copy.broll}
+          disabled={isBusy}
+          onSuccess={onBrollGenerateSuccess}
+          onError={onBrollGenerateError}
         />
       ) : null}
       <OperatorVideoJobSummaryPanel

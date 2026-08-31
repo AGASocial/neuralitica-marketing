@@ -1411,6 +1411,46 @@
         }
       }
     },
+    "broll": {
+      "generate": {
+        "button": "Generate B-roll",
+        "title": "Confirm B-roll generation",
+        "confirm": "Generate B-roll",
+        "cancel": "Cancel",
+        "loading": "Loading B-roll estimate…",
+        "loadError": "We could not load the B-roll estimate. Try again later.",
+        "estimated": "Estimated cost",
+        "clipCount": "Clips",
+        "providerLabel": "Provider",
+        "providerWan": "Wan (low tier)",
+        "providerLtx": "LTX B-roll (high tier)",
+        "ineligible": "B-roll generation is not available for this Reel.",
+        "toastSuccess": "B-roll generation jobs queued ({count} clips).",
+        "toastPartial": "{created} clips queued; {skipped} skipped.",
+        "toastSkippedAll": "No B-roll clips were queued.",
+        "errors": {
+          "unauthenticated": "Please log in to continue.",
+          "forbidden": "You do not have access to B-roll generation.",
+          "notFound": "That Reel script was not found.",
+          "validation": "Please check the request and try again.",
+          "forbiddenFields": "Invalid B-roll request.",
+          "budgetExceeded": "Blocked — would exceed Reel budget.",
+          "providerUnavailable": "B-roll provider is not available right now.",
+          "referenceStillMissing": "A reference still image is required before generating B-roll.",
+          "brollUnavailable": "B-roll generation is not available for this Reel.",
+          "internal": "Something went wrong. Please try again later."
+        }
+      },
+      "blocked": {
+        "jobInFlight": "A B-roll generation job is already in progress.",
+        "referenceStillMissing": "A reference still image is required.",
+        "providerUnavailable": "B-roll provider is not available.",
+        "budgetExceeded": "Reel budget cannot fund B-roll generation."
+      },
+      "failure": {
+        "referenceStillMissing": "A reference still image is required before generating B-roll."
+      }
+    },
     "heygen": {
       "button": "Generate with HeyGen",
       "title": "Confirm HeyGen generation",
