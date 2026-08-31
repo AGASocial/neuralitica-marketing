@@ -167,7 +167,7 @@ await routeApprovalChangeRequest({ approvalId, assembledReelId, changeRequest })
 - [ ] SPEC-REVIEW.md — ALIGNED
 - [ ] SECURITY.md — APPROVE (atomic limit, prompt containment, no Cliente job triggers)
 - [ ] CONTRACT.md frozen + `lib/contracts/approval.ts` updated
-- [ ] **Reviewed by FE:** line in CONTRACT.md
+- [x] **Reviewed by FE:** line in CONTRACT.md
 
 ---
 

@@ -1,7 +1,7 @@
 # API Contract — US-11.2 Request controlled revision round
 
 **Story:** US-11.2  
-**Status:** Frozen — 2026-08-30 · **Reviewed by FE:** pending — nextjs-frontend  
+**Status:** Frozen — 2026-08-30 · **Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend  
 **Extends:** [US-11.1 CONTRACT](../US-11.1/CONTRACT.md) (supersedes Phase A decide enum + package DTO revision fields only)  
 **Security:** `plan/stories/US-11.2/SECURITY.md` (APPROVE WITH CONDITIONS — reconciled below)  
 **Spec review:** `plan/stories/US-11.2/SPEC-REVIEW.md` (GAPS — all closed below)  
@@ -725,21 +725,52 @@ Extend `approvalErrorCodeSchema`:
 
 ## Open items needing FE signoff
 
-1. **Request changes form UX** — tag checkboxes, per-tag notes, optional summary, submit disabled until ≥1 tag.  
+**Resolved by FE signoff (2026-08-30)** — see § Reviewed by FE. Summary:
+
+1. **Request changes form UX** — tag checkboxes + per-tag notes + optional summary; submit disabled until ≥1 tag.  
 2. **Revisions remaining copy** — use `revisionsRemaining` / `maxRevisionRounds` from DTO (`approvals.revision.remaining`).  
 3. **Limit exceeded state** — hide Request changes; show `approvals.revision.limitExceeded` escalation.  
 4. **`changes_requested` waiting state** — read-only detail; no decide CTAs; `approvals.revision.waiting`.  
 5. **Error mapping** — `REVISION_LIMIT_EXCEEDED`, extended validation fields on `changeRequest`.  
 6. **Optional `changeRequestHistory`** — minimum AC needs `lastChangeRequest` + counts; full history list is nice-to-have Phase A.  
-7. **Operator grant UI** — action-only V1 acceptable; confirm no Cliente exposure of grant flag as self-serve bypass.
+7. **Operator grant UI** — action-only V1 acceptable; no Cliente exposure of grant flag as self-serve bypass.
+
+**No open disputes that reopen decide enum, DTO revision fields, atomic limit, or state machine.**
 
 ---
 
 ## Reviewed by FE
 
-**Reviewed by FE:** pending — nextjs-frontend.
+**Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend.
+
+**Verdict:** Accept — extend existing `ApprovalPackageView` on `/approvals/[approvalId]` with Request changes panel, revisions-remaining copy, limit-exceeded escalation, and `changes_requested` waiting state. Types in `lib/contracts/approval.ts` + `lib/contracts/approval-revision.ts` match the UI flow. Same `decideApproval` Server Action; no forbidden client authority fields in the write path.
+
+**FE signoff notes (UX disputes — frozen for BUILD):**
+
+| # | Topic | FE choice |
+|---|-------|-----------|
+| 1 | Request changes entry | **Third CTA** (outlined/secondary) alongside Approve/Reject when `pending_client` and revisions available. Opens inline panel (same pattern as Reject feedback mode). |
+| 2 | Tag selection UX | **PrimeReact `Checkbox`** per tag (`script`, `caption`, `assembly`, `branding`); show per-tag `InputTextarea` only for checked tags; optional overall summary textarea. Submit disabled until ≥1 tag. |
+| 3 | Revisions remaining | Show **`approvals.revision.remaining`** above decide CTAs using DTO `revisionsRemaining` / `maxRevisionRounds` — never client-compute limit. When `extraRevisionGranted === true`, show grant hint copy. |
+| 4 | Limit exceeded | Hide Request changes when `revisionsRemaining === 0` and `!extraRevisionGranted`; show **`approvals.revision.limitExceeded`** escalation (read-only). Approve/Reject unchanged. |
+| 5 | Gate blocks request_changes | **Disable Request changes** when `gate.ready === false` (same rule as Approve); server remains authority via `QA_GATE_NOT_READY`. |
+| 6 | Post request_changes navigation | **Stay on detail** read-only (`changes_requested` Tag + `approvals.revision.waiting`; no decide CTAs). Merge `revisionCount`, `revisionsRemaining`, `decidedAt` from decide success. Item leaves `/approvals` list until requeue (unchanged list filter). |
+| 7 | `changeRequestHistory` | **Phase A minimum:** `lastChangeRequest` + revision counts only. Full history list deferred to Phase B per contract. |
+| 8 | Operator grant | **No Cliente UI** for grant action or self-serve bypass. `extraRevisionGranted` is read-only display only. |
+
+**BUILD notes (FE):**
+
+- **Extend:** `components/approvals/ApprovalPackageView.tsx` client island — add `requestChangesMode`, tag state, `runDecide("request_changes", changeRequest)` branch. Reuse `APPROVAL_FEEDBACK_MAX_LENGTH` (500) for notes/summary.
+- **Mutation:** `decideApproval({ approvalId, decision: "request_changes", changeRequest })` — omit `clientFeedback`; never send `revisionCount`, `status`, `extraRevisionGranted`, gate flags.
+- **Read-only states:** `status !== "pending_client"` hides all decide CTAs (covers `changes_requested`, `approved`, `rejected`). Deep-linked `changes_requested` shows waiting copy; no polling in Phase A.
+- **i18n:** Add `approvals.revision.*` (tags, remaining, waiting, limitExceeded, submitted toast) + `approvals.errors.revisionLimitExceeded` EN/ES. Status tag `changes_requested` already present from US-11.1.
+- **Types:** Import `ApprovalChangeTag`, `ChangeRequestInput` from `lib/contracts/approval-revision.ts` (re-exported via `approval.ts`). Extend error map for `REVISION_LIMIT_EXCEEDED`.
+- **Out of scope:** Operator grant UI; `changeRequestHistory` list; polling/realtime for requeue.
+
+**Disputes:** None blocking BUILD.
 
 ---
 
+**Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend.  
 **Frozen by:** nextjs-backend — 2026-08-30  
 **Zod mirrors:** `lib/contracts/approval.ts` · `lib/contracts/approval-revision.ts`
