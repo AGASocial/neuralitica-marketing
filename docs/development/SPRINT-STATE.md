@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 7
 current_story: US-15.1
-story_status: contract
+story_status: signoff
 feature_branch: feature/US-15.1-weekly-cron
 last_completed_story: US-8.9
 phase_status: sprint_9_prep
 blocked_reason: null
-updated_at: 2026-08-31T22:26:00Z
+updated_at: 2026-08-31T22:27:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -46,13 +46,13 @@ updated_at: 2026-08-31T22:26:00Z
 
 **Sprint 8 CLOSED** — Operator B-roll generate UI on `/operator/scripts` (Wan low + LTX high via policy) → stitch → branding → QA verified on `main`. **Idle backlog:** QA follow-ups (enqueue-time audio probe · faceless revision B-roll step).
 
-## Sprint 9 — PLAN F7 weekly cron (CONTRACT Phase B)
+## Sprint 9 — PLAN F7 weekly cron (SIGNOFF Phase B)
 
 | Story | Status | Notes |
 |-------|--------|-------|
-| US-15.1 Weekly cycle cron + orchestration | Phase A closed / Phase B contract | SECURITY delta `bed0615` APPROVE WITH CONDITIONS · freezing live pipeline contract before FE signoff |
+| US-15.1 Weekly cycle cron + orchestration | Phase A closed / Phase B signoff | CONTRACT delta `f2c12d7` frozen by BE/SEC · FE reviewing Operator action/DTO/page states/i18n · BUILD veto active |
 
-**Sprint 9 CONTRACT Phase B** — SECURITY froze validated System auto-approval with CAS and vetoed generic draft-bypass; backend is freezing state machine, live seams, retries, DTOs, and rollout controls.
+**Sprint 9 SIGNOFF Phase B** — BE/SEC contract is frozen and implementable; frontend contract review is the final gate before live BUILD.
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -95,6 +95,7 @@ updated_at: 2026-08-31T22:26:00Z
 
 ## Historial reciente
 
+- 2026-08-31 · US-15.1 Phase B CONTRACT frozen `f2c12d7`: exact live state machine, CAS strategy approval, idempotent resume/outbox, retries/timeouts, Operator DTO/action, rollout controls, no-publish boundary; next FE signoff.
 - 2026-08-31 · US-15.1 Phase B SECURITY APPROVE WITH CONDITIONS `bed0615`: System auto-approval with CAS selected; generic scripts-side draft bypass vetoed; no user-choice blocker → CONTRACT delta.
 - 2026-08-31 · US-15.1 Phase A CLOSE `b1e4508`: 5/5 Phase A AC checked; Phase B 0/4 deferred; next mandatory Phase B SECURITY → CONTRACT delta → FE signoff.
 - 2026-08-31 · US-15.1 QA re-review APPROVE WITH CONDITIONS `efc6b75`: H1/M1/L1 closed; 30/30; scoped lint clean; CLOSE Phase A allowed; Phase B must document additive safety semantics.
