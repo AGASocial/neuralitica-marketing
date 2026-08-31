@@ -118,6 +118,38 @@ export async function applyBrandingJobUpdate(
   }
 
   const supabase = createServerSupabaseClient();
+
+  if (nextStatus === "processing") {
+    const { data, error } = await supabase
+      .from(BRANDING_JOBS_TABLE)
+      .update(updatePayload)
+      .eq("id", job.id)
+      .eq("status", "completed")
+      .eq("branding_status", "queued")
+      .select("id");
+
+    if (error) {
+      throw new Error("Branding job status update failed");
+    }
+
+    if (!data || data.length === 0) {
+      const refreshed = await loadBrandingJobByIdUnscoped(input.assemblyJobId);
+      return {
+        ok: true,
+        jobId: job.id,
+        brandingStatus: refreshed?.brandingStatus ?? currentStatus,
+        idempotent: true,
+      };
+    }
+
+    return {
+      ok: true,
+      jobId: job.id,
+      brandingStatus: "processing",
+      idempotent: false,
+    };
+  }
+
   let query = supabase
     .from(BRANDING_JOBS_TABLE)
     .update(updatePayload)

@@ -396,6 +396,77 @@ describe("runBrandingJob mocked pipeline", () => {
     );
   });
 
+  it("Phase B-M2: entry with processing status → no spawn (peer owns row)", async () => {
+    await withBrandingMocks(
+      {
+        jobs: [baseBrandingJobRow({ branding_status: "processing" })],
+        mediaAssets: [
+          {
+            id: BASE_ASSET_ID,
+            client_id: CLIENT_ID,
+            asset_type: "assembled_reel",
+            storage_key: `neuramark/${CLIENT_ID}/${REEL_SCRIPT_ID}/assembled-${BASE_ASSET_ID}.mp4`,
+          },
+        ],
+      },
+      async ({ updates }) => {
+        let ffmpegCalled = false;
+        const { runBrandingJob } = loadBrandingModule<{ runBrandingJob: Function }>(
+          "./run-branding-job.ts",
+        );
+
+        await runBrandingJob(JOB_ID, {
+          runFfmpeg: async () => {
+            ffmpegCalled = true;
+            return { exitCode: 0, stderr: "" };
+          },
+        });
+
+        assert.equal(ffmpegCalled, false);
+        assert.equal(
+          updates.some((u) => u.branding_status === "processing"),
+          false,
+        );
+      },
+    );
+  });
+
+  it("Phase B-M2: lost claim → no spawn", async () => {
+    await withBrandingMocks(
+      {
+        jobs: [baseBrandingJobRow({ branding_status: "queued" })],
+        mediaAssets: [
+          {
+            id: BASE_ASSET_ID,
+            client_id: CLIENT_ID,
+            asset_type: "assembled_reel",
+            storage_key: `neuramark/${CLIENT_ID}/${REEL_SCRIPT_ID}/assembled-${BASE_ASSET_ID}.mp4`,
+          },
+        ],
+        loseProcessingClaim: true,
+      },
+      async ({ updates }) => {
+        let ffmpegCalled = false;
+        const { runBrandingJob } = loadBrandingModule<{ runBrandingJob: Function }>(
+          "./run-branding-job.ts",
+        );
+
+        await runBrandingJob(JOB_ID, {
+          runFfmpeg: async () => {
+            ffmpegCalled = true;
+            return { exitCode: 0, stderr: "" };
+          },
+        });
+
+        assert.equal(ffmpegCalled, false);
+        assert.equal(
+          updates.some((u) => u.branding_status === "processing"),
+          false,
+        );
+      },
+    );
+  });
+
   it("Phase B-M1: malformed non-empty voiceoverTimingHash → CONFIG fail, no spawn", async () => {
     await withBrandingMocks(
       {
@@ -518,6 +589,7 @@ async function withBrandingMocks(
     insertedBrandedAssetId?: string;
     insertedCoverAssetId?: string;
     storage?: Map<string, Buffer>;
+    loseProcessingClaim?: boolean;
   },
   run: (ctx: {
     updates: Array<Record<string, unknown>>;
@@ -542,7 +614,9 @@ async function withBrandingMocks(
         createServerSupabaseClient: () => ({
           from(table: string) {
             if (table === "neuramark_assembled_reels") {
-              return createBrandingJobQuery(jobState, updates);
+              return createBrandingJobQuery(jobState, updates, {
+                loseProcessingClaim: options.loseProcessingClaim ?? false,
+              });
             }
             if (table === "neuramark_media_assets") {
               return createMediaAssetsQuery(options, () => {
@@ -605,6 +679,7 @@ async function withBrandingMocks(
 function createBrandingJobQuery(
   rows: Array<Record<string, unknown>>,
   updates: Array<Record<string, unknown>>,
+  options: { loseProcessingClaim?: boolean } = {},
 ) {
   const builder = {
     select: () => builder,
@@ -625,27 +700,8 @@ function createBrandingJobQuery(
       }
       return { data: row ?? null, error: null };
     },
-    update: (patch: Record<string, unknown>) => {
-      updates.push(patch);
-      return {
-        eq: (_col: string, id: string) => ({
-          eq: async (_statusCol: string, status: string) => {
-            const target = rows.find((row) => row.id === id);
-            if (target && target.branding_status === status) {
-              Object.assign(target, patch);
-            }
-            return { error: null };
-          },
-          is: async (_statusCol: string, _nullVal: null) => {
-            const target = rows.find((row) => row.id === id);
-            if (target && target.branding_status == null) {
-              Object.assign(target, patch);
-            }
-            return { error: null };
-          },
-        }),
-      };
-    },
+    update: (patch: Record<string, unknown>) =>
+      createUpdateQueryBuilder(rows, updates, patch, options),
     in: () => builder,
     lt: () => builder,
     order: () => builder,
@@ -656,6 +712,79 @@ function createBrandingJobQuery(
     _isVal: null as null,
   };
   return builder;
+}
+
+function createUpdateQueryBuilder(
+  rows: Array<Record<string, unknown>>,
+  updates: Array<Record<string, unknown>>,
+  patch: Record<string, unknown>,
+  options: { loseProcessingClaim?: boolean } = {},
+) {
+  const filters: Array<{ col: string; val: unknown; isNull?: boolean }> = [];
+
+  const builder = {
+    eq(col: string, val: unknown) {
+      filters.push({ col, val });
+      return builder;
+    },
+    is(col: string, val: null) {
+      filters.push({ col, val, isNull: true });
+      return builder;
+    },
+    select: async (_cols?: string) => {
+      if (options.loseProcessingClaim && patch.branding_status === "processing") {
+        return { data: [], error: null };
+      }
+
+      const target = findUpdateTarget(rows, filters);
+      if (!target || !rowMatchesFilters(target, filters)) {
+        return { data: [], error: null };
+      }
+
+      updates.push(patch);
+      Object.assign(target, patch);
+      return { data: [{ id: target.id }], error: null };
+    },
+    then(
+      resolve: (value: { error: null }) => void,
+      reject?: (reason: unknown) => void,
+    ) {
+      return builder.executeLegacyUpdate().then(resolve, reject);
+    },
+    executeLegacyUpdate: async () => {
+      const target = findUpdateTarget(rows, filters);
+      if (target && rowMatchesFilters(target, filters)) {
+        updates.push(patch);
+        Object.assign(target, patch);
+      }
+      return { error: null };
+    },
+  };
+
+  return builder;
+}
+
+function findUpdateTarget(
+  rows: Array<Record<string, unknown>>,
+  filters: Array<{ col: string; val: unknown; isNull?: boolean }>,
+) {
+  const idFilter = filters.find((f) => f.col === "id");
+  if (typeof idFilter?.val !== "string") {
+    return undefined;
+  }
+  return rows.find((row) => row.id === idFilter.val);
+}
+
+function rowMatchesFilters(
+  row: Record<string, unknown>,
+  filters: Array<{ col: string; val: unknown; isNull?: boolean }>,
+) {
+  return filters.every(({ col, val, isNull }) => {
+    if (isNull) {
+      return row[col] == null;
+    }
+    return row[col] === val;
+  });
 }
 
 function createMediaAssetsQuery(

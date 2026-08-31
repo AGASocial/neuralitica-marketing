@@ -92,12 +92,19 @@ export async function runBrandingJob(
     return;
   }
 
+  if (job.brandingStatus === "processing") {
+    return;
+  }
+
   if (job.brandingStatus === "queued") {
-    await applyBrandingJobUpdate({
+    const claim = await applyBrandingJobUpdate({
       assemblyJobId: job.id,
       patch: { brandingStatus: "processing" },
       source: "worker",
     });
+    if (claim.idempotent) {
+      return;
+    }
   }
 
   const activeJob = await loadBrandingJobByIdUnscoped(assemblyJobId);

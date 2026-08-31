@@ -358,10 +358,10 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 
 ### Backend / worker (nextjs-backend + media-pipeline-engineer)
 
-- [ ] **`applyBrandingJobUpdate`** — on `queued` → `processing` claim, inspect UPDATE rows affected / `RETURNING`; **0 rows** → `{ idempotent: true }` (M2-3).
-- [ ] **`runBrandingJob`** — if claim returns `idempotent: true`, or row already `processing` at entry → return **before** `mkdtemp` / download / FFmpeg (M2-4).
-- [ ] **`pollQueuedBrandingJobsBatch`** — candidate filter **`branding_status = 'queued'`** only; drop `processing` from poll batch (M2-5).
-- [ ] **Unit test** — simulated lost claim / concurrent claim → **zero** `runFfmpeg` / spawn invocations; winner path unchanged.
+- [x] **`applyBrandingJobUpdate`** — on `queued` → `processing` claim, inspect UPDATE rows affected / `RETURNING`; **0 rows** → `{ idempotent: true }` (M2-3).
+- [x] **`runBrandingJob`** — if claim returns `idempotent: true`, or row already `processing` at entry → return **before** `mkdtemp` / download / FFmpeg (M2-4).
+- [x] **`pollQueuedBrandingJobsBatch`** — candidate filter **`branding_status = 'queued'`** only; drop `processing` from poll batch (M2-5).
+- [x] **Unit test** — simulated lost claim / concurrent claim → **zero** `runFfmpeg` / spawn invocations; winner path unchanged (`run-branding-job.test.ts` Phase B-M2).
 - [ ] **CONTRACT amend** — § Poll runtime + `runBrandingJob` step 1: atomic claim semantics, idempotent skip, `queued`-only poll predicate (**nextjs-backend** — required before BUILD).
 
 ### Frontend
@@ -382,7 +382,7 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 
 | Agent | Owns |
 |-------|------|
-| **media-pipeline-engineer** | `poll-branding-jobs.ts`, `runBrandingJob` early-return gate |
+| **media-pipeline-engineer** | `poll-branding-jobs.ts`, `runBrandingJob` early-return gate ✅ |
 | **nextjs-backend** | `applyBrandingJobUpdate` rows-affected; CONTRACT amend; unit tests |
 | **nextjs-frontend** | None |
 | **security-architect** | SECURITY lean amend (worker claim) |

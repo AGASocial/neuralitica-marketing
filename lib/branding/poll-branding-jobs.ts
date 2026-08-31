@@ -26,7 +26,7 @@ export async function pollQueuedBrandingJobsBatch(limit = 5): Promise<void> {
     .from(BRANDING_JOBS_TABLE)
     .select("id")
     .eq("status", "completed")
-    .in("branding_status", ["queued", "processing"])
+    .eq("branding_status", "queued")
     .order("updated_at", { ascending: true })
     .limit(limit);
 
