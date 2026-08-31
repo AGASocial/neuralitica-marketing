@@ -114,6 +114,20 @@ export default async function OperatorCalendarPage({ searchParams }: CalendarPag
           viewOnInstagram: t.calendar.markPublished.viewOnInstagram,
           errors: t.calendar.markPublished.errors,
         },
+        metrics: {
+          title: t.calendar.metrics.title,
+          views: t.calendar.metrics.views,
+          likes: t.calendar.metrics.likes,
+          comments: t.calendar.metrics.comments,
+          saves: t.calendar.metrics.saves,
+          dms: t.calendar.metrics.dms,
+          recordedAtLabel: t.calendar.metrics.recordedAtLabel,
+          save: t.calendar.metrics.save,
+          savePending: t.calendar.metrics.savePending,
+          success: t.calendar.metrics.success,
+          editWindowExpired: t.calendar.metrics.editWindowExpired,
+          errors: t.calendar.metrics.errors,
+        },
       }}
     />
   );

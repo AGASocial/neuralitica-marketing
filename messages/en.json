@@ -1072,6 +1072,30 @@
         "internal": "Something went wrong. Please try again later.",
         "unauthenticated": "Please log in to continue."
       }
+    },
+    "metrics": {
+      "title": "Post metrics",
+      "views": "Views",
+      "likes": "Likes",
+      "comments": "Comments",
+      "saves": "Saves",
+      "dms": "DMs",
+      "recordedAtLabel": "Last updated",
+      "save": "Save metrics",
+      "savePending": "Saving…",
+      "success": "Metrics saved.",
+      "editWindowExpired": "The 7-day edit window for these metrics has expired. Values are read-only.",
+      "errors": {
+        "notFound": "This assembled Reel could not be found.",
+        "notPublished": "Metrics can only be recorded for published Reels.",
+        "editWindowExpired": "The edit window for these metrics has expired.",
+        "rateLimited": "Too many save attempts. Please wait and try again later.",
+        "validation": "Please check the highlighted fields and try again.",
+        "forbidden": "You do not have access to save Reel metrics.",
+        "forbiddenFields": "Something went wrong. Please try again.",
+        "internal": "Something went wrong. Please try again later.",
+        "unauthenticated": "Please log in to continue."
+      }
     }
   },
   "scripts": {

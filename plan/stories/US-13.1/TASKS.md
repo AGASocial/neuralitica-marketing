@@ -93,17 +93,17 @@ upsertReelMetrics({
 
 **Consumer:** `/operator/calendar` · `components/calendar/OperatorCalendarView.tsx` (Sidebar)
 
-- [ ] Add **metrics section** in Sidebar when `pipelineStatus === 'published'` and `assembledReelId` present.
-- [ ] Five **`InputNumber`** fields (integer, min 0, max per CONTRACT); labels EN/ES.
-- [ ] Pre-fill from `selectedSlot.metrics` when present; default zeros when null.
-- [ ] **Save** button calls **`upsertReelMetrics`**; disabled/hidden when `metrics.editable === false` or window expired.
-- [ ] Read-only state after edit window: show values + “window expired” copy; no Save.
-- [ ] Show **`recordedAt`** when metrics exist (formatted, localized).
-- [ ] On success: toast/inline success + **refresh** week via `getOperatorCalendarForWeek`.
-- [ ] Field + server error display (`notPublished`, `editWindowExpired`, validation, forbidden).
-- [ ] i18n EN + ES under **`calendar.metrics.*`**.
-- [ ] Do **not** show metrics form for non-published pipeline statuses.
-- [ ] Do **not** add a new route/page for metrics.
+- [x] Add **metrics section** in Sidebar when `pipelineStatus === 'published'` and `assembledReelId` present.
+- [x] Five **`InputNumber`** fields (integer, min 0, max per CONTRACT); labels EN/ES.
+- [x] Pre-fill from `selectedSlot.metrics` when present; default zeros when null.
+- [x] **Save** button calls **`upsertReelMetrics`**; disabled/hidden when `metrics.editable === false` or window expired.
+- [x] Read-only state after edit window: show values + “window expired” copy; no Save.
+- [x] Show **`recordedAt`** when metrics exist (formatted, localized).
+- [x] On success: toast/inline success + **refresh** week via `getOperatorCalendarForWeek`.
+- [x] Field + server error display (`notPublished`, `editWindowExpired`, validation, forbidden).
+- [x] i18n EN + ES under **`calendar.metrics.*`**.
+- [x] Do **not** show metrics form for non-published pipeline statuses.
+- [x] Do **not** add a new route/page for metrics.
 
 ---
 

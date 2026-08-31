@@ -13,6 +13,10 @@ import {
   MarkPublishedDialog,
   type MarkPublishedDialogCopy,
 } from "@/components/calendar/MarkPublishedDialog";
+import {
+  ReelMetricsSection,
+  type ReelMetricsSectionCopy,
+} from "@/components/calendar/ReelMetricsSection";
 import type {
   CalendarPipelineStatus,
   CalendarSlotDetailDto,
@@ -20,6 +24,7 @@ import type {
   GetOperatorCalendarForWeekSuccess,
 } from "@/lib/contracts/calendar";
 import type { ContentStrategySlotGoal } from "@/lib/contracts/content-strategy";
+import type { ReelMetricsDto } from "@/lib/contracts/reel-metrics";
 import { formatWeekRange, normalizeToIsoMonday } from "@/lib/trend/normalize-week-start";
 
 type CalendarPageCopy = {
@@ -55,6 +60,7 @@ type CalendarPageCopy = {
     publishedOnLabel: string;
     viewOnInstagram: string;
   };
+  metrics: ReelMetricsSectionCopy;
 };
 
 type OperatorCalendarViewProps = {
@@ -315,8 +321,17 @@ export function OperatorCalendarView({
     router.refresh();
   }
 
+  function handleMetricsSuccess(metrics: ReelMetricsDto) {
+    setSelectedSlot((current) =>
+      current ? { ...current, metrics } : current,
+    );
+  }
+
   const showMarkPublishedCta = selectedSlot?.pipelineStatus === "approved";
   const showUpdatePublishedCta = selectedSlot?.pipelineStatus === "published";
+  const showMetricsSection =
+    selectedSlot?.pipelineStatus === "published" &&
+    selectedSlot.assembledReelId != null;
 
   return (
     <div>
@@ -554,6 +569,15 @@ export function OperatorCalendarView({
                 className="p-button-outlined"
                 style={{ width: "100%" }}
                 onClick={() => setMarkPublishedOpen(true)}
+              />
+            ) : null}
+
+            {showMetricsSection && selectedSlot ? (
+              <ReelMetricsSection
+                slot={selectedSlot}
+                copy={copy.metrics}
+                locale={locale}
+                onSuccess={handleMetricsSuccess}
               />
             ) : null}
 

@@ -1072,6 +1072,30 @@
         "internal": "Algo salió mal. Inténtalo de nuevo más tarde.",
         "unauthenticated": "Inicia sesión para continuar."
       }
+    },
+    "metrics": {
+      "title": "Métricas de la publicación",
+      "views": "Visualizaciones",
+      "likes": "Me gusta",
+      "comments": "Comentarios",
+      "saves": "Guardados",
+      "dms": "Mensajes directos",
+      "recordedAtLabel": "Última actualización",
+      "save": "Guardar métricas",
+      "savePending": "Guardando…",
+      "success": "Métricas guardadas.",
+      "editWindowExpired": "La ventana de edición de 7 días para estas métricas ha expirado. Los valores son de solo lectura.",
+      "errors": {
+        "notFound": "No se encontró este Reel ensamblado.",
+        "notPublished": "Las métricas solo pueden registrarse para Reels publicados.",
+        "editWindowExpired": "La ventana de edición para estas métricas ha expirado.",
+        "rateLimited": "Demasiados intentos de guardado. Espera un momento e inténtalo de nuevo.",
+        "validation": "Revisa los campos resaltados e inténtalo de nuevo.",
+        "forbidden": "No tienes acceso para guardar métricas de Reels.",
+        "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+        "internal": "Algo salió mal. Inténtalo de nuevo más tarde.",
+        "unauthenticated": "Inicia sesión para continuar."
+      }
     }
   },
   "scripts": {
