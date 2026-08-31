@@ -41,7 +41,7 @@ No REDESIGN. No veto of PO lean defaults (Phase A talking-head + manual primary 
 | **Idempotency race / duplicate outputs** | Double FFmpeg spend, orphaned assets | Unique partial index or app-level guard on **completed** `(reel_script_id, script_updated_at, input_fingerprint)`; concurrent triggers → one winner, others return existing completed row or block on in-flight row (CONTRACT freezes). Terminal **`completed`** sticky |
 | **Stale timeout as client trigger** | Client forces fail/success | **`markStaleAssemblyJobsFailed()`** runs **only** in worker loop comparing `updated_at` to **`NEURAMARK_ASSEMBLY_STALE_TIMEOUT_MIN`** — not client-callable |
 | **Over-exposure in assembly DTO** | Leak storage keys, FFmpeg command, paths | Operator DTO: status, durations, asset ids for preview linkage, sanitized `failureReason` — **no** `storage_key`, `ffmpegArgs`, temp paths, or raw stderr |
-| **Phase B injection (deferred)** | `cold_open_notes` / B-roll paths become text injection | Phase B: trim seconds from **server-parsed numeric** field only — **never** raw free text in filtergraph. B-roll clip ids resolved server-side like primary — not client-supplied at trigger |
+| **Phase B injection** | `cold_open_notes` / B-roll paths become text injection | **See Phase B section below** — numeric trim only; server-resolved broll ids; concat args-array + owned assets only |
 
 **Residual risk accepted:** Operator trust — Operator can assemble for server-resolved client (V1: self). Compromise of Fly worker env or service-role key is ops-level blast radius (same as US-8.4 poller). FFmpeg parsing malicious MP4 is a supply-chain concern bounded by owned assets only. UUID guessing against uniform 404 is low sensitivity. Cliente preview of assembled Reel at approval (US-11.1) may require widening media serve auth — defer; V1 Operator-only serve is acceptable. Phase B B-roll stitch adds concat surface — same args-array + ownership floors apply when implemented.
 
@@ -337,3 +337,251 @@ When CONTRACT.md lands, security-architect re-runs the spot-check checklist; **e
 **APPROVE WITH CONDITIONS** — US-9.1 is the project's primary **command-injection** and **SSRF** surface (SECURITY_BASELINE Top 5). The PO design correctly isolates FFmpeg to a **trusted Fly worker**, restricts trigger input to a **single pointer**, resolves media through **owned `media_assets` rows**, and forbids **assembly-time URL fetch**. Conditions are the frozen CONTRACT items: spawn-only FFmpeg, closed status writes, tenancy checks on script/job/assets, and Operator-gated serve. Satisfying them closes injection, SSRF, IDOR, and client-authority bypass without blocking US-9.2 / US-10.1 / US-11.1 downstream consumption.
 
 **CONTRACT may proceed:** **Yes** (after spec-guardian SPEC-REVIEW and FE review line in CONTRACT).
+
+---
+---
+
+# Security Design Review — US-9.1 Phase B (Faceless B-roll stitch)
+
+**Story:** US-9.1 Phase B — stitch completed Wan `broll` clips (+ voiceover) into 9:16 assembled Reel for **faceless** only  
+**Sprint label:** `US-9.1-B`  
+**Date:** 2026-08-31  
+**Reviewer:** security-architect  
+**Branch:** `feature/US-9.1-phase-b-broll-stitch`  
+**Sources:** `plan/stories/US-9.1/PHASE-B.md` (PO B1–B14), Phase A section above, `plan/SECURITY_BASELINE.md` (FFmpeg / SSRF), `plan/stories/US-8.5/SECURITY.md` (owned `broll` handoff, degrade non-leak, no CDN-at-assembly), `plan/stories/US-9.1/CONTRACT.md` Phase B stub, `docs/adr/0003-worker-flyio-ffmpeg.md`  
+**Status:** Binding amendment to US-9.1 SECURITY. Phase A floors **remain in force** — Phase B **extends** them; it does not replace or weaken them. Do not treat this file as CONTRACT.md. Do not check off `USER_STORIES.md` AC here.  
+**Primary implementers:** **media-pipeline-engineer** (`build-broll-concat-args`, faceless `runAssemblyJob` branch). **nextjs-backend** (`resolveAssemblyInputs` faceless, fingerprint `path_tag`, CONTRACT Phase B). **nextjs-frontend** (Assemble enablement only — no path/URL authority).
+
+---
+
+## Verdict: APPROVE WITH CONDITIONS
+
+Phase B shape is correct and inherits Phase A controls: **same** Operator-gated `{ reelScriptId }` trigger; **server-resolved** ordered `broll` asset FKs (cap **8**) + voiceover; **Fly worker** concat via **`build-broll-concat-args` → `spawn('ffmpeg', args[], { shell: false })`** on **server temp paths only**; **Storage SDK** downloads of **owned** `media_assets` only — **never** client paths/URLs, **never** SiliconFlow CDN at assembly; **optional cold-open** as **numeric seconds** only; **degrade** to Phase A primary / `ASSEMBLY_INPUTS_INCOMPLETE` **without** vendor bodies, keys, argv, or temp paths in Operator-visible errors.
+
+No REDESIGN. No veto of PO freezes B1–B14. CONTRACT Phase B amendment may proceed after encoding the conditions below.
+
+**Condition count (Phase B):** **10** binding conditions (must land in CONTRACT Phase B + BUILD; see § Conditions before BUILD — Phase B).
+
+**Phase A floors that remain absolute (do not weaken):** `requireOperator("handler")` first; pointer-only trigger + `FORBIDDEN_FIELDS`; spawn args-array / `shell: false`; Storage SDK only (no assembly-time HTTP fetch); worker-only status writes; IDOR **404**; Operator DTO closed (no `storage_key` / ffmpeg argv / stderr); ADR-0003 (FFmpeg on Fly).
+
+**This phase owns:** Faceless branch of `resolveAssemblyInputs`; `input_fingerprint` extension (`ordered_broll_asset_ids` + `path_tag`); **`lib/assembly/ffmpeg/build-broll-concat-args.ts`**; faceless stitch path in `runAssemblyJob`; degrade / incomplete messaging hygiene; multi-asset ownership re-check; optional `parseColdOpenTrimSec` (CONTRACT name) — numeric only.
+
+**This phase does not own:** Wan adapter / `createBrollVideoJobs` (US-8.5 ✅); talking-head B-roll overlays; full rewind FX / free-text `editing_hints`; US-9.2 drawtext; weekly auto-assemble; new assemble Route Handler; Cliente assemble.
+
+---
+
+### Threat Summary (US-9.1 Phase B–specific)
+
+| Threat | Impact | Mitigation in Phase B |
+|---|---|---|
+| **Concat / filtergraph injection** | RCE via shell metacharacters, demuxer file lists, or filter_complex text | **`spawn('ffmpeg', args[], { shell: false })` only.** Builder **`build-broll-concat-args`** is a pure function over **local temp paths** (server UUID workspace) + **numeric** duration/tolerance/trim. **Forbidden in argv:** `brollBeats` text, raw `cold_open_notes`, Operator free text, original filenames, Storage keys, URLs |
+| **Multi-clip IDOR / cross-tenant stitch** | Job for client A concat’d with client B’s B-roll MP4s | Every resolved `broll` (and voiceover) asset: **`WHERE id = $1 AND client_id = $jobClientId`** at resolver **and** again in worker before each Storage read. Foreign → fail / incomplete — **no** spawn |
+| **Client-supplied clip paths / URLs / asset ids** | Path traversal, SSRF, cross-tenant input swap | Trigger remains **`{ reelScriptId }` only**. Reject `brollAssetIds`, `clipPaths`, `concatList`, URLs, `path_tag`, fingerprint overrides → **`FORBIDDEN_FIELDS`**. Ordering from server: completed `video_jobs` with `asset_role = broll`, **`created_at ASC`**, cap **8** |
+| **SSRF / CDN fetch at stitch time** | Worker fetches SiliconFlow or arbitrary HTTPS | Same Phase A SSRF floor: **Storage SDK + validated `storage_key` only**. US-8.5 handoff = owned `media_assets` — **no** `fetch(cdnUrl)` in `lib/assembly/**` |
+| **`cold_open_notes` text injection** | Free text becomes `-vf` / filter option | Optional lead trim **only** if server parse yields safe **non-negative integer seconds** within CONTRACT bounds (regex + max). Unparsable → **skip trim** (no fail-open into argv). **Never** pass raw notes string into FFmpeg |
+| **Degrade path secret / internals leak** | Operator sees Wan bodies, Bearer tokens, ffmpeg argv, temp paths when clips missing | Degrade / incomplete: sanitized **messageKey** + closed codes only (mirror US-8.5 degrade non-leak). **No** vendor JSON, Authorization, `storage_key`, argv, stderr, or clip URLs in DTO/logs |
+| **Talking-head accidental stitch** | Wrong modality runs concat / mixes unrelated broll | Stitch **only** when `modalidad === "faceless"` **and** ≥1 completed owned broll. Talking-head **always** Phase A primary path — **ignore** broll even if present |
+| **Assemble without Operator** | Cliente / unauth triggers expensive FFmpeg | Unchanged: **`requireOperator("handler")` first** on `assembleReelForScript` / orchestrator — Cliente **403**, no INSERT |
+| **Fingerprint bypass / path confusion** | Force re-run or wrong idempotency bucket | `input_fingerprint` server-only: include ordered broll ids + **`path_tag`** (`primary` vs `broll_stitch` — CONTRACT freezes exact strings). Client cannot supply `path_tag` or fingerprint |
+| **Unbounded clip concat** | CPU/DoS via huge N | Hard cap **8** (align US-8.5). Excess completed jobs ignored after ordered take |
+
+**Residual risk accepted (Phase B):** Malicious MP4 bytes in owned B-roll clips remain a content/parser risk bounded by download-and-own + tenancy (same as Phase A primary). Partial stitch (e.g. 3 of 5) is intentional product degrade — not a security bypass. Optional lineage JSON of broll ids on assembly row (if CONTRACT adds) must stay server-written and out of over-broad Operator DTOs.
+
+---
+
+## Assets and Trust Boundaries (Phase B delta)
+
+| Asset | Sensitivity | Trust boundary |
+|---|---|---|
+| Up to 8 owned `broll` MP4s | **High** — tenant content | Resolved from completed jobs + `media_assets` with **`client_id`** match; Storage SDK only |
+| Concat demuxer / filter_complex | **High** — injection surface | Built only from **server temp basenames** under `/tmp/neuramark-assembly/{assemblyJobId}/` |
+| `cold_open_notes` (script field) | **Untrusted text** | Parsed to integer seconds or discarded — never argv |
+| `brollBeats` / beat text | **Untrusted text** | Metadata/fingerprint count alignment only — **never** FFmpeg argv |
+| Degrade / incomplete Operator messages | Medium | Sanitized codes + i18n keys — no secrets/paths |
+| Extended `input_fingerprint` | Medium | Server-only hash over owned asset ids + `path_tag` |
+
+**Boundaries (unchanged topology + Phase B rules):**
+
+1. **Browser → assemble** — Still untrusted; **`{ reelScriptId }` only**; **`requireOperator("handler")` first**. FE enablement for faceless is convenience — server enforces B2/B4.
+2. **Resolver (faceless)** — Server lists completed owned broll jobs (cap 8, `created_at ASC`); verifies each output asset tenancy; requires voiceover when stitch path has no usable audio (CONTRACT); zero broll → degrade rules (B4).
+3. **Worker faceless branch** — Re-verify ownership per clip → download to fixed temp names (`broll-0.mp4` …) → **`build-broll-concat-args`** → spawn → upload `assembled_reel`. Talking-head never enters this branch for stitch.
+4. **No new HTTP asset route** — Worker still must not use M1/HMAC or vendor CDN URLs for stitch inputs.
+
+---
+
+## Abuse Cases Considered (Phase B)
+
+- *As a malicious actor, I POST `{ brollAssetIds: ["<victim-uuid>", …] }` on assemble* → **Blocked:** forbidden field; resolver ignores client lists.
+- *As a malicious actor, I POST `{ concatListPath: "/etc/passwd" }` or a clip URL* → **Blocked:** forbidden; worker builds paths only inside job UUID temp dir.
+- *As a malicious actor, I put `-i http://169.254.169.254/` in `cold_open_notes`* → **Blocked:** numeric parse only; raw string never reaches argv; unparsable → no trim.
+- *As a malicious actor, I inject via `brollBeats` text into filter_complex* → **Blocked:** beats never enter FFmpeg builders (B3/B6).
+- *As a malicious actor, I stitch another tenant’s completed broll by guessing asset UUIDs already in my script’s job rows* → **Blocked:** asset rows must match assembly **`client_id`**; foreign → no Storage read / no spawn.
+- *As a Cliente, I call assemble now that faceless stitch exists* → **Blocked:** **`requireOperator`** → **403**.
+- *As a malicious actor, I force talking-head to concat broll overlays* → **Blocked:** modality gate — talking-head ignores broll (B2).
+- *As a malicious actor, I read SiliconFlow CDN URL from a failed Wan job and expect assembly to fetch it* → **Blocked:** assembly never reads provider URLs; only owned `storage_key`.
+- *As a malicious actor, I trigger assemble with zero broll to scrape Wan errors from `failure_reason`* → **Blocked:** degrade/incomplete uses sanitized messageKey/codes only — no vendor bodies (US-8.5 parity).
+- *As a malicious actor, I supply `path_tag: "broll_stitch"` with empty inputs to skip checks* → **Blocked:** `path_tag` server-computed from resolved modality/path; not request-accepted.
+- *As a malicious actor, I use `exec("ffmpeg " + userArgs)` in the concat module* → **VETO / REJECT** at review — args-array only.
+
+---
+
+## Security Acceptance Criteria (Phase B — checkbox format)
+
+Phase A `[SEC]` criteria above remain binding. Items below are **additive** for Phase B BUILD. Story `[SEC]` rows in USER_STORIES.md (args-array + no assembly-time URL fetch) **must be re-validated** against the concat path.
+
+**Inherited (re-assert — do not weaken):**
+
+- [ ] **[SEC] FFmpeg invoked with argument arrays, never shell string interpolation; inputs from validated owned `media_assets` only** *(USER_STORIES US-9.1 — applies to concat)*
+- [ ] **[SEC] Assembly never fetches arbitrary URLs at assembly time (SSRF guard)** *(USER_STORIES US-9.1 — applies to multi-clip download)*
+- [ ] **[SEC] `assembleReelForScript` / orchestrator: `requireOperator("handler")` as first await** *(Phase A — unchanged for Phase B trigger)*
+- [ ] **[SEC] US-8.5 degrade non-leak floor:** failure/degrade surfaces never echo SiliconFlow/Wan secrets or raw vendor bodies *(US-8.5)*
+
+**Added for Phase B (binding):**
+
+- [ ] **[SEC] (Phase B) Concat builder:** **`build-broll-concat-args`** (CONTRACT-exact path under `lib/assembly/ffmpeg/`) returns **`string[]` only**; unit golden tests; **no** `exec` / `execSync` / shell string. Worker spawn: **`spawn('ffmpeg', args, { shell: false })`**
+- [ ] **[SEC] (Phase B) Argv content allowlist:** concat demuxer / `-filter_complex` / `-i` entries reference **server temp paths** under `/tmp/neuramark-assembly/{assemblyJobId}/` with **fixed basenames** only. **Forbidden in argv:** `brollBeats`, raw `cold_open_notes`, script prose, Operator text, `storage_key`, original upload filenames, any `http(s):` URL
+- [ ] **[SEC] (Phase B) Multi-asset ownership:** for **each** broll input id (and voiceover when used), resolver + worker **`SELECT … WHERE id = $1 AND client_id = $jobClientId`**. Any mismatch → **no** Storage read for that job run, **no** FFmpeg spawn; sanitized fail/incomplete
+- [ ] **[SEC] (Phase B) No client-supplied paths/URLs/clip lists:** extend **`findForbiddenAssemblyKeys`** (or Phase B equivalent) to reject at least: `brollAssetIds`, `broll_asset_ids`, `clipPaths`, `clipUrls`, `concatList`, `concat_list_path`, `ffmpegArgs`, `path_tag`, `inputFingerprint`, any URL-shaped field → **`FORBIDDEN_FIELDS`**. Trigger schema remains **`{ reelScriptId }` only**
+- [ ] **[SEC] (Phase B) Server-only clip resolution:** completed jobs with **`asset_role = broll`**, owned output asset, ordered **`created_at ASC`**, cap **8**. Talking-head modalities **must not** select the stitch path even if broll rows exist
+- [ ] **[SEC] (Phase B) Cold-open numeric trim only:** optional trim seconds from **server parse** of `cold_open_notes` — CONTRACT-frozen regex + **non-negative integer** + **max bound**. Pass **number** into builder only. Unparsable / out-of-bounds → omit trim (do not interpolate string). **No** rewind FX / free-text filters in V1 Phase B
+- [ ] **[SEC] (Phase B) Degrade without secret leak:** zero completed broll → Phase A primary path if owned primary exists; else **`ASSEMBLY_INPUTS_INCOMPLETE`** + faceless **messageKey**. Partial sets stitch completed subset only. Operator-visible errors/logs: **no** vendor bodies, Bearer/key substrings, ffmpeg argv, temp paths, or `storage_key`
+- [ ] **[SEC] (Phase B) Fingerprint extension server-only:** fingerprint includes ordered broll asset ids + **`path_tag`** distinguishing `primary` vs `broll_stitch` (CONTRACT exact strings). Client cannot override. Idempotency triple tenancy rules unchanged
+- [ ] **[SEC] (Phase B) No SiliconFlow / arbitrary HTTP in assembly:** grep/test — `lib/assembly/**` still has **zero** `fetch(` for asset bytes; downloads via Storage SDK + validated keys only (US-8.5 handoff)
+- [ ] **[SEC] (Phase B) Automated security tests cover at least:** (1) forbidden broll/path/URL fields rejected; (2) Cliente **403** on assemble; (3) cross-tenant broll asset id rejected before spawn; (4) `build-broll-concat-args` golden args contain only temp paths + numerics — fixture `cold_open_notes` with metacharacters does not appear in argv; (5) mocked spawn receives **array** not string, `shell: false`; (6) degrade/incomplete message fixtures contain no key/CDN/argv substrings; (7) talking-head + present broll → Phase A builder path (no concat); (8) grep no `fetch(` in `lib/assembly/**` for downloads
+
+---
+
+## Design Concerns and Required Changes (Phase B)
+
+### Frozen design choices (must land in CONTRACT Phase B)
+
+#### B-1. Trigger / Operator gate — **unchanged** (APPROVE)
+
+| Rule | Detail |
+|---|---|
+| Input | **`{ reelScriptId }` only** |
+| Gate | **`requireOperator("handler")` first** |
+| FE | Assemble enablement for faceless is UI-only; server enforces completeness |
+
+#### B-2. FFmpeg concat — **args-array, temp paths only** (APPROVE WITH CONDITIONS)
+
+| Rule | Detail |
+|---|---|
+| Module | **`build-broll-concat-args.ts`** pure `string[]` |
+| Spawn | **`shell: false`** — same Phase A vetoes |
+| Graph inputs | Local temp clip paths + optional voiceover path + numeric duration/tolerance/trim |
+| Forbidden | Beat text, notes string, URLs, Storage keys in argv |
+
+**Condition:** CONTRACT freezes builder signature, temp basename scheme, and concat approach (concat demuxer vs filter_complex) with **no user-text slots**.
+
+#### B-3. Ownership — **N-clip tenancy** (APPROVE)
+
+Every clip + voiceover re-checked; foreign → fail closed before I/O.
+
+#### B-4. Cold open — **integer seconds or skip** (APPROVE WITH CONDITIONS)
+
+| Rule | Detail |
+|---|---|
+| Parse | Safe non-negative int + max (CONTRACT) |
+| Fail mode | Skip trim if unparsable — **never** pass through string |
+| Out of scope | Rewind FX, free-text filters |
+
+#### B-5. Degrade — **product continuity + secret hygiene** (APPROVE WITH CONDITIONS)
+
+| Rule | Detail |
+|---|---|
+| Zero broll | Phase A if primary exists; else incomplete + messageKey |
+| Partial | Stitch completed subset — no wait-for-all |
+| Secrets | Same sanitizer bar as US-8.5 / Phase A DTOs |
+
+#### B-6. Modality / fingerprint — **server path selection** (APPROVE)
+
+Faceless + ≥1 broll → `broll_stitch` tag; talking-head → `primary` tag and Phase A graph. Fingerprint server-only.
+
+---
+
+### Vetoes (Phase B — would block BUILD)
+
+| If implementers… | Verdict |
+|---|---|
+| Use shell-string / `exec` for concat | **REJECT** |
+| Pass `brollBeats`, raw `cold_open_notes`, or user filenames into FFmpeg argv | **REJECT** |
+| Accept client `brollAssetIds`, clip paths, concat lists, or URLs on trigger | **REJECT** |
+| `fetch(httpUrl)` / SiliconFlow CDN for stitch inputs | **REJECT** |
+| Skip per-clip `client_id` ownership check | **REJECT** |
+| Assemble trigger without `requireOperator("handler")` | **REJECT** |
+| Put vendor bodies, argv, or `storage_key` in degrade/incomplete Operator messages | **REJECT** |
+| Run faceless concat for talking-head modalities | **REJECT** (product + confused-deputy surface) |
+
+---
+
+## Future-Proofing Notes (Phase B)
+
+- **US-9.2** must not reuse concat builder as a vehicle for unsanitized drawtext — separate burn-in SECURITY.
+- **Weekly auto-assemble** must call the same orchestrator (no alternate stitch entry that skips Operator/system-actor auth story).
+- **Optional `broll_asset_ids` lineage column:** server-written only; omit from broad DTOs unless preview needs ids (prefer output asset id only).
+- **Multi-tenancy:** N-clip ownership checks are the IDOR defense when RLS arrives — keep them even while single-tenant locally.
+
+---
+
+## CONTRACT Spot-Check Checklist (Phase B section)
+
+Before Phase B BUILD, verify CONTRACT Phase B amendment:
+
+- [ ] Faceless resolve rules (B2/B4), cap **8**, `created_at ASC`, talking-head ignores broll
+- [ ] Fingerprint formula + exact **`path_tag`** strings
+- [ ] **`build-broll-concat-args`** signature — local paths + numerics only; spawn `shell: false`
+- [ ] Cold-open parse regex/bounds; unparsable → skip
+- [ ] Forbidden fields list extended for broll/path/URL keys
+- [ ] Degrade / `ASSEMBLY_INPUTS_INCOMPLETE` messageKeys — no secret leakage notes
+- [ ] Voiceover required when stitch has no usable audio
+- [ ] Security test matrix for concat injection, multi-asset IDOR, degrade non-leak, modality gate
+- [ ] **Reviewed by FE** line for Assemble enablement
+- [ ] Phase A floors explicitly still binding
+
+---
+
+## Conditions before BUILD — Phase B (binding — condition count = 10)
+
+1. **Anti–shell-injection:** `build-broll-concat-args` → `spawn(..., { shell: false })` only; golden tests; no `exec`/shell strings.
+2. **Anti–filtergraph-text-injection:** argv from server temp paths + numerics only — never beats/notes/filenames/URLs/`storage_key`.
+3. **Anti–multi-clip-IDOR:** ownership check on **every** broll (+ voiceover) at resolve and before each Storage read.
+4. **Anti–client-path/URL-authority:** trigger `{ reelScriptId }` only; extended `FORBIDDEN_FIELDS` for clip lists/paths/URLs/`path_tag`.
+5. **Anti–SSRF-at-stitch:** Storage SDK only; no SiliconFlow CDN / `fetch(` for assembly inputs.
+6. **Anti–cold-open-string-passthrough:** numeric trim seconds only (regex + bounds); else skip — never raw string in argv.
+7. **Anti–degrade-secret-leak:** incomplete/degrade Operator surfaces sanitized (US-8.5 parity) — no vendor/argv/path/key leakage.
+8. **Anti–Cliente-trigger:** `requireOperator("handler")` first on assemble mutate path (re-assert).
+9. **Anti–modality-confused-deputy:** stitch only for faceless + ≥1 owned completed broll; talking-head always Phase A primary path.
+10. **Anti–fingerprint-forgery:** server-only fingerprint including ordered broll ids + `path_tag`; client cannot supply.
+
+---
+
+## BUILD vetoes (Phase B summary)
+
+1. **Shell-string or `exec`-based concat/FFmpeg.**
+2. **`brollBeats` / raw `cold_open_notes` / user filenames / URLs in FFmpeg argv.**
+3. **Client-supplied broll asset ids, clip paths, concat lists, or URLs on assemble.**
+4. **HTTP(S) or SiliconFlow CDN fetch for stitch input bytes.**
+5. **Missing per-clip `client_id` ownership verification.**
+6. **Assemble without `requireOperator("handler")`.**
+7. **Degrade/incomplete messages exposing secrets, argv, temp paths, or `storage_key`.**
+8. **Faceless concat executed for talking-head modalities.**
+9. **Client-supplied or overridable `path_tag` / `input_fingerprint`.**
+10. **Skipping security tests for concat argv hygiene, multi-asset IDOR, and degrade non-leak.**
+
+---
+
+## Verdict Rationale (Phase B)
+
+**APPROVE WITH CONDITIONS** — Phase B correctly extends the Phase A assembly trust model to **N owned B-roll clips** without opening new browser authority, shell, or SSRF surfaces. Primary new risks are **concat argv injection**, **multi-asset IDOR**, and **degrade/cold-open text leakage into FFmpeg or Operator DTOs** — all addressable with the **10 conditions** above. US-8.5 already guarantees download-and-own `broll` assets; assembly must **consume those rows only**.
+
+**CONTRACT Phase B may proceed:** **Yes** (after/with SPEC-REVIEW Phase B). **Next gate:** nextjs-backend CONTRACT Phase B section + FE Reviewed line → BUILD.
+
+### Gate summary (Phase B)
+
+| Field | Value |
+|---|---|
+| **Verdict** | **APPROVE WITH CONDITIONS** |
+| **Condition count** | **10** |
+| **Veto** | No |
+| **Next gate** | CONTRACT.md Phase B amendment |
