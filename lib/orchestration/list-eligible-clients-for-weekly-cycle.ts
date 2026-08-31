@@ -39,7 +39,16 @@ export async function listEligibleClientsForWeeklyCycle(
       result.skipped.push({ clientId: row.id, skipReason: "INACTIVE" });
       continue;
     }
-    const profile = await dependencies.getProfile(row.id);
+    let profile: Awaited<ReturnType<typeof getBusinessProfileForAgents>>;
+    try {
+      profile = await dependencies.getProfile(row.id);
+    } catch {
+      result.skipped.push({
+        clientId: row.id,
+        skipReason: "PROFILE_LOAD_FAILED",
+      });
+      continue;
+    }
     if (!profile.exists) {
       result.skipped.push({ clientId: row.id, skipReason: "loadFailed" in profile ? "PROFILE_LOAD_FAILED" : "PROFILE_MISSING" });
     } else if (profile.visualModeSummary === null) {

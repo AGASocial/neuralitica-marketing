@@ -26,4 +26,39 @@ describe("weekly cycle eligibility", () => {
       { clientId: "inactive", skipReason: "INACTIVE" },
     ]);
   }));
+
+  it("isolates a rejected profile lookup and continues to a later eligible client", async () => withServerOnlyStub(async () => {
+    const { listEligibleClientsForWeeklyCycle } = await import("./list-eligible-clients-for-weekly-cycle");
+    const rows = [
+      { id: "rejecting-client", active: true },
+      { id: "later-eligible-client", active: true },
+    ];
+    const query = { select: () => query, eq: () => query, order: async () => ({ data: rows, error: null }) };
+    const visited: string[] = [];
+    const result = await listEligibleClientsForWeeklyCycle({
+      createClient: (() => ({ from: () => query })) as never,
+      getProfile: async (clientId: string) => {
+        visited.push(clientId);
+        if (clientId === "rejecting-client") {
+          throw new Error("isolated profile failure");
+        }
+        return {
+          exists: true,
+          clientId: "11111111-1111-4111-8111-111111111111",
+          version: 1,
+          fields: {} as never,
+          visualModeSummary: {
+            allowedModes: [],
+            mustDiscloseNotOwner: false,
+          },
+        };
+      },
+    });
+
+    assert.deepEqual(visited, ["rejecting-client", "later-eligible-client"]);
+    assert.deepEqual(result.skipped, [
+      { clientId: "rejecting-client", skipReason: "PROFILE_LOAD_FAILED" },
+    ]);
+    assert.deepEqual(result.eligible, [{ clientId: "later-eligible-client" }]);
+  }));
 });
