@@ -133,6 +133,58 @@
 
 ---
 
+## Phase B-M2 — Assembly poll claim race — PREP
+
+**Sprint:** `US-9.1-B-M2` · **Branch:** `feature/US-9.1-b-m2-assembly-poll-claim` · **PREP:** [`PHASE-B-M2.md`](./PHASE-B-M2.md)
+
+**Closes:** QA Phase A Finding 1 · QA-PHASE-B Medium #1. **No** USER_STORIES AC changes. Mirror **CLOSED** US-9.2-B-M2.
+
+### Backend / worker (nextjs-backend + media-pipeline-engineer)
+
+- [ ] **`applyAssemblyJobUpdate`** — on `queued` → `processing` claim, conditional `UPDATE … WHERE status = 'queued'` + inspect UPDATE rows affected / `RETURNING`; **0 rows** → `{ idempotent: true }` (M2-3).
+- [ ] **`runAssemblyJob`** — if claim returns `idempotent: true`, or row already `processing` at entry → return **before** `mkdtemp` / download / FFmpeg (M2-4).
+- [ ] **`pollQueuedAssemblyJobsBatch`** — confirm candidate filter **`status = 'queued'`** only; do **not** poll `processing` (M2-5; align CONTRACT diagram).
+- [ ] **Unit test** — simulated lost claim / concurrent claim → **zero** `runFfmpeg` / spawn invocations; winner path unchanged (`run-assembly-job.test.ts` Phase B-M2).
+- [ ] **CONTRACT amend** — § Poll runtime + `runAssemblyJob` step 1: atomic claim semantics, idempotent skip, `queued`-only poll predicate (**nextjs-backend**).
+
+### Frontend
+
+- [ ] **None** (M2-9).
+
+### Database
+
+- [ ] **None** — conditional UPDATE on existing `neuramark_assembled_reels` row.
+
+### Security
+
+- [ ] **SECURITY.md lean amend** — close `[SEC] Worker job claim` AC (mirror US-9.2-B-M2 branding claim for **`status`**; security-architect).
+
+---
+
+## Agent routing summary (Phase B-M2)
+
+| Agent | Owns |
+|-------|------|
+| **media-pipeline-engineer** | `poll-assembly-jobs.ts`, `runAssemblyJob` early-return gate |
+| **nextjs-backend** | `applyAssemblyJobUpdate` rows-affected; CONTRACT amend; unit tests |
+| **nextjs-frontend** | None |
+| **security-architect** | SECURITY lean amend (worker claim) |
+
+---
+
+## Gate checklist — Phase B-M2
+
+- [x] PREP — [`PHASE-B-M2.md`](./PHASE-B-M2.md) + this checklist + README note
+- [ ] SECURITY.md lean amend (security-architect)
+- [ ] CONTRACT.md amend (nextjs-backend — atomic claim; FE Reviewed N/A)
+- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend)
+- [ ] VALIDATION lean (requirements-validator)
+- [ ] QA lean (qa-engineer) — close QA Phase A Medium #1 + QA-PHASE-B Medium #1
+- [ ] PO CLOSE M2
+- [ ] Do **not** check/uncheck USER_STORIES § US-9.1 AC
+
+---
+
 ## Frontend (nextjs-frontend) — Phase A ✅
 
 **Consumer surfaces:** `/operator/scripts` expand row (same pattern as video job panel).

@@ -1,6 +1,6 @@
 # US-9.1 — Assemble final 9:16 Reel
 
-**Status:** Phase A **CLOSED** (2026-08-30) — VALIDATION `03dff73` · QA `5c0ec7e` · 5/5 AC. **Phase B CLOSED** (2026-08-31) — faceless B-roll stitch; VALIDATION PASS WITH NOTES `6d13f4b` (5/5 AC + 16/16); QA APPROVE WITH CONDITIONS `37d0dcb` (0 Critical/High); fix `1106420`. Canonical Phase B doc: [`PHASE-B.md`](./PHASE-B.md).
+**Status:** Phase A **CLOSED** (2026-08-30) — VALIDATION `03dff73` · QA `5c0ec7e` · 5/5 AC. **Phase B CLOSED** (2026-08-31) — faceless B-roll stitch; VALIDATION PASS WITH NOTES `6d13f4b` (5/5 AC + 16/16); QA APPROVE WITH CONDITIONS `37d0dcb` (0 Critical/High); fix `1106420`. Canonical Phase B doc: [`PHASE-B.md`](./PHASE-B.md). **Phase B-M2 PREP** (2026-08-31) — assembly poll atomic claim; sprint **`US-9.1-B-M2`** · branch **`feature/US-9.1-b-m2-assembly-poll-claim`**. See [`PHASE-B-M2.md`](./PHASE-B-M2.md).
 
 **As a** System, **I want** to combine voice, avatar/B-roll, template, and timing, **so that** output is Instagram-ready vertical video.
 
@@ -70,6 +70,7 @@ _Evitar:_ shell FFmpeg strings; client-supplied asset URLs; long-lived third-par
 |-------|-------|--------|
 | **A (CLOSED 2026-08-30)** | DDL + orchestrator + worker FFmpeg **normalize path**: completed **primary** → **1080×1920** → trim/pad → **`assembled_reel`**. Talking-head + manual primary. Idempotency + Operator UI. | US-9.1 AC 5/5 |
 | **B (CLOSED 2026-08-31 — same story `US-9.1-B`)** | **Faceless** path: stitch up to **8** completed owned **`asset_role = broll`** clips + voiceover mux; optional safe numeric cold-open trim; **degrade** to Phase A primary path or incomplete when zero broll. Full rewind FX still out. Details + freezes: [`PHASE-B.md`](./PHASE-B.md). | SPEC §3 S3.M10 B-roll stitch handoff from US-8.5; re-validate US-9.1 SEC/duration AC on stitch path — **5/5 + 16/16 PASS** |
+| **B-M2 (US-9.1-B-M2 — PREP)** | Atomic assembly worker claim (`queued` → `processing`); lost race → idempotent skip spawn; poll `queued`-only (QA Phase A Finding 1 / QA-PHASE-B Medium #1). **No** new USER_STORIES AC. Mirror **CLOSED** US-9.2-B-M2 branding pattern. | Spend-control hardening — PREP; see [`PHASE-B-M2.md`](./PHASE-B-M2.md) |
 
 **VALIDATION note (binding):** Phase A VALIDATION documented partial S3.M10 (no B-roll stitch). Phase B VALIDATION must close that gap for stitch + note remaining rewind-FX defer if still out.
 
@@ -149,7 +150,17 @@ Full table in [`PHASE-B.md`](./PHASE-B.md). Do not reopen without PO + SECURITY:
 - [x] VALIDATION-PHASE-B.md — PASS WITH NOTES `6d13f4b` (5/5 + 16/16)
 - [x] QA-PHASE-B.md — APPROVE WITH CONDITIONS `37d0dcb` (0 Critical/High)
 
-**Phase B CLOSED.** Residual out: rewind FX · weekly auto-assemble · live FFmpeg E2E smoke. Non-blocking QA follow-ups: atomic worker claim · companion emission on jobs SELECT error.
+**Phase B CLOSED.** Residual out: rewind FX · weekly auto-assemble · live FFmpeg E2E smoke. Non-blocking QA follow-ups: companion emission on jobs SELECT error (QA-PHASE-B Medium #2). **Phase B-M2 PREP** tracks atomic worker claim (QA Phase A/Phase B Medium #1).
+
+### Phase B-M2 (PREP)
+
+- [x] PREP — [`PHASE-B-M2.md`](./PHASE-B-M2.md) + TASKS Phase B-M2 checklist + README note
+- [ ] SECURITY.md lean amend (security-architect — worker claim AC)
+- [ ] CONTRACT.md amend (nextjs-backend — atomic claim + poll `queued`-only; FE Reviewed N/A)
+- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend)
+- [ ] VALIDATION lean (requirements-validator)
+- [ ] QA lean (qa-engineer)
+- [ ] PO CLOSE M2
 
 ---
 
