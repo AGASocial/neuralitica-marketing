@@ -10,7 +10,12 @@ import type {
   ChangeRequestInput,
 } from "@/lib/contracts/approval-revision";
 import { getMaxRevisionRounds } from "@/lib/approvals/get-max-revision-rounds";
-import { parseChangeRequests } from "@/lib/approvals/parse-change-requests";
+import {
+  findClientRevisionRound,
+  parseChangeRequests,
+  withRoutingCompletedAt,
+  withRoutingStartedAt,
+} from "@/lib/approvals/parse-change-requests";
 import {
   createServerSupabaseClient,
   isSupabaseConfigured,
@@ -349,6 +354,100 @@ export async function grantExtraRevision(params: {
   }
 
   return mapApprovalRow(row as Record<string, unknown>);
+}
+
+/** Sets routingStartedAt on the matching client_revision round entry. */
+export async function markRevisionRoutingStarted(params: {
+  approvalId: string;
+  clientId: string;
+  round: number;
+}): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    return;
+  }
+
+  const approval = await loadApprovalByIdScoped({
+    approvalId: params.approvalId,
+    clientId: params.clientId,
+  });
+  if (!approval) {
+    return;
+  }
+
+  const roundEntry = findClientRevisionRound(
+    approval.changeRequests,
+    params.round,
+  );
+  if (!roundEntry || roundEntry.routingStartedAt) {
+    return;
+  }
+
+  const changeRequests = withRoutingStartedAt(
+    approval.changeRequests,
+    params.round,
+    new Date().toISOString(),
+  );
+
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from(APPROVALS_TABLE)
+    .update({ change_requests: changeRequests })
+    .eq("id", params.approvalId)
+    .eq("client_id", params.clientId);
+
+  if (error) {
+    console.error("[approvals] markRevisionRoutingStarted failed", {
+      code: error.code,
+      approvalId: params.approvalId,
+    });
+  }
+}
+
+/** Sets routingCompletedAt on the matching client_revision round entry. */
+export async function markRevisionRoutingCompleted(params: {
+  approvalId: string;
+  clientId: string;
+  round: number;
+}): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    return;
+  }
+
+  const approval = await loadApprovalByIdScoped({
+    approvalId: params.approvalId,
+    clientId: params.clientId,
+  });
+  if (!approval) {
+    return;
+  }
+
+  const roundEntry = findClientRevisionRound(
+    approval.changeRequests,
+    params.round,
+  );
+  if (!roundEntry) {
+    return;
+  }
+
+  const changeRequests = withRoutingCompletedAt(
+    approval.changeRequests,
+    params.round,
+    new Date().toISOString(),
+  );
+
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from(APPROVALS_TABLE)
+    .update({ change_requests: changeRequests })
+    .eq("id", params.approvalId)
+    .eq("client_id", params.clientId);
+
+  if (error) {
+    console.error("[approvals] markRevisionRoutingCompleted failed", {
+      code: error.code,
+      approvalId: params.approvalId,
+    });
+  }
 }
 
 /** Server-only requeue — changes_requested → pending_client. */

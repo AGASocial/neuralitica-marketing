@@ -8,9 +8,11 @@ import "server-only";
 import { revalidatePath } from "next/cache";
 
 import { requeueApprovalAfterRevisionParamsSchema } from "@/lib/contracts/approval-revision";
-import { loadApprovalByIdScoped } from "@/lib/approvals/persist-approval";
-import { requeueApprovalRow } from "@/lib/approvals/persist-approval";
-import { markRevisionRoutingCompleted } from "@/lib/approvals/revision/persist-revision-routing";
+import {
+  loadApprovalByIdScoped,
+  markRevisionRoutingCompleted,
+  requeueApprovalRow,
+} from "@/lib/approvals/persist-approval";
 import { getQaGateStatusForAssembledReel } from "@/lib/qa/get-qa-gate-status-for-assembled-reel";
 
 export type RequeueApprovalAfterRevisionParams = {

@@ -635,7 +635,6 @@ describe("closed write surface grep", () => {
       "lib/approvals/persist-approval.ts",
       "lib/approvals/requeue-approval-after-revision.ts",
       "lib/approvals/route-approval-change-request.ts",
-      "lib/approvals/revision/persist-revision-routing.ts",
     ];
     for (const rel of allowed) {
       const src = readFileSync(path.join(repoRoot, rel), "utf8");
