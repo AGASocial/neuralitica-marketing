@@ -1,7 +1,7 @@
 # API Contract — US-12.2 Mark manual publication done
 
 **Story:** US-12.2  
-**Status:** Frozen — 2026-08-30 · **Reviewed by FE:** pending — nextjs-frontend  
+**Status:** Frozen — 2026-08-30 · **Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend  
 **Security:** `plan/stories/US-12.2/SECURITY.md` (APPROVE WITH CONDITIONS — 13 conditions reconciled below)  
 **Spec review:** `plan/stories/US-12.2/SPEC-REVIEW.md` (GAPS — 5 Low closed below)  
 **Pattern:** US-12.1 calendar read + sync · US-11.x approval statuses · ADR-0002 approved-only guard (manual mark only)  
@@ -543,7 +543,20 @@ If sync needs publish awareness for tests/logging, may SELECT `publish_status`, 
 
 ## Reviewed by FE
 
-**Reviewed by FE:** pending — nextjs-frontend
+**Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend
+
+**Verdict:** Accept — extend existing `OperatorCalendarView` Sidebar + PrimeReact `Dialog` against frozen `markCalendarSlotPublished` / `CalendarSlotDetailDto` types in `lib/contracts/calendar.ts`. Matches US-12.1 week-refresh and approval-mutation patterns (`useTransition` + `router.refresh()`).
+
+### FE signoff notes (non-blocking)
+
+- **Surface:** No new route — Dialog + CTAs live in `components/calendar/OperatorCalendarView.tsx` (optional small child component for form state). Sidebar already holds slot DTO from card click.
+- **CTA gating (UX):** Show **Mark published** when `pipelineStatus === 'approved'`; **Update publish details** when `pipelineStatus === 'published'`. Hide for draft / generating / qa / pending / rejected. Operator may mark any active client slot — not limited to `sessionClientId` (deep links remain session-client only per US-12.1).
+- **Dialog form:** PrimeReact `Dialog` + `Calendar` date picker (default **Operator-local today** as `YYYY-MM-DD` submit shape) + optional IG URL `InputText`. Pending via `useTransition` on submit; map `VALIDATION_ERROR` field keys and `messageKey` via `CALENDAR_MARK_PUBLISHED_MESSAGE_KEYS` / `calendar.markPublished.*`.
+- **Success path:** Close Dialog; **`router.refresh()`** on current `weekStart` satisfies CONTRACT minimum (RSC re-fetches `getOperatorCalendarForWeek`). Optional optimistic merge of returned `slot` into `selectedSlot` / grid state is allowed but not required.
+- **Published display:** Sidebar shows formatted `publishedAt` (UTC noon DTO → calendar date via ISO slice or `Intl` UTC, same as `scheduledDate`). IG link icon only when `instagramPostUrl` non-null from DTO; `target="_blank"` + `rel="noopener noreferrer"` — never bind form input to `href`.
+- **Cards:** Violet `CalendarStatusTag` already wired; add published check + IG icon affordance on grid cards per DESIGN §10 when `pipelineStatus === 'published'`.
+- **i18n:** New `calendar.markPublished.*` EN/ES; extend page copy props from `app/(app)/operator/calendar/page.tsx`.
+- **Disputes:** none.
 
 **FE signoff checklist (blocking BUILD):**
 
