@@ -3,14 +3,14 @@
 > Mantenido por `master-orchestrator`. No editar manualmente salvo para corregir un atasco.
 
 ```yaml
-current_phase: 3
-current_story: null
-story_status: SELECT
-feature_branch: null
+current_phase: 5
+current_story: US-12.1
+story_status: PREP
+feature_branch: feature/US-12.1-weekly-calendar
 last_completed_story: US-11.3
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T02:00:00Z
+updated_at: 2026-08-31T02:05:00Z
 ```
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
