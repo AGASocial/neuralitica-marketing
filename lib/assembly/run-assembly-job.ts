@@ -103,12 +103,19 @@ export async function runAssemblyJob(
     return;
   }
 
+  if (job.status === "processing") {
+    return;
+  }
+
   if (job.status === "queued") {
-    await applyAssemblyJobUpdate({
+    const claim = await applyAssemblyJobUpdate({
       assemblyJobId: job.id,
       patch: { status: "processing" },
       source: "worker",
     });
+    if (claim.idempotent) {
+      return;
+    }
   }
 
   const activeJob = await loadAssemblyJobByIdUnscoped(assemblyJobId);

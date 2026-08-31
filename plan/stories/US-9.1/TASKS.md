@@ -141,10 +141,10 @@
 
 ### Backend / worker (nextjs-backend + media-pipeline-engineer)
 
-- [ ] **`applyAssemblyJobUpdate`** — on `queued` → `processing` claim, conditional `UPDATE … WHERE status = 'queued'` + inspect UPDATE rows affected / `RETURNING`; **0 rows** → `{ idempotent: true }` (M2-3).
-- [ ] **`runAssemblyJob`** — if claim returns `idempotent: true`, or row already `processing` at entry → return **before** `mkdtemp` / download / FFmpeg (M2-4).
-- [ ] **`pollQueuedAssemblyJobsBatch`** — confirm candidate filter **`status = 'queued'`** only; do **not** poll `processing` (M2-5; align CONTRACT diagram).
-- [ ] **Unit test** — simulated lost claim / concurrent claim → **zero** `runFfmpeg` / spawn invocations; winner path unchanged (`run-assembly-job.test.ts` Phase B-M2).
+- [x] **`applyAssemblyJobUpdate`** — on `queued` → `processing` claim, conditional `UPDATE … WHERE status = 'queued'` + inspect UPDATE rows affected / `RETURNING`; **0 rows** → `{ idempotent: true }` (M2-3).
+- [x] **`runAssemblyJob`** — if claim returns `idempotent: true`, or row already `processing` at entry → return **before** `mkdtemp` / download / FFmpeg (M2-4).
+- [x] **`pollQueuedAssemblyJobsBatch`** — confirm candidate filter **`status = 'queued'`** only; do **not** poll `processing` (M2-5; align CONTRACT diagram).
+- [x] **Unit test** — simulated lost claim / concurrent claim → **zero** `runFfmpeg` / spawn invocations; winner path unchanged (`run-assembly-job.test.ts` Phase B-M2).
 - [ ] **CONTRACT amend** — § Poll runtime + `runAssemblyJob` step 1: atomic claim semantics, idempotent skip, `queued`-only poll predicate (**nextjs-backend**).
 
 ### Frontend
@@ -177,7 +177,7 @@
 - [x] PREP — [`PHASE-B-M2.md`](./PHASE-B-M2.md) + this checklist + README note
 - [ ] SECURITY.md lean amend (security-architect)
 - [ ] CONTRACT.md amend (nextjs-backend — atomic claim; FE Reviewed N/A)
-- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend)
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend)
 - [ ] VALIDATION lean (requirements-validator)
 - [ ] QA lean (qa-engineer) — close QA Phase A Medium #1 + QA-PHASE-B Medium #1
 - [ ] PO CLOSE M2

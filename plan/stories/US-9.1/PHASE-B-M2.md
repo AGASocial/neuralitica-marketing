@@ -109,7 +109,7 @@ See [`TASKS.md`](./TASKS.md) § Phase B-M2 checklist.
 - [x] PREP — this file + TASKS Phase B-M2 checklist + README note
 - [ ] SECURITY.md lean amend (security-architect — worker claim AC)
 - [ ] CONTRACT.md amend (nextjs-backend — atomic claim + poll `queued`-only; FE Reviewed N/A)
-- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend)
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend)
 - [ ] VALIDATION lean (requirements-validator)
 - [ ] QA lean (qa-engineer) — close QA Phase A Medium #1 + QA-PHASE-B Medium #1
 - [ ] PO CLOSE M2 — README / TASKS gates (USER_STORIES AC unchanged)

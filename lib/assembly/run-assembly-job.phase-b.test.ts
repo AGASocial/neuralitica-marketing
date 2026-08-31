@@ -407,38 +407,94 @@ async function withAssemblyMocks(
 function createAssemblyQuery(
   rows: Array<Record<string, unknown>>,
   updates: Array<Record<string, unknown>>,
+  options: { loseProcessingClaim?: boolean } = {},
 ) {
   const builder = {
     select: () => builder,
     eq: (_col: string, value: string) => {
-      builder._id = value;
+      builder._eqCol = _col;
+      builder._eqVal = value;
       return builder;
     },
-    maybeSingle: async () => ({
-      data: rows.find((row) => row.id === builder._id) ?? null,
-      error: null,
-    }),
-    update: (patch: Record<string, unknown>) => {
-      updates.push(patch);
-      return {
-        eq: (_col: string, id: string) => ({
-          in: async (_statusCol: string, statuses: string[]) => {
-            const target = rows.find((row) => row.id === id);
-            if (target && statuses.includes(String(target.status))) {
-              Object.assign(target, patch);
-            }
-            return { error: null };
-          },
-        }),
-      };
+    maybeSingle: async () => {
+      let row = rows.find((r) => r.id === builder._eqVal);
+      if (builder._eqCol === "client_id") {
+        row = rows.find((r) => r.client_id === builder._eqVal);
+      }
+      return { data: row ?? null, error: null };
     },
+    update: (patch: Record<string, unknown>) =>
+      createAssemblyUpdateQueryBuilder(rows, updates, patch, options),
     in: () => builder,
     lt: () => builder,
     order: () => builder,
     limit: () => builder,
-    _id: "" as string,
+    _eqCol: "" as string,
+    _eqVal: "" as string,
   };
   return builder;
+}
+
+function createAssemblyUpdateQueryBuilder(
+  rows: Array<Record<string, unknown>>,
+  updates: Array<Record<string, unknown>>,
+  patch: Record<string, unknown>,
+  options: { loseProcessingClaim?: boolean } = {},
+) {
+  const filters: Array<{ col: string; val: unknown }> = [];
+
+  const builder = {
+    eq(col: string, val: unknown) {
+      filters.push({ col, val });
+      return builder;
+    },
+    in: async (_statusCol: string, statuses: string[]) => {
+      const target = findAssemblyUpdateTarget(rows, filters);
+      if (
+        target &&
+        assemblyRowMatchesFilters(target, filters) &&
+        statuses.includes(String(target.status))
+      ) {
+        updates.push(patch);
+        Object.assign(target, patch);
+      }
+      return { error: null };
+    },
+    select: async (_cols?: string) => {
+      if (options.loseProcessingClaim && patch.status === "processing") {
+        return { data: [], error: null };
+      }
+
+      const target = findAssemblyUpdateTarget(rows, filters);
+      if (!target || !assemblyRowMatchesFilters(target, filters)) {
+        return { data: [], error: null };
+      }
+
+      updates.push(patch);
+      Object.assign(target, patch);
+      return { data: [{ id: target.id }], error: null };
+    },
+  };
+
+  return builder;
+}
+
+function findAssemblyUpdateTarget(
+  rows: Array<Record<string, unknown>>,
+  filters: Array<{ col: string; val: unknown }>,
+) {
+  const idFilter = filters.find((f) => f.col === "id");
+  if (typeof idFilter?.val !== "string") {
+    return undefined;
+  }
+  return rows.find((row) => row.id === idFilter.val);
+}
+
+function assemblyRowMatchesFilters(
+  row: Record<string, unknown>,
+  filters: Array<{ col: string; val: unknown }>,
+) {
+  return filters.every((filter) => row[filter.col] === filter.val);
 }
 
 function createMediaAssetsQuery(options: {

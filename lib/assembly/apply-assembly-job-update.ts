@@ -103,6 +103,36 @@ export async function applyAssemblyJobUpdate(
     updatePayload.failure_reason = input.patch.failureReason;
   }
 
+  if (nextStatus === "processing") {
+    const { data, error } = await supabase
+      .from(ASSEMBLY_JOBS_TABLE)
+      .update(updatePayload)
+      .eq("id", job.id)
+      .eq("status", "queued")
+      .select("id");
+
+    if (error) {
+      throw new Error("Failed to update assembly job status");
+    }
+
+    if (!data || data.length === 0) {
+      const refreshed = await loadAssemblyJobByIdUnscoped(input.assemblyJobId);
+      return {
+        ok: true,
+        jobId: job.id,
+        status: refreshed?.status ?? job.status,
+        idempotent: true,
+      };
+    }
+
+    return {
+      ok: true,
+      jobId: job.id,
+      status: "processing",
+      idempotent: false,
+    };
+  }
+
   const { error } = await supabase
     .from(ASSEMBLY_JOBS_TABLE)
     .update(updatePayload)
