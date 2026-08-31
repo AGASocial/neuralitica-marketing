@@ -1031,7 +1031,7 @@
     },
     "sidebar": {
       "title": "Reel slot detail",
-      "client": "Cliente",
+      "client": "Client",
       "tema": "Topic",
       "goal": "Goal",
       "scheduledDate": "Scheduled date",

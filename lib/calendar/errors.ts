@@ -1,10 +1,13 @@
-import type { CalendarErrorCode } from "@/lib/contracts/calendar";
+import type {
+  CalendarErrorCode,
+  CalendarErrorEnvelope,
+} from "@/lib/contracts/calendar";
 
 export function calendarError(
   code: CalendarErrorCode,
   messageKey: string,
   extra?: { fields?: Record<string, string[]> },
-): { ok: false; error: { code: CalendarErrorCode; messageKey: string; fields?: Record<string, string[]> } } {
+): CalendarErrorEnvelope {
   return {
     ok: false,
     error: {
@@ -17,34 +20,24 @@ export function calendarError(
 
 export function calendarValidationError(
   fields: Record<string, string[]>,
-): { ok: false; error: { code: "VALIDATION_ERROR"; messageKey: string; fields: Record<string, string[]> } } {
-  return calendarError("VALIDATION_ERROR", "calendar.errors.validation", { fields });
+): CalendarErrorEnvelope {
+  return calendarError("VALIDATION_ERROR", "calendar.errors.validation", {
+    fields,
+  });
 }
 
-export function calendarForbiddenFieldsError(): {
-  ok: false;
-  error: { code: "FORBIDDEN_FIELDS"; messageKey: string };
-} {
+export function calendarForbiddenFieldsError(): CalendarErrorEnvelope {
   return calendarError("FORBIDDEN_FIELDS", "calendar.errors.forbiddenFields");
 }
 
-export function calendarInternalError(): {
-  ok: false;
-  error: { code: "INTERNAL_ERROR"; messageKey: string };
-} {
+export function calendarInternalError(): CalendarErrorEnvelope {
   return calendarError("INTERNAL_ERROR", "calendar.errors.internal");
 }
 
-export function calendarUnauthenticatedError(): {
-  ok: false;
-  error: { code: "UNAUTHENTICATED"; messageKey: string };
-} {
+export function calendarUnauthenticatedError(): CalendarErrorEnvelope {
   return calendarError("UNAUTHENTICATED", "auth.errors.unauthenticated");
 }
 
-export function calendarForbiddenError(): {
-  ok: false;
-  error: { code: "FORBIDDEN"; messageKey: string };
-} {
+export function calendarForbiddenError(): CalendarErrorEnvelope {
   return calendarError("FORBIDDEN", "auth.errors.forbidden");
 }

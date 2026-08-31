@@ -77,7 +77,7 @@ async function loadCalendarSlotRows(weekStart: string): Promise<CalendarSlotRow[
     .in("client_id", activeClientIds);
 
   if (error || !data) {
-    return [];
+    throw new Error("Failed to load calendar slots");
   }
 
   const strategyMetaById = new Map<string, Map<number, StrategySlotMeta>>();
