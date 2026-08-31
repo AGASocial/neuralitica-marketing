@@ -82,9 +82,9 @@ upsertReelMetrics({
 
 ## Contract-first checklist (before BUILD)
 
-- [ ] `SPEC-REVIEW.md` — spec-guardian
-- [ ] `SECURITY.md` — security-architect
-- [ ] `CONTRACT.md` frozen — Zod in `lib/contracts/reel-metrics.ts` + calendar DTO delta · **Reviewed by FE**
+- [x] `SPEC-REVIEW.md` — spec-guardian
+- [x] `SECURITY.md` — security-architect
+- [x] `CONTRACT.md` frozen — Zod in `lib/contracts/reel-metrics.ts` + calendar DTO delta · **Reviewed by FE** pending
 - [ ] Open questions in README § resolved in CONTRACT
 
 ---

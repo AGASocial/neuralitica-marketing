@@ -1,11 +1,12 @@
 /**
- * Operator content calendar (Calendario de contenido) contract (US-12.1 + US-12.2).
+ * Operator content calendar (Calendario de contenido) contract (US-12.1 + US-12.2 + US-13.1).
  * FE imports types + constants; Zod validation stays server-side.
  * Cliente calendar (future): separate action — never this aggregate.
  */
 import { z } from "zod";
 
 import { approvalStatusSchema } from "@/lib/contracts/approval";
+import { reelMetricsDtoSchema } from "@/lib/contracts/reel-metrics";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
 
 /** Display-only pipeline status for calendar cards (derived at read time). */
@@ -191,7 +192,7 @@ export const markCalendarSlotPublishedInstagramPostUrlInputSchema = z.preprocess
   calendarInstagramPostUrlSchema.nullable().optional(),
 );
 
-/** Sidebar detail — single-fetch superset of card fields (US-12.1 + US-12.2 publish metadata). */
+/** Sidebar detail — single-fetch superset of card fields (US-12.1 + US-12.2 + US-13.1 metrics). */
 export const calendarSlotDetailDtoSchema = calendarSlotCardDtoSchema
   .extend({
     strategyId: z.string().uuid(),
@@ -201,6 +202,11 @@ export const calendarSlotDetailDtoSchema = calendarSlotCardDtoSchema
     changesRequested: z.boolean(),
     publishedAt: calendarPublishedAtDtoSchema.nullable(),
     instagramPostUrl: calendarInstagramPostUrlSchema.nullable(),
+    /**
+     * Metrics Lite snapshot for published Reels with assembledReelId (US-13.1).
+     * null when pipelineStatus !== published or assembledReelId is null.
+     */
+    metrics: reelMetricsDtoSchema.nullable(),
   })
   .strict();
 
