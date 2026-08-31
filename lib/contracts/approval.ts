@@ -1,8 +1,9 @@
 /**
- * Client approval package contract (US-11.1 + US-11.2 extensions).
+ * Client approval package contract (US-11.1 + US-11.2 + US-11.3 extensions).
  * FE imports types + constants; Zod validation stays server-side.
  * Gate readiness authority remains getQaGateStatusForAssembledReel (DB-only).
  * Revision-round schemas: lib/contracts/approval-revision.ts
+ * Ready-to-publish list/export: US-11.3 CONTRACT — plan/stories/US-11.3/CONTRACT.md
  */
 import { z } from "zod";
 
@@ -41,8 +42,13 @@ export const APPROVAL_FEEDBACK_MAX_LENGTH = 500 as const;
 
 export const APPROVAL_ENSURE_AGENT_KEY = "approval_ensure" as const;
 export const APPROVAL_DECIDE_AGENT_KEY = "approval_decide" as const;
+/** Caption export route rate limit (US-11.3). */
+export const APPROVAL_EXPORT_AGENT_KEY = "approval_export" as const;
 export const APPROVAL_RATE_WINDOW_MS = 60 * 60 * 1000;
 export const APPROVAL_MAX_PER_WINDOW = 30;
+
+/** Whitelisted media serve query value for backup video download (US-11.3). */
+export const MEDIA_ASSET_DISPOSITION_ATTACHMENT = "attachment" as const;
 
 /** DB + DTO status enum (changes_requested reserved for US-11.2 writes). */
 export const approvalStatusSchema = z.enum([
@@ -186,6 +192,13 @@ export type ListPendingApprovalsInput = z.infer<
   typeof listPendingApprovalsInputSchema
 >;
 
+/** US-11.3 — ready-to-publish list; no request filter params. */
+export const listApprovedApprovalsInputSchema = z.object({}).strict();
+
+export type ListApprovedApprovalsInput = z.infer<
+  typeof listApprovedApprovalsInputSchema
+>;
+
 export const decideApprovalInputSchema = z
   .object({
     approvalId: z.string().uuid(),
@@ -321,6 +334,110 @@ export const approvalListItemDtoSchema = z
 
 export type ApprovalListItemDto = z.infer<typeof approvalListItemDtoSchema>;
 
+/** US-11.3 — approved-only list card (decided_at DESC on server). */
+export const approvedListItemDtoSchema = z
+  .object({
+    approvalId: z.string().uuid(),
+    assembledReelId: z.string().uuid(),
+    status: z.literal("approved"),
+    decidedAt: z.string().datetime({ offset: true }),
+    captionPreview: z.string().optional(),
+    hasDisclosure: z.boolean().optional(),
+    videoAssetId: z.string().uuid().optional(),
+  })
+  .strict();
+
+export type ApprovedListItemDto = z.infer<typeof approvedListItemDtoSchema>;
+
+/** US-11.3 — download href shapes for ready-to-publish detail / post-approve panel. */
+export const readyToPublishDownloadUrlsSchema = z
+  .object({
+    videoDownloadUrl: z
+      .string()
+      .regex(
+        /^\/api\/media\/assets\/[0-9a-f-]{36}\?disposition=attachment$/i,
+      ),
+    captionDownloadUrl: z
+      .string()
+      .regex(/^\/api\/approvals\/[0-9a-f-]{36}\/caption\.txt$/i),
+  })
+  .strict();
+
+export type ReadyToPublishDownloadUrls = z.infer<
+  typeof readyToPublishDownloadUrlsSchema
+>;
+
+/** US-11.3 — subset of ApprovalPackageDto for approved detail + download wiring. */
+export const readyToPublishPackageDtoSchema = z
+  .object({
+    approvalId: z.string().uuid(),
+    assembledReelId: z.string().uuid(),
+    status: z.literal("approved"),
+    video: approvalMediaRefSchema,
+    cover: approvalMediaRefSchema.nullable().optional(),
+    caption: approvalCaptionDtoSchema,
+    hashtags: z.array(z.string()),
+    disclosure: approvalDisclosureDtoSchema,
+    decidedAt: z.string().datetime({ offset: true }),
+    downloads: readyToPublishDownloadUrlsSchema,
+  })
+  .strict();
+
+export type ReadyToPublishPackageDto = z.infer<
+  typeof readyToPublishPackageDtoSchema
+>;
+
+/** Structured server log on approve success (US-11.3 — no outbound HTTP). */
+export const approvalReadyToPublishLogEventSchema = z
+  .object({
+    event: z.literal("approval_ready_to_publish"),
+    approvalId: z.string().uuid(),
+    assembledReelId: z.string().uuid(),
+    clientId: z.string().uuid(),
+    decidedAt: z.string().datetime({ offset: true }),
+  })
+  .strict();
+
+export type ApprovalReadyToPublishLogEvent = z.infer<
+  typeof approvalReadyToPublishLogEventSchema
+>;
+
+const UUID_IN_PATH_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/** Authenticated backup MP4 download URL (Cliente attachment mode). */
+export function mediaAttachmentDownloadUrl(assetId: string): string {
+  if (!UUID_IN_PATH_RE.test(assetId)) {
+    throw new Error("mediaAttachmentDownloadUrl: invalid assetId");
+  }
+  return `/api/media/assets/${assetId}?disposition=${MEDIA_ASSET_DISPOSITION_ATTACHMENT}`;
+}
+
+/** Authenticated caption `.txt` export URL. */
+export function captionExportUrl(approvalId: string): string {
+  if (!UUID_IN_PATH_RE.test(approvalId)) {
+    throw new Error("captionExportUrl: invalid approvalId");
+  }
+  return `/api/approvals/${approvalId}/caption.txt`;
+}
+
+/** Server-chosen caption export filename (Content-Disposition). */
+export function buildCaptionExportFilename(assembledReelId: string): string {
+  const shortId = assembledReelId.replace(/-/g, "").slice(0, 8).toLowerCase();
+  return `reel-${shortId}-caption.txt`;
+}
+
+/** Build ready-to-publish download URLs from package ids. */
+export function buildReadyToPublishDownloadUrls(params: {
+  approvalId: string;
+  videoAssetId: string;
+}): ReadyToPublishDownloadUrls {
+  return {
+    videoDownloadUrl: mediaAttachmentDownloadUrl(params.videoAssetId),
+    captionDownloadUrl: captionExportUrl(params.approvalId),
+  };
+}
+
 export const approvalErrorCodeSchema = z.enum([
   "UNAUTHENTICATED",
   "FORBIDDEN",
@@ -384,6 +501,32 @@ export type ListPendingApprovalsSuccess = z.infer<
 export type ListPendingApprovalsResult =
   | ListPendingApprovalsSuccess
   | ApprovalMutationError;
+
+export const listApprovedApprovalsSuccessSchema = z
+  .object({
+    ok: z.literal(true),
+    items: z.array(approvedListItemDtoSchema),
+  })
+  .strict();
+
+export type ListApprovedApprovalsSuccess = z.infer<
+  typeof listApprovedApprovalsSuccessSchema
+>;
+
+export type ListApprovedApprovalsResult =
+  | ListApprovedApprovalsSuccess
+  | ApprovalMutationError;
+
+/** Route Handler JSON error codes for caption export (US-11.3). */
+export const approvalExportRouteErrorCodeSchema = z.enum([
+  "NOT_FOUND",
+  "RATE_LIMITED",
+  "INTERNAL_ERROR",
+]);
+
+export type ApprovalExportRouteErrorCode = z.infer<
+  typeof approvalExportRouteErrorCodeSchema
+>;
 
 export const getApprovalPackageSuccessSchema = z
   .object({
