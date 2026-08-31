@@ -175,9 +175,9 @@ export type ReelWeekCostSummary = {
 **Concrete consumers:** Operator video panel · weekly slot sum · US-7.4 rollup (read-only).
 
 - [x] **CONTRACT.md Phase B amendment** — call-site table, TTS exception, poll `cost` DTO, duration on `async_update`; **Reviewed by FE** before BUILD (awaiting nextjs-frontend SIGNOFF).
-- [ ] Pass **`durationSec`** into `finalizeGenerationCost({ mode: "async_update" })` when persist/probe has duration; else null.
-- [ ] Completed spend row: actual **or** closed `actualCostUnavailableReason` — never null/null after successful complete.
-- [ ] Missing `spendEventId` on complete: log; **do not** invent a late INSERT of actual-only.
+- [x] Pass **`durationSec`** into `finalizeGenerationCost({ mode: "async_update" })` when persist/probe has duration; else null.
+- [x] Completed spend row: actual **or** closed `actualCostUnavailableReason` — never null/null after successful complete.
+- [x] Missing `spendEventId` on complete: log; **do not** invent a late INSERT of actual-only.
 - [x] **TTS trusted path:** persist `durationSec` on spend INSERT (Operator path already does).
 - [x] **Do not** rewrite manual upload `finalizeGenerationCost` (already actual 0).
 - [x] **Do not** migrate TTS to `finalizeGenerationCost` this slice.
@@ -294,14 +294,14 @@ All objects keep `neuramark_` prefix. Migrations via Supabase migrations only.
 
 ### Phase B — PREP 2026-08-31
 - [x] PREP — [`PHASE-B.md`](./PHASE-B.md) + this Phase B checklist
-- [ ] SPEC-REVIEW.md amendment (spec-guardian)
-- [ ] SECURITY.md amendment (security-architect)
-- [ ] CONTRACT.md Phase B + Reviewed by FE (nextjs-backend → nextjs-frontend)
-- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend)
+- [x] SPEC-REVIEW.md amendment (spec-guardian)
+- [x] SECURITY.md amendment (security-architect)
+- [x] CONTRACT.md Phase B + Reviewed by FE (nextjs-backend → nextjs-frontend)
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend)
 - [ ] VALIDATION Phase B — Phase A AC stay [x]; re-verify [SEC]
 - [ ] QA Phase B
 
-**Next:** spec-guardian **SPEC-REVIEW** (Phase B).
+**Next:** requirements-validator **VALIDATION** (Phase B).
 
 ---
 

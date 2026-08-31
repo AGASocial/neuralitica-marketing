@@ -86,3 +86,79 @@ Proceed to **SECURITY.md** then **CONTRACT.md** with these **non-negotiable free
 9. **Manual jobs** — `actual_cost_cents = 0`.
 
 Do not check off USER_STORIES acceptance criteria in this gate.
+
+---
+
+## Spec Review — US-7.3 Phase B (video/TTS/B-roll spend backfill)
+
+**Identity:** same story **US-7.3** (sprint `US-7.3-B`). Not a new backlog ID. Branch `feature/US-7.3-phase-b-spend-backfill`. Phase A text above is **unchanged**. Binding PREP: `PHASE-B.md` PO **B1–B18**.
+
+### Verdict: ALIGNED
+
+Phase B intent — persist **costo real** for completed video / TTS / B-roll **Jobs de generación** on canonical **`neuramark_reel_spend_events`**, keep **`neuramark_video_jobs.actual_cost_cents` as a UI mirror**, refresh **Operator** job cost on poll without inventing `/operator/production`, leave **US-7.4** as an automatic roll-up consumer, and never expose cost on **Cliente** (including poll routes) — **supports SPEC §3 Cost Policy Engine** (Operator sees estimados; Cliente never sees/envía costos), SPEC §6 presupuesto server-only, ADR-0003 trusted worker/poller state writes, and Phase A dual-store freeze.
+
+**No SPEC amendment.** SPEC does not name `/operator/production`, `finalizeGenerationCost`, or TTS writer identity. Remaining work is CONTRACT/SECURITY hygiene + BUILD gaps (duration, poll DTO, tests), not product-contract drift.
+
+**GAPS (acceptable — do not BLOCK):** Phase A CONTRACT still names a historical `/operator/production` surface; Phase A “sole writer `finalizeGenerationCost`” is **narrowed** by PO **B3/B7** (TTS success INSERT via `recordReelSpendEvent`). Those are **story-floor amendments**, not SPEC conflicts. SECURITY must encode the TTS exception without weakening [SEC] (adapter-sourced, `server-only`, no request-body actuals).
+
+**Upstream:** Phase A CLOSED; US-8.4 / US-8.2+ / US-8.3 / US-9.3 / US-7.4 Phase A CLOSED. US-7.4 CONTRACT **Phase B (automatic — no US-7.4 BUILD change)** is the consumer contract.
+
+---
+
+### Findings
+
+| Severity | Finding | SPEC/ADR reference | Fix |
+|----------|---------|-------------------|-----|
+| **High** | **TTS actual INSERT vs Phase A “sole writer.”** Phase A SPEC-REVIEW + CONTRACT freeze **`finalizeGenerationCost`** as exclusive mutator of `actual_cost_cents`; `recordReelSpendEvent` callers = finalize only. SECURITY Phase A: exclusive backfill module; `recordReelSpendEvent` INSERT-only for estimates; US-9.3 “same backfill module.” Live TTS writes actuals on success INSERT (`synthesize-voiceover-for-reel-script` / trusted path). PO **B3/B7** freeze **leave it** this slice. This **conflicts with Phase A floors**, not with SPEC §3 (any server job-completion path from adapter results is in-spec). | Phase A SPEC-REVIEW High (sole writer); US-7.3 CONTRACT L22, L190–198, L294; SECURITY exclusive module + future US-9.3 note; PO B3/B7 | **SECURITY amend (required):** named **TTS exception** — trusted orchestrator INSERT with actual still counts as the [SEC] “job-completion handler”; **forbidden:** request/Zod `actualCostCents`; keep `import "server-only"`; write-once / no client edit. **CONTRACT Phase B:** exclusive call-site table = `finalizeGenerationCost` (`async_update` video, `sync_insert` manual 0) **plus** TTS `recordReelSpendEvent` with actual. **Do not** migrate TTS this slice. Estimate-only video create INSERTs remain non-actual writers (B3/B4). |
+| **High** | **CONTRACT Phase A FE route is a historical name, not a live surface.** CONTRACT surfaces #9 / `OperatorProductionJobCostDto` **FE route: `/operator/production`**. That route **does not exist**. US-8.4 shipped on **`/operator/scripts`** (`OperatorVideoJobSummaryPanel`). Inventing `/operator/production` would be disconnected-API / scope drift vs AGENTS.md (endpoints from a concrete consumer) and PO **B11**. DTO **type name** may stay. | US-7.3 CONTRACT L23, L80, L451, FE signoff Phase B note; PO B11; US-8.4 live panel; SPEC §3 (no route name) | CONTRACT Phase B addendum: **strike** `/operator/production` as a BUILD target. Freeze job-level estimated vs actual on **`OperatorVideoJobSummaryPanel`** + Operator **`GET /api/video-jobs/[jobId]`** (or equivalent refetch) carrying **`OperatorProductionJobCostDto`**. Status-only poll that drops `cost` is **in-scope BUILD** (B12), not a new page. |
+| **High** | **Poll cost DTO is Operator-only; Cliente poll must stay cost-free.** Extending job poll with `estimatedCostCents` / `actualCostCents` / `costStatus` on a shared serializer would violate SPEC §3 and SECURITY_BASELINE response-shape exclusion even if the panel is Operator-only in UI. | SPEC §3 Cost Policy Engine; SPEC §6 sensitive presupuesto; Phase A SPEC-REVIEW Medium (Cliente exclusion); PO B12; US-7.4 [SEC] floor | SECURITY + CONTRACT: cost on **`requireOperator`** poll/summary only. **Forbidden keys** on any Cliente video-job / TTS / media poll. Tests: Cliente session cannot obtain `OperatorProductionJobCostDto`. |
+| **Medium** | **Dual store remains: ledger canonical, job row mirror.** Phase A High dual-store is **closed as policy**, not as a single physical column. Poller already mirrors `video_jobs.actual_cost_cents`. US-7.4 must not SUM the mirror. Phase B must not reopen US-7.4 query rewrite. | Phase A SPEC-REVIEW High dual store; PO B2/B13; US-7.4 CONTRACT L16, L67–69, forbidden SUM `video_jobs` | CONTRACT: mirror is **denormalized job UI** from the same complete pass; reporting SUM = **`neuramark_reel_spend_events` only**. **No US-7.4 BUILD.** Missing `spendEventId`: log; **no** late actual-only INSERT (B5) — avoids a second unofficial ledger path. |
+| **Medium** | **Failed / cancelled: no spend UPDATE.** Phase A AC wording “actual or null with failure reason” was already leaned to **success-only spend rows**. PO **B6** matches: fail/cancel leave estimate-only; do not invent billed cost; do not add “job failed” unavailable-reason unless an adapter reports a billed amount (none today). Aligns with US-7.4: failed attempts **without** spend rows excluded. | Phase A High LLM fail / Medium failure-reason; PO B6; US-7.4 CONTRACT failed-attempt rule | CONTRACT Phase B: terminal **fail/cancel** ∉ finalize path. Completed **success** row: actual **or** closed `actualCostUnavailableReason` — never null/null after successful complete (B5). |
+| **Medium** | **Duration still partial.** DDL `duration_sec` exists. Gaps: video `async_update` omits `durationSec`; TTS **trusted** path omits it (Operator TTS already sets). Not required for weekly SUM. LLM remains null. | Phase A Medium duration; PO B5/B7/B10; SPEC no duration column | BUILD only; **no new tables/columns**. CONTRACT: pass `durationSec` when adapter/probe knows it; else omit/null. |
+| **Low** | **Budget gate must stay estimate-only.** Phase B must not change `sumReelCumulativeCostCents` / `assertReelBudgetAllowsSpend`. | US-7.1 CONTRACT; SPEC §3 budget-before-generate; PO B14 | Non-goal in CONTRACT Phase B. |
+| **Low** | **Manual upload already `actual = 0`.** Verify tests only (B8). | Phase A Low manual; US-8.3 | No rewrite. |
+| **Info** | **US-7.4 automatic expand is the consumer, not this story’s UI.** Same GROUP BY `asset_role` picks up `talking_head` / `broll` / `tts` when ledger rows exist. B-roll clip strip and TTS cost chip are **out** (rollup + slot weekly sum). | US-7.4 CONTRACT Phase B automatic; PO B9/B13 | Do not reopen US-7.4 unless aggregator ignores non-LLM roles (PREP: it does not). |
+| **Info** | **ADRs.** Cost writes stay on server / trusted poller-worker updating `neuramark_*` (ADR-0003). No IG publish change (ADR-0002). Ciclo uses same orchestrators (ADR-0001). No secrets in browser (AGENTS.md / SPEC §5–6). | ADR-0001–0003; SPEC §5 | No Fly-hosted cost RPC to the browser; no unauthenticated webhook mapping raw `actualCostCents`. |
+| **Info** | **Roles / modalidades / playbook.** Operator-only cost; Cliente still never sees costs. B-roll is **asset_role** on the ledger, not a new **Modo visual** product noun. No playbook/trend conflation. | SPEC §2–3; CONTEXT | Keep Operator copy: **Costo estimado** / **Costo real**; **Job de generación**. |
+| **Info** | **Out of scope held:** `/operator/production` route, US-7.4 BUILD, TTS migrate to finalize, fail-row billed actuals, `ltx_broll_high`, assembly/branding/FFmpeg spend, QA spend rewrite, gate-on-actuals, Cliente cost fields, new DDL, historical SQL backfill, Stories IG, ads, RBAC UI, multicanal. | SPEC §1; PHASE-B.md scope out | Do not expand. |
+
+---
+
+### Terminology violations (CONTEXT)
+
+**None in Phase B PREP/TASKS** (uses Operator, Cliente, Reel, Job de generación, Costo estimado / Costo real).
+
+CONTRACT/FE Phase B must **not** introduce product-facing:
+
+| Prefer | _Evitar_ |
+|--------|----------|
+| **Operator** | admin, administrador, staff |
+| **Cliente** | prestador, dueño, usuario final (as product role) |
+| **Costo estimado** / **Costo real** | unlabeled “estimated vs actual”; **Política de costo** as the panel title |
+| **Job de generación** | generation job (user-facing EN) |
+| **B-roll / sin presencia** (if any new copy) | faceless (UI) |
+
+Keep DTO/code names (`OperatorProductionJobCostDto`, `asset_role`) out of Cliente strings. “Unit economics” stays Operator-internal only.
+
+---
+
+### Recommended action
+
+**Verdict ALIGNED (GAPS acceptable). SECURITY may proceed** — then CONTRACT Phase B amendment (do **not** rewrite Phase A except addenda) + **Reviewed by FE** before BUILD.
+
+SECURITY must freeze:
+
+1. TTS **`recordReelSpendEvent` actual INSERT** as the **only** named exception to `finalizeGenerationCost` for **actuals**; still server-only, adapter-sourced, no HTTP mutation.
+2. Operator poll/summary **`OperatorProductionJobCostDto`**; **zero** cost keys on Cliente poll/status routes.
+3. Dual store: ledger = reporting; `video_jobs` actual = mirror; US-7.4 still ledger-only.
+
+CONTRACT Phase B must freeze (nextjs-backend; not this gate):
+
+1. Call-site table (video `async_update` + duration; manual 0; TTS INSERT exception; create-path estimate-only INSERT).
+2. FE surface = **`/operator/scripts`** `OperatorVideoJobSummaryPanel` — **historical `/operator/production` is not a BUILD target**.
+3. Poll DTO + fail/cancel = no spend UPDATE; missing `spendEventId` = no invented INSERT.
+4. Non-goals: US-7.4 BUILD, gate-on-actuals, new DDL.
+
+**PO change required only if** PO wants TTS forced through `finalizeGenerationCost` this slice (would contradict B7) or insists on a new `/operator/production` route (would contradict B11 and this review). **Neither is required for SPEC.**
+
+Do not check off USER_STORIES acceptance criteria in this gate. Do not start SECURITY or CONTRACT from this agent.

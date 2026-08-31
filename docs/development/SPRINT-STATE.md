@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 3
 current_story: US-7.3-B
-story_status: SELECT
-feature_branch: null
+story_status: VALIDATE
+feature_branch: feature/US-7.3-phase-b-spend-backfill
 last_completed_story: US-9.2-B
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T18:10:03Z
+updated_at: 2026-08-31T19:20:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -75,6 +75,8 @@ updated_at: 2026-08-31T18:10:03Z
 
 ## Historial reciente
 
+- 2026-08-31 · US-7.3-B BUILD: FE `1add7ed` (poll cost merge) · BE `d3b2e03` (GET cost DTO + TTS duration) · media `3f3653c` (async_update duration + closed reason); next VALIDATE.
+- 2026-08-31 · US-7.3-B PREP: `PHASE-B.md` + README/TASKS freezes (B1–B18); branch `feature/US-7.3-phase-b-spend-backfill`; most writers already exist — BUILD = duration + poll cost refresh + TTS duration; no `/operator/production`; next SPEC-REVIEW.
 - 2026-08-31 · US-9.2 Phase B CLOSE: VALIDATION PASS WITH NOTES `6db2cba` (2/2 deferred; 44/44); QA APPROVE WITH CONDITIONS `02bfa3b` (0 Critical/High); FF-merge `7783de2` to main; VO-sync + `coverFrameSec` complete → SELECT **US-7.3 Phase B** (recommended), `ltx_broll_high`, or VO-hash M1 fast-follow.
 - 2026-08-31 · US-9.1 Phase B CLOSE: VALIDATION PASS WITH NOTES `6d13f4b` (5/5 AC + 16/16); QA APPROVE WITH CONDITIONS `37d0dcb` (0 Critical/High); fix `1106420`; FF-merge `9a95b55` to main; faceless path complete (Wan → stitch) → SELECT **US-9.2 Phase B** (recommended), high-tier B-roll, or US-7.3 Phase B spend.
 - 2026-08-31 · US-9.1 Phase B PREP: `PHASE-B.md` + README/TASKS freezes (B1–B14); branch `feature/US-9.1-phase-b-broll-stitch`; sprint `US-9.1-B` / PREP; next SPEC-REVIEW → SECURITY → CONTRACT.

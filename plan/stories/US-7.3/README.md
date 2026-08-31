@@ -1,44 +1,38 @@
 # US-7.3 — Track actual cost per generation job
 
-**Status:** CLOSED — Phase A (2026-08-29). VALIDATION PASS WITH NOTES (4/4 AC Phase A); QA APPROVE WITH NOTES after H1 fix `f60579d`. BE `030d85f` · FE `02b399b`/`ddca524` · fix `f60579d`. **Phase B** (video/TTS async actuals, `/operator/production` cost column) deferred to US-8.4 / US-9.3.
+**Status:** Phase A **CLOSED** (2026-08-29). **Phase B PREP** (2026-08-31) — sprint **`US-7.3-B`**. Freeze: [`PHASE-B.md`](./PHASE-B.md).
 
 **As an** Operator, **I want** real API cost recorded per Reel, **so that** we learn true unit economics.
 
-Ship **server-side actual-cost persistence on the spend ledger + Operator production-list visibility**: after each **completed** generation job, persist **`actual_cost_cents`** on **`neuramark_reel_spend_events`** from **provider adapter responses** (token usage × catalog `cost_model` for LLM; adapter-reported cost when available); **`actual_cost_cents` stays `NULL` until job completion**; Operator **`/operator/scripts`** production list shows **estimated vs actual** per Reel (cumulative across spend events for that slot) plus a **simple weekly actual-cost sum** for the session client. **V1 BUILD scopes LLM jobs only** (script/caption generate/regenerate); **`neuramark_video_jobs` actuals** and **US-8.4 retry UI** stay **out** until video pipeline ships — export completion seam for US-8.x.
+**Phase A (CLOSED):** server-side actual-cost persistence on the spend ledger for **LLM** jobs + Operator **`/operator/scripts`** estimated vs actual (slot + weekly sum). VALIDATION PASS WITH NOTES (4/4 AC Phase A); QA APPROVE WITH NOTES after H1 fix `f60579d`. BE `030d85f` · FE `02b399b`/`ddca524` · fix `f60579d`.
 
-**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-7.3 (checked on CLOSE).
+**Phase B (this sprint):** video / TTS / B-roll **actual backfill** on the same ledger; job-level cost on the **existing** Operator video panel (not a new `/operator/production` route). Upstream US-8.x / US-9.3 / US-7.4 Phase A **CLOSED**. **CONTRACT Phase B amendment required** — do not rewrite Phase A CONTRACT.
 
-**This folder:** [`plan/stories/US-7.3/`](./) — `README.md` · `TASKS.md` · (gates pending) `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
+**Canonical acceptance criteria:** [`plan/USER_STORIES.md`](../../USER_STORIES.md) → US-7.3 (Phase A **checked** — do **not** uncheck; Phase B adds **no** new checkboxes).
 
-**Branch:** `feature/US-7.3-actual-cost`
+**This folder:** [`plan/stories/US-7.3/`](./) — `README.md` · `TASKS.md` · [`PHASE-B.md`](./PHASE-B.md) · `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` · `VALIDATION.md` · `QA.md`.
 
-**Depends on:** [US-7.2](../US-7.2/) ✅ policy engine · `recordReelSpendEvent` · `logProviderDecision` · [US-7.1](../US-7.1/) ✅ `neuramark_reel_spend_events` ledger · budget gate · [US-5.1](../US-5.1/) ✅ `/operator/scripts` production list · `getReelScriptsForWeek` · [US-14.5](../US-14.5/) ✅ `requireOperator()`. **Soft:** [US-8.4](../../USER_STORIES.md) (video job completion UI) — **not required for V1 BUILD**; LLM path is synchronous complete-before-persist.
+**Branch:** `feature/US-7.3-phase-b-spend-backfill` (Phase A historical: `feature/US-7.3-actual-cost`)
 
-**Unblocks:** [US-7.4](../../USER_STORIES.md) (Reel cost roll-up + variance) · [US-8.x](../../USER_STORIES.md) (video job actual-cost backfill on spend events) · margin analysis on `neuramark_provider_decisions` vs actuals.
+**Depends on:** [US-7.2](../US-7.2/) ✅ · [US-7.1](../US-7.1/) ✅ · [US-5.1](../US-5.1/) ✅ · [US-14.5](../US-14.5/) ✅ · [US-8.4](../../USER_STORIES.md) ✅ · [US-8.2](../../USER_STORIES.md) / [US-8.6](../../USER_STORIES.md) / [US-8.7](../../USER_STORIES.md) ✅ · [US-8.5](../US-8.5/) ✅ · [US-8.3](../../USER_STORIES.md) ✅ · [US-9.3](../../USER_STORIES.md) ✅ · [US-7.4](../US-7.4/) Phase A ✅ (consumer — **do not reopen BUILD**).
+
+**Unblocks:** full per-Reel economics on existing US-7.4 roll-up (automatic component lines).
+
+**Implementers (Phase B):** **media-pipeline-engineer** + **nextjs-backend** + thin **nextjs-frontend**.
 
 ---
 
-## Scope in
+## Scope in (Phase A — historical)
 
-| Area | What US-7.3 adds |
-|------|------------------|
-| **FE** | **Estimated vs actual** column on **`/operator/scripts`** production list (per slot / Reel): cumulative **`estimatedCostCents`** and **`actualCostCents`** from spend ledger; **`—`** / pending label when actual is still null; **weekly footer** with simple **`SUM(actual_cost_cents)`** for session `clientId` + `weekStart`. EN/ES (`scripts.cost.actual.*`). **Operator-only** — no cost fields on Cliente routes. |
-| **BE** | **`computeActualCostFromLlmResult()`** — derive cents from `llmCompletionResult` (`inputTokens`, `outputTokens`, `actualCostCents` when adapter already computed) + catalog `cost_model` (`per_1m_tokens`). **`recordReelSpendEvent`** extended to accept optional **`actualCostCents`** at INSERT (LLM path: job completes before INSERT). **`updateReelSpendEventActual({ spendEventId, actualCostCents, unavailableReason? })`** — server-only UPDATE for **async** jobs (US-8.x seam; not wired in V1 BUILD). **`getReelCostSummaryForWeek({ clientId, weekStart })`** — per-`reel_script_id` estimated/actual sums + weekly total for list DTO. Wire script/caption orchestrators to pass LLM actual into spend event. Improve **`SiliconFlowLlmAdapter.complete`** to compute token-based actual (replace placeholder `0`). |
-| **DB** | Optional migration: **`actual_cost_unavailable_reason`** nullable text on **`neuramark_reel_spend_events`** (CONTRACT freezes enum vs free-text) for AC "null with failure reason". **No** `neuramark_video_jobs` columns in V1 BUILD — USER_STORIES `video_jobs.*` deferred to US-8.x; **canonical V1 store is spend ledger** per PO freeze. |
-| **media-pipeline-engineer** | Token→cost math in LLM adapters; `updateReelSpendEventActual` helper; orchestrator wiring. |
+See original tables below this file’s Phase A section in git history, or [`CONTRACT.md`](./CONTRACT.md). Phase A: LLM sync actuals + `/operator/scripts` cost column/footer.
 
-## Scope out
+## Scope in (Phase B)
 
-| Story / topic | Why out |
-|---------------|---------|
-| **US-8.4** job status / retry UI | Video jobs may not exist; async completion handler deferred — **seam only** in CONTRACT. |
-| **`neuramark_video_jobs` DDL** | USER_STORIES mentions `video_jobs.estimated_cost_cents` / `actual_cost_cents`; V1 uses **`neuramark_reel_spend_events`** until US-8.2+ creates jobs table. |
-| **US-7.4** Reel detail cost section | Per-component breakdown, variance highlight, over-budget — needs US-7.3 actuals first. |
-| **US-9.3** TTS actual cost | TTS spend events + adapter actuals when TTS ships. |
-| **Cumulative budget gate on actuals** | US-7.1 gate continues **`SUM(estimated_cost_cents)`** only — actuals are observability, not blocking math in V1. |
-| **Cliente** cost visibility | Margin-sensitive — Operator serializers only ([SEC] baseline). |
-| **Historical backfill migration** | One-off SQL backfill of pre-7.3 rows optional P1; BUILD wires forward path only unless CONTRACT adds lean backfill from existing spend rows with null actual. |
-| **Dashboard beyond weekly sum** | Full margin dashboard / charts — US-7.4. |
+See [`PHASE-B.md`](./PHASE-B.md) — duration on video `async_update`, TTS trusted `duration_sec`, Operator poll cost refresh, tests. **No new route. No new tables.**
+
+## Scope out (Phase B)
+
+`/operator/production` · B-roll clip strip · TTS panel chip · migrate TTS to `finalizeGenerationCost` · fail-row actuals · `ltx_broll_high` · assembly/branding spend · US-7.4 query rewrite · budget gate on actuals · Cliente cost · new USER_STORIES AC.
 
 ## Canonical terms (CONTEXT)
 
@@ -49,39 +43,34 @@ _Evitar:_ exposing raw provider pricing or budget caps to Cliente; client-editab
 
 | Source | Continuity |
 |--------|------------|
-| US-7.1 | **`neuramark_reel_spend_events`** with **`actual_cost_cents` NULL** today; **`recordReelSpendEvent`** INSERT after successful LLM; cumulative gate uses **estimate only**. |
-| US-7.2 | **`logProviderDecision`** stores **estimate-time** audit; actuals are a **separate write** on spend events (SECURITY handoff). |
-| US-5.1 | **`getReelScriptsForWeek`** · **`reelScriptListItemSchema`** · **`/operator/scripts`** list — extend DTO with cost summary block. |
-| `lib/contracts/providers.ts` | **`llmCompletionResultSchema`** already includes **`inputTokens`**, **`outputTokens`**, **`actualCostCents`**. |
+| US-7.3 Phase A | `finalizeGenerationCost`, weekly/slot cost on `/operator/scripts`, forbidden keys |
+| US-8.4 | Poller already calls `async_update` on complete; `OperatorVideoJobSummaryPanel` already renders `job.cost` |
+| US-8.2/8.6/8.7/8.5 | Create-path estimate-only `recordReelSpendEvent` + `spend_event_id` |
+| US-8.3 | Manual `finalizeGenerationCost` actual 0 |
+| US-9.3 | TTS `recordReelSpendEvent` with actual at success |
+| US-7.4 Phase A | Roll-up by `asset_role` — auto-picks new rows |
 
-**US-7.3 adds actual-cost persistence from adapter responses, list-column visibility, and weekly actual sum** — not video job table or Reel detail roll-up.
+---
 
-## PO decisions frozen (2026-08-29)
+## PO decisions frozen
 
-1. **V1 data store:** Backfill **`actual_cost_cents`** on **`neuramark_reel_spend_events`** from **LLM adapter responses** where available — **not** new `video_jobs` columns until US-8.x ships.
-2. **Completion semantics:** **`actual_cost_cents` is NULL until the job completes**; LLM jobs complete synchronously — persist actual on the **same INSERT** as the spend event (or immediate UPDATE if INSERT already happened — prefer single INSERT with actual in V1 refactor).
-3. **LLM-first scope:** Wire **script + caption** generate/regenerate orchestrators only in BUILD; **document `updateReelSpendEventActual` seam** for US-8.x async video/TTS completion — no `neuramark_video_jobs` dependency in V1.
-4. **Operator production list:** **`/operator/scripts`** shows **estimated vs actual** column per slot (cumulative sums for that `reel_script_id`); pending/null actual shows **"—"** or i18n **pending** label.
-5. **Weekly aggregate:** Simple **`SUM(actual_cost_cents)`** for **client + weekStart** on the scripts page (footer or header stat) — satisfies AC "dashboard aggregate" without a new route in V1.
-6. **Unavailable actual:** When adapter cannot derive cost (missing usage, provider omits billing), keep **`actual_cost_cents` NULL** and set **`actual_cost_unavailable_reason`** (CONTRACT freezes enum, e.g. `usage_missing`, `provider_no_billing`) — satisfies AC "null with failure reason".
-7. **Failed jobs:** No spend event today on LLM failure — **out of scope** for "completed job" AC; only **successful** jobs get ledger rows with actual or null+reason.
-8. **Token math:** Prefer **catalog `cost_model.unitCostCents` + `billingUnit: per_1m_tokens`** over hardcoded rates; adapter may set **`actualCostCents`** directly when vendor returns billed amount.
-9. **No client authority:** **[SEC]** `actual_cost_cents` written **only** by server job-completion path; reject client-supplied cost fields on all mutations (extend US-7.1 forbidden-key list).
-10. **Operator-only reads:** Cost summary DTO only on **`requireOperator()`** paths; **`getReelScriptsForWeek`** Operator branch includes cost block — Cliente/shared serializers **omit** cost fields entirely.
-11. **Budget gate unchanged:** Cumulative check remains **`estimated_cost_cents`** — actuals do not retroactively block past generations in V1.
-12. **Implementers:** **media-pipeline-engineer** + **nextjs-backend** + **nextjs-frontend** (`docs/development/AGENT-ROSTER.md` Phase 4). **No content-agents-engineer** prompt changes.
-13. **Module placement (lean):** `lib/cost-policy/compute-llm-actual-cost.ts`, `lib/cost-policy/update-reel-spend-event-actual.ts`, `lib/cost-policy/get-reel-cost-summary-for-week.ts`; extend `record-reel-spend-event.ts`; contracts in `lib/contracts/cost-policy.ts`.
-14. **i18n:** EN + ES under **`scripts.cost.actual.*`** (column headers, pending, unavailable reason labels, weekly total).
+- **Phase A (2026-08-29):** see historical list in this README (LLM-first, spend ledger canonical, Operator `/operator/scripts`, estimate-only gate).
+- **Phase B (2026-08-31):** [`PHASE-B.md`](./PHASE-B.md) **B1–B18**.
 
 ---
 
 ## Gates (orchestrator)
 
-- [x] SPEC-REVIEW.md (spec-guardian — GAPS)
-- [x] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
-- [x] CONTRACT.md (nextjs-backend — frozen `f6038e9`; **Reviewed by FE** before BUILD)
-- [x] BUILD (media-pipeline-engineer + nextjs-backend + nextjs-frontend — Phase A LLM)
-- [x] VALIDATION.md (requirements-validator — PASS WITH NOTES)
-- [x] QA.md (qa-engineer — APPROVE WITH NOTES after `f60579d`)
+### Phase A — CLOSED 2026-08-29
+- [x] SPEC-REVIEW.md · SECURITY.md · CONTRACT.md · BUILD · VALIDATION.md · QA.md
 
-**Status:** CLOSED (Phase A). **Next:** Phase B when US-8.4 / US-9.3 land, or **US-7.4** Reel cost roll-up.
+### Phase B — PREP
+- [x] PREP — [`PHASE-B.md`](./PHASE-B.md) + TASKS Phase B checklist
+- [ ] SPEC-REVIEW.md amendment
+- [ ] SECURITY.md amendment
+- [ ] CONTRACT.md Phase B + Reviewed by FE
+- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ thin nextjs-frontend)
+- [ ] VALIDATION Phase B
+- [ ] QA Phase B
+
+**Next:** spec-guardian **SPEC-REVIEW** (Phase B).
