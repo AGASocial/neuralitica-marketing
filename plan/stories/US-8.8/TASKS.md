@@ -178,17 +178,17 @@ Concrete consumers: **`createBrollVideoJobs`** · US-8.4 poller · **`estimateVi
 
 ### Phase B — Activate catalog + orchestrator unlock
 
-- [ ] **Migration** — `UPDATE neuramark_provider_catalog SET active = true WHERE key = 'ltx_broll_high'`.
-- [ ] **Remove Wan-only guard** in `create-broll-video-jobs.ts`; allow LTX high path.
-- [ ] **`buildLtxBrollPrompt`** (or CONTRACT name) — server-authored from beats; injection floor.
-- [ ] **Job INSERT** — `provider_key = ltx_broll_high`, `provider_tier = high`, **`asset_role = broll`**, spend event per clip.
-- [ ] **Budget** — `assertReelBudgetAllowsSpend` per clip; over-budget skips **that** clip without aborting primary.
-- [ ] **Graceful degrade** — tests: primary succeeds when LTX create/poll fails (mirror US-8.5).
-- [ ] **Reject** client `provider_key` / tier / raw unbounded prompt fields.
-- [ ] **Poller** — verify B-roll LTX jobs picked up (provider-agnostic poller).
-- [ ] **Retry** — B-roll retry stays `asset_role = broll` + inherits LTX parent provider.
-- [ ] **Orchestrator tests** — high + needsBroll → LTX · low + needsBroll → Wan only · N clips · budget block · degrade · non-operator 403.
-- [ ] **Policy regression** — `resolveProvider(..., { tier: "high", assetRole: "broll" })` returns `ltx_broll_high` after activate.
+- [x] **Migration** — `UPDATE neuramark_provider_catalog SET active = true WHERE key = 'ltx_broll_high'`.
+- [x] **Remove Wan-only guard** in `create-broll-video-jobs.ts`; allow LTX high path.
+- [x] **`buildLtxBrollPrompt`** (or CONTRACT name) — server-authored from beats; injection floor.
+- [x] **Job INSERT** — `provider_key = ltx_broll_high`, `provider_tier = high`, **`asset_role = broll`**, spend event per clip.
+- [x] **Budget** — `assertReelBudgetAllowsSpend` per clip; over-budget skips **that** clip without aborting primary.
+- [x] **Graceful degrade** — tests: primary succeeds when LTX create/poll fails (mirror US-8.5).
+- [x] **Reject** client `provider_key` / tier / raw unbounded prompt fields.
+- [x] **Poller** — verify B-roll LTX jobs picked up (provider-agnostic poller).
+- [x] **Retry** — B-roll retry stays `asset_role = broll` + inherits LTX parent provider.
+- [x] **Orchestrator tests** — high + needsBroll → LTX · low + needsBroll → Wan only · N clips · budget block · degrade · non-operator 403.
+- [x] **Policy regression** — `resolveProvider(..., { tier: "high", assetRole: "broll" })` returns `ltx_broll_high` after activate.
 
 ---
 
@@ -196,7 +196,7 @@ Concrete consumers: **`createBrollVideoJobs`** · US-8.4 poller · **`estimateVi
 
 All objects keep `neuramark_` prefix.
 
-- [ ] **Activate migration** — `ltx_broll_high.active = true` (Phase B).
+- [x] **Activate migration** — `ltx_broll_high.active = true` (Phase B).
 - [ ] **No DDL** on `neuramark_video_jobs` unless CONTRACT finds a gap.
 - [ ] RLS deny-by-default unchanged; service-role Node only.
 - [ ] No secrets in catalog rows — `env_key_name` only.
@@ -235,7 +235,7 @@ All objects keep `neuramark_` prefix.
 - [ ] SECURITY.md (security-architect — APPROVE WITH CONDITIONS)
 - [x] CONTRACT.md authored (nextjs-backend; **Reviewed by FE: N/A**)
 - [ ] BUILD Phase A (media-pipeline-engineer + nextjs-backend)
-- [ ] BUILD Phase B (BE orchestrator + DB activate)
+- [x] BUILD Phase B (BE orchestrator + DB activate)
 - [ ] VALIDATION.md (requirements-validator) — note stitch → US-9.1 ✅
 - [ ] QA.md (qa-engineer)
 

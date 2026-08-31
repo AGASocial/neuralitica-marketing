@@ -239,6 +239,20 @@ describe("migrations (US-X.4)", () => {
     assert.equal(combinedSeed.includes("Bearer"), false);
     assert.equal(combinedSeed.includes("NEXT_PUBLIC_"), false);
   });
+
+  it("ltx_broll_high activate migration sets active without cost_model change", () => {
+    const activateMigration = readFileSync(
+      path.join(
+        repoRoot,
+        "supabase/migrations/20260831100000_neuramark_ltx_broll_high_activate.sql",
+      ),
+      "utf8",
+    );
+    assert.match(activateMigration, /ltx_broll_high/);
+    assert.match(activateMigration, /SET\s+active\s*=\s*true/i);
+    assert.doesNotMatch(activateMigration, /SET[\s\S]*cost_model/i);
+    assert.doesNotMatch(activateMigration, /CREATE TABLE/i);
+  });
 });
 
 describe("DEFAULT_LOW_TIER_PROVIDER_KEYS", () => {
@@ -465,6 +479,33 @@ describe("resolveProvider (US-X.4)", () => {
     const { getCatalogRowByKey } = loadProviderAdapters();
     const found = getCatalogRowByKey(catalog, "siliconflow_qwen");
     assert.equal(found?.key, "siliconflow_qwen");
+  });
+
+  it("low tier + active ltx_broll_high never resolves LTX for broll", () => {
+    const activated = buildSeedCatalog().map((entry) =>
+      entry.key === "ltx_broll_high" ? { ...entry, active: true } : entry,
+    );
+    const { resolveProvider } = loadProviderAdapters();
+    const resolved = resolveProvider(activated, {
+      assetRole: "broll",
+      tier: "low",
+    });
+    assert.equal(resolved.key, DEFAULT_LOW_TIER_PROVIDER_KEYS.broll);
+    assert.notEqual(resolved.key, "ltx_broll_high");
+  });
+
+  it("high tier + active ltx_broll_high resolves LTX for broll", () => {
+    const activated = buildSeedCatalog().map((entry) =>
+      entry.key === "ltx_broll_high" ? { ...entry, active: true } : entry,
+    );
+    const { resolveProvider } = loadProviderAdapters();
+    const resolved = resolveProvider(activated, {
+      assetRole: "broll",
+      tier: "high",
+    });
+    assert.equal(resolved.key, "ltx_broll_high");
+    assert.equal(resolved.tier, "high");
+    assert.equal(resolved.costModel.unitCostCents, 126);
   });
 });
 

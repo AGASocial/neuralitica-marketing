@@ -1,6 +1,13 @@
 import "server-only";
 
 import {
+  buildLtxBrollPrompt,
+  clampLtxClipDurationSec,
+  isAllowedBrollProviderPair,
+  LTX_PROVIDER_KEY,
+  LTX_UNIT_COST_CENTS_PER_CLIP,
+} from "@/lib/contracts/ltx-broll-high";
+import {
   WAN_PROMPT_BEAT_CLOSE,
   WAN_PROMPT_BEAT_OPEN,
   WAN_PROMPT_MAX_CHARS,
@@ -185,7 +192,7 @@ export async function createBrollVideoJobs(
     const providerKey = providerResult.decision.providerKey;
     const providerTier = providerResult.decision.providerTier;
 
-    if (providerKey !== WAN_PROVIDER_KEY || providerTier !== "low") {
+    if (!isAllowedBrollProviderPair(providerKey, providerTier)) {
       return videoJobMutationError("BROLL_PROVIDER_UNAVAILABLE");
     }
 
@@ -217,11 +224,21 @@ export async function createBrollVideoJobs(
     const skipped: CreateBrollVideoJobSkippedItem[] = [];
     const attempt = options?.attempt ?? 1;
     const jobKind = options?.jobKind ?? "broll_generate";
-    const durationSec = clampWanClipDurationSec(5);
+    const durationSec =
+      providerKey === LTX_PROVIDER_KEY
+        ? clampLtxClipDurationSec(5)
+        : clampWanClipDurationSec(5);
+    const defaultEstimateCentsPerClip =
+      providerKey === LTX_PROVIDER_KEY
+        ? LTX_UNIT_COST_CENTS_PER_CLIP
+        : WAN_UNIT_COST_CENTS_PER_CLIP;
 
     for (let i = 0; i < clipCount; i += 1) {
       const beatText = beatTexts[i] ?? beatTexts[0] ?? script.package.hook;
-      const prompt = buildWanBrollPrompt({ beatText });
+      const prompt =
+        providerKey === LTX_PROVIDER_KEY
+          ? buildLtxBrollPrompt({ beatText })
+          : buildWanBrollPrompt({ beatText });
 
       const resolvedInput = {
         reelScriptId: input.reelScriptId,
@@ -236,7 +253,7 @@ export async function createBrollVideoJobs(
         clipCount: 1,
       };
 
-      let estimateCents = WAN_UNIT_COST_CENTS_PER_CLIP;
+      let estimateCents = defaultEstimateCentsPerClip;
       try {
         const estimate = await adapter.estimateCost(resolvedInput);
         estimateCents = estimate.estimatedCostCents;

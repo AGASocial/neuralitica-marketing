@@ -17,6 +17,7 @@ const JOB_ID = "44444444-4444-4444-8444-444444444444";
 const EXTERNAL_JOB_ID = "wan_mock_request_001";
 const PRIMARY_JOB_ID = "55555555-5555-4555-8555-555555555555";
 const API_KEY = "sk-test-siliconflow-broll-orchestrator-key";
+const FAL_API_KEY = "fal-test-ltx-broll-orchestrator-key";
 
 type NodeModuleLoad = {
   _load: (
@@ -83,10 +84,14 @@ function installMocks(options: MockOptions = {}) {
     (needsBroll ? ["Storefront morning", "Product close-up"] : []);
   const providerKey = options.providerKey ?? "siliconflow_wan21_turbo";
   const providerTier = options.providerTier ?? "low";
+  const unitCostCents =
+    providerKey === "ltx_broll_high"
+      ? 126
+      : 21;
 
   const mockAdapter = {
     estimateCost: async () => ({
-      estimatedCostCents: 21,
+      estimatedCostCents: unitCostCents,
       currency: "USD",
       providerKey,
     }),
@@ -103,7 +108,7 @@ function installMocks(options: MockOptions = {}) {
       return {
         externalJobId: `${EXTERNAL_JOB_ID}_${createCallCount}`,
         status: "queued" as const,
-        estimatedCostCents: 21,
+        estimatedCostCents: unitCostCents,
       };
     },
   };
@@ -662,5 +667,264 @@ describe("US-8.5 Phase B createBrollVideoJobs", () => {
         clearModuleCache();
       }
     });
+  });
+});
+
+describe("US-8.8 Phase B createBrollVideoJobs (LTX high tier)", () => {
+  it("1 — high tier + needsBroll → creates LTX jobs asset_role=broll", async () => {
+    await withServerOnlyStub(async () => {
+      const mock = installMocks({
+        providerKey: "ltx_broll_high",
+        providerTier: "high",
+      });
+      try {
+        const { createBrollVideoJobs } = require("./create-broll-video-jobs.ts");
+        const result = await createBrollVideoJobs({
+          reelScriptId: REEL_SCRIPT_ID,
+          clientId: CLIENT_ID,
+        });
+        assert.equal(result.ok, true);
+        assert.equal(result.createdCount, 2);
+        for (const row of mock.getInsertedRows()) {
+          assert.equal(row.asset_role, "broll");
+          assert.equal(row.provider_key, "ltx_broll_high");
+          assert.equal(row.provider_tier, "high");
+          assert.equal(row.client_id, CLIENT_ID);
+        }
+      } finally {
+        mock.restore();
+      }
+    });
+  });
+
+  it("2 — low tier + needsBroll → Wan only (never LTX even if policy smuggles)", async () => {
+    await withServerOnlyStub(async () => {
+      const mock = installMocks({
+        providerKey: "siliconflow_wan21_turbo",
+        providerTier: "low",
+      });
+      try {
+        const { createBrollVideoJobs } = require("./create-broll-video-jobs.ts");
+        const result = await createBrollVideoJobs({
+          reelScriptId: REEL_SCRIPT_ID,
+          clientId: CLIENT_ID,
+        });
+        assert.equal(result.ok, true);
+        for (const row of mock.getInsertedRows()) {
+          assert.equal(row.provider_key, "siliconflow_wan21_turbo");
+          assert.notEqual(row.provider_key, "ltx_broll_high");
+        }
+      } finally {
+        mock.restore();
+      }
+    });
+  });
+
+  it("3 — isAllowedBrollProviderPair rejects (ltx_broll_high, low)", async () => {
+    await withServerOnlyStub(async () => {
+      const mock = installMocks({
+        providerKey: "ltx_broll_high",
+        providerTier: "low",
+      });
+      try {
+        const { createBrollVideoJobs } = require("./create-broll-video-jobs.ts");
+        const result = await createBrollVideoJobs({
+          reelScriptId: REEL_SCRIPT_ID,
+          clientId: CLIENT_ID,
+        });
+        assert.equal(result.ok, false);
+        assert.equal(result.error.code, "BROLL_PROVIDER_UNAVAILABLE");
+        assert.equal(mock.getCreateCallCount(), 0);
+      } finally {
+        mock.restore();
+      }
+    });
+  });
+
+  it("7 — budget spy called before each LTX clip createJob at 126¢", async () => {
+    await withServerOnlyStub(async () => {
+      const budgetEstimates: number[] = [];
+      const mock = installMocks({
+        providerKey: "ltx_broll_high",
+        providerTier: "high",
+        brollBeats: ["A", "B"],
+        onBudget: (args) => {
+          budgetEstimates.push(args.estimatedCostCents as number);
+        },
+      });
+      try {
+        const { createBrollVideoJobs } = require("./create-broll-video-jobs.ts");
+        await createBrollVideoJobs({
+          reelScriptId: REEL_SCRIPT_ID,
+          clientId: CLIENT_ID,
+        });
+        assert.equal(budgetEstimates.length, 2);
+        assert.ok(budgetEstimates.every((c) => c === 126));
+      } finally {
+        mock.restore();
+      }
+    });
+  });
+
+  it("8 — over-budget LTX B-roll does not mark primary failed", async () => {
+    await withServerOnlyStub(async () => {
+      const primaryJobsTouched = { count: 0 };
+      const mock = installMocks({
+        providerKey: "ltx_broll_high",
+        providerTier: "high",
+        budgetOk: false,
+        primaryJobsTouched,
+      });
+      try {
+        const { createBrollVideoJobs } = require("./create-broll-video-jobs.ts");
+        const result = await createBrollVideoJobs({
+          reelScriptId: REEL_SCRIPT_ID,
+          clientId: CLIENT_ID,
+        });
+        assert.equal(result.ok, true);
+        assert.equal(result.createdCount, 0);
+        assert.equal(primaryJobsTouched.count, 0);
+      } finally {
+        mock.restore();
+      }
+    });
+  });
+
+  it("9 — LTX adapter throw leaves primary successful (degrade)", async () => {
+    await withServerOnlyStub(async () => {
+      const primaryJobsTouched = { count: 0 };
+      const mock = installMocks({
+        providerKey: "ltx_broll_high",
+        providerTier: "high",
+        createJobThrows: `Key ${FAL_API_KEY} vendor boom`,
+        primaryJobsTouched,
+      });
+      try {
+        const { createBrollVideoJobs } = require("./create-broll-video-jobs.ts");
+        const result = await createBrollVideoJobs({
+          reelScriptId: REEL_SCRIPT_ID,
+          clientId: CLIENT_ID,
+        });
+        assert.equal(result.ok, true);
+        assert.equal(result.createdCount, 0);
+        assert.ok(result.skippedCount >= 1);
+        assert.equal(primaryJobsTouched.count, 0);
+      } finally {
+        mock.restore();
+      }
+    });
+  });
+
+  it("10 — INSERT persists LTX broll + high tier + client_id", async () => {
+    await withServerOnlyStub(async () => {
+      const mock = installMocks({
+        providerKey: "ltx_broll_high",
+        providerTier: "high",
+        brollBeats: ["One"],
+      });
+      try {
+        const { createBrollVideoJobs } = require("./create-broll-video-jobs.ts");
+        await createBrollVideoJobs({
+          reelScriptId: REEL_SCRIPT_ID,
+          clientId: CLIENT_ID,
+        });
+        const row = mock.getInsertedRows()[0];
+        assert.equal(row?.asset_role, "broll");
+        assert.equal(row?.provider_key, "ltx_broll_high");
+        assert.equal(row?.provider_tier, "high");
+        assert.equal(row?.client_id, CLIENT_ID);
+      } finally {
+        mock.restore();
+      }
+    });
+  });
+
+  it("13 — singleClipRetry LTX parent stays broll + ltx_broll_high", async () => {
+    await withServerOnlyStub(async () => {
+      let createInput: Record<string, unknown> | null = null;
+      const mock = installMocks({
+        providerKey: "ltx_broll_high",
+        providerTier: "high",
+        brollBeats: ["A", "B", "C"],
+        onCreateJob: (input) => {
+          createInput = input;
+        },
+      });
+      try {
+        const { createBrollVideoJobs } = require("./create-broll-video-jobs.ts");
+        const result = await createBrollVideoJobs(
+          {
+            reelScriptId: REEL_SCRIPT_ID,
+            clientId: CLIENT_ID,
+          },
+          {
+            parentJobId: "77777777-7777-4777-8777-777777777777",
+            attempt: 2,
+            operatorClientId: CLIENT_ID,
+            jobKind: "broll_retry",
+            singleClipRetry: { referenceStillAssetId: STILL_ASSET_ID },
+          },
+        );
+        assert.equal(result.ok, true);
+        assert.equal(result.createdCount, 1);
+        assert.equal(createInput?.assetRole, "broll");
+        assert.equal(createInput?.providerKey, "ltx_broll_high");
+        assert.equal(mock.getInsertedRows()[0]?.provider_key, "ltx_broll_high");
+        assert.equal(mock.getInsertedRows()[0]?.provider_tier, "high");
+      } finally {
+        mock.restore();
+      }
+    });
+  });
+
+  it("14 — LTX degrade path sanitized errors contain no Key substring", async () => {
+    await withServerOnlyStub(async () => {
+      const mock = installMocks({
+        providerKey: "ltx_broll_high",
+        providerTier: "high",
+        createJobThrows: `Unauthorized Key ${FAL_API_KEY} refused`,
+      });
+      try {
+        const { createBrollVideoJobs } = require("./create-broll-video-jobs.ts");
+        const result = await createBrollVideoJobs({
+          reelScriptId: REEL_SCRIPT_ID,
+          clientId: CLIENT_ID,
+        });
+        assert.equal(result.ok, true);
+        const serialized = JSON.stringify(result);
+        assert.doesNotMatch(serialized, new RegExp(FAL_API_KEY));
+        assert.doesNotMatch(serialized, /Key\s+fal-/i);
+      } finally {
+        mock.restore();
+      }
+    });
+  });
+
+  it("15 — pre-activate inactive LTX row → BROLL_PROVIDER_UNAVAILABLE", async () => {
+    await withServerOnlyStub(async () => {
+      const mock = installMocks({
+        providerKey: "",
+        providerTier: "high",
+      });
+      try {
+        const { createBrollVideoJobs } = require("./create-broll-video-jobs.ts");
+        const result = await createBrollVideoJobs({
+          reelScriptId: REEL_SCRIPT_ID,
+          clientId: CLIENT_ID,
+        });
+        assert.equal(result.ok, false);
+        assert.equal(result.error.code, "BROLL_PROVIDER_UNAVAILABLE");
+        assert.equal(mock.getCreateCallCount(), 0);
+      } finally {
+        mock.restore();
+      }
+    });
+  });
+
+  it("buildLtxBrollPrompt wraps beat with delimiters", () => {
+    const { buildLtxBrollPrompt } = require("../contracts/ltx-broll-high.ts");
+    const prompt = buildLtxBrollPrompt({ beatText: "  storefront dawn  " });
+    assert.match(prompt, /<<BEAT>>storefront dawn<<\/BEAT>>/);
+    assert.match(prompt, /High-polish cinematic B-roll/);
   });
 });
