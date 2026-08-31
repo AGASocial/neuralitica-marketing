@@ -4,6 +4,7 @@ import type {
   ApprovalListItemDto,
   ApprovalPackageDto,
   ApprovalQaOverrideDto,
+  ApprovedListItemDto,
 } from "@/lib/contracts/approval";
 import {
   buildEffectiveInstagramCaption,
@@ -178,6 +179,26 @@ export async function composeApprovalPackage(params: {
   };
 
   return { ok: true, package: pkg, assembly };
+}
+
+/** US-11.3 — approved-only list card (decidedAt from row). */
+export async function toApprovedListItemDto(params: {
+  approval: ApprovalRow;
+  clientId: string;
+}): Promise<ApprovedListItemDto> {
+  const item = await toApprovalListItemDto(params);
+  return {
+    approvalId: item.approvalId,
+    assembledReelId: item.assembledReelId,
+    status: "approved",
+    decidedAt:
+      params.approval.decidedAt ??
+      params.approval.updatedAt ??
+      params.approval.createdAt,
+    captionPreview: item.captionPreview,
+    hasDisclosure: item.hasDisclosure,
+    videoAssetId: item.videoAssetId,
+  };
 }
 
 export async function toApprovalListItemDto(params: {

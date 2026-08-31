@@ -3,6 +3,7 @@ import "server-only";
 import {
   APPROVAL_DECIDE_AGENT_KEY,
   APPROVAL_ENSURE_AGENT_KEY,
+  APPROVAL_EXPORT_AGENT_KEY,
   APPROVAL_MAX_PER_WINDOW,
   APPROVAL_OPERATOR_GRANT_AGENT_KEY,
   APPROVAL_OPERATOR_GRANT_MAX_PER_WINDOW,
@@ -20,7 +21,8 @@ export type ApprovalRateLimitCheckResult =
 export type ApprovalRateAgentKey =
   | typeof APPROVAL_ENSURE_AGENT_KEY
   | typeof APPROVAL_DECIDE_AGENT_KEY
-  | typeof APPROVAL_OPERATOR_GRANT_AGENT_KEY;
+  | typeof APPROVAL_OPERATOR_GRANT_AGENT_KEY
+  | typeof APPROVAL_EXPORT_AGENT_KEY;
 
 function maxAttemptsForAgent(agentKey: ApprovalRateAgentKey): number {
   if (agentKey === APPROVAL_OPERATOR_GRANT_AGENT_KEY) {

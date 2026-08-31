@@ -8,9 +8,11 @@ import type { CurrentUser } from "@/lib/auth/get-current-user-types";
 import {
   getApprovalPackageInputSchema,
   type GetApprovalPackageResult,
+  type ListApprovedApprovalsResult,
   type ListPendingApprovalsResult,
 } from "@/lib/contracts/approval";
 import {
+  toApprovedListItemDto,
   toApprovalListItemDto,
   composeApprovalPackage,
 } from "@/lib/approvals/compose-approval-package";
@@ -26,11 +28,30 @@ import {
 } from "@/lib/approvals/errors";
 import { findForbiddenApprovalKeys } from "@/lib/approvals/find-forbidden-approval-keys";
 import {
+  listApprovedApprovalsForClient,
   listBrandCompletedAssemblyIdsForClient,
   listPendingApprovalsForClient,
   loadApprovalByIdScoped,
 } from "@/lib/approvals/persist-approval";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
+
+/** US-11.3 — approved-only ready-to-publish list; no batch-ensure. */
+export async function listApprovedApprovalsForClientUser(params: {
+  user: CurrentUser;
+}): Promise<ListApprovedApprovalsResult> {
+  const clientId = params.user.id;
+  const rows = await listApprovedApprovalsForClient({ clientId });
+  const items = [];
+  for (const approval of rows) {
+    items.push(
+      await toApprovedListItemDto({
+        approval,
+        clientId,
+      }),
+    );
+  }
+  return { ok: true, items };
+}
 
 export async function listPendingApprovalsForClientUser(params: {
   user: CurrentUser;

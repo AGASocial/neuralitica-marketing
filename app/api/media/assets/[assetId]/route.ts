@@ -14,6 +14,7 @@ import {
   MEDIA_ASSET_TYPE_GENERATED_VIDEO,
   MEDIA_ASSET_TYPE_VOICEOVER,
 } from "@/lib/contracts/media-assets";
+import { MEDIA_ASSET_DISPOSITION_ATTACHMENT } from "@/lib/contracts/approval";
 import {
   assembledReelAssetMetadataSchema,
   avatarReferenceAssetMetadataSchema,
@@ -22,6 +23,7 @@ import {
   generatedVideoAssetMetadataSchema,
   voiceoverAssetMetadataSchema,
 } from "@/lib/contracts/media-assets";
+import { hasApprovedApprovalForOutputAsset } from "@/lib/approvals/persist-approval";
 import { getMediaStorage } from "@/lib/media/storage/get-media-storage";
 import {
   createServerSupabaseClient,
@@ -57,15 +59,21 @@ function internalErrorResponse(): Response {
 }
 
 /**
- * Authenticated ownership-checked media serve (US-3.3 + US-8.3 + US-9.2 + US-11.1).
+ * Authenticated ownership-checked media serve (US-3.3 + US-8.3 + US-9.2 + US-11.1 + US-11.3).
  * avatar_reference / client_logo / cover_frame: Cliente session.
  * generated_video + voiceover: Operator only.
  * assembled_reel: owning Cliente (requireActive) or Operator (requireOperator).
+ * US-11.3: Cliente `?disposition=attachment` requires approved approval linkage.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ assetId: string }> },
 ): Promise<Response> {
+  const url = new URL(request.url);
+  const dispositionParam = url.searchParams.get("disposition");
+  const attachmentMode =
+    dispositionParam === MEDIA_ASSET_DISPOSITION_ATTACHMENT;
+
   const { assetId } = await context.params;
   if (!assetId || !UUID_RE.test(assetId)) {
     return notFoundResponse();
@@ -105,6 +113,7 @@ export async function GET(
 
   let contentType = "application/octet-stream";
   let originalFilename: string | undefined;
+  let accessViaCliente = false;
 
   if (row.asset_type === MEDIA_ASSET_TYPE_AVATAR_REFERENCE) {
     let user;
@@ -228,6 +237,7 @@ export async function GET(
       hadSuccessfulAuth = true;
       if (row.client_id === user.id) {
         allowed = true;
+        accessViaCliente = true;
       }
     } catch (authError) {
       if (isAuthGuardError(authError)) {
@@ -260,6 +270,16 @@ export async function GET(
       return notFoundResponse();
     }
 
+    if (attachmentMode && accessViaCliente) {
+      const approvedLink = await hasApprovedApprovalForOutputAsset({
+        clientId: row.client_id,
+        assetId,
+      });
+      if (!approvedLink) {
+        return notFoundResponse();
+      }
+    }
+
     const metaParsed = assembledReelAssetMetadataSchema.safeParse(
       row.metadata ?? {},
     );
@@ -279,12 +299,16 @@ export async function GET(
   try {
     const storage = getMediaStorage();
     const stream = await storage.readStream(storageKey);
+    const dispositionType =
+      attachmentMode && row.asset_type === MEDIA_ASSET_TYPE_ASSEMBLED_REEL
+        ? "attachment"
+        : "inline";
     const headers: Record<string, string> = {
       "Content-Type": contentType,
       "Cache-Control": "private, no-store",
       "Content-Disposition": originalFilename
-        ? `inline; filename="${sanitizeFilenameForHeader(originalFilename)}"`
-        : "inline",
+        ? `${dispositionType}; filename="${sanitizeFilenameForHeader(originalFilename)}"`
+        : dispositionType,
     };
     return new Response(stream, { status: 200, headers });
   } catch (err) {

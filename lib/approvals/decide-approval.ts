@@ -207,6 +207,20 @@ export async function decideApprovalForClient(
     agentKey: APPROVAL_DECIDE_AGENT_KEY,
   });
 
+  const decidedAt = updated.decidedAt ?? new Date().toISOString();
+
+  if (decision === "approved") {
+    console.log(
+      JSON.stringify({
+        event: "approval_ready_to_publish",
+        approvalId: updated.id,
+        assembledReelId: updated.assembledReelId,
+        clientId,
+        decidedAt,
+      }),
+    );
+  }
+
   const summary = await toApprovalListItemDto({
     approval: updated,
     clientId,
@@ -217,7 +231,7 @@ export async function decideApprovalForClient(
     approvalId: updated.id,
     assembledReelId: updated.assembledReelId,
     status: decision,
-    decidedAt: updated.decidedAt ?? new Date().toISOString(),
+    decidedAt,
     summary,
   };
 }

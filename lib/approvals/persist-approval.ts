@@ -127,6 +127,77 @@ export async function loadApprovalByAssembledReelScoped(params: {
   return mapApprovalRow(data as Record<string, unknown>);
 }
 
+/** US-11.3 — approved-only list for ready-to-publish; decided_at DESC. */
+export async function listApprovedApprovalsForClient(params: {
+  clientId: string;
+}): Promise<ApprovalRow[]> {
+  if (!isSupabaseConfigured()) {
+    return [];
+  }
+
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from(APPROVALS_TABLE)
+    .select("*")
+    .eq("client_id", params.clientId)
+    .eq("status", "approved")
+    .order("decided_at", { ascending: false });
+
+  if (error || !data) {
+    return [];
+  }
+
+  const rows: ApprovalRow[] = [];
+  for (const raw of data) {
+    const mapped = mapApprovalRow(raw as Record<string, unknown>);
+    if (mapped) {
+      rows.push(mapped);
+    }
+  }
+  return rows;
+}
+
+/**
+ * US-11.3 — Cliente attachment guard: approved approval links asset as output.
+ */
+export async function hasApprovedApprovalForOutputAsset(params: {
+  clientId: string;
+  assetId: string;
+}): Promise<boolean> {
+  if (!isSupabaseConfigured()) {
+    return false;
+  }
+
+  const supabase = createServerSupabaseClient();
+  const { data: approvals, error } = await supabase
+    .from(APPROVALS_TABLE)
+    .select("assembled_reel_id")
+    .eq("client_id", params.clientId)
+    .eq("status", "approved");
+
+  if (error || !approvals?.length) {
+    return false;
+  }
+
+  const reelIds = approvals
+    .map((row) => (row as { assembled_reel_id?: unknown }).assembled_reel_id)
+    .filter((id): id is string => typeof id === "string");
+
+  if (reelIds.length === 0) {
+    return false;
+  }
+
+  const { data: reels, error: reelError } = await supabase
+    .from("neuramark_assembled_reels")
+    .select("id")
+    .eq("client_id", params.clientId)
+    .eq("output_media_asset_id", params.assetId)
+    .in("id", reelIds)
+    .limit(1);
+
+  return !reelError && (reels?.length ?? 0) > 0;
+}
+
 export async function listPendingApprovalsForClient(params: {
   clientId: string;
 }): Promise<ApprovalRow[]> {

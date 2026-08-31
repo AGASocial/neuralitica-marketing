@@ -105,18 +105,18 @@ GET /api/media/assets/[assetId]?disposition=attachment
 
 **Consumers:** ready-to-publish pages · download buttons · existing approve flow (log hook only)
 
-- [ ] Extend **`lib/contracts/approval.ts`**: `ApprovedListItemDto`, `listApprovedApprovalsInputSchema`, result types, export error codes if needed.
-- [ ] Add **`listApprovedApprovalsForClient`** in `lib/approvals/list-get-approvals.ts` (or sibling) — query `WHERE client_id = $session AND status = 'approved' ORDER BY decided_at DESC`.
-- [ ] Add **`lib/approvals/actions/list-approved-approvals.ts`** Server Action — `requireActive("handler")` first; empty body `.strict()`.
-- [ ] Add persist helper **`listApprovedApprovalsForClient`** in `lib/approvals/persist-approval.ts`.
-- [ ] Add **`app/api/approvals/[approvalId]/caption.txt/route.ts`** — auth + tenancy + **`status === 'approved'`** guard; compose caption via existing package composer / `buildEffectiveInstagramCaption`; `Content-Type: text/plain; charset=utf-8`; `Content-Disposition: attachment`; `Cache-Control: private, no-store`.
-- [ ] Extend **`app/api/media/assets/[assetId]/route.ts`**: parse `disposition=attachment` (PO lean) → `Content-Disposition: attachment` with sanitized filename; default remains `inline`.
-- [ ] Optional: **`approval_ready_to_publish` structured log** in `decideApprovalForClient` on `approved` success — no outbound integrations.
-- [ ] **[SEC]** Caption route: foreign `approvalId` → 404; non-approved status → 404; never stream from unscoped assembly/caption tables.
-- [ ] **[SEC]** Media attachment: same ownership matrix as US-11.1 — Cliente `assembled_reel` only; no widen to `generated_video` / `voiceover`.
-- [ ] **[SEC]** Reaffirm — no new approval status writers; grep closed write surface unchanged except log line.
-- [ ] Rate limit caption export — CONTRACT names bucket (`approval_export` lean 30/hour).
-- [ ] Unit/integration tests: approved-only list; rejected/pending/changes_requested excluded; caption export 404 for non-approved; attachment disposition header; IDOR 404 cross-client.
+- [x] Extend **`lib/contracts/approval.ts`**: `ApprovedListItemDto`, `listApprovedApprovalsInputSchema`, result types, export error codes if needed.
+- [x] Add **`listApprovedApprovalsForClient`** in `lib/approvals/list-get-approvals.ts` (or sibling) — query `WHERE client_id = $session AND status = 'approved' ORDER BY decided_at DESC`.
+- [x] Add **`lib/approvals/actions/list-approved-approvals.ts`** Server Action — `requireActive("handler")` first; empty body `.strict()`.
+- [x] Add persist helper **`listApprovedApprovalsForClient`** in `lib/approvals/persist-approval.ts`.
+- [x] Add **`app/api/approvals/[approvalId]/caption.txt/route.ts`** — auth + tenancy + **`status === 'approved'`** guard; compose caption via existing package composer / `buildEffectiveInstagramCaption`; `Content-Type: text/plain; charset=utf-8`; `Content-Disposition: attachment`; `Cache-Control: private, no-store`.
+- [x] Extend **`app/api/media/assets/[assetId]/route.ts`**: parse `disposition=attachment` (PO lean) → `Content-Disposition: attachment` with sanitized filename; default remains `inline`.
+- [x] Optional: **`approval_ready_to_publish` structured log** in `decideApprovalForClient` on `approved` success — no outbound integrations.
+- [x] **[SEC]** Caption route: foreign `approvalId` → 404; non-approved status → 404; never stream from unscoped assembly/caption tables.
+- [x] **[SEC]** Media attachment: same ownership matrix as US-11.1 — Cliente `assembled_reel` only; no widen to `generated_video` / `voiceover`.
+- [x] **[SEC]** Reaffirm — no new approval status writers; grep closed write surface unchanged except log line.
+- [x] Rate limit caption export — CONTRACT names bucket (`approval_export` lean 30/hour).
+- [x] Unit/integration tests: approved-only list; rejected/pending/changes_requested excluded; caption export 404 for non-approved; attachment disposition header; IDOR 404 cross-client.
 
 ---
 
@@ -124,8 +124,8 @@ GET /api/media/assets/[assetId]?disposition=attachment
 
 **No migration required** — consume existing `neuramark_approvals.status`, `decided_at`, `decided_by`.
 
-- [ ] Verify index **`neuramark_approvals_client_status_created_idx`** supports `(client_id, status, …)` filter for `approved` list — add migration **only if** CONTRACT/perf review shows gap (PO lean: existing index sufficient with `status = 'approved'` predicate).
-- [ ] Document in CONTRACT: no DDL for US-11.3.
+- [x] Verify index **`neuramark_approvals_client_status_created_idx`** supports `(client_id, status, …)` filter for `approved` list — add migration **only if** CONTRACT/perf review shows gap (PO lean: existing index sufficient with `status = 'approved'` predicate).
+- [x] Document in CONTRACT: no DDL for US-11.3.
 
 ---
 
