@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 5
-current_story: null
-story_status: SELECT
-feature_branch: null
+current_story: US-12.2
+story_status: SPEC
+feature_branch: feature/US-12.2-mark-published
 last_completed_story: US-12.1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T02:15:00Z
+updated_at: 2026-08-31T02:25:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1)
@@ -18,6 +18,7 @@ updated_at: 2026-08-31T02:15:00Z
 | Story | Status | Notes |
 |-------|--------|-------|
 | US-12.1 Weekly calendar view | done | BE `9ac84dc` · FE `de2fe1e` · fix `79546ab` · VALIDATION `d642e70` · QA `80766dc` · CLOSE `722e5e0` (5/5 AC; mark published → US-12.2) |
+| US-12.2 Mark manual publication done | SPEC | branch `feature/US-12.2-mark-published` · PREP `839a4bb` · SECURITY next |
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -60,6 +61,7 @@ updated_at: 2026-08-31T02:15:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-12.2 SELECT → PREP. Branch `feature/US-12.2-mark-published` from main; deps US-12.1 ✅.
 - 2026-08-30 · US-12.1 CLOSE: 5/5 AC checked; VALIDATION PASS WITH NOTES `d642e70` (18/18); QA APPROVE WITH CONDITIONS `80766dc` after fix `79546ab` (0 Critical/High); FF-merge `722e5e0` to main; Phase 5 → SELECT **US-12.2** (recommended), US-13.1, or US-8.7.
 - 2026-08-30 · US-11.3 CLOSE: 5/5 AC checked; VALIDATION PASS WITH NOTES `209dcc3` (44/44); QA APPROVE WITH CONDITIONS `04dfe5b` (0 Critical/High); FF-merge `dfdace9` to main; **Sprint 6 complete** (US-11.1/11.2/11.3); Phase 3 → SELECT **US-12.1** (recommended), phase integration, or US-8.5.
 - 2026-08-30 · US-11.2 CLOSE Phase A: 5/5 AC checked; VALIDATION PASS WITH NOTES `e4f12fb` (105/105); QA APPROVE WITH CONDITIONS `84902c8`; FF-merge `a08b999` to main; Phase 3 → SELECT **US-11.3** (recommended) or US-8.5.
@@ -68,70 +70,3 @@ updated_at: 2026-08-31T02:15:00Z
 - 2026-08-30 · US-11.1 SELECT → PREP. Branch `feature/US-11.1-client-approval` from main; deps US-10.1 ✅ · US-10.2 ✅ · US-9.2 ✅.
 - 2026-08-30 · US-10.2 CLOSE Phase A: 7/7 AC checked; VALIDATION PASS WITH NOTES `d7e3cd5` (22/22); QA APPROVE WITH CONDITIONS `3da5547`; FF-merge `c9b97e5` to main; Phase 3 → SELECT **US-11.1** (recommended) or US-8.5.
 - 2026-08-30 · US-10.2 SELECT → PREP. Branch `feature/US-10.2-qa-override` from main; deps US-10.1 ✅.
-- 2026-08-30 · US-10.1 CLOSE Phase A: 6/6 AC checked; VALIDATION PASS WITH NOTES `d95555d` (42/42); QA APPROVE WITH CONDITIONS `a6ba923`; FF-merge `b7a3bb9` to main; Phase 3 → SELECT **US-10.2** (recommended) or US-8.5 or US-11.1 (deps allow).
-- 2026-08-30 · US-10.1 SPEC GAPS `ab28e78` · SECURITY APPROVE WITH CONDITIONS `8a96c33`; story_status CONTRACT.
-- 2026-08-30 · US-10.1 PREP `d3d2985`; story_status SPEC → SPEC+SECURITY next.
-- 2026-08-30 · US-10.1 SELECT → PREP. Branch `feature/US-10.1-automated-qa` from main; deps US-9.2 ✅ · US-6.1 ✅ · US-3.4 ✅ · US-X.4 ✅.
-- 2026-08-30 · US-9.2 CLOSE Phase A: 5/5 AC checked; QA APPROVE WITH CONDITIONS `c0d6f66`; FF-merge `92b196a` to main; Phase 3 → SELECT US-10.1 (recommended) or US-8.5.
-- 2026-08-30 · US-9.2 SELECT → PREP. Branch `feature/US-9.2-subtitles-logo-cover` from main; deps US-9.1 ✅ · US-2.2 ✅.
-- 2026-08-30 · US-9.1 CLOSE Phase A: 5/5 AC checked; QA APPROVE WITH CONDITIONS `5c0ec7e`; FF-merge `4853871` to main; Phase 3 → SELECT US-9.2 (recommended) or US-8.5.
-- 2026-08-30 · US-9.1 BUILD: worker `f74570f` · BE `7189f4b` · FE `9e7142c`; story_status VALIDATE.
-- 2026-08-30 · US-9.1 SPEC GAPS `8728973` · SECURITY APPROVE WITH CONDITIONS `3b13b66`; story_status CONTRACT.
-- 2026-08-30 · US-9.1 SELECT → PREP `70a312d`. Branch `feature/US-9.1-assemble-reel`.
-- 2026-08-30 · US-9.3 CLOSE Phase A: 5/6 AC checked; QA APPROVE WITH CONDITIONS `e9c1833`; FF-merge `dfdd08b` to main; Phase 3 → SELECT US-9.1 (recommended).
-- 2026-08-30 · US-9.3 VALIDATION: PASS WITH NOTES `1715048` (79/79 tests); story_status QA.
-- 2026-08-30 · US-9.3 BUILD: adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813`.
-- 2026-08-30 · US-9.3 CONTRACT: frozen `fb620ef`; story_status SIGNOFF.
-- 2026-08-30 · US-8.3 CLOSE: 7/7 AC; QA APPROVE WITH CONDITIONS `a58faeb`; FF-merge `d8baafb` to main; Phase 3 → SELECT US-9.3.
-- 2026-08-30 · US-8.6 CLOSE: 4/5 AC V1; QA APPROVE WITH CONDITIONS `82bde3d`; FF-merge `2fb7573` to main; Phase 3 → SELECT US-8.3.
-- 2026-08-30 · US-8.4 CLOSE: 8/8 AC + US-8.2 Phase B 9/9 AC; QA APPROVE WITH CONDITIONS `9b24c48`; FF-merge `35a433d` to main; Phase 3 → SELECT US-8.6.
-- 2026-08-30 · US-8.4 CONTRACT: frozen `af68149`; FE signoff; PREP docs; branch `feature/US-8.4-video-jobs`; story_status CONTRACT → BUILD next (closes US-8.2 Phase B).
-- 2026-08-30 · US-8.4 PREP: README + TASKS + SPEC-REVIEW (GAPS) + SECURITY APPROVE WITH CONDITIONS.
-- 2026-08-30 · US-8.2 CLOSE Phase A: `258fcef`; Phase B deferred to US-8.4.
-- 2026-08-30 · US-8.1 CLOSE: 6/6 AC; QA BLOCK remediated `4193a1e`; BE `a11d4ae` · VALIDATION PASS WITH NOTES `7367929`; Phase 3 → SELECT next story (US-8.2 recommended).
-- 2026-08-30 · US-7.4 CLOSE: 6/6 AC Phase A; QA APPROVE WITH CONDITIONS after fix `5b3e9d7`; BE `5c9abb4` · FE `8735be2` · VALIDATION PASS WITH NOTES `a678ac4`; Phase 3 → SELECT next story. Phase B (video/TTS/B-roll lines) deferred.
-- 2026-08-30 · US-7.4 CONTRACT: frozen `08b4131`; FE signoff; story_status CONTRACT → BUILD next.
-- 2026-08-30 · US-7.4 PREP: README + TASKS + SPEC-REVIEW (GAPS) + SECURITY APPROVE WITH CONDITIONS.
-- 2026-08-30 · US-7.3 CLOSE: 4/4 AC Phase A; QA APPROVE WITH NOTES after fix `f60579d`; BE `030d85f` · FE `02b399b`/`ddca524` · VALIDATION PASS WITH NOTES `09656e0`; Phase 3 → SELECT US-7.4. Phase B (video/TTS) deferred.
-- 2026-08-30 · US-7.3 CONTRACT: frozen `f6038e9`; FE signoff; story_status CONTRACT → BUILD next.
-- 2026-08-30 · US-7.3 PREP: README + TASKS + SPEC-REVIEW (GAPS) + SECURITY APPROVE WITH CONDITIONS.
-- 2026-08-30 · US-7.2 CLOSE: 8/8 AC; QA APPROVE WITH NOTES after fix `78e6aa1`; BE `8eab3f7` · FE `2ab482c` · VALIDATION PASS WITH NOTES `eb03f8e`; Phase 3 → SELECT US-7.3.
-- 2026-08-30 · US-7.2 CONTRACT: frozen `45c46e5`; FE signoff; story_status CONTRACT → BUILD next.
-- 2026-08-30 · US-7.2 PREP: README + TASKS + SPEC-REVIEW (GAPS) + SECURITY APPROVE WITH CONDITIONS.
-- 2026-08-30 · US-7.1 CLOSE: 10/10 AC; QA APPROVE WITH NOTES; BE `3bdc709` · FE `bb19e4d` · fix `69d274f` · VALIDATION PASS WITH NOTES `13531f8`; Phase 3 → SELECT US-7.2.
-- 2026-08-30 · US-7.1 BUILD: frozen `9470d49`; FE signoff; branch `feature/US-7.1-cost-policy`; story_status CONTRACT → BUILD next.
-- 2026-08-30 · US-7.1 PREP: README + TASKS + SPEC-REVIEW (GAPS) + SECURITY APPROVE WITH CONDITIONS.
-- 2026-08-30 · US-6.2 CLOSE: 3/3 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 4 Low); BE `146479c` · FE `f82ba33` · VALIDATION `258773c` · QA `fc0f4b2` · CLOSE `72723c5`; Phase 3 → SELECT US-7.1.
-- 2026-08-30 · US-6.2 BUILD: BE `146479c` · FE `f82ba33`; VALIDATION PASS WITH NOTES `258773c`; QA APPROVE WITH NOTES `fc0f4b2`.
-- 2026-08-30 · US-6.2 CONTRACT: `plan/stories/US-6.2/CONTRACT.md` frozen; FE signoff; 7 SPEC gaps closed; SECURITY APPROVE WITH CONDITIONS; branch `feature/US-6.2-cta-selection`; story_status CONTRACT → BUILD next.
-- 2026-08-30 · US-6.2 PREP: `plan/stories/US-6.2/README.md` + `TASKS.md` + `SPEC-REVIEW.md` + `SECURITY.md`; PO decisions frozen; story_status PREP → CONTRACT.
-- 2026-08-30 · US-6.1 CLOSE: 5/5 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 1 Low); agents `c385372` · FE `d075781` · BE `1f45244` · VALIDATION `2cebd89`; Phase 3 → SELECT US-6.2.
-- 2026-08-30 · US-6.1 QA: APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 1 Low); `plan/stories/US-6.1/QA.md`; 48/48 caption tests; CLOSE recommended yes; agents `c385372` · FE `d075781` · BE `1f45244` · VALIDATION `2cebd89`; story_status QA.
-- 2026-08-30 · US-6.1 VALIDATION: PASS WITH NOTES (0 blockers, 45/48 tests); `plan/stories/US-6.1/VALIDATION.md`; agents `c385372` · FE `d075781` · BE `1f45244`; 3 agent prompt-fixture assertion failures documented; story_status VALIDATION.
-- 2026-08-30 · US-6.1 BUILD (BE): `neuramark_reel_captions` migration, caption contracts, orchestrator, Server Actions, list DTO extension, 34 caption tests; story_status BUILD.
-- 2026-08-30 · US-6.1 PREP: `plan/stories/US-6.1/README.md` + `TASKS.md`; PO decisions frozen; story_status PREP.
-- 2026-08-30 · US-5.2 CLOSE: 2/2 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 3 Low); BE `b503241` · FE `b68d2ee` · VALIDATION `8ba616e`; Phase 3 → SELECT US-6.1.
-- 2026-08-30 · US-5.2 QA: APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 3 Low); `plan/stories/US-5.2/QA.md`; 18/18 tests; CLOSE recommended yes; BE `b503241` · FE `b68d2ee` · VALIDATION `8ba616e`; story_status QA.
-- 2026-08-30 · US-5.2 VALIDATION: PASS WITH NOTES (0 blockers, 18/18 tests); `plan/stories/US-5.2/VALIDATION.md`; BE `b503241` · FE `b68d2ee`; story_status VALIDATION.
-- 2026-08-30 · US-5.2 BUILD (BE): `compute-script-readability.test.ts` (18 tests); `find-forbidden-keys` threshold guards; mapper attaches `readability`; story_status BUILD.
-- 2026-08-30 · US-5.2 CONTRACT: `plan/stories/US-5.2/CONTRACT.md` frozen; `lib/contracts/reel-script-readability.ts`; SPEC gaps closed (40 chars/beat, parse rules, read-only DTO); story_status CONTRACT; branch `feature/US-5.2-script-readability`.
-- 2026-08-30 · US-5.2 PREP: `plan/stories/US-5.2/README.md` + `TASKS.md`; PO decisions frozen; story_status PREP.
-- 2026-08-30 · US-5.1 CLOSE: 6/6 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 3 Medium, 3 Low); agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e`; Phase 3 → SELECT US-5.2.
-- 2026-08-30 · US-5.1 QA: APPROVE WITH NOTES (0 Critical, 0 High, 3 Medium, 3 Low); `plan/stories/US-5.1/QA.md`; 47/47 story tests; CLOSE recommended yes; agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e` · VALIDATION `f387659`; story_status QA.
-- 2026-08-30 · US-5.1 VALIDATION: PASS WITH NOTES (0 blockers, 109/109 tests); `plan/stories/US-5.1/VALIDATION.md`; agents `a12cbc7` · BE `aa1c13e` · FE `18abc7e`; story_status VALIDATION.
-- 2026-08-30 · US-5.1 CONTRACT: `plan/stories/US-5.1/CONTRACT.md` frozen; SPEC-REVIEW gaps closed; story_status CONTRACT; branch `feature/US-5.1-reel-scripts`.
-- 2026-08-30 · US-5.1 PREP: `plan/stories/US-5.1/README.md` + `TASKS.md`; PO decisions frozen; story_status PREP.
-- 2026-08-30 · US-4.2 CLOSE: 5/5 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 0 Medium, 3 Low); BE `ba57bac` · FE `4367287`; Phase 3 → SELECT US-5.1.
-- 2026-08-30 · US-4.2 QA: APPROVE WITH NOTES (0 Critical, 0 High, 3 Low); `plan/stories/US-4.2/QA.md`; 74/74 tests; CLOSE recommended yes; BE `ba57bac` · FE `4367287` · VALIDATION `dd7eff5`; story_status QA.
-- 2026-08-30 · US-4.2 VALIDATION: PASS WITH NOTES (0 blockers, 74/74 tests); `plan/stories/US-4.2/VALIDATION.md`; BE `ba57bac` · FE `4367287`; story_status VALIDATION.
-- 2026-08-30 · US-4.2 CONTRACT: `plan/stories/US-4.2/CONTRACT.md` frozen; SPEC-REVIEW gaps closed; story_status CONTRACT; branch `feature/US-4.2-strategy-approve`.
-- 2026-08-30 · US-4.2 PREP: `plan/stories/US-4.2/README.md` + `TASKS.md`; PO decisions frozen; story_status PREP.
-- 2026-08-30 · US-4.1 CLOSE: 9/9 AC checked; QA APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 3 Low); BE `af998d9` · FE `dcbd15a` · agents `bbd159d`; Phase 3 → SELECT US-4.2.
-- 2026-08-30 · US-4.1 QA: APPROVE WITH NOTES (0 Critical, 0 High, 2 Medium, 3 Low); `plan/stories/US-4.1/QA.md`; story_status QA; CLOSE recommended yes.
-- 2026-08-30 · US-4.1 VALIDATION: PASS WITH NOTES (0 blockers, 51/51 tests); `plan/stories/US-4.1/VALIDATION.md`; story_status VALIDATION.
-- 2026-08-30 · US-4.1 CONTRACT: `plan/stories/US-4.1/CONTRACT.md` frozen; SPEC-REVIEW gaps closed; story_status CONTRACT; branch `feature/US-4.1-content-strategy`.
-- 2026-08-30 · US-4.1 PREP: `plan/stories/US-4.1/README.md` + `TASKS.md`; PO decisions frozen; story_status PREP.
-- 2026-08-29 · US-X.4 CLOSE + FF-merge to main (`291313b`). Phase 3 → SELECT US-4.1.
-- 2026-08-29 · US-X.4 QA: APPROVE WITH NOTES (0 Critical/High, 26/26 tests).
-- 2026-08-29 · US-X.4 VALIDATION: PASS WITH NOTES (0 blockers).
-- 2026-08-29 · US-X.4 BUILD: catalog migrations + `getProviderCatalog()` + `llmVariant` routing (`5ba9876`).
