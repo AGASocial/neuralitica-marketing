@@ -1149,11 +1149,11 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | `reel_metrics` (assembled_reel_id, views, likes, comments, saves, dms, recorded_at) |
 
 **Acceptance criteria**
-- [ ] Metrics only on published Reels
-- [ ] Edit allowed within 7 days (configurable)
-- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403)
-- [ ] [SEC] Metrics inputs are validated server-side as non-negative integers with a sane upper bound; the "published Reels only" and 7-day-edit rules are enforced in the handler, not just the form
-- [ ] [SEC] Metrics writes are scoped to Reels of the current client (client-supplied `assembled_reel_id` verified for ownership)
+- [x] Metrics only on published Reels
+- [x] Edit allowed within 7 days (configurable)
+- [x] Operator-only: endpoint/action rejects non-operator sessions server-side (403)
+- [x] [SEC] Metrics inputs are validated server-side as non-negative integers with a sane upper bound; the "published Reels only" and 7-day-edit rules are enforced in the handler, not just the form
+- [x] [SEC] Metrics writes are scoped to Reels of the current client (client-supplied `assembled_reel_id` verified for ownership)
 
 **Depends on:** US-12.2
 

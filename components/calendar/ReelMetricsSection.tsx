@@ -68,7 +68,7 @@ export function ReelMetricsSection({
 }: ReelMetricsSectionProps) {
   const router = useRouter();
   const metrics = slot.metrics;
-  const editable = metrics?.editable ?? true;
+  const editable = metrics?.editable === true;
 
   const [values, setValues] = useState<Record<MetricField, number | null>>(() =>
     defaultCounters(metrics),
