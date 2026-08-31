@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 5
 current_story: US-12.2
-story_status: VALIDATE
+story_status: QA
 feature_branch: feature/US-12.2-mark-published
 last_completed_story: US-12.1
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T02:50:00Z
+updated_at: 2026-08-31T02:55:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1)
@@ -18,7 +18,7 @@ updated_at: 2026-08-31T02:50:00Z
 | Story | Status | Notes |
 |-------|--------|-------|
 | US-12.1 Weekly calendar view | done | BE `9ac84dc` · FE `de2fe1e` · fix `79546ab` · VALIDATION `d642e70` · QA `80766dc` · CLOSE `722e5e0` (5/5 AC; mark published → US-12.2) |
-| US-12.2 Mark manual publication done | VALIDATE | branch `feature/US-12.2-mark-published` · BE `6e0fcf0` · FE `513632e` · QA next |
+| US-12.2 Mark manual publication done | QA | branch `feature/US-12.2-mark-published` · VALIDATION `ceacf10` (39/39) · CLOSE next |
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
