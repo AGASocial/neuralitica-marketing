@@ -131,14 +131,14 @@ type ClientGapWarningDto = {
 
 **Consumers:** `/operator/calendar` page · Sidebar (same payload)
 
-- [ ] Add **`lib/contracts/calendar.ts`**: Zod input `getOperatorCalendarForWeekInputSchema` (`weekStart` only — `.strict()`); DTOs above; error codes (`UNAUTHENTICATED`, `FORBIDDEN`, `VALIDATION_ERROR`, `INTERNAL_ERROR`).
-- [ ] Add **`lib/calendar/sync-calendar-slots-for-week.ts`**: for each active client, load latest **approved** strategy for `weekStart`; map slots → `scheduled_date`; upsert `neuramark_content_calendar_slots`; link `reel_script_id` when script row exists; **delete** orphan rows for that client/week not in current brief; set `publish_status = 'ready'` on insert only.
-- [ ] Add **`lib/calendar/derive-calendar-pipeline-status.ts`**: cascade rules per README PO #5 using joins to scripts, video jobs, assembly, QA, approvals (reuse existing loaders where possible — do not duplicate QA gate logic).
-- [ ] Add **`lib/calendar/get-operator-calendar-for-week.ts`**: orchestrate sync + query + gap computation (`scheduledCount` per client).
-- [ ] Add **`lib/calendar/actions/get-operator-calendar-for-week.ts`**: Server Action; **`requireOperator("handler")`** first; reject forbidden body keys (`client_id`, etc.).
-- [ ] **[SEC]** Cliente role calling action → **403**; no `client_id` param accepted.
-- [ ] **[SEC]** Document in story SECURITY (later): future Cliente calendar = separate action — out of BUILD scope but test that aggregate never accepts client filter.
-- [ ] Unit/integration tests: sync idempotency; gap math (&lt;3); status cascade samples (draft → generating → qa → pending → approved → published); operator gate; forbidden fields; orphan slot deletion.
+- [x] Add **`lib/contracts/calendar.ts`**: Zod input `getOperatorCalendarForWeekInputSchema` (`weekStart` only — `.strict()`); DTOs above; error codes (`UNAUTHENTICATED`, `FORBIDDEN`, `VALIDATION_ERROR`, `INTERNAL_ERROR`).
+- [x] Add **`lib/calendar/sync-calendar-slots-for-week.ts`**: for each active client, load latest **approved** strategy for `weekStart`; map slots → `scheduled_date`; upsert `neuramark_content_calendar_slots`; link `reel_script_id` when script row exists; **delete** orphan rows for that client/week not in current brief; set `publish_status = 'ready'` on insert only.
+- [x] Add **`lib/calendar/derive-calendar-pipeline-status.ts`**: cascade rules per README PO #5 using joins to scripts, video jobs, assembly, QA, approvals (reuse existing loaders where possible — do not duplicate QA gate logic).
+- [x] Add **`lib/calendar/get-operator-calendar-for-week.ts`**: orchestrate sync + query + gap computation (`scheduledCount` per client).
+- [x] Add **`lib/calendar/actions/get-operator-calendar-for-week.ts`**: Server Action; **`requireOperator("handler")`** first; reject forbidden body keys (`client_id`, etc.).
+- [x] **[SEC]** Cliente role calling action → **403**; no `client_id` param accepted.
+- [x] **[SEC]** Document in story SECURITY (later): future Cliente calendar = separate action — out of BUILD scope but test that aggregate never accepts client filter.
+- [x] Unit/integration tests: sync idempotency; gap math (&lt;3); status cascade samples (draft → generating → qa → pending → approved → published); operator gate; forbidden fields; orphan slot deletion.
 
 ---
 
@@ -146,7 +146,7 @@ type ClientGapWarningDto = {
 
 **Consumers:** sync helper · US-12.2 (future publish_status updates)
 
-- [ ] Migration **`neuramark_content_calendar_slots`**:
+- [x] Migration **`neuramark_content_calendar_slots`**:
   - `id` uuid PK default `gen_random_uuid()`
   - `client_id` uuid NOT NULL REFERENCES `neuramark_clients(id)`
   - `week_start` date NOT NULL (ISO Monday)
@@ -157,20 +157,20 @@ type ClientGapWarningDto = {
   - `publish_status` text NOT NULL DEFAULT `'ready'` CHECK (`publish_status` IN (`'ready'`, `'published'`))
   - `created_at` / `updated_at` timestamptz
   - UNIQUE (`client_id`, `week_start`, `slot_index`)
-- [ ] Indexes: `neuramark_content_calendar_slots_week_start_idx`; `neuramark_content_calendar_slots_client_week_idx`; `neuramark_content_calendar_slots_scheduled_date_idx`.
-- [ ] RLS: **deny-by-default** (server service role only — same house pattern as peer tables).
-- [ ] **No trigger** on strategy approve in US-12.1 — sync-on-read only.
+- [x] Indexes: `neuramark_content_calendar_slots_week_start_idx`; `neuramark_content_calendar_slots_client_week_idx`; `neuramark_content_calendar_slots_scheduled_date_idx`.
+- [x] RLS: **deny-by-default** (server service role only — same house pattern as peer tables).
+- [x] **No trigger** on strategy approve in US-12.1 — sync-on-read only.
 
 ---
 
 ## Security acceptance (for SECURITY.md — checklist seed)
 
-- [ ] Operator aggregate Server Action: **`requireOperator("handler")`** — 403 for Cliente.
-- [ ] Request schema: **`weekStart` only** — reject `client_id` / extra keys (`FORBIDDEN_FIELDS`).
-- [ ] No reuse of Cliente `/ready-to-publish` or `listApprovedApprovals` for Operator calendar data.
-- [ ] Future Cliente calendar documented as **separate endpoint** — not in BUILD.
-- [ ] Preview/thumbnail URLs: server-built authenticated paths only — never expose `storage_key`.
-- [ ] US-12.1 performs **no** `publish_status` update to `published` (defer US-12.2).
+- [x] Operator aggregate Server Action: **`requireOperator("handler")`** — 403 for Cliente.
+- [x] Request schema: **`weekStart` only** — reject `client_id` / extra keys (`FORBIDDEN_FIELDS`).
+- [x] No reuse of Cliente `/ready-to-publish` or `listApprovedApprovals` for Operator calendar data.
+- [x] Future Cliente calendar documented as **separate endpoint** — not in BUILD.
+- [x] Preview/thumbnail URLs: server-built authenticated paths only — never expose `storage_key`.
+- [x] US-12.1 performs **no** `publish_status` update to `published` (defer US-12.2).
 
 ---
 

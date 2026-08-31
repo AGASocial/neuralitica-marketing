@@ -249,11 +249,10 @@ export async function GET(
 
     if (!allowed) {
       try {
-        const operator = await requireOperator("handler");
+        await requireOperator("handler");
         hadSuccessfulAuth = true;
-        if (row.client_id === operator.id) {
-          allowed = true;
-        }
+        // US-12.1: Operator may stream any active client's assembled_reel thumbnail.
+        allowed = true;
       } catch (authError) {
         if (isAuthGuardError(authError)) {
           lastAuthError = authError;
