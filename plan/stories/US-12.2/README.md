@@ -1,6 +1,6 @@
 # US-12.2 — Mark manual publication done
 
-**Status:** PREP (2026-08-30) — README + TASKS. Do **not** check off AC in PREP.
+**Status:** CLOSED (2026-08-30) — VALIDATION PASS WITH NOTES `ceacf10` (39/39, 4/4 AC) · QA APPROVE `8b3536f` (0 Critical/High) · PO AC check-off. BE `6e0fcf0` · FE `513632e` · DB `f62a1a2`. Metrics → US-13.1.
 
 **As a** Operator, **I want** to mark a Reel as published on Instagram, **so that** the calendar reflects reality.
 
@@ -109,13 +109,13 @@ _Evitar:_ “publish queue” as primary noun on Operator surfaces; admin/staff;
 ## Gates (orchestrator)
 
 - [x] PREP — README + TASKS + PO freezes
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend) — Reviewed by FE
-- [ ] BUILD (nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md
-- [ ] QA.md
-- [ ] CLOSE — AC checked in USER_STORIES.md (product-owner)
+- [x] SPEC-REVIEW.md (spec-guardian)
+- [x] SECURITY.md (security-architect)
+- [x] CONTRACT.md (nextjs-backend) — Reviewed by FE
+- [x] BUILD (nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md
+- [x] QA.md
+- [x] CLOSE — 4/4 AC checked in USER_STORIES.md (product-owner)
 
 **Next:** SPEC-REVIEW → SECURITY → CONTRACT (freeze Zod + ALTER + error codes) → BUILD.
 

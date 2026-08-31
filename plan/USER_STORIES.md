@@ -1123,15 +1123,17 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 |-------|------|
 | **FE** | "Mark published" + optional IG post URL |
 | **BE** | Update slot status; store `published_at` and URL |
-| **DB** | `publish_status`: `ready` \| `published` |
+| **DB** | `publish_status`: `ready` \| `published`; `published_at`, `instagram_post_url` |
 
 **Acceptance criteria**
-- [ ] Only approved Reels can be marked published
-- [ ] Published date defaults to today editable
-- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403)
-- [ ] [SEC] "Approved only" is enforced server-side in the mark-published handler (roadmap hard rule: no publish without approval); the optional IG post URL is validated as an `https://www.instagram.com/...` URL and stored as text, never rendered as a raw link without validation
+- [x] Only approved Reels can be marked published
+- [x] Published date defaults to today editable
+- [x] Operator-only: endpoint/action rejects non-operator sessions server-side (403)
+- [x] [SEC] "Approved only" is enforced server-side in the mark-published handler (roadmap hard rule: no publish without approval); the optional IG post URL is validated as an `https://www.instagram.com/...` URL and stored as text, never rendered as a raw link without validation
 
 **Depends on:** US-12.1
+
+**Phase A closure (2026-08-30):** VALIDATION PASS WITH NOTES `ceacf10` (4/4 AC; 39/39 tests) · QA APPROVE `8b3536f` (0 Critical/High). Phase B deferred: unpublish, Graph auto-mark (ADR-0002), audit history.
 
 ---
 
