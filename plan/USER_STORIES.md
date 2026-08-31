@@ -1082,11 +1082,11 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | `approvals.status`: `approved` |
 
 **Acceptance criteria**
-- [ ] Approved Reels appear in "ready to publish" list
-- [ ] Caption + video downloadable for manual IG posting (V1)
-- [ ] Rejected Reels do not appear in publish queue
-- [ ] [SEC] Approval status transitions follow a server-enforced state machine (`pending_client` → `approved`/`rejected`/`changes_requested`); approving an already-decided or ungated approval is rejected
-- [ ] [SEC] Download/export links serve only assets tied to Reels of the current client, through the authenticated asset route (no direct static paths)
+- [x] Approved Reels appear in "ready to publish" list
+- [x] Caption + video downloadable for manual IG posting (V1)
+- [x] Rejected Reels do not appear in publish queue
+- [x] [SEC] Approval status transitions follow a server-enforced state machine (`pending_client` → `approved`/`rejected`/`changes_requested`); approving an already-decided or ungated approval is rejected
+- [x] [SEC] Download/export links serve only assets tied to Reels of the current client, through the authenticated asset route (no direct static paths)
 
 **Depends on:** US-11.1
 

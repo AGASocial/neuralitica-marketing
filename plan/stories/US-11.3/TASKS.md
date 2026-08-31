@@ -131,10 +131,10 @@ GET /api/media/assets/[assetId]?disposition=attachment
 
 ## Contract-first checklist (before BUILD)
 
-- [ ] `SPEC-REVIEW.md` — ALIGNED
-- [ ] `SECURITY.md` — APPROVE (download tenancy + approved-only export)
+- [x] `SPEC-REVIEW.md` — ALIGNED
+- [x] `SECURITY.md` — APPROVE (download tenancy + approved-only export)
 - [x] `CONTRACT.md` frozen — Zod in `lib/contracts/approval.ts` · **Reviewed by FE: yes**
-- [ ] Open questions in README § resolved in CONTRACT
+- [x] Open questions in README § resolved in CONTRACT
 
 ---
 

@@ -1,6 +1,6 @@
 # US-11.3 — Approve and mark ready to publish
 
-**Status:** PREP (2026-08-30) — README + TASKS + PO freezes. Next gates: `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md`.
+**Status:** CLOSED (2026-08-30) — VALIDATION PASS WITH NOTES `209dcc3` (44/44, 5/5 AC) · QA APPROVE WITH CONDITIONS `04dfe5b` (0 Critical/High) · PO AC check-off. BE `af50d1d` · FE `f38c731`. Zip/webhook/email → Phase B; operator calendar → US-12.1.
 
 **As a** Client, **I want** to approve a Reel, **so that** my team knows it can be posted to Instagram.
 
@@ -109,15 +109,15 @@ _Evitar:_ “publish queue” as a product noun on Cliente surfaces; admin/staff
 ## Gates (orchestrator)
 
 - [x] PREP — README + TASKS + PO freezes
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend) — Reviewed by FE
-- [ ] BUILD (nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md
-- [ ] QA.md
-- [ ] CLOSE — check AC in USER_STORIES.md (requirements-validator only)
+- [x] SPEC-REVIEW.md (spec-guardian)
+- [x] SECURITY.md (security-architect)
+- [x] CONTRACT.md (nextjs-backend) — Reviewed by FE
+- [x] BUILD (nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md
+- [x] QA.md
+- [x] CLOSE — 5/5 AC checked in USER_STORIES.md (product-owner)
 
-**Next after PREP:** SPEC-REVIEW → SECURITY → CONTRACT (contract-first freeze before BUILD).
+**Next:** SELECT **US-12.1** (recommended) or phase integration · **US-8.5** (faceless B-roll / US-9.1 Phase B).
 
 ---
 
