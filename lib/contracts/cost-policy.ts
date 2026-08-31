@@ -28,6 +28,9 @@ export const reelSpendJobKindSchema = z.enum([
   "tts_generate",
   "tts_regenerate",
   "qa_run",
+  /** US-8.5 Wan B-roll spend ledger */
+  "broll_generate",
+  "broll_retry",
 ]);
 
 export type ReelSpendJobKind = z.infer<typeof reelSpendJobKindSchema>;

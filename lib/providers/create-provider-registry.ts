@@ -20,7 +20,7 @@ import { createManualUploadAdapter } from "@/lib/providers/video/manual-upload-a
 import { createMusetalkLowAdapter } from "@/lib/providers/video/musetalk-low-adapter";
 import { createSadtalkerLowAdapter } from "@/lib/providers/video/sadtalker-low-adapter";
 import { createSiliconflowCosyvoice2Adapter } from "@/lib/providers/tts/siliconflow-cosyvoice2-adapter";
-import { createSiliconflowWan21TurboStubAdapter } from "@/lib/providers/video/siliconflow-wan21-turbo-stub-adapter";
+import { createSiliconflowWan21TurboAdapter } from "@/lib/providers/video/siliconflow-wan21-turbo-adapter";
 
 const STUB_VIDEO_KEYS = [
   DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead,
@@ -31,7 +31,8 @@ const STUB_VIDEO_KEYS = [
 const STUB_DEFAULT_ESTIMATE_CENTS: Record<(typeof STUB_VIDEO_KEYS)[number], number> =
   {
     [DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead]: 19,
-    [DEFAULT_LOW_TIER_PROVIDER_KEYS.broll]: 10,
+    /** US-8.5 — catalog per_clip 21¢ (kill 10¢ stub leftover). */
+    [DEFAULT_LOW_TIER_PROVIDER_KEYS.broll]: 21,
     /** Fallback when duration missing — 30s × 2¢. */
     heygen_high: 60,
   };
@@ -74,7 +75,14 @@ function createAdapterForKey(
     case DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead:
       return createSadtalkerLowAdapter({ defaultEstimateCents });
     case DEFAULT_LOW_TIER_PROVIDER_KEYS.broll:
-      return createSiliconflowWan21TurboStubAdapter(defaultEstimateCents);
+      return createSiliconflowWan21TurboAdapter({
+        defaultEstimateCents,
+        unitCostCentsPerClip: unitCostCentsFromCatalog(
+          catalog,
+          DEFAULT_LOW_TIER_PROVIDER_KEYS.broll,
+          21,
+        ),
+      });
     case "heygen_high":
       return createHeygenHighAdapter({
         defaultEstimateCents,

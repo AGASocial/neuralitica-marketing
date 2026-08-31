@@ -3,15 +3,18 @@
 import {
   previewRetryVideoJobEstimateRequestSchema,
   retryVideoJobRequestSchema,
+  retryVideoJobSuccessSchema,
   type PreviewRetryVideoJobEstimateSuccess,
   type RetryVideoJobResult,
 } from "@/lib/contracts/video-job";
+import { WAN_PROVIDER_KEY } from "@/lib/contracts/siliconflow-wan21-turbo";
 import { isAuthGuardError, requireOperator } from "@/lib/auth/require-user";
 import { initializeProviderRegistryFromCatalog } from "@/lib/providers/create-provider-registry";
 import { resolveProviderForJob } from "@/lib/providers/resolve-provider-for-job";
 import { assertActiveAvatarConsentForJobs } from "@/lib/visual-preferences/assert-active-avatar-consent-for-jobs";
 
 import { assertVideoJobBudgetAllowsSpend } from "../assert-video-job-budget";
+import { createBrollVideoJobs } from "../create-broll-video-jobs";
 import { createTalkingHeadVideoJob } from "../create-talking-head-video-job";
 import { videoJobMutationError } from "../errors";
 import { loadReelScriptForVideoJob } from "../load-reel-script-for-video-job";
@@ -90,16 +93,18 @@ export async function previewRetryVideoJobEstimate(
     return videoJobMutationError("NOT_FOUND");
   }
 
+  const isBroll = failedJob.assetRole === "broll";
+
   const providerResult = await resolveProviderForJob({
     clientId: failedJob.clientId,
-    assetRole: "talking_head",
+    assetRole: isBroll ? "broll" : "talking_head",
     productionContext: {
       visualMode: script.visualMode,
       modalidad: script.modalidad,
       hasReferenceLoop: script.hasReferenceLoop,
-      needsBroll: false,
-      targetDurationSec: script.package.targetDurationSec,
-      brollClipCount: 0,
+      needsBroll: isBroll,
+      targetDurationSec: isBroll ? 5 : script.package.targetDurationSec,
+      brollClipCount: isBroll ? 1 : 0,
       ttsCharCount: script.package.voiceoverText.length,
     },
   });
@@ -112,17 +117,38 @@ export async function previewRetryVideoJobEstimate(
     };
   }
 
+  /** B-roll retry must stay on Wan — never promote to talking-head. */
+  const providerKey = isBroll
+    ? failedJob.providerKey === WAN_PROVIDER_KEY
+      ? WAN_PROVIDER_KEY
+      : providerResult.decision.providerKey
+    : providerResult.decision.providerKey;
+
+  if (isBroll && providerKey !== WAN_PROVIDER_KEY) {
+    return {
+      ok: true,
+      estimatedCostCents: failedJob.estimatedCostCents,
+      canRetry: false,
+      retryBlockedReasonKey: "scripts.videoJob.retry.providerUnavailable",
+    };
+  }
+
   const registry = await initializeProviderRegistryFromCatalog();
-  const adapter = registry.getVideoAdapter(providerResult.decision.providerKey);
+  const adapter = registry.getVideoAdapter(providerKey);
   const estimate = await adapter.estimateCost({
     reelScriptId: failedJob.reelScriptId,
     clientId: failedJob.clientId,
-    providerKey: providerResult.decision.providerKey,
-    providerTier: providerResult.decision.providerTier,
-    assetRole: "primary",
-    targetDurationSec: script.package.targetDurationSec,
+    providerKey,
+    providerTier: isBroll ? "low" : providerResult.decision.providerTier,
+    assetRole: isBroll ? "broll" : "primary",
+    targetDurationSec: isBroll ? 5 : script.package.targetDurationSec,
     voiceoverAssetId: failedJob.voiceoverAssetId ?? undefined,
     portraitAssetId: failedJob.portraitAssetId ?? undefined,
+    referenceImageAssetId: isBroll
+      ? (failedJob.portraitAssetId ?? undefined)
+      : undefined,
+    prompt: isBroll ? "Cinematic B-roll. <<BEAT>>retry<</BEAT>>" : undefined,
+    clipCount: isBroll ? 1 : undefined,
   });
 
   const budgetRetryState = await evaluateRetryEligibility({
@@ -234,6 +260,55 @@ export async function retryVideoJob(
   });
   if (!script) {
     return videoJobMutationError("NOT_FOUND");
+  }
+
+  if (failedJob.assetRole === "broll") {
+    if (failedJob.providerKey !== WAN_PROVIDER_KEY) {
+      return videoJobMutationError("JOB_NOT_RETRYABLE");
+    }
+
+    const brollResult = await createBrollVideoJobs(
+      {
+        clientId: failedJob.clientId,
+        reelScriptId: failedJob.reelScriptId,
+      },
+      {
+        parentJobId: failedJob.id,
+        attempt: failedJob.attempt + 1,
+        operatorClientId: operator.id,
+        jobKind: "broll_retry",
+        singleClipRetry: {
+          referenceStillAssetId: failedJob.portraitAssetId,
+        },
+      },
+    );
+
+    if (!brollResult.ok) {
+      return brollResult;
+    }
+
+    const created = brollResult.jobs[0];
+    if (!created) {
+      const skip = brollResult.skipped[0];
+      if (skip?.reasonCode === "BUDGET_EXCEEDED") {
+        return videoJobMutationError("BUDGET_EXCEEDED", {
+          messageKey: skip.messageKey,
+        });
+      }
+      return videoJobMutationError("INTERNAL_ERROR");
+    }
+
+    if (override) {
+      await consumeRetryOverride(override.id);
+    }
+
+    return retryVideoJobSuccessSchema.parse({
+      ok: true,
+      jobId: created.jobId,
+      status: created.status,
+      estimatedCostCents: created.estimatedCostCents,
+      attempt: created.attempt,
+    });
   }
 
   if (script.visualMode === "own_avatar" || script.modalidad === "own_avatar") {

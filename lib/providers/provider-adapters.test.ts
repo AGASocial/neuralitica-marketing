@@ -217,34 +217,50 @@ describe("US-8.1 provider registry", () => {
     );
   });
 
-  it("5 — stub round-trip createJob → getJobStatus → fetchAsset (wan stub)", async () => {
+  it("5 — registry siliconflow_wan21_turbo is real adapter (no stub id prefix)", async () => {
     const { getProviderRegistry, resetProviderRegistryForTests } =
       loadRegistryModule();
-    const { VIDEO_JOB_STATUSES } = loadProviderAdapters();
     resetProviderRegistryForTests();
 
     const adapter = getProviderRegistry().getVideoAdapter(
       "siliconflow_wan21_turbo",
     );
-    const input = {
-      reelScriptId: "00000000-0000-4000-8000-000000000001",
-      clientId: "00000000-0000-4000-8000-000000000002",
-      providerKey: "siliconflow_wan21_turbo",
-      providerTier: "low" as const,
-      assetRole: "broll" as const,
-      targetDurationSec: 30,
-    };
+    assert.equal(adapter.providerKey, "siliconflow_wan21_turbo");
+    assert.equal(adapter.videoAssetRole, "broll");
 
-    const created = await adapter.createJob(input);
-    assert.equal(created.status, "queued");
-    assert.match(created.externalJobId, /^stub-siliconflow_wan21_turbo-/);
+    const previousToken = process.env.SILICONFLOW_API_KEY;
+    delete process.env.SILICONFLOW_API_KEY;
 
-    const status = await adapter.getJobStatus(created.externalJobId);
-    assert.ok(VIDEO_JOB_STATUSES.includes(status.status));
-
-    const asset = await adapter.fetchAsset(created.externalJobId);
-    assert.match(asset.storageKey, /^stub\/siliconflow_wan21_turbo\//);
-    assert.equal(asset.mimeType, "video/mp4");
+    try {
+      await assert.rejects(
+        () =>
+          adapter.createJob({
+            reelScriptId: "00000000-0000-4000-8000-000000000001",
+            clientId: "00000000-0000-4000-8000-000000000002",
+            providerKey: "siliconflow_wan21_turbo",
+            providerTier: "low",
+            assetRole: "broll",
+            targetDurationSec: 5,
+            referenceImageAssetId: "00000000-0000-4000-8000-000000000010",
+            prompt: "Cinematic B-roll. <<BEAT>>test<</BEAT>>",
+          }),
+        (err: unknown) => {
+          assert.ok(err instanceof Error);
+          assert.equal((err as { code?: string }).code, "PROVIDER_CONFIG_MISSING");
+          assert.doesNotMatch(
+            String((err as Error).message),
+            /^stub-siliconflow_wan21_turbo-/,
+          );
+          return true;
+        },
+      );
+    } finally {
+      if (previousToken === undefined) {
+        delete process.env.SILICONFLOW_API_KEY;
+      } else {
+        process.env.SILICONFLOW_API_KEY = previousToken;
+      }
+    }
   });
 
   it("5b — sadtalker registry adapter is real (no stub prefix)", async () => {

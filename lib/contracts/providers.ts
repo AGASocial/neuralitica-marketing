@@ -166,6 +166,8 @@ export const resolvedCreateVideoJobInputSchema = z.object({
   referenceVideoAssetId: z.string().uuid().optional(),
   prompt: z.string().max(4000).optional(),
   referenceImageAssetId: z.string().uuid().optional(),
+  /** Wan B-roll estimate projection only (US-8.5) — never client-authoritative. */
+  clipCount: z.number().int().positive().max(8).optional(),
 });
 
 /** @deprecated Use createVideoJobRequestSchema at boundaries; resolvedCreateVideoJobInputSchema internally. */
