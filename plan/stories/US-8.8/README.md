@@ -94,14 +94,14 @@ _Evitar:_ client-supplied `provider_key`; long-lived third-party `output_url` as
 
 - [ ] SPEC-REVIEW.md (spec-guardian — cross-cutting vs SPEC §3 S3.M9 Video Provider / B-roll)
 - [ ] SECURITY.md (security-architect — FAL SSRF, key redaction, tier floor)
-- [ ] CONTRACT.md (nextjs-backend — freeze FAL endpoints/schemas; **Reviewed by FE: N/A**)
+- [x] CONTRACT.md (nextjs-backend — freeze FAL endpoints/schemas; **Reviewed by FE: N/A**)
 - [ ] BUILD Phase A (media-pipeline-engineer + nextjs-backend)
 - [ ] BUILD Phase B (BE orchestrator extension + DB activate)
 - [ ] VALIDATION.md (requirements-validator)
 - [ ] QA.md (qa-engineer)
 - [ ] CLOSE — 7/7 AC checked in USER_STORIES.md (product-owner)
 
-**Status:** PREP. **Next:** SPEC-REVIEW → SECURITY → CONTRACT.
+**Status:** CONTRACT frozen — BUILD unblocked. **Next:** BUILD Phase A → Phase B → VALIDATION.
 
 ---
 
