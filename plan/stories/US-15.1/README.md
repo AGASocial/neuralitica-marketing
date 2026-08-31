@@ -1,6 +1,6 @@
 # US-15.1 — Weekly cycle cron endpoint and orchestration (Phase A + B)
 
-**Status:** PREP (2026-08-31) — story added to `USER_STORIES.md`; README + TASKS frozen; branch `feature/US-15.1-weekly-cron`; next **SPEC-REVIEW** → **SECURITY** → **CONTRACT**.
+**Status:** BUILD Phase A ready (2026-08-31) — SPEC-REVIEW ✅ · SECURITY ✅ · CONTRACT Phase A frozen; branch `feature/US-15.1-weekly-cron`; next **BUILD Phase A** → VALIDATION → QA → CLOSE Phase A.
 
 **As a** System, **I want** a scheduled weekly cycle per active Client with complete onboarding, **so that** 3 Reels reach the approval queue without Operator clicks on the happy path.
 
@@ -78,13 +78,13 @@ PLAN F7 is too large for one BUILD gate. **Phase A** lands the cron auth surface
 
 ## Gates (orchestrator)
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend + integrations-engineer; FE signoff N/A Phase A)
+- [x] SPEC-REVIEW.md (spec-guardian)
+- [x] SECURITY.md (security-architect)
+- [x] CONTRACT.md Phase A (spec-guardian freeze — 2026-08-31)
 - [ ] BUILD Phase A (integrations-engineer + nextjs-backend)
 - [ ] VALIDATION.md Phase A
 - [ ] QA.md Phase A
 - [ ] CLOSE Phase A (product-owner)
 - [ ] BUILD Phase B → VALIDATION → QA → CLOSE Phase B
 
-**Next gate:** SPEC-REVIEW on `plan/stories/US-15.1/`.
+**Next gate:** BUILD Phase A (`integrations-engineer` + `nextjs-backend`).

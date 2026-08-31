@@ -124,9 +124,9 @@ Concrete consumer: **Operator cycle control page** (minimal).
 
 ### Phase A
 
-- [ ] SPEC-REVIEW.md (spec-guardian)
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md — Phase A freeze (cron auth, ledger DDL, dry-run orchestrator, eligibility)
+- [x] SPEC-REVIEW.md (spec-guardian)
+- [x] SECURITY.md (security-architect)
+- [x] CONTRACT.md — Phase A freeze (cron auth, ledger DDL, dry-run orchestrator, eligibility) — 2026-08-31
 - [ ] BUILD Phase A (integrations-engineer + nextjs-backend)
 - [ ] VALIDATION.md Phase A
 - [ ] QA.md Phase A
