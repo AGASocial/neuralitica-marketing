@@ -1046,6 +1046,32 @@
       "validation": "Please check the highlighted fields and try again.",
       "forbiddenFields": "Something went wrong. Please try again.",
       "internal": "Something went wrong. Please try again later."
+    },
+    "markPublished": {
+      "markCta": "Mark published",
+      "updateCta": "Update publish details",
+      "dialogTitle": "Mark as published",
+      "dialogTitleUpdate": "Update publish details",
+      "publishedDateLabel": "Published date",
+      "publishedOnLabel": "Published on",
+      "instagramUrlLabel": "Instagram post URL (optional)",
+      "instagramUrlHint": "https://www.instagram.com/reel/…",
+      "submit": "Save",
+      "submitPending": "Saving…",
+      "cancel": "Cancel",
+      "viewOnInstagram": "View on Instagram",
+      "errors": {
+        "notFound": "This calendar slot could not be found.",
+        "notApproved": "Only approved Reels can be marked as published.",
+        "slotNotReady": "This slot is not ready to publish yet.",
+        "rateLimited": "Too many mark-published attempts. Please wait and try again later.",
+        "invalidIgUrl": "Enter a valid Instagram URL (https://www.instagram.com/…).",
+        "forbidden": "You do not have access to mark Reels as published.",
+        "validation": "Please check the highlighted fields and try again.",
+        "forbiddenFields": "Something went wrong. Please try again.",
+        "internal": "Something went wrong. Please try again later.",
+        "unauthenticated": "Please log in to continue."
+      }
     }
   },
   "scripts": {

@@ -1046,6 +1046,32 @@
       "validation": "Revisa los campos resaltados e inténtalo de nuevo.",
       "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
       "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
+    },
+    "markPublished": {
+      "markCta": "Marcar como publicado",
+      "updateCta": "Actualizar datos de publicación",
+      "dialogTitle": "Marcar como publicado",
+      "dialogTitleUpdate": "Actualizar datos de publicación",
+      "publishedDateLabel": "Fecha de publicación",
+      "publishedOnLabel": "Publicado el",
+      "instagramUrlLabel": "URL de la publicación en Instagram (opcional)",
+      "instagramUrlHint": "https://www.instagram.com/reel/…",
+      "submit": "Guardar",
+      "submitPending": "Guardando…",
+      "cancel": "Cancelar",
+      "viewOnInstagram": "Ver en Instagram",
+      "errors": {
+        "notFound": "No se encontró este slot del calendario.",
+        "notApproved": "Solo los Reels aprobados pueden marcarse como publicados.",
+        "slotNotReady": "Este slot aún no está listo para publicar.",
+        "rateLimited": "Demasiados intentos de marcar como publicado. Espera un momento e inténtalo de nuevo.",
+        "invalidIgUrl": "Introduce una URL válida de Instagram (https://www.instagram.com/…).",
+        "forbidden": "No tienes acceso para marcar Reels como publicados.",
+        "validation": "Revisa los campos resaltados e inténtalo de nuevo.",
+        "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+        "internal": "Algo salió mal. Inténtalo de nuevo más tarde.",
+        "unauthenticated": "Inicia sesión para continuar."
+      }
     }
   },
   "scripts": {

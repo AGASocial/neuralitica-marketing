@@ -99,6 +99,21 @@ export default async function OperatorCalendarPage({ searchParams }: CalendarPag
         },
         changesRequestedLabel: t.calendar.status.changesRequested,
         goals: t.strategy.page.goals,
+        markPublished: {
+          markCta: t.calendar.markPublished.markCta,
+          updateCta: t.calendar.markPublished.updateCta,
+          dialogTitle: t.calendar.markPublished.dialogTitle,
+          dialogTitleUpdate: t.calendar.markPublished.dialogTitleUpdate,
+          publishedDateLabel: t.calendar.markPublished.publishedDateLabel,
+          publishedOnLabel: t.calendar.markPublished.publishedOnLabel,
+          instagramUrlLabel: t.calendar.markPublished.instagramUrlLabel,
+          instagramUrlHint: t.calendar.markPublished.instagramUrlHint,
+          submit: t.calendar.markPublished.submit,
+          submitPending: t.calendar.markPublished.submitPending,
+          cancel: t.calendar.markPublished.cancel,
+          viewOnInstagram: t.calendar.markPublished.viewOnInstagram,
+          errors: t.calendar.markPublished.errors,
+        },
       }}
     />
   );

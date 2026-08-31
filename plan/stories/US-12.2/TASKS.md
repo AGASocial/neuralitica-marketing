@@ -90,15 +90,15 @@ markCalendarSlotPublished({
 
 **Consumer:** `/operator/calendar` · `components/calendar/OperatorCalendarView.tsx` (Sidebar)
 
-- [ ] Add **"Mark published"** button in Sidebar when `pipelineStatus === 'approved'` (and not already handling update mode).
-- [ ] For `pipelineStatus === 'published'`: show published date + IG link icon (validated URL from DTO); optional **"Update publish details"** opens same Dialog.
-- [ ] PrimeReact **`Dialog`** form: date input defaulting to **today**, editable; optional Instagram URL field; submit / cancel; pending state on submit.
-- [ ] Call **`markCalendarSlotPublished`**; on success close Dialog and **refresh** week via `getOperatorCalendarForWeek` (or merge returned slot — match CONTRACT).
-- [ ] Field + server error display (`notApproved`, validation, forbidden) without leaking internals.
-- [ ] Published cards: violet status already exists — add check / IG affordance per DESIGN §10.
-- [ ] i18n EN + ES under **`calendar.markPublished.*`** (and any published display keys).
-- [ ] Do **not** show Mark published for draft / generating / qa / pending / rejected paths.
-- [ ] Do **not** add a new route/page for mark-published.
+- [x] Add **"Mark published"** button in Sidebar when `pipelineStatus === 'approved'` (and not already handling update mode).
+- [x] For `pipelineStatus === 'published'`: show published date + IG link icon (validated URL from DTO); optional **"Update publish details"** opens same Dialog.
+- [x] PrimeReact **`Dialog`** form: date input defaulting to **today**, editable; optional Instagram URL field; submit / cancel; pending state on submit.
+- [x] Call **`markCalendarSlotPublished`**; on success close Dialog and **refresh** week via `getOperatorCalendarForWeek` (or merge returned slot — match CONTRACT).
+- [x] Field + server error display (`notApproved`, validation, forbidden) without leaking internals.
+- [x] Published cards: violet status already exists — add check / IG affordance per DESIGN §10.
+- [x] i18n EN + ES under **`calendar.markPublished.*`** (and any published display keys).
+- [x] Do **not** show Mark published for draft / generating / qa / pending / rejected paths.
+- [x] Do **not** add a new route/page for mark-published.
 
 ---
 

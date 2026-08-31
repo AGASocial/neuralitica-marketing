@@ -9,6 +9,10 @@ import { Message } from "primereact/message";
 import { Sidebar } from "primereact/sidebar";
 
 import { CalendarStatusTag } from "@/components/calendar/CalendarStatusTag";
+import {
+  MarkPublishedDialog,
+  type MarkPublishedDialogCopy,
+} from "@/components/calendar/MarkPublishedDialog";
 import type {
   CalendarPipelineStatus,
   CalendarSlotDetailDto,
@@ -45,6 +49,12 @@ type CalendarPageCopy = {
   status: Record<CalendarPipelineStatus, string>;
   changesRequestedLabel: string;
   goals: Record<ContentStrategySlotGoal, string>;
+  markPublished: MarkPublishedDialogCopy & {
+    markCta: string;
+    updateCta: string;
+    publishedOnLabel: string;
+    viewOnInstagram: string;
+  };
 };
 
 type OperatorCalendarViewProps = {
@@ -121,6 +131,8 @@ type SlotCardProps = {
 };
 
 function SlotCard({ slot, copy, onSelect }: SlotCardProps) {
+  const isPublished = slot.pipelineStatus === "published";
+
   return (
     <button
       type="button"
@@ -165,12 +177,60 @@ function SlotCard({ slot, copy, onSelect }: SlotCardProps) {
       >
         {slot.tema}
       </div>
-      <CalendarStatusTag
-        status={slot.pipelineStatus}
-        label={copy.status[slot.pipelineStatus]}
-        changesRequested={slot.changesRequested}
-        changesRequestedLabel={copy.changesRequestedLabel}
-      />
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "0.35rem",
+          alignItems: "center",
+        }}
+      >
+        <CalendarStatusTag
+          status={slot.pipelineStatus}
+          label={copy.status[slot.pipelineStatus]}
+          changesRequested={slot.changesRequested}
+          changesRequestedLabel={copy.changesRequestedLabel}
+        />
+        {isPublished ? (
+          <span
+            aria-hidden
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "1.25rem",
+              height: "1.25rem",
+              borderRadius: "9999px",
+              background: "#7c3aed",
+              color: "#ffffff",
+              fontSize: "0.65rem",
+            }}
+          >
+            <i className="pi pi-check" />
+          </span>
+        ) : null}
+        {isPublished && slot.instagramPostUrl ? (
+          <a
+            href={slot.instagramPostUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={copy.markPublished.viewOnInstagram}
+            onClick={(event) => event.stopPropagation()}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "1.25rem",
+              height: "1.25rem",
+              borderRadius: "0.25rem",
+              color: "#7c3aed",
+              fontSize: "0.85rem",
+            }}
+          >
+            <i className="pi pi-instagram" />
+          </a>
+        ) : null}
+      </div>
     </button>
   );
 }
@@ -211,6 +271,7 @@ export function OperatorCalendarView({
 }: OperatorCalendarViewProps) {
   const router = useRouter();
   const [selectedSlot, setSelectedSlot] = useState<CalendarSlotDetailDto | null>(null);
+  const [markPublishedOpen, setMarkPublishedOpen] = useState(false);
 
   const weekDate = weekStartToDate(weekStart);
   const weekRangeLabel = formatWeekRange(weekStart, locale);
@@ -243,6 +304,19 @@ export function OperatorCalendarView({
     const key = goal as ContentStrategySlotGoal;
     return copy.goals[key] ?? goal;
   }
+
+  function formatPublishedAt(isoTimestamp: string): string {
+    return formatScheduledDate(isoTimestamp.slice(0, 10), locale);
+  }
+
+  function handleMarkPublishedSuccess(slot: CalendarSlotDetailDto) {
+    setMarkPublishedOpen(false);
+    setSelectedSlot(slot);
+    router.refresh();
+  }
+
+  const showMarkPublishedCta = selectedSlot?.pipelineStatus === "approved";
+  const showUpdatePublishedCta = selectedSlot?.pipelineStatus === "published";
 
   return (
     <div>
@@ -367,7 +441,10 @@ export function OperatorCalendarView({
       <Sidebar
         visible={selectedSlot !== null}
         position="right"
-        onHide={() => setSelectedSlot(null)}
+        onHide={() => {
+          setSelectedSlot(null);
+          setMarkPublishedOpen(false);
+        }}
         style={{ width: "min(420px, 100vw)" }}
         header={copy.sidebar.title}
       >
@@ -420,6 +497,66 @@ export function OperatorCalendarView({
               />
             </div>
 
+            {showUpdatePublishedCta && selectedSlot.publishedAt ? (
+              <div>
+                <div style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: "0.25rem" }}>
+                  {copy.markPublished.publishedOnLabel}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                    <i className="pi pi-check" style={{ color: "#7c3aed" }} aria-hidden />
+                    {formatPublishedAt(selectedSlot.publishedAt)}
+                  </span>
+                  {selectedSlot.instagramPostUrl ? (
+                    <a
+                      href={selectedSlot.instagramPostUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.35rem",
+                        color: "#7c3aed",
+                        fontWeight: 600,
+                        fontSize: "0.875rem",
+                      }}
+                    >
+                      <i className="pi pi-instagram" aria-hidden />
+                      {copy.markPublished.viewOnInstagram}
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
+            {showMarkPublishedCta ? (
+              <Button
+                type="button"
+                label={copy.markPublished.markCta}
+                icon="pi pi-check-circle"
+                style={{ width: "100%" }}
+                onClick={() => setMarkPublishedOpen(true)}
+              />
+            ) : null}
+
+            {showUpdatePublishedCta ? (
+              <Button
+                type="button"
+                label={copy.markPublished.updateCta}
+                icon="pi pi-pencil"
+                className="p-button-outlined"
+                style={{ width: "100%" }}
+                onClick={() => setMarkPublishedOpen(true)}
+              />
+            ) : null}
+
             {canDeepLink ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <Link
@@ -459,6 +596,17 @@ export function OperatorCalendarView({
           </div>
         ) : null}
       </Sidebar>
+
+      {selectedSlot && markPublishedOpen ? (
+        <MarkPublishedDialog
+          visible={markPublishedOpen}
+          slot={selectedSlot}
+          isUpdate={selectedSlot.pipelineStatus === "published"}
+          copy={copy.markPublished}
+          onHide={() => setMarkPublishedOpen(false)}
+          onSuccess={handleMarkPublishedSuccess}
+        />
+      ) : null}
     </div>
   );
 }
