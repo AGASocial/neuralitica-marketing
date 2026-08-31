@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 
 import type { BusinessProfileForAgentsView } from "@/lib/contracts/profile";
 import type { PlaybookForAgentsResult } from "@/lib/contracts/playbook";
+import type { MetricsSummaryForPrompt } from "@/lib/contracts/strategy-insights";
+import { TRUSTED_METRICS_SUMMARY_TAG } from "@/lib/contracts/strategy-insights";
 import type { TrendSnapshotForWeekResult } from "@/lib/contracts/trend";
 import type { ProviderCatalogRow } from "@/lib/contracts/providers";
 
@@ -136,6 +138,30 @@ const TREND: TrendSnapshotForWeekResult = {
   ],
 };
 
+const METRICS_SUMMARY: MetricsSummaryForPrompt = [
+  {
+    rank: 1,
+    reelCount: 2,
+    views: 1500,
+    likes: 120,
+    comments: 15,
+    saves: 40,
+    dms: 3,
+    engagementScore: 1678,
+    tema: "Mantenimiento preventivo",
+  },
+  {
+    rank: 2,
+    reelCount: 1,
+    views: 800,
+    likes: 45,
+    comments: 8,
+    saves: 12,
+    dms: 1,
+    engagementScore: 866,
+  },
+];
+
 const PROVIDER: ProviderCatalogRow = {
   key: "siliconflow_deepseek_flash",
   assetRole: "llm",
@@ -209,6 +235,114 @@ describe("generate-weekly-strategy agent module", () => {
     assert.match(systemPrompt, /local_sale/);
     assert.match(systemPrompt, /inbound_dm/);
     assert.match(systemPrompt, /Write all copy .* in English/);
+  });
+
+  it("buildWeeklyStrategyPrompts omits TRUSTED_METRICS_SUMMARY when summary is null", async () => {
+    const { buildWeeklyStrategyPrompts } = await loadStrategyModule();
+    const { systemPrompt, userPrompt } = buildWeeklyStrategyPrompts({
+      profile: PROFILE,
+      playbook: PLAYBOOK,
+      trend: TREND,
+      weekStart: WEEK_START,
+      locale: "en",
+      metricsSummaryForPrompt: null,
+    });
+
+    assert.doesNotMatch(userPrompt, new RegExp(`<${TRUSTED_METRICS_SUMMARY_TAG}>`));
+    assert.doesNotMatch(systemPrompt, /engagementScore/);
+  });
+
+  it("buildWeeklyStrategyPrompts omits TRUSTED_METRICS_SUMMARY when summary is undefined", async () => {
+    const { buildWeeklyStrategyPrompts } = await loadStrategyModule();
+    const { userPrompt } = buildWeeklyStrategyPrompts({
+      profile: PROFILE,
+      playbook: PLAYBOOK,
+      trend: TREND,
+      weekStart: WEEK_START,
+      locale: "es",
+    });
+
+    assert.doesNotMatch(userPrompt, new RegExp(`<${TRUSTED_METRICS_SUMMARY_TAG}>`));
+  });
+
+  it("buildWeeklyStrategyPrompts appends TRUSTED_METRICS_SUMMARY after untrusted blocks", async () => {
+    const {
+      buildWeeklyStrategyPrompts,
+      UNTRUSTED_TREND_HINTS_TAG,
+    } = await loadStrategyModule();
+    const { systemPrompt, userPrompt } = buildWeeklyStrategyPrompts({
+      profile: PROFILE,
+      playbook: PLAYBOOK,
+      trend: TREND,
+      weekStart: WEEK_START,
+      locale: "en",
+      metricsSummaryForPrompt: METRICS_SUMMARY,
+    });
+
+    const trustedOpen = userPrompt.indexOf(`<${TRUSTED_METRICS_SUMMARY_TAG}>`);
+    const untrustedClose = userPrompt.indexOf(`</${UNTRUSTED_TREND_HINTS_TAG}>`);
+    assert.ok(trustedOpen > untrustedClose);
+    assert.match(
+      userPrompt,
+      /<TRUSTED_METRICS_SUMMARY>\n\[\{"rank":1,"reelCount":2,"views":1500,"likes":120,"comments":15,"saves":40,"dms":3,"engagementScore":1678,"tema":"Mantenimiento preventivo"\},/,
+    );
+    assert.match(
+      userPrompt,
+      /\{"rank":2,"reelCount":1,"views":800,"likes":45,"comments":8,"saves":12,"dms":1,"engagementScore":866\}/,
+    );
+    assert.match(userPrompt, /"tema":"Mantenimiento preventivo"/);
+    assert.equal((userPrompt.match(/"tema":/g) ?? []).length, 1);
+
+    assert.match(systemPrompt, /trusted server-built performance data from the last 4 weeks/i);
+    assert.match(systemPrompt, /Do NOT change modalidad/i);
+    assert.match(systemPrompt, /engagementScore/i);
+  });
+
+  it("buildWeeklyStrategyPrompts serializes rank-only rows without angle brackets in tema", async () => {
+    const { buildWeeklyStrategyPrompts } = await loadStrategyModule();
+    const { userPrompt } = buildWeeklyStrategyPrompts({
+      profile: PROFILE,
+      playbook: PLAYBOOK,
+      trend: TREND,
+      weekStart: WEEK_START,
+      locale: "es",
+      metricsSummaryForPrompt: [
+        {
+          rank: 3,
+          reelCount: 1,
+          views: 100,
+          likes: 5,
+          comments: 0,
+          saves: 2,
+          dms: 0,
+          engagementScore: 107,
+        },
+      ],
+    });
+
+    assert.match(userPrompt, /"engagementScore":107\}/);
+    assert.doesNotMatch(userPrompt, /"tema":/);
+    const jsonPayload = userPrompt
+      .split(`<${TRUSTED_METRICS_SUMMARY_TAG}>`)[1]
+      ?.split(`</${TRUSTED_METRICS_SUMMARY_TAG}>`)[0]
+      ?.trim();
+    assert.ok(jsonPayload);
+    assert.doesNotMatch(jsonPayload!, /[<>]/);
+  });
+
+  it("buildWeeklyStrategyPrompts adds Spanish metrics system addendum", async () => {
+    const { buildWeeklyStrategyPrompts } = await loadStrategyModule();
+    const { systemPrompt } = buildWeeklyStrategyPrompts({
+      profile: PROFILE,
+      playbook: PLAYBOOK,
+      trend: TREND,
+      weekStart: WEEK_START,
+      locale: "es",
+      metricsSummaryForPrompt: METRICS_SUMMARY.slice(0, 1),
+    });
+
+    assert.match(systemPrompt, /datos de rendimiento confiables/i);
+    assert.match(systemPrompt, /NO cambies modalidad/i);
   });
 
   it("extractJsonFromLlmContent handles fenced and bare JSON", async () => {

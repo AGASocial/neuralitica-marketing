@@ -8,6 +8,8 @@ import {
 } from "@/lib/contracts/content-strategy";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
 import { generateWeeklyContentStrategy } from "@/lib/agents/content/generate-weekly-strategy";
+import { aggregateReelMetricsByTema } from "@/lib/metrics/aggregate-reel-metrics-by-tema";
+import { buildMetricsSummaryForPrompt } from "@/lib/metrics/build-metrics-summary-for-prompt";
 import {
   acquireGenerationInFlight,
   recordGenerationSuccess,
@@ -115,6 +117,15 @@ export async function generateContentStrategyForClient(params: {
         ? preferredLocale
         : "es";
 
+    const insights = await aggregateReelMetricsByTema({ clientId, weekStart });
+    const metricsSummaryForPrompt = buildMetricsSummaryForPrompt(insights);
+
+    console.info("[content-strategy] metrics summary for prompt", {
+      clientId,
+      weekStart,
+      topCount: insights?.topThemes.length ?? 0,
+    });
+
     let rawBrief: unknown;
     try {
       rawBrief = await generateWeeklyContentStrategy({
@@ -125,6 +136,7 @@ export async function generateContentStrategyForClient(params: {
         provider,
         llmAdapter,
         locale,
+        metricsSummaryForPrompt,
       });
     } catch (error) {
       console.error("[content-strategy] agent failed", {
