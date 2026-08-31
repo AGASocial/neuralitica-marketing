@@ -1,7 +1,7 @@
 # API Contract — US-12.1 Weekly calendar view (Calendario de contenido)
 
 **Story:** US-12.1  
-**Status:** Frozen — 2026-08-30 · **Reviewed by FE:** _pending — nextjs-frontend_  
+**Status:** Frozen — 2026-08-30 · **Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend  
 **Security:** `plan/stories/US-12.1/SECURITY.md` (APPROVE WITH CONDITIONS — 11 conditions reconciled below)  
 **Spec review:** `plan/stories/US-12.1/SPEC-REVIEW.md` (GAPS — 6 Low closed below)  
 **Pattern:** US-4.1 strategy slots + `week_start` · US-5.1 scripts · US-11.3 Operator ≠ Cliente queue · US-11.1 approval statuses · `lib/trend/normalize-week-start.ts`  
@@ -563,4 +563,32 @@ Automated test/grep: no Cliente route imports `getOperatorCalendarForWeek`.
 
 ## Reviewed by FE
 
-_Pending nextjs-frontend signoff before BUILD._
+**Reviewed by FE:** yes — 2026-08-30 — nextjs-frontend
+
+**Verdict:** Accept — `/operator/calendar` RSC + `OperatorCalendarView` client island against `getOperatorCalendarForWeek` and types in `lib/contracts/calendar.ts`. Matches existing Operator week patterns (`strategy` / `scripts` pages).
+
+### FE signoff notes (non-blocking)
+
+- **Page shell:** RSC `app/(app)/operator/calendar/page.tsx` — `resolveWeekStart(searchParams.weekStart)` via `trendWeekStartSchema` + `normalizeToIsoMonday`; auth via `operator/layout.tsx` `requireOperator("page")`; `dynamic = "force-dynamic"`.
+- **Week UX:** Reuse `formatWeekRange(weekStart, locale)` + PrimeReact `Calendar` picker + prev/next week buttons (same `navigateWeek` query-param pattern as `ScriptsPageView` / `StrategyPageView`).
+- **Grid:** Group `slots[]` by `scheduledDate` into 7 Mon–Sun columns; localized weekday headers via `Intl.DateTimeFormat` + `calendar.*` copy.
+- **Cards:** `CalendarStatusTag` from `pipelineStatus`; optional `<img src={thumbnailPreviewUrl}>` when set (authenticated path only); `changesRequested` sub-badge on `pending` color.
+- **Gap UI:** Render `gapWarnings[]` when `missingCount > 0` — per-client warning strip/card at week level.
+- **Sidebar:** PrimeReact `Sidebar` on card click; fields from `CalendarSlotDetailDto` (single-fetch — no refetch action). CTAs: `/operator/scripts?weekStart=&highlightSlot={slotIndex}` and `/operator/strategy?weekStart=` — **disable or hide when `slot.clientId !== sessionClientId`** (V1 deep-link limitation documented in contract).
+- **Goal labels:** Map `goal` via existing `strategy.page.goals.{key}` — same keys as strategy brief.
+- **Optional:** Week-level summary for `clientsWithoutApprovedStrategyCount` when `> 0`; `ScriptsPageView` `highlightSlot` scroll/expand — both optional Phase A nice-to-haves per TASKS.
+- **Nav / i18n:** Add `header.nav.calendar` → `/operator/calendar`; new `calendar.*` namespace EN/ES.
+- **README drift:** README PO #14 says hide rejected cards; **CONTRACT Rule R1 governs BUILD** — cards remain visible; rejected skips `approved`/`pending` display branches only.
+- **Disputes:** none.
+
+### FE signoff checklist (blocking BUILD)
+
+- [ ] **Route:** `/operator/calendar?weekStart=` RSC wired; `loading.tsx` skeleton.
+- [ ] **Types:** Import DTOs/result union from `lib/contracts/calendar.ts` only — no ad-hoc shapes.
+- [ ] **Action:** `getOperatorCalendarForWeek({ weekStart })` — body strict; map error codes to `calendar.*` copy.
+- [ ] **Grid + Sidebar:** 7-column week grid; card click opens Sidebar from slot DTO.
+- [ ] **Gap warnings:** Render `gapWarnings` per client when `missingCount > 0`.
+- [ ] **Status colors:** draft=grey · generating=blue · qa=amber · pending=orange · approved=green · published=violet.
+- [ ] **Deep links:** Session-client CTAs only; other clients summary-only in Sidebar.
+- [ ] **i18n:** `calendar.*` + `header.nav.calendar` EN/ES.
+- [ ] **No mark-published UI** in Phase A.

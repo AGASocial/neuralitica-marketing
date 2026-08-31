@@ -101,6 +101,15 @@ type ClientGapWarningDto = {
 
 ---
 
+## Contract-first checklist (before BUILD)
+
+- [x] `SPEC-REVIEW.md` — GAPS (6 Low closed in CONTRACT)
+- [x] `SECURITY.md` — APPROVE WITH CONDITIONS (11 conditions reconciled in CONTRACT)
+- [x] `CONTRACT.md` frozen — Zod in `lib/contracts/calendar.ts` · **Reviewed by FE: yes**
+- [x] Open questions in README § resolved in CONTRACT
+
+---
+
 ## Frontend (nextjs-frontend)
 
 **Consumers:** `/operator/calendar` · `AppHeader` Operator nav · optional `/operator/scripts` highlight
