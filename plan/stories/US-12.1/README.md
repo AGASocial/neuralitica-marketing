@@ -1,6 +1,6 @@
 # US-12.1 — Weekly calendar view
 
-**Status:** PREP (2026-08-30) — README + TASKS + PO freezes. Next: `SPEC-REVIEW.md` · `SECURITY.md` · `CONTRACT.md` (not created in PREP).
+**Status:** CLOSED (2026-08-30) — VALIDATION PASS WITH NOTES `d642e70` (18/18, 5/5 AC) · QA APPROVE WITH CONDITIONS `80766dc` after fix `79546ab` (0 Critical/High) · PO AC check-off. BE `9ac84dc` · FE `de2fe1e`. Mark published / IG URL → US-12.2.
 
 **As a** Operator, **I want** a calendar of planned and approved Reels, **so that** I can hit 3 posts per week.
 
@@ -114,15 +114,15 @@ _Evitar:_ “publish queue” on Operator surfaces; admin/staff; exposing storag
 ## Gates (orchestrator)
 
 - [x] PREP — README + TASKS + PO freezes
-- [ ] SPEC-REVIEW.md (spec-guardian) — note SPEC §3 P2 vs USER_STORIES P1 precedence
-- [ ] SECURITY.md (security-architect)
-- [ ] CONTRACT.md (nextjs-backend) — Reviewed by FE
-- [ ] BUILD (nextjs-backend + nextjs-frontend)
-- [ ] VALIDATION.md
-- [ ] QA.md
-- [ ] CLOSE — AC check-off in USER_STORIES.md (product-owner)
+- [x] SPEC-REVIEW.md (spec-guardian) — note SPEC §3 P2 vs USER_STORIES P1 precedence
+- [x] SECURITY.md (security-architect)
+- [x] CONTRACT.md (nextjs-backend) — Reviewed by FE
+- [x] BUILD (nextjs-backend + nextjs-frontend)
+- [x] VALIDATION.md
+- [x] QA.md
+- [x] CLOSE — 5/5 AC checked in USER_STORIES.md (product-owner)
 
-**Next after PREP:** spec-guardian → security-architect → CONTRACT (backend + FE signoff) → BUILD.
+**Next:** SELECT **US-12.2** (recommended) mark manual publication · optional security test hardening · repo TTS build fix.
 
 ---
 

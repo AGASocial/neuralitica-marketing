@@ -1106,11 +1106,11 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | `content_calendar_slots` (client_id, date, reel_script_id, publish_status) |
 
 **Acceptance criteria**
-- [ ] Shows gaps when fewer than 3 Reels scheduled
-- [ ] Click slot opens Reel detail workflow
-- [ ] EN/ES day/month labels
-- [ ] Operator-only: endpoint/action rejects non-operator sessions server-side (403) — the V1 calendar aggregates production status across clients and is an operator surface
-- [ ] [SEC] If a client-facing calendar is added later, it must be a separate endpoint scoped to the server-resolved client's own Reels — never the operator aggregate with rows filtered in the UI, and never a `client_id` parameter on the operator endpoint
+- [x] Shows gaps when fewer than 3 Reels scheduled
+- [x] Click slot opens Reel detail workflow
+- [x] EN/ES day/month labels
+- [x] Operator-only: endpoint/action rejects non-operator sessions server-side (403) — the V1 calendar aggregates production status across clients and is an operator surface
+- [x] [SEC] If a client-facing calendar is added later, it must be a separate endpoint scoped to the server-resolved client's own Reels — never the operator aggregate with rows filtered in the UI, and never a `client_id` parameter on the operator endpoint
 
 **Depends on:** US-11.3, US-4.1
 
