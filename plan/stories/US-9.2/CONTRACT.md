@@ -1,10 +1,10 @@
 Reviewed by FE: yes — 2026-08-30 — nextjs-frontend (Phase A).  
-**Phase B — Reviewed by FE: pending** — nextjs-frontend (Operator `coverFrameSec` InputNumber + Apply/Re-brand wire).
+**Phase B — Reviewed by FE: yes — 2026-08-31 — nextjs-frontend** (Operator `coverFrameSec` InputNumber + Apply/Re-brand wire).
 
 # API Contract — US-9.2 Add subtitles, logo, and cover
 
 **Story:** US-9.2  
-**Status:** Phase A frozen — 2026-08-30 · **Phase B section frozen — 2026-08-31** (Reviewed by FE: **pending** — BUILD blocked until FE sign-off)  
+**Status:** Phase A frozen — 2026-08-30 · **Phase B section frozen — 2026-08-31** (Reviewed by FE: **yes — 2026-08-31** — BUILD unblocked)  
 **Security:** `plan/stories/US-9.2/SECURITY.md` (Phase A + Phase B APPROVE WITH CONDITIONS — 8 Phase B conditions reconciled in § Phase B)  
 **Spec review:** `plan/stories/US-9.2/SPEC-REVIEW.md` (Phase A GAPS closed) · `plan/stories/US-9.2/SPEC-REVIEW-PHASE-B.md` (**ALIGNED**)  
 **Phase B prep:** `plan/stories/US-9.2/PHASE-B.md` (PO B1–B15)  
@@ -981,7 +981,7 @@ Logo upload errors reuse `mediaUploadErrorCodeSchema` from US-3.3 where applicab
 
 # Phase B — VO-proportional beat timing + Operator `coverFrameSec`
 
-**Status:** Frozen — 2026-08-31 (BE authored) · **Reviewed by FE: pending**  
+**Status:** Frozen — 2026-08-31 (BE authored) · **Reviewed by FE: yes — 2026-08-31**  
 **Sprint:** `US-9.2-B` · branch `feature/US-9.2-phase-b-subtitle-cover`  
 **Sources:** `PHASE-B.md` (B1–B15) · `SPEC-REVIEW-PHASE-B.md` (ALIGNED) · `SECURITY.md` Phase B (8 conditions)  
 **DB:** **None** — reuse `assembly_config` / `branding_config` JSON (`coverFrameSec` already present).  
@@ -1332,7 +1332,7 @@ No new error code required for equal-split fallback (silent, expected).
 | Continuity | **Do not** rebuild subtitle/logo toggles |
 | Out | **No** Cliente Ficha cover control · **No** thumbnail strip · **No** second font UI |
 
-**Reviewed by FE: pending** — nextjs-frontend must sign off this Phase B section before BUILD.
+**Reviewed by FE: yes — 2026-08-31 — nextjs-frontend.**
 
 ---
 
@@ -1425,16 +1425,29 @@ Same USER_STORIES § US-9.2 AC (do **not** uncheck Phase A; **no** new checkboxe
 
 ## Phase B — Reviewed by FE
 
-**Reviewed by FE: pending** — nextjs-frontend.
+**Reviewed by FE: yes — 2026-08-31 — nextjs-frontend.**
+
+**Verdict:** **approved** — Phase B FE enablement is implementable against existing `/operator/scripts` `OperatorAssemblyPanel` branding section (Phase A toggles, Apply / Re-brand, poll, cover download). No contract disputes.
 
 **Sign-off checklist for FE:**
 
-- [ ] Operator `InputNumber` seed + Apply/Re-brand wire matches § Phase B — FE enablement
-- [ ] Optional `coverFrameSec` on `applyBrandingForAssembly` request shape accepted
-- [ ] i18n keys `scripts.branding.coverFrame*` (EN/ES) — no lip-sync copy
-- [ ] No Cliente cover control; no thumbnail strip; toggles reused
+- [x] Operator `InputNumber` seed + Apply/Re-brand wire matches § Phase B — FE enablement
+- [x] Optional `coverFrameSec` on `applyBrandingForAssembly` request shape accepted
+- [x] i18n keys `scripts.branding.coverFrame*` (EN/ES) — no lip-sync copy
+- [x] No Cliente cover control; no thumbnail strip; toggles reused
 
-When signed: replace this line with `Reviewed by FE: yes — YYYY-MM-DD — nextjs-frontend` and clear the header **pending** flag.
+**BUILD constraints (FE):**
+
+| # | Constraint |
+|---|------------|
+| 1 | Add PrimeReact **`InputNumber`** in `OperatorAssemblyPanel` branding block (next to existing subtitle/logo `Checkbox`es) — `min={0}` `max={45}` `step={0.1}`; seed `job.brandingConfig?.coverFrameSec ?? 1.0`; disable when `panelBusy \|\| brandingInFlight`. |
+| 2 | Pass **`coverFrameSec` only as optional `number`** on `applyBrandingForAssembly({ assemblyJobId, subtitlesEnabled, logoEnabled, coverFrameSec })` for Apply **and** Re-brand — never string / FormData text; omit only if leaving server default (prefer always pass current InputNumber value when in range). |
+| 3 | Extend `onRequestRebrand` / rebrand confirm path to include `coverFrameSec` (today: `(assemblyJobId, subtitlesEnabled, logoEnabled)` only). |
+| 4 | i18n EN+ES: `scripts.branding.coverFrame.label`, `scripts.branding.coverFrame.help`, `scripts.branding.coverFrame.invalid` — cover-frame / seconds language only; **no** lip-sync / word-aligned-audio claims. Extend `OperatorBrandingCopy`. |
+| 5 | **Do not** touch Cliente `/profile` Brand section for cover; **do not** add thumbnail strip; **do not** rebuild subtitle/logo toggles. |
+| 6 | **BE prerequisite (coordinate):** BUILD must extend `applyBrandingForAssemblyRequestSchema` with optional `coverFrameSec` **and** remove `coverFrameSec` / `cover_frame_sec` from `FORBIDDEN_BRANDING_AUTHORITY_KEYS` (Phase A still forbids them in `lib/contracts/branding-job.ts`) before FE can ship the wire — FE panel DTO already exposes `brandingConfig.coverFrameSec` for seed. |
+
+**Disputes:** None blocking Phase B BUILD.
 
 ---
 
@@ -1442,5 +1455,6 @@ When signed: replace this line with `Reviewed by FE: yes — YYYY-MM-DD — next
 
 | Date | Change |
 |------|--------|
-| 2026-08-31 | **Phase B freeze** — VO word-partition timings + `voiceoverTimingHash` fingerprint; optional Operator `coverFrameSec` on apply; seek clamp; forbidden-keys amend; narrow scope (no second font / thumbnail); FE Reviewed pending |
+| 2026-08-31 | **Phase B FE sign-off** — approved; BUILD constraints for Operator InputNumber + optional `coverFrameSec` wire + i18n; BUILD unblocked |
+| 2026-08-31 | **Phase B freeze** — VO word-partition timings + `voiceoverTimingHash` fingerprint; optional Operator `coverFrameSec` on apply; seek clamp; forbidden-keys amend; narrow scope (no second font / thumbnail) |
 | 2026-08-30 | Initial freeze — branding pipeline DDL, orchestrator, worker seam, ASS/FFmpeg graph, Cliente logo actions, DTOs, media serve; resolves SPEC-REVIEW + SECURITY gaps |

@@ -290,7 +290,7 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 - [x] PREP — [`PHASE-B.md`](./PHASE-B.md) + this TASKS Phase B checklist
 - [ ] SPEC-REVIEW.md amendment (spec-guardian)
 - [ ] SECURITY.md amendment (security-architect)
-- [ ] CONTRACT.md Phase B + Reviewed by FE (nextjs-backend → nextjs-frontend)
+- [x] CONTRACT.md Phase B + Reviewed by FE (nextjs-backend → nextjs-frontend) — FE approved 2026-08-31
 - [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend ∥ nextjs-frontend)
 - [ ] VALIDATION.md Phase B (requirements-validator) — re-verify [SEC]; do **not** uncheck Phase A AC
 - [ ] QA.md Phase B (qa-engineer)
