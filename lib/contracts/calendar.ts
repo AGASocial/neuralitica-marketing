@@ -1,5 +1,5 @@
 /**
- * Operator content calendar (Calendario de contenido) contract (US-12.1).
+ * Operator content calendar (Calendario de contenido) contract (US-12.1 + US-12.2).
  * FE imports types + constants; Zod validation stays server-side.
  * Cliente calendar (future): separate action — never this aggregate.
  */
@@ -119,7 +119,79 @@ export const calendarSlotCardDtoSchema = z
 
 export type CalendarSlotCardDto = z.infer<typeof calendarSlotCardDtoSchema>;
 
-/** Sidebar detail — single-fetch superset of card fields (US-12.1 Phase A). */
+/** Validated Instagram post permalink — HTTPS + www host only (US-12.2 SEC). */
+export function isCalendarInstagramPostUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value.trim());
+    return (
+      parsed.protocol === "https:" &&
+      parsed.hostname === "www.instagram.com" &&
+      parsed.pathname.length > 1
+    );
+  } catch {
+    return false;
+  }
+}
+
+export const calendarInstagramPostUrlSchema = z
+  .string()
+  .trim()
+  .max(500)
+  .url()
+  .refine(isCalendarInstagramPostUrl, {
+    message: "instagramPostUrl must be https://www.instagram.com/...",
+  });
+
+export type CalendarInstagramPostUrl = z.infer<
+  typeof calendarInstagramPostUrlSchema
+>;
+
+/** Stored publish timestamp — UTC noon anchor for calendar date (US-12.2). */
+export const calendarPublishedAtDtoSchema = z
+  .string()
+  .regex(
+    /^\d{4}-\d{2}-\d{2}T12:00:00\.000Z$/,
+    "publishedAt must be UTC noon ISO timestamptz",
+  );
+
+export type CalendarPublishedAtDto = z.infer<typeof calendarPublishedAtDtoSchema>;
+
+/** Mark-published action input — date-only YYYY-MM-DD (US-12.2). */
+export const calendarPublishedAtInputSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "publishedAt must be YYYY-MM-DD")
+  .refine(
+    (value) => !Number.isNaN(Date.parse(`${value}T12:00:00.000Z`)),
+    "publishedAt must be a valid calendar date",
+  );
+
+export type CalendarPublishedAtInput = z.infer<
+  typeof calendarPublishedAtInputSchema
+>;
+
+function normalizeOptionalInstagramPostUrl(
+  value: unknown,
+): string | null | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value === null) {
+    return null;
+  }
+  if (typeof value !== "string") {
+    return value as string;
+  }
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+/** Optional IG URL input — empty/whitespace → null before allowlist parse. */
+export const markCalendarSlotPublishedInstagramPostUrlInputSchema = z.preprocess(
+  normalizeOptionalInstagramPostUrl,
+  calendarInstagramPostUrlSchema.nullable().optional(),
+);
+
+/** Sidebar detail — single-fetch superset of card fields (US-12.1 + US-12.2 publish metadata). */
 export const calendarSlotDetailDtoSchema = calendarSlotCardDtoSchema
   .extend({
     strategyId: z.string().uuid(),
@@ -127,6 +199,8 @@ export const calendarSlotDetailDtoSchema = calendarSlotCardDtoSchema
     approvalStatus: approvalStatusSchema.nullable(),
     /** True when approvalStatus === changes_requested — FE sub-badge on pending color. */
     changesRequested: z.boolean(),
+    publishedAt: calendarPublishedAtDtoSchema.nullable(),
+    instagramPostUrl: calendarInstagramPostUrlSchema.nullable(),
   })
   .strict();
 
@@ -176,6 +250,10 @@ export const CALENDAR_ERROR_CODES = [
   "FORBIDDEN",
   "FORBIDDEN_FIELDS",
   "VALIDATION_ERROR",
+  "NOT_FOUND",
+  "NOT_APPROVED",
+  "SLOT_NOT_READY",
+  "RATE_LIMITED",
   "INTERNAL_ERROR",
 ] as const;
 
@@ -207,3 +285,115 @@ export type GetOperatorCalendarForWeekResult = z.infer<
 
 /** Future Cliente calendar — name frozen; NOT implemented in US-12.1. */
 export const FUTURE_CLIENT_CALENDAR_ACTION = "getClientCalendarForWeek" as const;
+
+/**
+ * Keys rejected before Zod parse on mark-published action (US-12.2).
+ * Allowlist input: slotId, publishedAt, instagramPostUrl? only.
+ */
+export const FORBIDDEN_MARK_PUBLISHED_AUTHORITY_KEYS = [
+  "clientId",
+  "client_id",
+  "weekStart",
+  "week_start",
+  "filter",
+  "limit",
+  "offset",
+  "role",
+  "auth_user_id",
+  "status",
+  "publish_status",
+  "publishStatus",
+  "pipelineStatus",
+  "slot_id",
+  "strategyId",
+  "strategy_id",
+  "reelScriptId",
+  "reel_script_id",
+  "assembledReelId",
+  "assembled_reel_id",
+  "approvalId",
+  "approval_id",
+  "published_at",
+  "instagram_post_url",
+  "storage_key",
+  "storageKey",
+  "previewUrl",
+  "thumbnailPreviewUrl",
+  "costCents",
+  "estimated_cost_cents",
+  "actual_cost_cents",
+  "costSummary",
+  "reelCostRollups",
+  "provider_key",
+  "envKeyName",
+  "tier",
+  "brief",
+  "caption",
+  "hook",
+  "body",
+  "cta",
+] as const;
+
+export type ForbiddenMarkPublishedAuthorityKey =
+  (typeof FORBIDDEN_MARK_PUBLISHED_AUTHORITY_KEYS)[number];
+
+export function findForbiddenMarkPublishedKeys(raw: unknown): string[] {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+    return [];
+  }
+  const forbidden = new Set<string>(FORBIDDEN_MARK_PUBLISHED_AUTHORITY_KEYS);
+  return Object.keys(raw).filter((key) => forbidden.has(key));
+}
+
+export const MARK_CALENDAR_SLOT_PUBLISHED_ACTION =
+  "markCalendarSlotPublished" as const;
+
+export const markCalendarSlotPublishedInputSchema = z
+  .object({
+    slotId: z.string().uuid(),
+    publishedAt: calendarPublishedAtInputSchema,
+    instagramPostUrl:
+      markCalendarSlotPublishedInstagramPostUrlInputSchema.optional(),
+  })
+  .strict();
+
+export type MarkCalendarSlotPublishedInput = z.infer<
+  typeof markCalendarSlotPublishedInputSchema
+>;
+
+export const markCalendarSlotPublishedSuccessSchema = z
+  .object({
+    ok: z.literal(true),
+    slot: calendarSlotDetailDtoSchema,
+  })
+  .strict();
+
+export type MarkCalendarSlotPublishedSuccess = z.infer<
+  typeof markCalendarSlotPublishedSuccessSchema
+>;
+
+export const markCalendarSlotPublishedResultSchema = z.union([
+  markCalendarSlotPublishedSuccessSchema,
+  calendarErrorEnvelopeSchema,
+]);
+
+export type MarkCalendarSlotPublishedResult = z.infer<
+  typeof markCalendarSlotPublishedResultSchema
+>;
+
+/** Rate limit for Operator mark-published writes (US-12.2 SEC). */
+export const CALENDAR_MARK_PUBLISHED_AGENT_KEY =
+  "calendar_mark_published" as const;
+
+export const CALENDAR_MARK_PUBLISHED_MAX_PER_WINDOW = 30;
+
+export const CALENDAR_MARK_PUBLISHED_RATE_WINDOW_MS = 60 * 60 * 1000;
+
+/** i18n keys for mark-published validation (invalid IG URL uses VALIDATION_ERROR envelope). */
+export const CALENDAR_MARK_PUBLISHED_MESSAGE_KEYS = {
+  notFound: "calendar.markPublished.errors.notFound",
+  notApproved: "calendar.markPublished.errors.notApproved",
+  slotNotReady: "calendar.markPublished.errors.slotNotReady",
+  rateLimited: "calendar.markPublished.errors.rateLimited",
+  invalidIgUrl: "calendar.markPublished.errors.invalidIgUrl",
+} as const;
