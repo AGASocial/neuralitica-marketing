@@ -94,9 +94,11 @@ type HeygenMockOptions = {
     package: { targetDurationSec: number; voiceoverText: string };
   };
   onCreateJob?: (input: Record<string, unknown>) => void;
-  onBudget?: () => void;
+  onBudget?: (args?: { estimatedCostCents: number }) => void;
   onConsent?: () => void;
   resolveProviderKey?: string;
+  /** Simulate neuramark_video_job_heygen_fallback_overrides INSERT failure (QA M2). */
+  overrideInsertFails?: boolean;
 };
 
 function installHeygenMocks(options: HeygenMockOptions) {
@@ -104,9 +106,13 @@ function installHeygenMocks(options: HeygenMockOptions) {
   const originalLoad = nodeModule._load.bind(nodeModule);
   let insertedPayload: Record<string, unknown> | null = null;
   let overridePayload: Record<string, unknown> | null = null;
+  let lastJobUpdate: Record<string, unknown> | null = null;
   let createJobCalled = false;
   let budgetCalled = false;
   let consentCalled = false;
+  let spendCalled = false;
+  let pollEnqueued = false;
+  let lastEstimateDurationSec: number | undefined;
 
   const role = options.role ?? "operator";
   const providerTier = options.providerTier ?? "low";
@@ -127,11 +133,14 @@ function installHeygenMocks(options: HeygenMockOptions) {
       : options.latestJob;
 
   const mockAdapter = {
-    estimateCost: async (input: { targetDurationSec?: number }) => ({
-      estimatedCostCents: 2 * (input.targetDurationSec ?? 30),
-      currency: "USD" as const,
-      providerKey: "heygen_high",
-    }),
+    estimateCost: async (input: { targetDurationSec?: number }) => {
+      lastEstimateDurationSec = input.targetDurationSec;
+      return {
+        estimatedCostCents: 2 * (input.targetDurationSec ?? 30),
+        currency: "USD" as const,
+        providerKey: "heygen_high",
+      };
+    },
     createJob: async (input: Record<string, unknown>) => {
       createJobCalled = true;
       options.onCreateJob?.(input);
@@ -251,9 +260,11 @@ function installHeygenMocks(options: HeygenMockOptions) {
 
     if (req.includes("assert-reel-budget-allows-estimated-spend")) {
       return {
-        assertReelBudgetAllowsEstimatedSpend: async () => {
+        assertReelBudgetAllowsEstimatedSpend: async (args: {
+          estimatedCostCents: number;
+        }) => {
           budgetCalled = true;
-          options.onBudget?.();
+          options.onBudget?.(args);
           return { ok: true };
         },
       };
@@ -271,9 +282,12 @@ function installHeygenMocks(options: HeygenMockOptions) {
 
     if (req.includes("record-reel-spend-event")) {
       return {
-        recordReelSpendEvent: async () => ({
-          spendEventId: "99999999-9999-4999-8999-999999999999",
-        }),
+        recordReelSpendEvent: async () => {
+          spendCalled = true;
+          return {
+            spendEventId: "99999999-9999-4999-8999-999999999999",
+          };
+        },
       };
     }
 
@@ -282,7 +296,11 @@ function installHeygenMocks(options: HeygenMockOptions) {
     }
 
     if (req.includes("enqueue-video-job-poll")) {
-      return { enqueueVideoJobPoll: () => {} };
+      return {
+        enqueueVideoJobPoll: () => {
+          pollEnqueued = true;
+        },
+      };
     }
 
     if (req.includes("supabase/server")) {
@@ -333,7 +351,12 @@ function installHeygenMocks(options: HeygenMockOptions) {
                       }),
                   });
                 },
-                update: () => chainableQuery({ eq: async () => ({ error: null }) }),
+                update: (payload: Record<string, unknown>) => {
+                  lastJobUpdate = payload;
+                  return chainableQuery({
+                    eq: async () => ({ error: null }),
+                  });
+                },
                 maybeSingle: async () => {
                   if (!latestJob) {
                     return { data: null, error: null };
@@ -353,6 +376,11 @@ function installHeygenMocks(options: HeygenMockOptions) {
               return chainableQuery({
                 insert: (payload: Record<string, unknown>) => {
                   overridePayload = payload;
+                  if (options.overrideInsertFails) {
+                    return {
+                      error: { message: "override insert failed" },
+                    };
+                  }
                   return { error: null };
                 },
               });
@@ -373,9 +401,13 @@ function installHeygenMocks(options: HeygenMockOptions) {
     },
     getInserted: () => insertedPayload,
     getOverride: () => overridePayload,
+    getLastJobUpdate: () => lastJobUpdate,
+    getLastEstimateDurationSec: () => lastEstimateDurationSec,
     wasCreateJobCalled: () => createJobCalled,
     wasBudgetCalled: () => budgetCalled,
     wasConsentCalled: () => consentCalled,
+    wasSpendCalled: () => spendCalled,
+    wasPollEnqueued: () => pollEnqueued,
   };
 }
 
@@ -655,5 +687,102 @@ describe("US-8.7 Phase B — HeyGen unlock + fallback", () => {
     );
     assert.match(source, /forcedProviderKey/);
     assert.match(source, /heygen_high/);
+  });
+
+  it("11 — M1: client targetDurationSec: 1 cannot shrink estimate below package duration", async () => {
+    await withServerOnlyStub(async () => {
+      clearModuleCache();
+      let budgetEstimate: number | undefined;
+      let createDuration: number | undefined;
+      const harness = installHeygenMocks({
+        providerTier: "high",
+        latestJob: null,
+        script: {
+          visualMode: "own_avatar",
+          modalidad: "own_avatar",
+          hasReferenceLoop: false,
+          package: { targetDurationSec: 30, voiceoverText: "HeyGen path" },
+        },
+        onBudget: (args) => {
+          budgetEstimate = args?.estimatedCostCents;
+        },
+        onCreateJob: (input) => {
+          createDuration = input.targetDurationSec as number | undefined;
+        },
+      });
+      try {
+        const mod = require("./create-heygen-talking-head-video-job.ts") as {
+          createHeygenTalkingHeadVideoJob: (
+            input: unknown,
+          ) => Promise<{ ok: boolean; estimatedCostCents?: number }>;
+        };
+        const result = await mod.createHeygenTalkingHeadVideoJob({
+          reelScriptId: REEL_SCRIPT_ID,
+          clientId: CLIENT_ID,
+          targetDurationSec: 1,
+          voiceoverAssetId: VOICEOVER_ASSET_ID,
+          portraitAssetId: PORTRAIT_ASSET_ID,
+          confirmEstimateCents: 2,
+        });
+        assert.equal(result.ok, true);
+        assert.equal(harness.getLastEstimateDurationSec(), 30);
+        assert.equal(createDuration, 30);
+        assert.equal(budgetEstimate, 60);
+        assert.equal(result.estimatedCostCents, 60);
+        assert.equal(harness.getInserted()?.estimated_cost_cents, 60);
+      } finally {
+        harness.restore();
+      }
+    });
+  });
+
+  it("12 — M2: fallback override INSERT failure marks job failed (no spend/poll)", async () => {
+    await withServerOnlyStub(async () => {
+      clearModuleCache();
+      process.env.HEYGEN_DEFAULT_AVATAR_ID = "studio_avatar";
+      const harness = installHeygenMocks({
+        providerTier: "low",
+        catalogActive: true,
+        overrideInsertFails: true,
+        script: {
+          visualMode: "generic_avatar",
+          modalidad: "generic_avatar",
+          hasReferenceLoop: false,
+          package: { targetDurationSec: 30, voiceoverText: "x" },
+        },
+        latestJob: {
+          id: PARENT_JOB_ID,
+          status: "failed",
+          providerKey: "sadtalker_low",
+        },
+      });
+      try {
+        const mod = require("./create-heygen-talking-head-video-job.ts") as {
+          createHeygenTalkingHeadVideoJob: (
+            input: unknown,
+          ) => Promise<{ ok: boolean; error?: { code: string } }>;
+        };
+        const result = await mod.createHeygenTalkingHeadVideoJob({
+          reelScriptId: REEL_SCRIPT_ID,
+          clientId: CLIENT_ID,
+          targetDurationSec: 30,
+          voiceoverAssetId: VOICEOVER_ASSET_ID,
+          confirmEstimateCents: 60,
+        });
+        assert.equal(result.ok, false);
+        assert.equal(result.error?.code, "INTERNAL_ERROR");
+        assert.equal(harness.wasCreateJobCalled(), true);
+        assert.ok(harness.getInserted());
+        assert.equal(harness.getLastJobUpdate()?.status, "failed");
+        assert.equal(
+          harness.getLastJobUpdate()?.failure_reason,
+          "heygen_fallback_audit_failed",
+        );
+        assert.equal(harness.wasSpendCalled(), false);
+        assert.equal(harness.wasPollEnqueued(), false);
+      } finally {
+        harness.restore();
+      }
+    });
   });
 });

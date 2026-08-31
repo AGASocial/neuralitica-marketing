@@ -186,8 +186,8 @@ export async function previewHeygenTalkingHeadEstimate(
     return videoJobMutationError("NOT_FOUND");
   }
 
-  const durationSec =
-    parsed.data.targetDurationSec ?? script.package.targetDurationSec;
+  // Server-authoritative duration from reel package (client value is display-only).
+  const durationSec = script.package.targetDurationSec;
   const eligibility = await resolveEligibility({
     clientId: parsed.data.clientId,
     reelScriptId: parsed.data.reelScriptId,
@@ -265,6 +265,10 @@ export async function createHeygenTalkingHeadVideoJob(
       return videoJobMutationError("VALIDATION_ERROR");
     }
 
+    // Server-authoritative duration from reel package — never trust client
+    // targetDurationSec for estimateCost / budget (SECURITY anti–gate-bypass).
+    const targetDurationSec = script.package.targetDurationSec;
+
     const eligibility = await resolveEligibility({
       clientId: input.clientId,
       reelScriptId: input.reelScriptId,
@@ -331,7 +335,7 @@ export async function createHeygenTalkingHeadVideoJob(
         providerKey: "heygen_high",
         providerTier: "high",
         assetRole: "primary",
-        targetDurationSec: input.targetDurationSec,
+        targetDurationSec,
         voiceoverAssetId,
         portraitAssetId,
       };
@@ -358,7 +362,7 @@ export async function createHeygenTalkingHeadVideoJob(
         providerKey: "heygen_high",
         providerTier: "high",
         assetRole: "primary",
-        targetDurationSec: input.targetDurationSec,
+        targetDurationSec,
         voiceoverAssetId,
       };
     }
@@ -444,6 +448,27 @@ export async function createHeygenTalkingHeadVideoJob(
           rationale_key: HEYGEN_FALLBACK_RATIONALE_KEY,
         });
       if (overrideError) {
+        // Vendor job + DB row already exist — compensate so we do not leave a
+        // queued job without spend/poll (QA M2). Mark failed; skip spend+poll.
+        console.error("[video-jobs] heygen fallback override insert failed", {
+          jobId: jobRow.id,
+          parentJobId,
+          message:
+            overrideError instanceof Error
+              ? overrideError.message
+              : typeof overrideError === "object" &&
+                  overrideError &&
+                  "message" in overrideError
+                ? String((overrideError as { message: unknown }).message)
+                : "unknown",
+        });
+        await supabase
+          .from(VIDEO_JOBS_TABLE)
+          .update({
+            status: "failed",
+            failure_reason: "heygen_fallback_audit_failed",
+          })
+          .eq("id", jobRow.id);
         return videoJobMutationError("INTERNAL_ERROR");
       }
     }
