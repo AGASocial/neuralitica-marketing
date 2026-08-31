@@ -8,7 +8,10 @@ import { probeLocalMediaFile } from "@/lib/assembly/probe-media-streams";
 import { runFfmpeg } from "@/lib/assembly/run-ffmpeg";
 import { getMediaStorage } from "@/lib/media/storage/get-media-storage";
 
-import { computeVoProportionalBeatTimings } from "@/lib/assembly/compute-vo-proportional-beat-timings";
+import {
+  computeVoiceoverTimingHash,
+  computeVoProportionalBeatTimings,
+} from "@/lib/assembly/compute-vo-proportional-beat-timings";
 
 import { applyBrandingJobUpdate } from "./apply-branding-job-update";
 import { buildAssFromBeats } from "./build-ass-from-beats";
@@ -17,6 +20,7 @@ import {
   generateBrandedReelStorageKey,
   generateCoverFrameStorageKey,
   isTerminalBrandingStatus,
+  VOICEOVER_TIMING_HASH_HEX_RE,
 } from "./branding-job-row";
 import {
   clampCoverSeekSec,
@@ -159,6 +163,31 @@ export async function runBrandingJob(
 
     if (sanitized.subtitleSourceHash !== config.subtitleSourceHash) {
       await failBrandingJob(activeJob.id, BRANDING_FAILURE_SUBTITLE_HASH);
+      return;
+    }
+
+    // Phase B-M1: re-check voiceoverTimingHash vs live VO before mkdtemp/ASS/spawn.
+    // Use raw snapshot field (not soft-defaulted config) so Phase A rows skip.
+    const snapshotVoHash = activeJob.rawVoiceoverTimingHash;
+    if (
+      typeof snapshotVoHash === "string" &&
+      VOICEOVER_TIMING_HASH_HEX_RE.test(snapshotVoHash)
+    ) {
+      const liveHash = computeVoiceoverTimingHash(voiceoverText);
+      if (liveHash !== snapshotVoHash) {
+        await failBrandingJob(
+          activeJob.id,
+          BRANDING_FAILURE_VOICEOVER_TIMING_HASH,
+        );
+        return;
+      }
+    } else if (
+      snapshotVoHash !== undefined &&
+      snapshotVoHash !== null &&
+      snapshotVoHash !== ""
+    ) {
+      // Non-empty malformed — fail closed (no soft-skip).
+      await failBrandingJob(activeJob.id, BRANDING_FAILURE_CONFIG);
       return;
     }
 

@@ -30,6 +30,12 @@ export type BrandingJobRow = {
   targetDurationSec: number;
   brandingStatus: BrandingStatus | null;
   brandingConfig: BrandingConfigSnapshot | null;
+  /**
+   * Raw `branding_config.voiceoverTimingHash` before soft-default.
+   * `undefined` = key absent (Phase A legacy → skip VO-hash re-check).
+   * Used by Phase B-M1 worker guard — do not use soft-defaulted snapshot field.
+   */
+  rawVoiceoverTimingHash: string | null | undefined;
   brandingFingerprint: string | null;
   brandingFailureReason: string | null;
   coverMediaAssetId: string | null;
@@ -58,6 +64,38 @@ export const BRANDING_JOBS_TABLE = "neuramark_assembled_reels" as const;
 const EMPTY_VOICEOVER_TIMING_HASH =
   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
+/** Phase B-M1: 64 lowercase hex sha256. */
+export const VOICEOVER_TIMING_HASH_HEX_RE = /^[0-9a-f]{64}$/;
+
+/**
+ * Read raw `voiceoverTimingHash` from branding_config JSON before soft-default.
+ * - `undefined` — key absent
+ * - `null` — explicit null
+ * - `string` — stored value (may be empty, valid hex, or malformed)
+ * - non-string present → string that fails hex regex (malformed → fail CONFIG)
+ */
+export function readRawVoiceoverTimingHash(
+  brandingConfig: unknown,
+): string | null | undefined {
+  if (!brandingConfig || typeof brandingConfig !== "object") {
+    return undefined;
+  }
+  if (!("voiceoverTimingHash" in brandingConfig)) {
+    return undefined;
+  }
+  const value = (brandingConfig as Record<string, unknown>).voiceoverTimingHash;
+  if (value === null) {
+    return null;
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  // Non-string present: coerce to a non-hex sentinel so guard fails CONFIG.
+  return typeof value === "number" || typeof value === "boolean"
+    ? String(value)
+    : "__malformed_voiceover_timing_hash__";
+}
+
 function parseBrandingConfig(raw: unknown): BrandingConfigSnapshot | null {
   if (!raw || typeof raw !== "object") {
     return null;
@@ -75,7 +113,7 @@ function parseBrandingConfig(raw: unknown): BrandingConfigSnapshot | null {
   }
   const voiceoverTimingHash =
     typeof row.voiceoverTimingHash === "string" &&
-    row.voiceoverTimingHash.length === 64
+    VOICEOVER_TIMING_HASH_HEX_RE.test(row.voiceoverTimingHash)
       ? row.voiceoverTimingHash
       : EMPTY_VOICEOVER_TIMING_HASH;
   return {
@@ -126,6 +164,7 @@ export function mapBrandingJobRow(
     targetDurationSec: raw.target_duration_sec,
     brandingStatus,
     brandingConfig: parseBrandingConfig(raw.branding_config),
+    rawVoiceoverTimingHash: readRawVoiceoverTimingHash(raw.branding_config),
     brandingFingerprint:
       typeof raw.branding_fingerprint === "string"
         ? raw.branding_fingerprint

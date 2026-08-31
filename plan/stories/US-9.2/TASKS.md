@@ -193,15 +193,15 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 
 - [x] **CONTRACT.md amend** — worker step: after VO load / subtitle-hash guard, compare `computeVoiceoverTimingHash(voiceoverText)` to `config.voiceoverTimingHash`; freeze fail code string; note changelog.
 - [x] Export **`BRANDING_FAILURE_VOICEOVER_TIMING_HASH`** = `scripts.branding.failure.voiceoverTimingHashMismatch` (parallel to `BRANDING_FAILURE_SUBTITLE_HASH` in `lib/branding/run-branding-job.ts`).
-- [ ] Unit test: VO text mutated vs snapshot hash → job **`failed`**, reason = fail key, **FFmpeg runner never called**. *(media-pipeline owns `run-branding-job.test.ts` with the worker guard — avoid duplicate.)*
-- [ ] Unit test: matching hash still proceeds (no false fail) — can share existing happy-path fixture. *(media-pipeline.)*
+- [x] Unit test: VO text mutated vs snapshot hash → job **`failed`**, reason = fail key, **FFmpeg runner never called**. *(media-pipeline owns `run-branding-job.test.ts` with the worker guard — avoid duplicate.)*
+- [x] Unit test: matching hash still proceeds (no false fail) — can share existing happy-path fixture. *(media-pipeline.)*
 
 ### Worker / media pipeline (media-pipeline-engineer) — Phase B-M1
 
-- [ ] In `runBrandingJob` (subtitle/VO path): after `subtitleSourceHash` check and **before** `mkdtemp` / ASS / spawn — if `config.voiceoverTimingHash.length === 64`, recompute hash from live `voiceoverText`; mismatch → `failBrandingJob` + return.
-- [ ] Legacy empty hash → **skip** re-check (M1-6).
-- [ ] Reuse `computeVoiceoverTimingHash` — do not fork formula.
-- [ ] **spawn args-array only** — no VO strings in argv (unchanged).
+- [x] In `runBrandingJob` (subtitle/VO path): after `subtitleSourceHash` check and **before** `mkdtemp` / ASS / spawn — if `config.voiceoverTimingHash.length === 64`, recompute hash from live `voiceoverText`; mismatch → `failBrandingJob` + return.
+- [x] Legacy empty hash → **skip** re-check (M1-6).
+- [x] Reuse `computeVoiceoverTimingHash` — do not fork formula.
+- [x] **spawn args-array only** — no VO strings in argv (unchanged).
 
 ### Database — Phase B-M1
 

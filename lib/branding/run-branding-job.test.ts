@@ -16,6 +16,13 @@ const LOGO_ASSET_ID = "66666666-6666-4666-8666-666666666666";
 const BRANDED_ASSET_ID = "77777777-7777-4777-8777-777777777777";
 const COVER_ASSET_ID = "88888888-8888-4888-8888-888888888888";
 
+/** sha256 of tokenizeVoiceoverWords("one two three four").join("\\n") */
+const VOICEOVER_TIMING_HASH_ONE_TWO_THREE_FOUR =
+  "c2fa7d384065e108cf8746af983dfe308f3cc709631df3f2615d450e1f07fd0d";
+
+const SUBTITLE_SOURCE_HASH_BEAT_ONE_TWO =
+  "173c1ddf22a285919046857aa25bb6ad8417248851f49a47fbe4560505167791";
+
 type NodeModuleLoad = {
   _load: (
     request: string,
@@ -45,6 +52,7 @@ function clearBrandingModuleCache() {
       normalized.includes("/lib/branding/") ||
       normalized.includes("/lib/assembly/probe-media-streams") ||
       normalized.includes("/lib/assembly/run-ffmpeg") ||
+      normalized.includes("/lib/assembly/compute-vo-proportional-beat-timings") ||
       normalized.includes("/lib/media/storage/") ||
       normalized.includes("/lib/supabase/server")
     ) {
@@ -155,6 +163,7 @@ describe("runBrandingJob mocked pipeline", () => {
         ],
         logoAssetId: LOGO_ASSET_ID,
         scriptOnScreenText: "Beat one\nBeat two",
+        scriptVoiceoverText: "one two three four",
         insertedBrandedAssetId: BRANDED_ASSET_ID,
         insertedCoverAssetId: COVER_ASSET_ID,
         storage,
@@ -190,6 +199,248 @@ describe("runBrandingJob mocked pipeline", () => {
         assert.ok(completed);
         assert.equal(completed?.output_media_asset_id, BRANDED_ASSET_ID);
         assert.equal(completed?.cover_media_asset_id, COVER_ASSET_ID);
+      },
+    );
+  });
+
+  it("Phase B-M1: voiceoverTimingHash mismatch → failed, spawn never called", async () => {
+    await withBrandingMocks(
+      {
+        jobs: [
+          baseBrandingJobRow({
+            branding_status: "queued",
+            branding_config: {
+              subtitlesEnabled: true,
+              logoEnabled: false,
+              coverFrameSec: 1.0,
+              subtitleBeatCount: 2,
+              subtitleSourceHash: SUBTITLE_SOURCE_HASH_BEAT_ONE_TWO,
+              // Snapshot frozen at enqueue for "one two three four"
+              voiceoverTimingHash: VOICEOVER_TIMING_HASH_ONE_TWO_THREE_FOUR,
+            },
+          }),
+        ],
+        mediaAssets: [
+          {
+            id: BASE_ASSET_ID,
+            client_id: CLIENT_ID,
+            asset_type: "assembled_reel",
+            storage_key: `neuramark/${CLIENT_ID}/${REEL_SCRIPT_ID}/assembled-${BASE_ASSET_ID}.mp4`,
+          },
+        ],
+        scriptOnScreenText: "Beat one\nBeat two",
+        // Live VO mutated after enqueue — hash diverges
+        scriptVoiceoverText: "mutated voiceover tokens after enqueue",
+      },
+      async ({ updates }) => {
+        let ffmpegCalled = false;
+        const { runBrandingJob, BRANDING_FAILURE_VOICEOVER_TIMING_HASH } =
+          loadBrandingModule<{
+            runBrandingJob: Function;
+            BRANDING_FAILURE_VOICEOVER_TIMING_HASH: string;
+          }>("./run-branding-job.ts");
+
+        await runBrandingJob(JOB_ID, {
+          runFfmpeg: async () => {
+            ffmpegCalled = true;
+            return { exitCode: 0, stderr: "" };
+          },
+        });
+
+        assert.equal(ffmpegCalled, false);
+        const failed = updates.find((u) => u.branding_status === "failed");
+        assert.ok(failed);
+        assert.equal(
+          failed?.failure_reason,
+          BRANDING_FAILURE_VOICEOVER_TIMING_HASH,
+        );
+        assert.equal(
+          BRANDING_FAILURE_VOICEOVER_TIMING_HASH,
+          "scripts.branding.failure.voiceoverTimingHashMismatch",
+        );
+      },
+    );
+  });
+
+  it("Phase B-M1: matching voiceoverTimingHash still proceeds past guard", async () => {
+    const baseKey = `neuramark/${CLIENT_ID}/${REEL_SCRIPT_ID}/assembled-${BASE_ASSET_ID}.mp4`;
+    const storage = new Map<string, Buffer>();
+    storage.set(baseKey, Buffer.from("fake-base-mp4"));
+
+    await withBrandingMocks(
+      {
+        jobs: [
+          baseBrandingJobRow({
+            branding_status: "queued",
+            branding_config: {
+              subtitlesEnabled: true,
+              logoEnabled: false,
+              coverFrameSec: 1.0,
+              subtitleBeatCount: 2,
+              subtitleSourceHash: SUBTITLE_SOURCE_HASH_BEAT_ONE_TWO,
+              voiceoverTimingHash: VOICEOVER_TIMING_HASH_ONE_TWO_THREE_FOUR,
+            },
+          }),
+        ],
+        mediaAssets: [
+          {
+            id: BASE_ASSET_ID,
+            client_id: CLIENT_ID,
+            asset_type: "assembled_reel",
+            storage_key: baseKey,
+          },
+        ],
+        scriptOnScreenText: "Beat one\nBeat two",
+        scriptVoiceoverText: "one two three four",
+        insertedBrandedAssetId: BRANDED_ASSET_ID,
+        insertedCoverAssetId: COVER_ASSET_ID,
+        storage,
+      },
+      async ({ updates }) => {
+        let ffmpegCalled = false;
+        const { runBrandingJob } = loadBrandingModule<{
+          runBrandingJob: Function;
+        }>("./run-branding-job.ts");
+
+        await runBrandingJob(JOB_ID, {
+          runFfmpeg: async (args: string[]) => {
+            ffmpegCalled = true;
+            const outputPath = args.at(-1);
+            if (typeof outputPath === "string") {
+              if (outputPath.endsWith("branded.mp4")) {
+                await writeFile(outputPath, Buffer.from("fake-branded-mp4"));
+              } else if (outputPath.endsWith("cover.jpg")) {
+                await writeFile(outputPath, Buffer.from("fake-cover-jpg"));
+              }
+            }
+            return { exitCode: 0, stderr: "" };
+          },
+          probeLocalMediaFile: async () => ({
+            durationSec: 30,
+            hasAudioStream: true,
+          }),
+        });
+
+        assert.equal(ffmpegCalled, true);
+        assert.ok(updates.some((u) => u.branding_status === "completed"));
+        assert.equal(
+          updates.some((u) => u.branding_status === "failed"),
+          false,
+        );
+      },
+    );
+  });
+
+  it("Phase B-M1: legacy missing voiceoverTimingHash skips re-check", async () => {
+    const baseKey = `neuramark/${CLIENT_ID}/${REEL_SCRIPT_ID}/assembled-${BASE_ASSET_ID}.mp4`;
+    const storage = new Map<string, Buffer>();
+    storage.set(baseKey, Buffer.from("fake-base-mp4"));
+
+    await withBrandingMocks(
+      {
+        jobs: [
+          baseBrandingJobRow({
+            branding_status: "queued",
+            branding_config: {
+              subtitlesEnabled: true,
+              logoEnabled: false,
+              coverFrameSec: 1.0,
+              subtitleBeatCount: 2,
+              subtitleSourceHash: SUBTITLE_SOURCE_HASH_BEAT_ONE_TWO,
+              // Phase A row — key absent (soft-default must not false-fail)
+            },
+          }),
+        ],
+        mediaAssets: [
+          {
+            id: BASE_ASSET_ID,
+            client_id: CLIENT_ID,
+            asset_type: "assembled_reel",
+            storage_key: baseKey,
+          },
+        ],
+        scriptOnScreenText: "Beat one\nBeat two",
+        scriptVoiceoverText: "one two three four",
+        insertedBrandedAssetId: BRANDED_ASSET_ID,
+        insertedCoverAssetId: COVER_ASSET_ID,
+        storage,
+      },
+      async ({ updates }) => {
+        let ffmpegCalled = false;
+        const { runBrandingJob } = loadBrandingModule<{
+          runBrandingJob: Function;
+        }>("./run-branding-job.ts");
+
+        await runBrandingJob(JOB_ID, {
+          runFfmpeg: async (args: string[]) => {
+            ffmpegCalled = true;
+            const outputPath = args.at(-1);
+            if (typeof outputPath === "string") {
+              if (outputPath.endsWith("branded.mp4")) {
+                await writeFile(outputPath, Buffer.from("fake-branded-mp4"));
+              } else if (outputPath.endsWith("cover.jpg")) {
+                await writeFile(outputPath, Buffer.from("fake-cover-jpg"));
+              }
+            }
+            return { exitCode: 0, stderr: "" };
+          },
+          probeLocalMediaFile: async () => ({
+            durationSec: 30,
+            hasAudioStream: true,
+          }),
+        });
+
+        assert.equal(ffmpegCalled, true);
+        assert.ok(updates.some((u) => u.branding_status === "completed"));
+      },
+    );
+  });
+
+  it("Phase B-M1: malformed non-empty voiceoverTimingHash → CONFIG fail, no spawn", async () => {
+    await withBrandingMocks(
+      {
+        jobs: [
+          baseBrandingJobRow({
+            branding_status: "queued",
+            branding_config: {
+              subtitlesEnabled: true,
+              logoEnabled: false,
+              coverFrameSec: 1.0,
+              subtitleBeatCount: 2,
+              subtitleSourceHash: SUBTITLE_SOURCE_HASH_BEAT_ONE_TWO,
+              voiceoverTimingHash: "not-a-valid-64-hex-hash",
+            },
+          }),
+        ],
+        mediaAssets: [
+          {
+            id: BASE_ASSET_ID,
+            client_id: CLIENT_ID,
+            asset_type: "assembled_reel",
+            storage_key: `neuramark/${CLIENT_ID}/${REEL_SCRIPT_ID}/assembled-${BASE_ASSET_ID}.mp4`,
+          },
+        ],
+        scriptOnScreenText: "Beat one\nBeat two",
+        scriptVoiceoverText: "one two three four",
+      },
+      async ({ updates }) => {
+        let ffmpegCalled = false;
+        const { runBrandingJob, BRANDING_FAILURE_CONFIG } = loadBrandingModule<{
+          runBrandingJob: Function;
+          BRANDING_FAILURE_CONFIG: string;
+        }>("./run-branding-job.ts");
+
+        await runBrandingJob(JOB_ID, {
+          runFfmpeg: async () => {
+            ffmpegCalled = true;
+            return { exitCode: 0, stderr: "" };
+          },
+        });
+
+        assert.equal(ffmpegCalled, false);
+        const failed = updates.find((u) => u.branding_status === "failed");
+        assert.ok(failed);
+        assert.equal(failed?.failure_reason, BRANDING_FAILURE_CONFIG);
       },
     );
   });
@@ -247,10 +498,8 @@ function baseBrandingJobRow(overrides: Record<string, unknown> = {}) {
       logoEnabled: true,
       coverFrameSec: 1.0,
       subtitleBeatCount: 2,
-      subtitleSourceHash:
-        "173c1ddf22a285919046857aa25bb6ad8417248851f49a47fbe4560505167791",
-      voiceoverTimingHash:
-        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      subtitleSourceHash: SUBTITLE_SOURCE_HASH_BEAT_ONE_TWO,
+      voiceoverTimingHash: VOICEOVER_TIMING_HASH_ONE_TWO_THREE_FOUR,
     },
     failure_reason: null,
     cover_media_asset_id: null,
@@ -265,6 +514,7 @@ async function withBrandingMocks(
     mediaAssets: Array<Record<string, unknown>>;
     logoAssetId?: string | null;
     scriptOnScreenText?: string;
+    scriptVoiceoverText?: string;
     insertedBrandedAssetId?: string;
     insertedCoverAssetId?: string;
     storage?: Map<string, Buffer>;
@@ -308,6 +558,7 @@ async function withBrandingMocks(
             if (table === "neuramark_reel_scripts") {
               return createReelScriptQuery(
                 options.scriptOnScreenText ?? "Beat one\nBeat two",
+                options.scriptVoiceoverText ?? "one two three four",
               );
             }
             throw new Error(`Unexpected table ${table}`);
@@ -447,14 +698,14 @@ function createProfileQuery(logoAssetId: string | null) {
   return builder;
 }
 
-function createReelScriptQuery(onScreenText: string) {
+function createReelScriptQuery(onScreenText: string, voiceoverText: string) {
   const builder = {
     select: () => builder,
     eq: () => builder,
     maybeSingle: async () => ({
       data: {
         on_screen_text: onScreenText,
-        voiceover_text: "one two three four",
+        voiceover_text: voiceoverText,
         target_duration_sec: 30,
       },
       error: null,
