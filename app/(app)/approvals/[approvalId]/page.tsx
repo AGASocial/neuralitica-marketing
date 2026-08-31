@@ -44,8 +44,8 @@ function mapLoadError(
 }
 
 /**
- * Cliente approval package preview + decide (US-11.1 Phase A).
- * Approve / Reject only — no request-changes (US-11.2).
+ * Cliente approval package preview + decide (US-11.1 + US-11.2).
+ * Approve / Reject / Request changes on pending packages.
  * Data: `getApprovalPackage` · mutation: `decideApproval` (client island).
  */
 export default async function ApprovalDetailPage({
@@ -93,6 +93,7 @@ export default async function ApprovalDetailPage({
             toastApproved: t.approvals.detail.toastApproved,
             toastRejected: t.approvals.detail.toastRejected,
             status: t.approvals.detail.status,
+            revision: t.approvals.revision,
             errors: t.approvals.errors,
           }}
         />

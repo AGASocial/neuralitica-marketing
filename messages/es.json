@@ -382,6 +382,29 @@
         "changes_requested": "Cambios solicitados"
       }
     },
+    "revision": {
+      "requestChanges": "Pedir cambios",
+      "confirmRequestChanges": "Enviar solicitud de cambios",
+      "cancelRequestChanges": "Cancelar",
+      "requesting": "Enviando…",
+      "tagsTitle": "¿Qué debemos cambiar?",
+      "tags": {
+        "script": "Guion",
+        "caption": "Caption",
+        "assembly": "Ensamblado",
+        "branding": "Branding"
+      },
+      "tagNotesLabel": "Notas para {tag}",
+      "tagNotesHint": "Opcional — hasta 500 caracteres.",
+      "summaryLabel": "Resumen general (opcional)",
+      "summaryHint": "Añade contexto que aplique a las áreas que seleccionaste.",
+      "noteTooLong": "Las notas deben tener 500 caracteres o menos.",
+      "remaining": "{remaining} de {max} rondas de revisión disponibles",
+      "grantHint": "Tu equipo otorgó una ronda de revisión adicional.",
+      "limitExceeded": "Ya usaste todas las rondas de revisión disponibles. Contacta a tu equipo si necesitas otra revisión.",
+      "waiting": "Tu solicitud de cambios está en proceso. Te avisaremos cuando el paquete actualizado esté listo para revisar.",
+      "toastSubmitted": "Solicitud de cambios enviada."
+    },
     "errors": {
       "unauthenticated": "Inicia sesión para continuar.",
       "forbidden": "No tienes acceso a eso.",
@@ -394,6 +417,7 @@
       "captionRequired": "Se requiere un caption antes de la aprobación.",
       "captionCtaNotSelected": "Debe seleccionarse un llamado a la acción antes de la aprobación.",
       "invalidTransition": "Este paquete ya fue decidido.",
+      "revisionLimitExceeded": "No te quedan rondas de revisión.",
       "rateLimited": "Demasiados intentos. Espera e inténtalo de nuevo más tarde.",
       "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
     }

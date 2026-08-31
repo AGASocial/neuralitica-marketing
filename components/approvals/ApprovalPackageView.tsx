@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Button } from "primereact/button";
+import { Checkbox } from "primereact/checkbox";
 import { InputTextarea } from "primereact/inputtextarea";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
@@ -16,6 +17,11 @@ import {
   type ApprovalPackageDto,
   type ApprovalStatus,
 } from "@/lib/contracts/approval";
+import {
+  APPROVAL_CHANGE_TAGS,
+  type ApprovalChangeTag,
+  type ChangeRequestInput,
+} from "@/lib/contracts/approval-revision";
 
 export type ApprovalPackageCopy = {
   title: string;
@@ -42,6 +48,24 @@ export type ApprovalPackageCopy = {
   toastApproved: string;
   toastRejected: string;
   status: Record<ApprovalStatus, string>;
+  revision: {
+    requestChanges: string;
+    confirmRequestChanges: string;
+    cancelRequestChanges: string;
+    requesting: string;
+    tagsTitle: string;
+    tags: Record<ApprovalChangeTag, string>;
+    tagNotesLabel: string;
+    tagNotesHint: string;
+    summaryLabel: string;
+    summaryHint: string;
+    noteTooLong: string;
+    remaining: string;
+    grantHint: string;
+    limitExceeded: string;
+    waiting: string;
+    toastSubmitted: string;
+  };
   errors: Record<
     | "unauthenticated"
     | "forbidden"
@@ -54,6 +78,7 @@ export type ApprovalPackageCopy = {
     | "captionRequired"
     | "captionCtaNotSelected"
     | "invalidTransition"
+    | "revisionLimitExceeded"
     | "rateLimited"
     | "internal",
     string
@@ -67,6 +92,8 @@ type ApprovalPackageViewProps = {
   checkLabels: Record<string, string>;
   copy: ApprovalPackageCopy;
 };
+
+type DecideMode = "approved" | "rejected" | "request_changes";
 
 function formatDateTime(iso: string, locale: "en" | "es"): string {
   const date = new Date(iso);
@@ -123,12 +150,42 @@ function mapErrorMessage(
       return errors.captionCtaNotSelected;
     case "INVALID_TRANSITION":
       return errors.invalidTransition;
+    case "REVISION_LIMIT_EXCEEDED":
+      return errors.revisionLimitExceeded;
     case "RATE_LIMITED":
       return errors.rateLimited;
     case "INTERNAL_ERROR":
+    case "REVISION_ROUTING_FAILED":
     default:
       return errors.internal;
   }
+}
+
+function trimNote(value: string): string | undefined {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function buildChangeRequest(
+  selectedTags: ApprovalChangeTag[],
+  notesByTag: Partial<Record<ApprovalChangeTag, string>>,
+  summary: string,
+): ChangeRequestInput {
+  const notes: Partial<Record<ApprovalChangeTag, string>> = {};
+  for (const tag of selectedTags) {
+    const note = trimNote(notesByTag[tag] ?? "");
+    if (note) {
+      notes[tag] = note;
+    }
+  }
+
+  const summaryNote = trimNote(summary);
+
+  return {
+    tags: selectedTags,
+    ...(Object.keys(notes).length > 0 ? { notesByTag: notes } : {}),
+    ...(summaryNote ? { summary: summaryNote } : {}),
+  };
 }
 
 export function ApprovalPackageView({
@@ -141,22 +198,82 @@ export function ApprovalPackageView({
   const toastRef = useRef<Toast>(null);
   const [pkg, setPkg] = useState(initialPackage);
   const [rejectMode, setRejectMode] = useState(false);
+  const [requestChangesMode, setRequestChangesMode] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [selectedTags, setSelectedTags] = useState<ApprovalChangeTag[]>([]);
+  const [notesByTag, setNotesByTag] = useState<
+    Partial<Record<ApprovalChangeTag, string>>
+  >({});
+  const [revisionSummary, setRevisionSummary] = useState("");
   const [banner, setBanner] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const isPending = pkg.status === "pending_client";
+  const isWaiting = pkg.status === "changes_requested";
   const gateBlocksApprove = pkg.gate?.ready === false;
   const feedbackTrimmed = feedback.trim();
   const feedbackTooLong = feedbackTrimmed.length > APPROVAL_FEEDBACK_MAX_LENGTH;
+  const summaryTrimmed = revisionSummary.trim();
+  const summaryTooLong = summaryTrimmed.length > APPROVAL_FEEDBACK_MAX_LENGTH;
 
-  function runDecide(decision: "approved" | "rejected") {
+  const revisionsRemaining = pkg.revisionsRemaining;
+  const maxRevisionRounds = pkg.maxRevisionRounds;
+  const canRequestChanges =
+    isPending &&
+    (pkg.extraRevisionGranted === true ||
+      (typeof revisionsRemaining === "number" && revisionsRemaining > 0));
+  const limitExceeded =
+    isPending &&
+    typeof revisionsRemaining === "number" &&
+    revisionsRemaining === 0 &&
+    !pkg.extraRevisionGranted;
+
+  const tagNoteTooLong = selectedTags.some((tag) => {
+    const note = (notesByTag[tag] ?? "").trim();
+    return note.length > APPROVAL_FEEDBACK_MAX_LENGTH;
+  });
+  const revisionFormInvalid =
+    selectedTags.length === 0 || tagNoteTooLong || summaryTooLong;
+
+  function resetRevisionForm() {
+    setSelectedTags([]);
+    setNotesByTag({});
+    setRevisionSummary("");
+  }
+
+  function toggleTag(tag: ApprovalChangeTag, checked: boolean) {
+    setSelectedTags((prev) => {
+      if (checked) {
+        return prev.includes(tag) ? prev : [...prev, tag];
+      }
+      return prev.filter((value) => value !== tag);
+    });
+    if (!checked) {
+      setNotesByTag((prev) => {
+        const next = { ...prev };
+        delete next[tag];
+        return next;
+      });
+    }
+  }
+
+  function runDecide(decision: DecideMode) {
     if (pending || !isPending) {
       return;
     }
+
     if (decision === "rejected" && feedbackTooLong) {
       setBanner(copy.feedbackTooLong);
       return;
+    }
+
+    if (decision === "request_changes") {
+      if (revisionFormInvalid) {
+        if (tagNoteTooLong || summaryTooLong) {
+          setBanner(copy.revision.noteTooLong);
+        }
+        return;
+      }
     }
 
     setBanner(null);
@@ -166,6 +283,15 @@ export function ApprovalPackageView({
         decision,
         ...(decision === "rejected" && feedbackTrimmed.length > 0
           ? { clientFeedback: feedbackTrimmed }
+          : {}),
+        ...(decision === "request_changes"
+          ? {
+              changeRequest: buildChangeRequest(
+                selectedTags,
+                notesByTag,
+                revisionSummary,
+              ),
+            }
           : {}),
       });
 
@@ -184,13 +310,28 @@ export function ApprovalPackageView({
         ...prev,
         status: result.status,
         decidedAt: result.decidedAt,
+        ...(typeof result.revisionCount === "number"
+          ? { revisionCount: result.revisionCount }
+          : {}),
+        ...(typeof result.revisionsRemaining === "number"
+          ? { revisionsRemaining: result.revisionsRemaining }
+          : {}),
       }));
       setRejectMode(false);
+      setRequestChangesMode(false);
       setFeedback("");
+      resetRevisionForm();
+
+      let toastSummary = copy.toastApproved;
+      if (result.status === "rejected") {
+        toastSummary = copy.toastRejected;
+      } else if (result.status === "changes_requested") {
+        toastSummary = copy.revision.toastSubmitted;
+      }
+
       toastRef.current?.show({
         severity: "success",
-        summary:
-          result.status === "approved" ? copy.toastApproved : copy.toastRejected,
+        summary: toastSummary,
         life: 4000,
       });
     });
@@ -240,6 +381,14 @@ export function ApprovalPackageView({
         <Message
           severity="error"
           text={banner}
+          style={{ width: "100%", marginBottom: "1rem" }}
+        />
+      ) : null}
+
+      {isWaiting ? (
+        <Message
+          severity="info"
+          text={copy.revision.waiting}
           style={{ width: "100%", marginBottom: "1rem" }}
         />
       ) : null}
@@ -416,33 +565,203 @@ export function ApprovalPackageView({
             borderTop: "1px solid #e5e7eb",
           }}
         >
-          {!rejectMode ? (
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "0.65rem",
-              }}
-            >
-              <Button
-                type="button"
-                label={pending ? copy.approving : copy.approve}
-                disabled={pending || gateBlocksApprove}
-                onClick={() => runDecide("approved")}
-              />
-              <Button
-                type="button"
-                label={copy.reject}
-                severity="secondary"
-                outlined
-                disabled={pending}
-                onClick={() => {
-                  setBanner(null);
-                  setRejectMode(true);
+          {typeof revisionsRemaining === "number" &&
+          typeof maxRevisionRounds === "number" ? (
+            <p style={{ margin: 0, color: "#4b5563", fontSize: "0.9rem" }}>
+              {copy.revision.remaining
+                .replace("{remaining}", String(revisionsRemaining))
+                .replace("{max}", String(maxRevisionRounds))}
+            </p>
+          ) : null}
+
+          {pkg.extraRevisionGranted ? (
+            <Message
+              severity="info"
+              text={copy.revision.grantHint}
+              style={{ width: "100%" }}
+            />
+          ) : null}
+
+          {limitExceeded ? (
+            <Message
+              severity="warn"
+              text={copy.revision.limitExceeded}
+              style={{ width: "100%" }}
+            />
+          ) : null}
+
+          {requestChangesMode ? (
+            <>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: "1rem",
+                  color: "#374151",
                 }}
+              >
+                {copy.revision.tagsTitle}
+              </h2>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.85rem",
+                }}
+              >
+                {APPROVAL_CHANGE_TAGS.map((tag) => {
+                  const checked = selectedTags.includes(tag);
+                  const noteValue = notesByTag[tag] ?? "";
+                  const noteTrimmed = noteValue.trim();
+                  const noteTooLong =
+                    noteTrimmed.length > APPROVAL_FEEDBACK_MAX_LENGTH;
+
+                  return (
+                    <div
+                      key={tag}
+                      style={{
+                        border: "1px solid #e5e7eb",
+                        borderRadius: "8px",
+                        padding: "0.75rem 0.9rem",
+                        background: checked ? "#f9fafb" : "#fff",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                        }}
+                      >
+                        <Checkbox
+                          inputId={`revision-tag-${tag}`}
+                          checked={checked}
+                          disabled={pending}
+                          onChange={(event) =>
+                            toggleTag(tag, event.checked === true)
+                          }
+                        />
+                        <label
+                          htmlFor={`revision-tag-${tag}`}
+                          style={{ fontWeight: 600, color: "#111827" }}
+                        >
+                          {copy.revision.tags[tag]}
+                        </label>
+                      </div>
+                      {checked ? (
+                        <div style={{ marginTop: "0.65rem" }}>
+                          <label
+                            htmlFor={`revision-notes-${tag}`}
+                            style={{
+                              display: "block",
+                              marginBottom: "0.35rem",
+                              fontSize: "0.875rem",
+                              color: "#374151",
+                            }}
+                          >
+                            {copy.revision.tagNotesLabel.replace(
+                              "{tag}",
+                              copy.revision.tags[tag],
+                            )}
+                          </label>
+                          <InputTextarea
+                            id={`revision-notes-${tag}`}
+                            value={noteValue}
+                            onChange={(event) =>
+                              setNotesByTag((prev) => ({
+                                ...prev,
+                                [tag]: event.target.value,
+                              }))
+                            }
+                            rows={3}
+                            autoResize
+                            disabled={pending}
+                            maxLength={APPROVAL_FEEDBACK_MAX_LENGTH + 50}
+                            placeholder={copy.revision.tagNotesHint}
+                            style={{ width: "100%" }}
+                          />
+                          <p
+                            style={{
+                              margin: "0.25rem 0 0",
+                              color: "#6b7280",
+                              fontSize: "0.8rem",
+                            }}
+                          >
+                            {noteTrimmed.length}/{APPROVAL_FEEDBACK_MAX_LENGTH}
+                          </p>
+                          {noteTooLong ? (
+                            <Message
+                              severity="error"
+                              text={copy.revision.noteTooLong}
+                              style={{ width: "100%", marginTop: "0.35rem" }}
+                            />
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <label
+                htmlFor="revision-summary"
+                style={{ fontWeight: 600, color: "#374151" }}
+              >
+                {copy.revision.summaryLabel}
+              </label>
+              <InputTextarea
+                id="revision-summary"
+                value={revisionSummary}
+                onChange={(event) => setRevisionSummary(event.target.value)}
+                rows={3}
+                autoResize
+                disabled={pending}
+                maxLength={APPROVAL_FEEDBACK_MAX_LENGTH + 50}
+                placeholder={copy.revision.summaryHint}
+                style={{ width: "100%" }}
               />
-            </div>
-          ) : (
+              <p style={{ margin: 0, color: "#6b7280", fontSize: "0.8rem" }}>
+                {summaryTrimmed.length}/{APPROVAL_FEEDBACK_MAX_LENGTH}
+              </p>
+              {summaryTooLong ? (
+                <Message
+                  severity="error"
+                  text={copy.revision.noteTooLong}
+                  style={{ width: "100%" }}
+                />
+              ) : null}
+
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.65rem",
+                }}
+              >
+                <Button
+                  type="button"
+                  label={
+                    pending
+                      ? copy.revision.requesting
+                      : copy.revision.confirmRequestChanges
+                  }
+                  severity="secondary"
+                  disabled={pending || revisionFormInvalid}
+                  onClick={() => runDecide("request_changes")}
+                />
+                <Button
+                  type="button"
+                  label={copy.revision.cancelRequestChanges}
+                  text
+                  disabled={pending}
+                  onClick={() => {
+                    setRequestChangesMode(false);
+                    resetRevisionForm();
+                    setBanner(null);
+                  }}
+                />
+              </div>
+            </>
+          ) : rejectMode ? (
             <>
               <label
                 htmlFor="approval-reject-feedback"
@@ -498,6 +817,49 @@ export function ApprovalPackageView({
                 />
               </div>
             </>
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.65rem",
+              }}
+            >
+              <Button
+                type="button"
+                label={pending ? copy.approving : copy.approve}
+                disabled={pending || gateBlocksApprove}
+                onClick={() => runDecide("approved")}
+              />
+              <Button
+                type="button"
+                label={copy.reject}
+                severity="secondary"
+                outlined
+                disabled={pending}
+                onClick={() => {
+                  setBanner(null);
+                  setRequestChangesMode(false);
+                  resetRevisionForm();
+                  setRejectMode(true);
+                }}
+              />
+              {canRequestChanges ? (
+                <Button
+                  type="button"
+                  label={copy.revision.requestChanges}
+                  severity="secondary"
+                  outlined
+                  disabled={pending || gateBlocksApprove}
+                  onClick={() => {
+                    setBanner(null);
+                    setRejectMode(false);
+                    setFeedback("");
+                    setRequestChangesMode(true);
+                  }}
+                />
+              ) : null}
+            </div>
           )}
         </section>
       ) : null}

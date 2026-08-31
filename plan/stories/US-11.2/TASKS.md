@@ -98,16 +98,16 @@ await routeApprovalChangeRequest({ approvalId, assembledReelId, changeRequest })
 
 **Consumer:** `/approvals/[approvalId]` — extend `ApprovalPackageView` (or sibling client island).
 
-- [ ] Add **Request changes** CTA when `status === "pending_client"` and revisions remaining > 0 (or `extraRevisionGranted` from DTO).
-- [ ] Change-request panel: **≥1** tag checkbox among `script`, `caption`, `assembly`, `branding` (labels EN/ES `approvals.revision.tags.*`).
-- [ ] Per-tag optional `InputTextarea` (max 500) + optional overall summary; disable submit until ≥1 tag selected.
-- [ ] Show **revisions remaining** copy (e.g. `approvals.revision.remaining` with count from package DTO `revisionCount` / `maxRevisionRounds`).
-- [ ] When limit exceeded (`revisionCount >= max` and no grant): hide Request changes; show operator escalation message (`approvals.revision.limitExceeded`).
-- [ ] Submit calls **`decideApproval({ approvalId, decision: "request_changes", changeRequest })`** — never send `revision_count`, `status`, gate flags.
-- [ ] Pending/disabled states during mutation; map **`REVISION_LIMIT_EXCEEDED`**, `INVALID_TRANSITION`, `QA_GATE_NOT_READY`, validation errors.
-- [ ] Read-only state when `status === "changes_requested"` (waiting for team — no decide CTAs).
-- [ ] EN/ES strings under `approvals.revision.*` (+ extend error map if new codes).
-- [ ] Mobile-friendly form layout (consistent with US-11.1 detail).
+- [x] Add **Request changes** CTA when `status === "pending_client"` and revisions remaining > 0 (or `extraRevisionGranted` from DTO).
+- [x] Change-request panel: **≥1** tag checkbox among `script`, `caption`, `assembly`, `branding` (labels EN/ES `approvals.revision.tags.*`).
+- [x] Per-tag optional `InputTextarea` (max 500) + optional overall summary; disable submit until ≥1 tag selected.
+- [x] Show **revisions remaining** copy (e.g. `approvals.revision.remaining` with count from package DTO `revisionCount` / `maxRevisionRounds`).
+- [x] When limit exceeded (`revisionCount >= max` and no grant): hide Request changes; show operator escalation message (`approvals.revision.limitExceeded`).
+- [x] Submit calls **`decideApproval({ approvalId, decision: "request_changes", changeRequest })`** — never send `revision_count`, `status`, gate flags.
+- [x] Pending/disabled states during mutation; map **`REVISION_LIMIT_EXCEEDED`**, `INVALID_TRANSITION`, `QA_GATE_NOT_READY`, validation errors.
+- [x] Read-only state when `status === "changes_requested"` (waiting for team — no decide CTAs).
+- [x] EN/ES strings under `approvals.revision.*` (+ extend error map if new codes).
+- [x] Mobile-friendly form layout (consistent with US-11.1 detail).
 
 ---
 

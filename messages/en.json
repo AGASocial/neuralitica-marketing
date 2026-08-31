@@ -382,6 +382,29 @@
         "changes_requested": "Changes requested"
       }
     },
+    "revision": {
+      "requestChanges": "Request changes",
+      "confirmRequestChanges": "Submit change request",
+      "cancelRequestChanges": "Cancel",
+      "requesting": "Submitting…",
+      "tagsTitle": "What should we change?",
+      "tags": {
+        "script": "Script",
+        "caption": "Caption",
+        "assembly": "Assembly",
+        "branding": "Branding"
+      },
+      "tagNotesLabel": "Notes for {tag}",
+      "tagNotesHint": "Optional — up to 500 characters.",
+      "summaryLabel": "Overall summary (optional)",
+      "summaryHint": "Add context that applies across the areas you selected.",
+      "noteTooLong": "Notes must be 500 characters or fewer.",
+      "remaining": "{remaining} of {max} revision rounds remaining",
+      "grantHint": "Your team granted one extra revision round.",
+      "limitExceeded": "You have used all available revision rounds. Contact your team if you need another review.",
+      "waiting": "Your change request is being processed. We will notify you when the updated package is ready for review.",
+      "toastSubmitted": "Change request submitted."
+    },
     "errors": {
       "unauthenticated": "Please log in to continue.",
       "forbidden": "You do not have access to that.",
@@ -394,6 +417,7 @@
       "captionRequired": "A caption is required before approval.",
       "captionCtaNotSelected": "A call to action must be selected before approval.",
       "invalidTransition": "This package was already decided.",
+      "revisionLimitExceeded": "You have no revision rounds remaining.",
       "rateLimited": "Too many attempts. Please wait and try again later.",
       "internal": "Something went wrong. Please try again later."
     }
