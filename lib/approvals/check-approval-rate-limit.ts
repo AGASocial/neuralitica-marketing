@@ -4,6 +4,8 @@ import {
   APPROVAL_DECIDE_AGENT_KEY,
   APPROVAL_ENSURE_AGENT_KEY,
   APPROVAL_MAX_PER_WINDOW,
+  APPROVAL_OPERATOR_GRANT_AGENT_KEY,
+  APPROVAL_OPERATOR_GRANT_MAX_PER_WINDOW,
   APPROVAL_RATE_WINDOW_MS,
 } from "@/lib/contracts/approval";
 import {
@@ -17,13 +19,14 @@ export type ApprovalRateLimitCheckResult =
 
 export type ApprovalRateAgentKey =
   | typeof APPROVAL_ENSURE_AGENT_KEY
-  | typeof APPROVAL_DECIDE_AGENT_KEY;
+  | typeof APPROVAL_DECIDE_AGENT_KEY
+  | typeof APPROVAL_OPERATOR_GRANT_AGENT_KEY;
 
-function currentWindowStart(now: Date): string {
-  const bucketMs =
-    Math.floor(now.getTime() / APPROVAL_RATE_WINDOW_MS) *
-    APPROVAL_RATE_WINDOW_MS;
-  return new Date(bucketMs).toISOString();
+function maxAttemptsForAgent(agentKey: ApprovalRateAgentKey): number {
+  if (agentKey === APPROVAL_OPERATOR_GRANT_AGENT_KEY) {
+    return APPROVAL_OPERATOR_GRANT_MAX_PER_WINDOW;
+  }
+  return APPROVAL_MAX_PER_WINDOW;
 }
 
 export async function checkApprovalRateLimit(params: {
@@ -62,11 +65,18 @@ export async function checkApprovalRateLimit(params: {
     0,
   );
 
-  if (totalAttempts >= APPROVAL_MAX_PER_WINDOW) {
+  if (totalAttempts >= maxAttemptsForAgent(params.agentKey)) {
     return { ok: false, code: "RATE_LIMITED" };
   }
 
   return { ok: true };
+}
+
+function currentWindowStart(now: Date): string {
+  const bucketMs =
+    Math.floor(now.getTime() / APPROVAL_RATE_WINDOW_MS) *
+    APPROVAL_RATE_WINDOW_MS;
+  return new Date(bucketMs).toISOString();
 }
 
 export async function recordApprovalAttempt(params: {

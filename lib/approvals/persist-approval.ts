@@ -5,6 +5,12 @@ import type {
   ApprovalStatus,
 } from "@/lib/contracts/approval";
 import { approvalStatusSchema } from "@/lib/contracts/approval";
+import type {
+  ChangeRequestAuditEntry,
+  ChangeRequestInput,
+} from "@/lib/contracts/approval-revision";
+import { getMaxRevisionRounds } from "@/lib/approvals/get-max-revision-rounds";
+import { parseChangeRequests } from "@/lib/approvals/parse-change-requests";
 import {
   createServerSupabaseClient,
   isSupabaseConfigured,
@@ -20,6 +26,9 @@ export type ApprovalRow = {
   clientFeedback: string | null;
   decidedAt: string | null;
   decidedBy: string | null;
+  revisionCount: number;
+  changeRequests: ChangeRequestAuditEntry[];
+  extraRevisionGranted: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -43,6 +52,13 @@ export function mapApprovalRow(
     return null;
   }
 
+  const revisionCount =
+    typeof raw.revision_count === "number" ? raw.revision_count : 0;
+  const extraRevisionGranted =
+    typeof raw.extra_revision_granted === "boolean"
+      ? raw.extra_revision_granted
+      : false;
+
   return {
     id: raw.id,
     clientId: raw.client_id,
@@ -52,6 +68,9 @@ export function mapApprovalRow(
       typeof raw.client_feedback === "string" ? raw.client_feedback : null,
     decidedAt: typeof raw.decided_at === "string" ? raw.decided_at : null,
     decidedBy: typeof raw.decided_by === "string" ? raw.decided_by : null,
+    revisionCount,
+    changeRequests: parseChangeRequests(raw.change_requests),
+    extraRevisionGranted,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
   };
@@ -182,7 +201,7 @@ export async function insertPendingApproval(params: {
 export async function updateApprovalDecision(params: {
   approvalId: string;
   clientId: string;
-  decision: ApprovalDecision;
+  decision: Extract<ApprovalDecision, "approved" | "rejected">;
   decidedBy: string;
   clientFeedback: string | null;
 }): Promise<ApprovalRow | null> {
@@ -220,6 +239,150 @@ export async function updateApprovalDecision(params: {
   }
 
   return mapApprovalRow(data as Record<string, unknown>);
+}
+
+/**
+ * Atomic request_changes persist (US-11.2).
+ * Single conditional UPDATE — never read-then-write revision limit.
+ */
+export async function updateApprovalRequestChanges(params: {
+  approvalId: string;
+  clientId: string;
+  decidedBy: string;
+  changeRequest: ChangeRequestInput;
+  summary: string | null;
+}): Promise<ApprovalRow | null> {
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+
+  const maxRounds = getMaxRevisionRounds();
+  const decidedAt = new Date().toISOString();
+
+  const newRound = {
+    kind: "client_revision" as const,
+    tags: params.changeRequest.tags,
+    ...(params.changeRequest.notesByTag
+      ? { notesByTag: params.changeRequest.notesByTag }
+      : {}),
+    ...(params.changeRequest.summary
+      ? { summary: params.changeRequest.summary }
+      : {}),
+    decidedAt,
+    decidedBy: params.decidedBy,
+  };
+
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase.rpc(
+    "neuramark_update_approval_request_changes",
+    {
+      p_approval_id: params.approvalId,
+      p_client_id: params.clientId,
+      p_max_rounds: maxRounds,
+      p_new_round: newRound,
+      p_summary: params.summary,
+      p_decided_by: params.decidedBy,
+    },
+  );
+
+  if (error) {
+    console.error("[approvals] request_changes rpc failed", {
+      code: error.code,
+      approvalId: params.approvalId,
+    });
+    return null;
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) {
+    return null;
+  }
+
+  return mapApprovalRow(row as Record<string, unknown>);
+}
+
+export async function isRevisionLimitExhausted(
+  approval: ApprovalRow,
+): Promise<boolean> {
+  const maxRounds = getMaxRevisionRounds();
+  return (
+    approval.revisionCount >= maxRounds && !approval.extraRevisionGranted
+  );
+}
+
+/** Operator grant — sets extra_revision_granted + audit append. */
+export async function grantExtraRevision(params: {
+  approvalId: string;
+  clientId: string;
+  grantedBy: string;
+  reason: string;
+}): Promise<ApprovalRow | null> {
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+
+  const grantEntry = {
+    kind: "operator_grant" as const,
+    grantedAt: new Date().toISOString(),
+    grantedBy: params.grantedBy,
+    reason: params.reason,
+  };
+
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase.rpc("neuramark_grant_extra_revision", {
+    p_approval_id: params.approvalId,
+    p_client_id: params.clientId,
+    p_grant_entry: grantEntry,
+  });
+
+  if (error) {
+    console.error("[approvals] grant extra revision rpc failed", {
+      code: error.code,
+      approvalId: params.approvalId,
+    });
+    return null;
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) {
+    return null;
+  }
+
+  return mapApprovalRow(row as Record<string, unknown>);
+}
+
+/** Server-only requeue — changes_requested → pending_client. */
+export async function requeueApprovalRow(params: {
+  approvalId: string;
+  clientId: string;
+}): Promise<ApprovalRow | null> {
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase.rpc(
+    "neuramark_requeue_approval_after_revision",
+    {
+      p_approval_id: params.approvalId,
+      p_client_id: params.clientId,
+    },
+  );
+
+  if (error) {
+    console.error("[approvals] requeue rpc failed", {
+      code: error.code,
+      approvalId: params.approvalId,
+    });
+    return null;
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) {
+    return null;
+  }
+
+  return mapApprovalRow(row as Record<string, unknown>);
 }
 
 /** Candidate assemblies for batch-ensure (branding completed + branded output). */

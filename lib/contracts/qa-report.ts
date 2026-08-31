@@ -227,7 +227,7 @@ export type RunQaForAssembledReelResult =
   | RunQaForAssembledReelSuccess
   | QaReportMutationError;
 
-export const qaInvokerSchema = z.enum(["operator", "system"]);
+export const qaInvokerSchema = z.enum(["operator", "system", "revision"]);
 
 export type QaInvoker = z.infer<typeof qaInvokerSchema>;
 

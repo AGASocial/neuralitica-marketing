@@ -310,6 +310,23 @@ export function findForbiddenChangeRequestKeys(raw: unknown): string[] {
   return hits;
 }
 
+export function computeRevisionsRemaining(params: {
+  revisionCount: number;
+  maxRevisionRounds: number;
+  extraRevisionGranted: boolean;
+  status: string;
+}): number {
+  if (params.status !== "pending_client") {
+    return Math.max(0, params.maxRevisionRounds - params.revisionCount);
+  }
+
+  const base = Math.max(0, params.maxRevisionRounds - params.revisionCount);
+  if (params.extraRevisionGranted) {
+    return base + 1;
+  }
+  return base;
+}
+
 /** Compute maximal routing plan from selected tags (PO freeze #4). */
 export function computeRevisionRoutingPlan(
   tags: readonly ApprovalChangeTag[],

@@ -12,9 +12,9 @@ import {
 } from "@/lib/approvals/errors";
 
 /**
- * Cliente Server Action — approve / reject Aprobación package (US-11.1 Phase A).
- * Accepts `{ approvalId, decision, clientFeedback? }` only.
- * Frontend: `/approvals/[approvalId]` Approve / Reject CTAs.
+ * Cliente Server Action — approve / reject / request changes (US-11.1 + US-11.2).
+ * Accepts `{ approvalId, decision, clientFeedback?, changeRequest? }` only.
+ * Frontend: `/approvals/[approvalId]` Approve / Reject / Request changes CTAs.
  *
  * requireActive("handler") is the first await — failure → 401/403, no UPDATE.
  * Gate re-checked server-side before any status write.

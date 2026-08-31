@@ -97,7 +97,8 @@ export async function createBrandingJobForAssembly(input: {
   assemblyJobId: string;
   subtitlesEnabled?: boolean;
   logoEnabled?: boolean;
-  source: "auto_chain" | "operator_manual";
+  source: "auto_chain" | "operator_manual" | "revision";
+  clientId?: string;
 }): Promise<CreateBrandingJobForAssemblyResult> {
   try {
     let clientId: string;
@@ -114,6 +115,11 @@ export async function createBrandingJobForAssembly(input: {
         }
         throw error;
       }
+    } else if (input.source === "revision") {
+      if (!input.clientId) {
+        return brandingJobInternalError();
+      }
+      clientId = input.clientId;
     } else {
       const unscoped = await loadBrandingJobByIdUnscoped(input.assemblyJobId);
       if (!unscoped) {
@@ -212,6 +218,13 @@ export async function createBrandingJobForAssembly(input: {
     });
 
     enqueueBrandingJob(job.id);
+
+    if (input.source === "revision") {
+      console.info("[branding] revision enqueue", {
+        assemblyJobId: job.id,
+        clientId,
+      });
+    }
 
     return {
       ok: true,

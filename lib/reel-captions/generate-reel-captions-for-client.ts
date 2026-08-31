@@ -50,6 +50,7 @@ import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors
 import type { BusinessProfileForAgentsView } from "@/lib/contracts/profile";
 import type { RevisionContext } from "@/lib/contracts/approval-revision";
 import { revisionContextSchema } from "@/lib/contracts/approval-revision";
+import { requeueApprovalAfterRevision } from "@/lib/approvals/requeue-approval-after-revision";
 
 export type GenerateReelCaptionsForClientParams = {
   clientId: string;

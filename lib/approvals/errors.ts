@@ -90,6 +90,13 @@ export function approvalRateLimitedError(): ApprovalMutationError {
   return approvalError("RATE_LIMITED", "approvals.errors.rateLimited");
 }
 
+export function approvalRevisionLimitExceededError(): ApprovalMutationError {
+  return approvalError(
+    "REVISION_LIMIT_EXCEEDED",
+    "approvals.errors.revisionLimitExceeded",
+  );
+}
+
 export function approvalInternalError(): ApprovalMutationError {
   return approvalError("INTERNAL_ERROR", "approvals.errors.internal");
 }

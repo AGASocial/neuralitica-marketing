@@ -12,6 +12,11 @@ import {
 import type { AssemblyJobRow } from "@/lib/assembly/assembly-job-row";
 import { loadAssemblyJobScoped } from "@/lib/assembly/load-assembly-job";
 import type { ApprovalRow } from "@/lib/approvals/persist-approval";
+import {
+  computeRevisionsRemaining,
+  getMaxRevisionRounds,
+} from "@/lib/approvals/get-max-revision-rounds";
+import { getLastClientRevisionRound } from "@/lib/approvals/parse-change-requests";
 import { getQaGateStatusForAssembledReel } from "@/lib/qa/get-qa-gate-status-for-assembled-reel";
 import {
   loadQaOverridesForReport,
@@ -115,6 +120,17 @@ export async function composeApprovalPackage(params: {
     hashtags: caption.record.hashtags,
   });
 
+  const maxRevisionRounds = getMaxRevisionRounds();
+  const revisionsRemaining = computeRevisionsRemaining({
+    revisionCount: params.approval.revisionCount,
+    maxRevisionRounds,
+    extraRevisionGranted: params.approval.extraRevisionGranted,
+    status: params.approval.status,
+  });
+  const lastChangeRequest = getLastClientRevisionRound(
+    params.approval.changeRequests,
+  );
+
   const cover =
     assembly.coverMediaAssetId != null
       ? {
@@ -151,6 +167,11 @@ export async function composeApprovalPackage(params: {
       overriddenCheckKeys: gate.overriddenCheckKeys,
       uncoveredFailedCheckKeys: gate.uncoveredFailedCheckKeys,
     },
+    revisionCount: params.approval.revisionCount,
+    maxRevisionRounds,
+    revisionsRemaining,
+    extraRevisionGranted: params.approval.extraRevisionGranted,
+    ...(lastChangeRequest ? { lastChangeRequest } : {}),
     decidedAt: params.approval.decidedAt,
     createdAt: params.approval.createdAt,
     updatedAt: params.approval.updatedAt,

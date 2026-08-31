@@ -125,6 +125,9 @@ const pendingApproval = {
   clientFeedback: null,
   decidedAt: null,
   decidedBy: null,
+  revisionCount: 0,
+  changeRequests: [],
+  extraRevisionGranted: false,
   createdAt: "2026-08-30T19:00:00.000Z",
   updatedAt: "2026-08-30T19:00:00.000Z",
 };
@@ -188,7 +191,7 @@ describe("findForbiddenApprovalKeys", () => {
 });
 
 describe("approval input schemas", () => {
-  it("rejects decision changes_requested", () => {
+  it("rejects wire status changes_requested (use request_changes decision)", () => {
     const parsed = decideApprovalInputSchema.safeParse({
       approvalId: APPROVAL_ID,
       decision: "changes_requested",
@@ -744,6 +747,9 @@ describe("decideApproval action", () => {
               uncoveredFailedCheckKeys: [],
             }),
           };
+        }
+        if (req.includes("route-approval-change-request")) {
+          return { routeApprovalChangeRequest: async () => {} };
         }
         if (req.includes("next/cache")) {
           return { revalidatePath: () => {} };

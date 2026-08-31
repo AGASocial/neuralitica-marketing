@@ -92,36 +92,20 @@ async function findIdempotentAssemblyJob(params: {
 
 export type CreateAssemblyJobForReelScriptResult = AssembleReelForScriptResult;
 
+export type CreateAssemblyJobTrustedParams = {
+  clientId: string;
+  reelScriptId: string;
+  invokedBy: "operator" | "revision";
+};
+
 /**
- * Assembly orchestrator (US-9.1). Operator-only; pointer input `{ reelScriptId }`.
+ * Trusted server-only assembly enqueue (Operator or revision router).
  */
-export async function createAssemblyJobForReelScript(
-  rawInput: unknown,
+export async function createAssemblyJobForClientTrusted(
+  params: CreateAssemblyJobTrustedParams,
 ): Promise<CreateAssemblyJobForReelScriptResult> {
   try {
-    let operator;
-    try {
-      operator = await requireOperator("handler");
-    } catch (error) {
-      if (isAuthGuardError(error)) {
-        return error.status === 401
-          ? assemblyJobUnauthenticatedError()
-          : assemblyJobForbiddenError();
-      }
-      throw error;
-    }
-
-    if (findForbiddenAssemblyKeys(rawInput).length > 0) {
-      return assemblyJobForbiddenFieldsError();
-    }
-
-    const parsed = assembleReelForScriptRequestSchema.safeParse(rawInput);
-    if (!parsed.success) {
-      return assemblyJobMutationError("VALIDATION_ERROR");
-    }
-
-    const { reelScriptId } = parsed.data;
-    const clientId = operator.id;
+    const { reelScriptId, clientId } = params;
 
     const script = await loadReelScriptForVideoJob({
       reelScriptId,
@@ -229,12 +213,58 @@ export async function createAssemblyJobForReelScript(
     const jobId = (data as { id: string }).id;
     enqueueAssemblyJob(jobId);
 
+    console.info("[assembly] revision enqueue", {
+      jobId,
+      reelScriptId,
+      clientId,
+      invokedBy: params.invokedBy,
+    });
+
     return {
       ok: true,
       jobId,
       status: "queued",
       idempotent: false,
     };
+  } catch (error) {
+    console.error("[assembly] trusted create job unexpected error");
+    return assemblyJobInternalError();
+  }
+}
+
+/**
+ * Assembly orchestrator (US-9.1). Operator-only; pointer input `{ reelScriptId }`.
+ */
+export async function createAssemblyJobForReelScript(
+  rawInput: unknown,
+): Promise<CreateAssemblyJobForReelScriptResult> {
+  try {
+    let operator;
+    try {
+      operator = await requireOperator("handler");
+    } catch (error) {
+      if (isAuthGuardError(error)) {
+        return error.status === 401
+          ? assemblyJobUnauthenticatedError()
+          : assemblyJobForbiddenError();
+      }
+      throw error;
+    }
+
+    if (findForbiddenAssemblyKeys(rawInput).length > 0) {
+      return assemblyJobForbiddenFieldsError();
+    }
+
+    const parsed = assembleReelForScriptRequestSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      return assemblyJobMutationError("VALIDATION_ERROR");
+    }
+
+    return createAssemblyJobForClientTrusted({
+      clientId: operator.id,
+      reelScriptId: parsed.data.reelScriptId,
+      invokedBy: "operator",
+    });
   } catch (error) {
     if (isAuthGuardError(error)) {
       return error.status === 401

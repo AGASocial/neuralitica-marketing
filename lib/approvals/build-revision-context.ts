@@ -1,4 +1,6 @@
-import "server-only";
+/**
+ * Build delimited revision context for script/caption agents (US-11.2).
+ */
 
 import type { ChangeRequestInput } from "@/lib/contracts/approval-revision";
 import {
