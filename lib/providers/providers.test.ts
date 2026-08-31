@@ -116,7 +116,7 @@ function row(
     manual: { billingUnit: "per_run", unitCostCents: 0 },
     heygen_high: {
       billingUnit: "per_second",
-      unitCostCents: 7,
+      unitCostCents: 2,
       metadata: { plan: "standard" },
     },
     ltx_broll_high: {

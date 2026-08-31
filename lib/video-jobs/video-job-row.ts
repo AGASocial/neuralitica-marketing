@@ -33,6 +33,8 @@ export const VIDEO_JOB_SELECT_COLUMNS = VIDEO_JOB_SELECT;
 export const VIDEO_JOBS_TABLE = "neuramark_video_jobs" as const;
 export const VIDEO_JOB_RETRY_OVERRIDES_TABLE =
   "neuramark_video_job_retry_overrides" as const;
+export const VIDEO_JOB_HEYGEN_FALLBACK_OVERRIDES_TABLE =
+  "neuramark_video_job_heygen_fallback_overrides" as const;
 
 export function mapVideoJobRow(raw: Record<string, unknown>): VideoJobRow | null {
   if (

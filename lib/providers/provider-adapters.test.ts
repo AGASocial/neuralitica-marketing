@@ -86,7 +86,7 @@ function row(
     sadtalker_low: { billingUnit: "per_run", unitCostCents: 10 },
     musetalk_low: { billingUnit: "per_run", unitCostCents: 19 },
     siliconflow_wan21_turbo: { billingUnit: "per_clip", unitCostCents: 21 },
-    heygen_high: { billingUnit: "per_second", unitCostCents: 7 },
+    heygen_high: { billingUnit: "per_second", unitCostCents: 2 },
   };
   const envKeys: Record<string, string> = {
     sadtalker_low: "REPLICATE_API_TOKEN",
@@ -329,6 +329,59 @@ describe("US-8.1 provider registry", () => {
 });
 
 describe("US-8.1 response normalization", () => {
+  it("5d — heygen registry adapter is real (no stub prefix)", async () => {
+    const { getProviderRegistry, resetProviderRegistryForTests } =
+      loadRegistryModule();
+    resetProviderRegistryForTests();
+
+    const adapter = getProviderRegistry().getVideoAdapter("heygen_high");
+    assert.equal(adapter.providerKey, "heygen_high");
+    assert.equal(adapter.videoAssetRole, "primary");
+
+    const previousToken = process.env.HEYGEN_API_KEY;
+    delete process.env.HEYGEN_API_KEY;
+
+    try {
+      await assert.rejects(
+        () =>
+          adapter.createJob({
+            reelScriptId: "00000000-0000-4000-8000-000000000001",
+            clientId: "00000000-0000-4000-8000-000000000002",
+            providerKey: "heygen_high",
+            providerTier: "high",
+            assetRole: "primary",
+            targetDurationSec: 30,
+            portraitAssetId: "00000000-0000-4000-8000-000000000010",
+            voiceoverAssetId: "00000000-0000-4000-8000-000000000011",
+          }),
+        (err: unknown) => {
+          assert.ok(err instanceof Error);
+          assert.equal((err as { code?: string }).code, "PROVIDER_CONFIG_MISSING");
+          return true;
+        },
+      );
+
+      const estimate = await adapter.estimateCost({
+        reelScriptId: "00000000-0000-4000-8000-000000000001",
+        clientId: "00000000-0000-4000-8000-000000000002",
+        providerKey: "heygen_high",
+        providerTier: "high",
+        assetRole: "primary",
+        targetDurationSec: 30,
+        portraitAssetId: "00000000-0000-4000-8000-000000000010",
+        voiceoverAssetId: "00000000-0000-4000-8000-000000000011",
+      });
+      assert.equal(estimate.estimatedCostCents, 60);
+    } finally {
+      if (previousToken === undefined) {
+        delete process.env.HEYGEN_API_KEY;
+      } else {
+        process.env.HEYGEN_API_KEY = previousToken;
+      }
+      resetProviderRegistryForTests();
+    }
+  });
+
   it("6 — externalJobIdSchema rejects traversal and invalid ids", () => {
     for (const invalid of ["", "../evil", "foo/bar", "foo\\bar", "a".repeat(513)]) {
       assert.equal(externalJobIdSchema.safeParse(invalid).success, false);
@@ -438,6 +491,9 @@ describe("US-8.1 module boundaries", () => {
           continue;
         }
         if (normalized.endsWith("/lib/contracts/musetalk-low.ts")) {
+          continue;
+        }
+        if (normalized.endsWith("/lib/contracts/heygen-high.ts")) {
           continue;
         }
         assert.match(

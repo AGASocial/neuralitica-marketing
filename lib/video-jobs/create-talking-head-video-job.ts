@@ -46,7 +46,8 @@ async function verifyMediaAssetOwned(params: {
 function isAllowedTalkingHeadProviderKey(providerKey: string): boolean {
   return (
     providerKey === DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead ||
-    providerKey === DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHeadLoop
+    providerKey === DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHeadLoop ||
+    providerKey === "heygen_high"
   );
 }
 
@@ -57,6 +58,9 @@ export type CreateTalkingHeadVideoJobOptions = {
   jobKind?: "talking_head_generate" | "talking_head_retry";
   portraitAssetId?: string | null;
   voiceoverAssetId?: string | null;
+  /** Server-only: retry inherits parent heygen_high (US-8.7). */
+  forcedProviderKey?: string;
+  forcedProviderTier?: "low" | "high";
 };
 
 export async function createTalkingHeadVideoJob(
@@ -107,11 +111,18 @@ export async function createTalkingHeadVideoJob(
       },
     });
 
-    if (!providerResult.ok) {
+    let providerKey: string;
+    let providerTier: "low" | "high";
+    if (options?.forcedProviderKey) {
+      providerKey = options.forcedProviderKey;
+      providerTier = options.forcedProviderTier ?? "high";
+    } else if (providerResult.ok) {
+      providerKey = providerResult.decision.providerKey;
+      providerTier = providerResult.decision.providerTier;
+    } else {
       return videoJobMutationError("PROVIDER_UNAVAILABLE");
     }
 
-    const providerKey = providerResult.decision.providerKey;
     if (!isAllowedTalkingHeadProviderKey(providerKey)) {
       return videoJobMutationError("PROVIDER_UNAVAILABLE");
     }
@@ -130,8 +141,9 @@ export async function createTalkingHeadVideoJob(
 
     const isMusetalk =
       providerKey === DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHeadLoop;
+    const isHeygen = providerKey === "heygen_high";
 
-    let portraitAssetIdForInsert: string;
+    let portraitAssetIdForInsert: string | null;
     let resolvedInput: Parameters<typeof adapter.createJob>[0];
 
     if (isMusetalk) {
@@ -174,7 +186,7 @@ export async function createTalkingHeadVideoJob(
         reelScriptId: input.reelScriptId,
         clientId: input.clientId,
         providerKey,
-        providerTier: providerResult.decision.providerTier,
+        providerTier,
         assetRole: "primary",
         targetDurationSec:
           input.targetDurationSec ?? script.package.targetDurationSec,
@@ -182,6 +194,84 @@ export async function createTalkingHeadVideoJob(
         referenceVideoAssetId,
         prompt: input.prompt,
       };
+    } else if (isHeygen) {
+      if (script.visualMode === "faceless" || script.modalidad === "faceless") {
+        return videoJobMutationError("VALIDATION_ERROR");
+      }
+
+      const isOwnAvatar =
+        script.visualMode === "own_avatar" || script.modalidad === "own_avatar";
+
+      if (isOwnAvatar) {
+        const portraitAssetId =
+          options?.portraitAssetId ??
+          input.portraitAssetId ??
+          input.referenceImageAssetId ??
+          null;
+
+        if (!portraitAssetId) {
+          return videoJobMutationError("VALIDATION_ERROR", {
+            fields: { portraitAssetId: ["REQUIRED"] },
+          });
+        }
+
+        const [portraitOwned, voiceoverOwned] = await Promise.all([
+          verifyMediaAssetOwned({
+            assetId: portraitAssetId,
+            clientId: input.clientId,
+          }),
+          verifyMediaAssetOwned({
+            assetId: voiceoverAssetId,
+            clientId: input.clientId,
+          }),
+        ]);
+
+        if (!portraitOwned || !voiceoverOwned) {
+          return videoJobMutationError("NOT_FOUND");
+        }
+
+        portraitAssetIdForInsert = portraitAssetId;
+        resolvedInput = {
+          reelScriptId: input.reelScriptId,
+          clientId: input.clientId,
+          providerKey,
+          providerTier,
+          assetRole: "primary",
+          targetDurationSec:
+            input.targetDurationSec ?? script.package.targetDurationSec,
+          voiceoverAssetId,
+          portraitAssetId,
+          prompt: input.prompt,
+        };
+      } else {
+        const avatarId = process.env.HEYGEN_DEFAULT_AVATAR_ID?.trim();
+        if (!avatarId) {
+          return videoJobMutationError("HEYGEN_CONFIG_MISSING", {
+            messageKey: "scripts.heygen.errors.configMissing",
+          });
+        }
+
+        const voiceoverOwned = await verifyMediaAssetOwned({
+          assetId: voiceoverAssetId,
+          clientId: input.clientId,
+        });
+        if (!voiceoverOwned) {
+          return videoJobMutationError("NOT_FOUND");
+        }
+
+        portraitAssetIdForInsert = null;
+        resolvedInput = {
+          reelScriptId: input.reelScriptId,
+          clientId: input.clientId,
+          providerKey,
+          providerTier,
+          assetRole: "primary",
+          targetDurationSec:
+            input.targetDurationSec ?? script.package.targetDurationSec,
+          voiceoverAssetId,
+          prompt: input.prompt,
+        };
+      }
     } else {
       const portraitAssetId =
         options?.portraitAssetId ??
@@ -215,7 +305,7 @@ export async function createTalkingHeadVideoJob(
         reelScriptId: input.reelScriptId,
         clientId: input.clientId,
         providerKey,
-        providerTier: providerResult.decision.providerTier,
+        providerTier,
         assetRole: "primary",
         targetDurationSec:
           input.targetDurationSec ?? script.package.targetDurationSec,
@@ -233,7 +323,7 @@ export async function createTalkingHeadVideoJob(
       reelScriptId: input.reelScriptId,
       estimatedCostCents: estimate.estimatedCostCents,
       operatorClientId: operator.id,
-      providerTier: providerResult.decision.providerTier,
+      providerTier,
     });
 
     if (!budgetResult.ok) {
@@ -268,7 +358,7 @@ export async function createTalkingHeadVideoJob(
         client_id: input.clientId,
         reel_script_id: input.reelScriptId,
         provider_key: providerKey,
-        provider_tier: providerResult.decision.providerTier,
+        provider_tier: providerTier,
         asset_role: "primary",
         external_job_id: createResult.externalJobId,
         status: createResult.status,

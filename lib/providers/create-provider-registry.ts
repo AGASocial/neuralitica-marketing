@@ -1,5 +1,10 @@
 import "server-only";
 
+import {
+  HEYGEN_APPROX_PER_MINUTE_CENTS,
+  HEYGEN_DEFAULT_AVATAR_ID_ENV,
+  HEYGEN_UNIT_COST_CENTS_PER_SECOND,
+} from "@/lib/contracts/heygen-high";
 import type { ProviderCatalogRow } from "@/lib/contracts/providers";
 import {
   DEFAULT_LOW_TIER_PROVIDER_KEYS,
@@ -10,7 +15,7 @@ import {
   InMemoryProviderRegistry,
   type ProviderRegistry,
 } from "@/lib/providers/provider-adapters";
-import { createHeygenHighStubAdapter } from "@/lib/providers/video/heygen-high-stub-adapter";
+import { createHeygenHighAdapter } from "@/lib/providers/video/heygen-high-adapter";
 import { createManualUploadAdapter } from "@/lib/providers/video/manual-upload-adapter";
 import { createMusetalkLowAdapter } from "@/lib/providers/video/musetalk-low-adapter";
 import { createSadtalkerLowAdapter } from "@/lib/providers/video/sadtalker-low-adapter";
@@ -27,7 +32,8 @@ const STUB_DEFAULT_ESTIMATE_CENTS: Record<(typeof STUB_VIDEO_KEYS)[number], numb
   {
     [DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead]: 19,
     [DEFAULT_LOW_TIER_PROVIDER_KEYS.broll]: 10,
-    heygen_high: 100,
+    /** Fallback when duration missing — 30s × 2¢. */
+    heygen_high: 60,
   };
 
 let singletonRegistry: ProviderRegistry | null = null;
@@ -50,9 +56,19 @@ function estimateCentsFromCatalog(
   return fallbackCents;
 }
 
-function createStubAdapterForKey(
+function unitCostCentsFromCatalog(
+  catalog: readonly ProviderCatalogRow[],
+  providerKey: string,
+  fallbackCents: number,
+): number {
+  const row = catalog.find((entry) => entry.key === providerKey);
+  return row?.costModel.unitCostCents ?? fallbackCents;
+}
+
+function createAdapterForKey(
   providerKey: (typeof STUB_VIDEO_KEYS)[number],
   defaultEstimateCents: number,
+  catalog: readonly ProviderCatalogRow[],
 ) {
   switch (providerKey) {
     case DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead:
@@ -60,9 +76,17 @@ function createStubAdapterForKey(
     case DEFAULT_LOW_TIER_PROVIDER_KEYS.broll:
       return createSiliconflowWan21TurboStubAdapter(defaultEstimateCents);
     case "heygen_high":
-      return createHeygenHighStubAdapter(defaultEstimateCents);
+      return createHeygenHighAdapter({
+        defaultEstimateCents,
+        unitCostCentsPerSecond: unitCostCentsFromCatalog(
+          catalog,
+          "heygen_high",
+          HEYGEN_UNIT_COST_CENTS_PER_SECOND,
+        ),
+        heygenAvatarId: process.env[HEYGEN_DEFAULT_AVATAR_ID_ENV],
+      });
     default:
-      throw new Error(`Unsupported stub provider key: ${providerKey}`);
+      throw new Error(`Unsupported video provider key: ${providerKey}`);
   }
 }
 
@@ -112,8 +136,16 @@ function buildBootstrapCatalog(): ProviderCatalogRow[] {
       key: "heygen_high",
       assetRole: "talking_head",
       tier: "high",
-      active: false,
-      costModel: { billingUnit: "per_second", unitCostCents: 7 },
+      active: true,
+      costModel: {
+        billingUnit: "per_second",
+        unitCostCents: HEYGEN_UNIT_COST_CENTS_PER_SECOND,
+        metadata: {
+          plan: "standard",
+          vendor: "heygen",
+          approxPerMinuteCents: HEYGEN_APPROX_PER_MINUTE_CENTS,
+        },
+      },
       envKeyName: "HEYGEN_API_KEY",
     },
     {
@@ -152,10 +184,14 @@ export function createProviderRegistry(
       STUB_DEFAULT_ESTIMATE_CENTS[providerKey],
     );
 
-    const adapter = createStubAdapterForKey(providerKey, defaultEstimateCents);
+    const adapter = createAdapterForKey(
+      providerKey,
+      defaultEstimateCents,
+      catalog,
+    );
 
     if (adapter.providerKey !== providerKey) {
-      throw new Error(`Stub adapter providerKey mismatch: ${providerKey}`);
+      throw new Error(`Video adapter providerKey mismatch: ${providerKey}`);
     }
 
     registry.registerVideo(adapter);

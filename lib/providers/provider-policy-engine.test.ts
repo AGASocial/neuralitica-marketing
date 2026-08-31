@@ -219,7 +219,7 @@ describe("resolveProviderForJob routing (US-7.2)", () => {
             providers: [
               row("siliconflow_deepseek_flash", "llm", "low", 14),
               row("siliconflow_qwen", "llm", "low", 18),
-              row("heygen_high", "talking_head", "high", 7),
+              row("heygen_high", "talking_head", "high", 2),
             ],
           }),
         };

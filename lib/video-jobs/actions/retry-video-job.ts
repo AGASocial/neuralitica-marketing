@@ -260,6 +260,12 @@ export async function retryVideoJob(
       jobKind: "talking_head_retry",
       portraitAssetId: failedJob.portraitAssetId,
       voiceoverAssetId: failedJob.voiceoverAssetId,
+      ...(failedJob.providerKey === "heygen_high"
+        ? {
+            forcedProviderKey: "heygen_high",
+            forcedProviderTier: "high" as const,
+          }
+        : {}),
     },
   );
 
