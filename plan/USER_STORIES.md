@@ -919,6 +919,32 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 
 ---
 
+#### US-8.8 — LTX B-roll adapter (high tier, P1)
+
+**As a** System, **I want** short B-roll clips via LTX on FAL when quality tier is high, **so that** faceless Reels can use higher-polish visuals without forcing low-tier Wan.
+
+| Owner | Work |
+|-------|------|
+| **FE** | — (reuse US-8.4 status UI; optional B-roll preview strip remains deferred from US-8.5) |
+| **BE** | FAL LTX adapter: image/text prompt → short clip; `provider_key` `ltx_broll_high`; env `FAL_API_KEY`; extend `createBrollVideoJobs` for high-tier policy path |
+| **DB** | Migration: activate `ltx_broll_high` catalog row (`active = true`); reuse `video_jobs.asset_role = broll` |
+
+**Acceptance criteria**
+
+- [ ] Never the silent default when `provider_tier = low` — tier floor unchanged; Wan remains low-tier B-roll
+- [ ] Default B-roll provider when `provider_tier = high`, script marks `needs_broll`, and catalog row is active
+- [ ] Clips max duration per policy (3–5s); LTX catalog documents 5s cap (`ltx-2.3-pro`)
+- [ ] Estimated cost ~$1.26/clip at research baseline (126¢ `per_clip` from catalog seed)
+- [ ] Failed B-roll does not block talking-head primary (graceful degrade — same independence as US-8.5)
+- [ ] Multiple B-roll clips may be stitched in assembly (US-9.1) *(produce N `broll` assets; stitch = US-9.1 Phase B handoff)*
+- [ ] [SEC] LTX adapter follows US-8.1 contract: server-only `FAL_API_KEY`, untrusted-response handling, B-roll cost counted against Reel cumulative budget (US-7.1)
+
+**Depends on:** US-8.1, US-7.2, US-8.5, US-X.4
+
+**Priority:** P1 (MVP operable without this if low-tier Wan + manual upload suffice)
+
+---
+
 ### Module: Media Assembly Pipeline (P0)
 
 #### US-9.1 — Assemble final 9:16 Reel
@@ -1265,7 +1291,7 @@ Sprint 3: US-X.4, US-4.1, US-4.2, US-5.1, US-5.2, US-6.1, US-6.2
 Sprint 4: US-7.1, US-7.2, US-8.1, US-8.2, US-8.6, US-8.3, US-8.4, US-9.3
 Sprint 5: US-8.5, US-9.1, US-9.2, US-7.3, US-7.4, US-10.1, US-10.2
 Sprint 6: US-11.1, US-11.2, US-11.3
-Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, (+ high-tier B-roll adapter when added)
+Sprint 7 (P1): US-8.7, US-12.1, US-12.2, US-13.1, US-13.2, US-8.8 (LTX high-tier B-roll)
 ```
 
 Auth is scheduled early (Sprint 1b) because US-14.5 gates route protection for everything after it. US-X.3 defined the `getCurrentUser()` seam; US-14.5 swapped internals to session-backed lookup with no call-site changes. Logout UI shipped in US-14.3. Sprint 1b (US-14.1–US-14.5) is complete.

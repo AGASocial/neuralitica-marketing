@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: null
-story_status: idle
-feature_branch: null
+current_story: US-8.8
+story_status: PREP
+feature_branch: feature/US-8.8-ltx-broll-high
 last_completed_story: US-9.1-B-M2
 phase_status: sprint_7_closed
 blocked_reason: null
-updated_at: 2026-08-31T23:00:00Z
+updated_at: 2026-08-31T19:45:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -34,7 +34,7 @@ updated_at: 2026-08-31T23:00:00Z
 
 | Phase integration | done | PHASE-7.md CONNECTED (0 blockers; 149/149 integration tests) |
 
-**Sprint 7 CLOSED** — Fase 5 ops + Provider P1 + faceless stitch + branding hardening + spend backfill + poll-claim races. **SELECT (idle):** **`ltx_broll_high` adapter** (recommended), **B-roll Operator generate UI**, **PLAN F7 cron**, or QA follow-ups (enqueue-time audio probe · faceless revision B-roll step).
+**Sprint 7 CLOSED** — Fase 5 ops + Provider P1 + faceless stitch + branding hardening + spend backfill + poll-claim races. **Active:** **US-8.8** LTX high-tier B-roll adapter (PREP). **Idle backlog:** B-roll Operator generate UI · PLAN F7 cron · QA follow-ups (enqueue-time audio probe · faceless revision B-roll step).
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -77,6 +77,7 @@ updated_at: 2026-08-31T23:00:00Z
 
 ## Historial reciente
 
+- 2026-08-31 · US-8.8 SELECT → PREP: `US-8.8` added to USER_STORIES.md (7 AC); README + TASKS in `plan/stories/US-8.8/` — Phase A (FAL LTX adapter) then Phase B (activate catalog + orchestrator high-tier unlock); branch `feature/US-8.8-ltx-broll-high`; mirror US-8.5 Wan + US-8.7 activate; FE deferred; next SPEC-REVIEW.
 - 2026-08-31 · Sprint 7 phase integration CONNECTED: `PHASE-7.md` (0 blockers; 149/149 tests); Wan→stitch→branding→QA + HeyGen + US-7.3-B spend + Fase 5 ops verified on `main` → **Sprint 7 CLOSED**; SELECT **`ltx_broll_high`**, B-roll generate UI, or F7 cron.
 - 2026-08-31 · US-9.1-B-M2 CLOSE: VALIDATION PASS WITH NOTES; QA APPROVE (1 Low; QA Phase A Medium #1 + QA-PHASE-B Medium #1 CLOSED); BUILD `2a69b24` · SECURITY/CONTRACT `db8e246`; assembly poll atomic claim → SELECT **Sprint 7 phase integration** (recommended), **`ltx_broll_high` adapter**, or QA follow-ups.
 - 2026-08-31 · US-9.1-B-M2 SELECT → PREP: `PHASE-B-M2.md` + README/TASKS M2 checklist; branch `feature/US-9.1-b-m2-assembly-poll-claim`; closes QA Phase A/Phase B Medium #1 (assembly poll claim race); mirror US-9.2-B-M2; next SECURITY lean amend.
