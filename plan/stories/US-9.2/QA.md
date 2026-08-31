@@ -134,3 +134,72 @@ Phase A implements the frozen CONTRACT/SECURITY model: ASS sanitize → temp fil
 | Blockers for merge? | **No** — no Critical/High; Medium is worker-claim hardening (same class as US-9.1), not exploitable bypass |
 | Recommend CLOSE Phase A? | **YES** |
 | Conditions before production traffic | (1) Manual or Fly smoke with real FFmpeg + cover extract; (2) track Finding 1 worker claim hardening in backlog; (3) add SECURITY matrix tests (Finding 3) and extend `fetch(` grep (Finding 2) in next slice |
+
+---
+---
+
+# QA Report — US-9.2 Phase B-M2 (Branding poll atomic claim)
+
+**Story:** US-9.2 — Phase B-M2 lean integrity fast-follow  
+**Sprint label:** `US-9.2-B-M2`  
+**Branch:** `feature/US-9.2-b-m2-branding-poll-claim`  
+**Sources:** `PHASE-B-M2.md` (M2-1…M2-11) · `SECURITY.md` Phase B-M2 (5 conditions) · `CONTRACT.md` § Phase B-M2  
+**Reviewer:** qa-engineer  
+**Date:** 2026-08-31  
+**Scope:** Lean — poll claim race only. Do not check USER_STORIES AC.
+
+### Verdict: APPROVE
+
+M2 closes QA Phase A **Medium #1** and QA-PHASE-B **Medium #2**. Atomic `queued` → `processing` claim via conditional UPDATE + `.select("id")`; zero rows → `{ idempotent: true }`; `runBrandingJob` exits before `mkdtemp` / download / spawn on lost claim or peer `processing` at entry; poll batch is `queued`-only. All five SECURITY Phase B-M2 conditions hold. No new client authority. **Close recommendation (Phase B-M2): YES.**
+
+---
+
+## Finding status
+
+| # | Severity | Status | Notes |
+|---|----------|--------|-------|
+| **1** (Phase A QA) | Medium | **CLOSED** | `apply-branding-job-update.ts:122–150` · `run-branding-job.ts:95–107` |
+| **2** (QA-PHASE-B) | Medium | **CLOSED** | `poll-branding-jobs.ts:29` — `queued`-only; claim gate as above |
+| Phase A Low 2–4 · Phase B Low 3–4 | Low | Unchanged | Out of M2 scope |
+
+---
+
+## M2 control verification
+
+| Condition (SECURITY / CONTRACT M2) | Status | Evidence |
+|------------------------------------|--------|----------|
+| Atomic claim `WHERE branding_status = 'queued'` + RETURNING | **PASS** | `apply-branding-job-update.ts:123–129` — also `.eq("status", "completed")`; `pre_branding` snapshot on claim (`103–107`) |
+| Zero rows → `idempotent: true`, no throw | **PASS** | `apply-branding-job-update.ts:135–142` |
+| Runner gate: lost claim / peer `processing` → no spawn | **PASS** | `run-branding-job.ts:95–107`; tests `Phase B-M2: lost claim` · `entry with processing status` |
+| Poll `queued`-only (no `processing` resume) | **PASS** | `poll-branding-jobs.ts:29`; stale sweep still runs first (`mark-stale-branding-jobs-failed.ts`) |
+| No new client authority / endpoints | **PASS** | Worker-only applier; `import "server-only"` unchanged |
+
+---
+
+## Checks Run
+
+| Command | Result |
+|---------|--------|
+| `npx tsx --test lib/branding/run-branding-job.test.ts` | **11 pass / 0 fail** (~284 ms) — includes 2 Phase B-M2 cases |
+| `npx tsx --test lib/branding/*.test.ts` | **35 pass / 0 fail** (~277 ms) |
+| Manual review vs SECURITY Phase B-M2 (5) + CONTRACT § Phase B-M2 | Completed |
+
+---
+
+## What Was Not Covered
+
+- Live multi-replica Fly concurrency soak (design relies on Postgres conditional UPDATE — acceptable per CONTRACT)  
+- Dedicated unit test for `poll-branding-jobs.ts` SELECT predicate (optional per PHASE-B-M2)  
+- US-9.1 assembly poll claim (separate backlog — M2-11)
+
+---
+
+## Gate summary (Phase B-M2)
+
+| Field | Value |
+|-------|-------|
+| **Verdict** | **APPROVE** |
+| **Critical / High / Medium / Low** | **0 / 0 / 0 / 0** (new) |
+| **QA Phase A Medium #1** | **CLOSED** |
+| **QA-PHASE-B Medium #2** | **CLOSED** |
+| **Stop CLOSE M2?** | **No** |

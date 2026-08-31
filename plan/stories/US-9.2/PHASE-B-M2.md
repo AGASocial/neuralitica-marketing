@@ -1,7 +1,7 @@
 # US-9.2 Phase B-M2 — Branding poll claim race
 
 **Story ID:** **US-9.2** (same story — **not** a new `US-9.x` ID). Sprint label: **`US-9.2-B-M2`**.  
-**Status:** **PREP** (2026-08-31)  
+**Status:** **CLOSED** (2026-08-31) — VALIDATION PASS WITH NOTES · QA APPROVE (0 findings; QA Phase A Medium #1 + QA-PHASE-B Medium #2 CLOSED) · BUILD `29352f4` · SECURITY/CONTRACT `3ccc42b`  
 **Branch:** `feature/US-9.2-b-m2-branding-poll-claim`  
 **Source:** [`QA.md`](./QA.md) Finding **Medium #1** · [`QA-PHASE-B.md`](./QA-PHASE-B.md) Finding **Medium #2** (Phase A carry-forward)
 
@@ -103,15 +103,17 @@ See [`TASKS.md`](./TASKS.md) § Phase B-M2 checklist.
 
 ---
 
-## Gates (Phase B-M2)
+## Gates (Phase B-M2) — CLOSED 2026-08-31
 
 - [x] PREP — this file + TASKS Phase B-M2 checklist + README note
-- [ ] SECURITY.md lean amend (security-architect — worker claim AC)
-- [ ] CONTRACT.md amend (nextjs-backend — atomic claim + poll `queued`-only; FE Reviewed N/A)
-- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend)
-- [ ] VALIDATION lean (requirements-validator)
-- [ ] QA lean (qa-engineer) — Medium #2 CLOSED
-- [ ] PO CLOSE M2
+- [x] SECURITY.md lean amend (security-architect — worker claim AC — `3ccc42b`)
+- [x] CONTRACT.md amend (nextjs-backend — atomic claim + poll `queued`-only; FE Reviewed N/A — `3ccc42b`)
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend) — `29352f4`
+- [x] VALIDATION lean (requirements-validator) — PASS WITH NOTES (`VALIDATION-PHASE-B-M2.md`; 11/11 tests)
+- [x] QA lean (qa-engineer) — APPROVE; QA Phase A Medium #1 + QA-PHASE-B Medium #2 CLOSED
+- [x] PO CLOSE M2 — this status + README / TASKS gates (USER_STORIES AC unchanged)
+
+**Status:** **CLOSED.** Residual: US-9.1 assembly poll claim race — separate SELECT (mirror M2 pattern).
 
 ---
 

@@ -350,7 +350,7 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 
 ---
 
-## Phase B-M2 — Branding poll claim race (PREP)
+## Phase B-M2 — Branding poll claim race — ✅ CLOSED 2026-08-31
 
 **Sprint:** `US-9.2-B-M2` · **Branch:** `feature/US-9.2-b-m2-branding-poll-claim` · **PREP:** [`PHASE-B-M2.md`](./PHASE-B-M2.md)
 
@@ -362,19 +362,19 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 - [x] **`runBrandingJob`** — if claim returns `idempotent: true`, or row already `processing` at entry → return **before** `mkdtemp` / download / FFmpeg (M2-4).
 - [x] **`pollQueuedBrandingJobsBatch`** — candidate filter **`branding_status = 'queued'`** only; drop `processing` from poll batch (M2-5).
 - [x] **Unit test** — simulated lost claim / concurrent claim → **zero** `runFfmpeg` / spawn invocations; winner path unchanged (`run-branding-job.test.ts` Phase B-M2).
-- [ ] **CONTRACT amend** — § Poll runtime + `runBrandingJob` step 1: atomic claim semantics, idempotent skip, `queued`-only poll predicate (**nextjs-backend** — required before BUILD).
+- [x] **CONTRACT amend** — § Poll runtime + `runBrandingJob` step 1: atomic claim semantics, idempotent skip, `queued`-only poll predicate (**nextjs-backend** — `3ccc42b`).
 
 ### Frontend
 
-- [ ] **None** (M2-9).
+- [x] **None** (M2-9).
 
 ### Database
 
-- [ ] **None** — conditional UPDATE on existing `neuramark_assembled_reels` row.
+- [x] **None** — conditional UPDATE on existing `neuramark_assembled_reels` row.
 
 ### Security
 
-- [ ] **SECURITY.md lean amend** — branding worker claim AC (mirror US-9.1 `[SEC] Worker job claim`; security-architect).
+- [x] **SECURITY.md lean amend** — branding worker claim AC (mirror US-9.1 `[SEC] Worker job claim`; security-architect — `3ccc42b`).
 
 ---
 
@@ -389,13 +389,13 @@ function resolveSubtitleBeats(onScreenText: string): string[] {
 
 ---
 
-## Gate checklist — Phase B-M2
+## Gate checklist — Phase B-M2 — ✅ CLOSED 2026-08-31
 
 - [x] PREP — [`PHASE-B-M2.md`](./PHASE-B-M2.md) + this checklist + README note
-- [ ] SECURITY.md lean amend (security-architect)
-- [ ] CONTRACT.md amend (nextjs-backend — atomic claim; FE Reviewed N/A)
-- [ ] BUILD (media-pipeline-engineer ∥ nextjs-backend)
-- [ ] VALIDATION lean — lost claim → no spawn
-- [ ] QA lean — Medium #2 CLOSED
-- [ ] PO CLOSE M2
-- [ ] Do **not** check/uncheck USER_STORIES § US-9.2 AC
+- [x] SECURITY.md lean amend (security-architect — `3ccc42b`)
+- [x] CONTRACT.md amend (nextjs-backend — atomic claim; FE Reviewed N/A — `3ccc42b`)
+- [x] BUILD (media-pipeline-engineer ∥ nextjs-backend) — `29352f4`
+- [x] VALIDATION lean — PASS WITH NOTES (`VALIDATION-PHASE-B-M2.md`; 11/11 tests)
+- [x] QA lean — APPROVE (0 findings; QA Phase A Medium #1 + QA-PHASE-B Medium #2 CLOSED)
+- [x] PO CLOSE M2
+- [x] Do **not** check/uncheck USER_STORIES § US-9.2 AC

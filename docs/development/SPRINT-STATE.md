@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 3
-current_story: US-9.2-B-M2
-story_status: BUILD
-feature_branch: feature/US-9.2-b-m2-branding-poll-claim
-last_completed_story: US-9.2-B-M1
+current_story: null
+story_status: idle
+feature_branch: null
+last_completed_story: US-9.2-B-M2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T20:20:00Z
+updated_at: 2026-08-31T20:30:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -30,9 +30,9 @@ updated_at: 2026-08-31T20:20:00Z
 | US-8.7 HeyGen adapter (high tier) | done | FE `a18d4cb` · BE `299d638` · VALIDATION `602995c` (5/5 AC; 22/22) · QA `fc19d0a` · fix `b3a9377` · CLOSE `89d0119` FF-merge to main |
 | US-8.5 Wan B-roll adapter | done | BUILD `f7cf726` · VALIDATION `14a74f5` (6/6 AC; 39/39) · QA `8617ae7` · fix `e75e1b7` · CLOSE `6c66f7d` FF-merge to main (stitch → US-9.1 Phase B) |
 | US-9.1 Phase B faceless B-roll stitch | done | BUILD `c3a9c19` · FE `80652c2` · fix `1106420` · VALIDATION `6d13f4b` (5/5 + 16/16) · QA `37d0dcb` · CLOSE `9a95b55` FF-merge to main |
-| US-9.2 Phase B VO-sync + coverFrameSec | done (B+M1) | BE `95419c1` · FE `8f365bf` · CLOSE `7783de2`; **M1 CLOSED** `1b2a8e7`/`00df642` worker VO-hash re-check |
+| US-9.2 Phase B VO-sync + coverFrameSec | done (B+M1+M2) | BE `95419c1` · FE `8f365bf` · CLOSE `7783de2`; **M1 CLOSED** `1b2a8e7`/`00df642`; **M2 CLOSED** `29352f4` branding poll claim |
 
-**Sprint 7 provider + faceless stitch + branding Phase B + US-7.3-B + US-9.2-B-M1 complete.** Next SELECT: **US-9.2-B-M2** (branding poll claim race — recommended). Alternates: `ltx_broll_high`, or US-7.3-B QA M1 (fail-closed finalize).
+**Sprint 7 provider + faceless stitch + branding Phase B + US-7.3-B + US-9.2-B-M1/M2 complete.** Next SELECT: **US-9.1-B-M2** (assembly poll claim race — recommended mirror of M2). Alternates: `ltx_broll_high` adapter, Sprint 7 phase integration.
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -58,7 +58,7 @@ updated_at: 2026-08-31T20:20:00Z
 | US-8.3 Manual video upload fallback | done | FE `fc6deca` · BE `eaa974a` · fixes `f3f78af`/`b2fb1cc` · VALIDATION `2f5edc0` · QA `a58faeb` · CLOSE `d8baafb` |
 | US-9.3 Text-to-speech for voiceover | done | Phase A `dfdd08b` · adapter `7a2e4ae` · BE `1f2319e` · FE `1d9d813` · VALIDATION `1715048` · QA `e9c1833` · CLOSE 5/6 AC (ElevenLabs Phase B defer) |
 | US-9.1 Assemble final 9:16 Reel | done (A+B) | Phase A `4853871` · CLOSE 5/5 AC; **Phase B CLOSED** `9a95b55` FF-merge (VALIDATION `6d13f4b` 5/5+16/16; QA `37d0dcb`; fix `1106420`) |
-| US-9.2 Add subtitles, logo, and cover | done (A+B) | Phase A CLOSE `92b196a` (5/5 AC). **Phase B CLOSED** `7783de2` FF-merge (VALIDATION `6db2cba` 2/2+44/44; QA `02bfa3b`; VO-sync + `coverFrameSec`) |
+| US-9.2 Add subtitles, logo, and cover | done (A+B+M1+M2) | Phase A CLOSE `92b196a` (5/5 AC). **Phase B CLOSED** `7783de2` FF-merge (VALIDATION `6db2cba` 2/2+44/44; QA `02bfa3b`; VO-sync + `coverFrameSec`). **M1/M2 fast-follows CLOSED** — VO-hash re-check + branding poll claim |
 | US-10.1 Run automated QA | done | agents `0b56c9e`/`75802d6` · BE `5e50115` · FE `b5e0941` · VALIDATION `d95555d` · QA `a6ba923` · CLOSE `b7a3bb9` (6/6 AC; override → US-10.2) |
 | US-10.2 Operator override with reason | done | BE `a9cc533` · FE `0c6bfb0` · VALIDATION `d7e3cd5` · QA `3da5547` · CLOSE `c9b97e5` (7/7 AC; approval render → US-11.1) |
 | US-11.1 Present Reel package for client approval | done | BE `d830b0f` · FE `defd9ff` · VALIDATION `633c6f5` · QA `3f39db9` · CLOSE `4f11d38` (5/5 AC; request-changes → US-11.2) |
@@ -75,6 +75,7 @@ updated_at: 2026-08-31T20:20:00Z
 
 ## Historial reciente
 
+- 2026-08-31 · US-9.2-B-M2 CLOSE: VALIDATION PASS WITH NOTES; QA APPROVE (0 findings; QA Phase A Medium #1 + QA-PHASE-B Medium #2 CLOSED); BUILD `29352f4` · SECURITY/CONTRACT `3ccc42b`; branding poll atomic claim → SELECT **US-9.1-B-M2** (assembly poll claim race — recommended).
 - 2026-08-31 · US-9.2-B-M1 CLOSE: VALIDATION PASS WITH NOTES; QA APPROVE; worker VO-hash re-check `1b2a8e7`/`00df642`; Medium #1 closed → SELECT **US-9.2-B-M2** (branding poll claim race).
 - 2026-08-31 · US-7.3-B CLOSE: VALIDATION PASS WITH NOTES; QA APPROVE WITH CONDITIONS (0 Critical/High, M1 non-blocking); FE `1add7ed` · BE `d3b2e03` · media `3f3653c`; video/TTS/B-roll actuals + Operator poll cost on `/operator/scripts`; US-7.4 Phase B auto-expand realized → SELECT **US-9.2-B QA M1** (`voiceoverTimingHash` worker re-check).
 - 2026-08-31 · US-7.3-B BUILD: FE `1add7ed` (poll cost merge) · BE `d3b2e03` (GET cost DTO + TTS duration) · media `3f3653c` (async_update duration + closed reason); next VALIDATE.
