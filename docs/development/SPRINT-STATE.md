@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 7
 current_story: US-15.1
-story_status: prep
+story_status: security
 feature_branch: feature/US-15.1-weekly-cron
 last_completed_story: US-8.9
 phase_status: sprint_9_prep
 blocked_reason: null
-updated_at: 2026-08-31T22:15:00Z
+updated_at: 2026-08-31T22:25:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -46,13 +46,13 @@ updated_at: 2026-08-31T22:15:00Z
 
 **Sprint 8 CLOSED** — Operator B-roll generate UI on `/operator/scripts` (Wan low + LTX high via policy) → stitch → branding → QA verified on `main`. **Idle backlog:** QA follow-ups (enqueue-time audio probe · faceless revision B-roll step).
 
-## Sprint 9 — PLAN F7 weekly cron (PREP)
+## Sprint 9 — PLAN F7 weekly cron (SECURITY Phase B)
 
 | Story | Status | Notes |
 |-------|--------|-------|
-| US-15.1 Weekly cycle cron + orchestration | prep | Phase A: cron + CRON_SECRET + dry-run + idempotency ledger · Phase B: full pipeline (deferred) · branch `feature/US-15.1-weekly-cron` · next SPEC-REVIEW |
+| US-15.1 Weekly cycle cron + orchestration | Phase A closed / Phase B security | Phase A CLOSE `b1e4508` (5/5) · Phase B 0/4 deferred · mandatory SECURITY + CONTRACT delta before live BUILD |
 
-**Sprint 9 PREP** — SELECT **US-15.1** (PLAN F7 / ADR-0001) after Sprint 8 CLOSE. Alternates deferred: US-11.2-B faceless revision B-roll step · QA follow-ups.
+**Sprint 9 SECURITY Phase B** — Phase A closed; reviewing live pipeline, dual-path strategy gate, Operator trigger, async transitions, and additive Phase A safety semantics before freezing the Phase B contract.
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -95,6 +95,16 @@ updated_at: 2026-08-31T22:15:00Z
 
 ## Historial reciente
 
+- 2026-08-31 · US-15.1 Phase A CLOSE `b1e4508`: 5/5 Phase A AC checked; Phase B 0/4 deferred; next mandatory Phase B SECURITY → CONTRACT delta → FE signoff.
+- 2026-08-31 · US-15.1 QA re-review APPROVE WITH CONDITIONS `efc6b75`: H1/M1/L1 closed; 30/30; scoped lint clean; CLOSE Phase A allowed; Phase B must document additive safety semantics.
+- 2026-08-31 · US-15.1 POST-QA-FIX VALIDATE PASS WITH NOTES `3e3e4ea`: 30/30; H1/M1/L1 closed; zero blockers → QA re-review.
+- 2026-08-31 · US-15.1 QA FIX → VALIDATE: M1 profile isolation `4b5449d`; H1 guarded ledger re-plan + L1 invalid JSON `23d048c`; focused tests 30/30; ESLint clean.
+- 2026-08-31 · US-15.1 QA Phase A BLOCK `8c8e902`: H1 dry-run could overwrite non-dry-run ledger status/history; M1 profile rejection aborted batch; L1 malformed JSON accepted → BUILD/FIX then VALIDATE + QA re-run.
+- 2026-08-31 · US-15.1 RE-VALIDATE Phase A PASS WITH NOTES `d213875`: 17/17 focused tests; all prior blockers closed; zero blockers for Phase A CLOSE → QA.
+- 2026-08-31 · US-15.1 BUILD/FIX → RE-VALIDATE Phase A: `2658713` closes GET forbidden-field parity and adds executable auth/eligibility/idempotency/re-plan/zero-spend coverage; focused tests 17/17; ESLint clean.
+- 2026-08-31 · US-15.1 VALIDATE Phase A FAIL `29ebe97`: GET forbidden fields bypassed body gate; executable zero-spend proof absent; frozen auth/eligibility/idempotency/re-plan matrix incomplete → BUILD/FIX integrations owner.
+- 2026-08-31 · US-15.1 BUILD Phase A → VALIDATE: BE/DB `54bfdbc`; integrations `8828f73`; focused contract + orchestration tests 7/7; ESLint focused clean; next requirements-validator.
+- 2026-08-31 · US-15.1 PREP → SPEC → SECURITY → CONTRACT → BUILD Phase A: SPEC-REVIEW ALIGNED; SECURITY APPROVE WITH CONDITIONS; CONTRACT Phase A frozen; FE signoff N/A (backend-only); next integrations + BE/DB implementation.
 - 2026-08-31 · US-15.1 SELECT → PREP: `US-15.1` added to USER_STORIES.md (Phase A 5 AC + Phase B 4 AC); README + TASKS in `plan/stories/US-15.1/` — PLAN F7 cron (ADR-0001): Phase A = cron route + dry-run + ledger; Phase B = full pipeline wiring; branch `feature/US-15.1-weekly-cron`; next SPEC-REVIEW.
 - 2026-08-31 · Sprint 8 phase integration CONNECTED: `PHASE-8.md` (0 blockers; 79/79 tests); Operator UI → Wan/LTX preview+create → stitch → branding → QA verified on `main` → **Sprint 8 fully closed**; SELECT **PLAN F7 cron** (recommended) or QA follow-ups.
 - 2026-08-31 · US-8.9 CLOSE: 6/6 AC checked; VALIDATION PASS WITH NOTES (6/6 AC; 41/41); QA APPROVE (0 Critical/High, 3 Low); FE `4eed5a5` · BE `e8bd0d3`; branch `feature/US-8.9-broll-operator-generate-ui` ready for FF-merge → **Sprint 8 CLOSED**; SELECT **Sprint 8 phase integration** (recommended), **PLAN F7 cron**, or QA follow-ups.
