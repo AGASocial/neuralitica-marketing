@@ -1169,9 +1169,9 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 | **DB** | — |
 
 **Acceptance criteria**
-- [ ] Strategy agent prompt includes last 4 weeks metrics summary when available
-- [ ] Graceful empty state when no metrics yet
-- [ ] [SEC] Metrics summary injected into the strategy prompt is built from aggregated numbers server-side (no free-text fields), keeping the prompt surface free of user-authored injection vectors
+- [x] Strategy agent prompt includes last 4 weeks metrics summary when available
+- [x] Graceful empty state when no metrics yet
+- [x] [SEC] Metrics summary injected into the strategy prompt is built from aggregated numbers server-side (no free-text fields), keeping the prompt surface free of user-authored injection vectors
 
 **Depends on:** US-13.1, US-4.1
 
