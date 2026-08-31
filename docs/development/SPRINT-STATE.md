@@ -5,7 +5,7 @@
 ```yaml
 current_phase: 5
 current_story: US-13.2
-story_status: SECURITY
+story_status: QA
 feature_branch: feature/US-13.2-strategy-insights
 last_completed_story: US-13.1
 phase_status: in_progress
