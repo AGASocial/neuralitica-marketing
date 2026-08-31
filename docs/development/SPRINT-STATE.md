@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 5
-current_story: US-12.2
-story_status: CLOSE
-feature_branch: feature/US-12.2-mark-published
-last_completed_story: US-12.1
+current_story: null
+story_status: SELECT
+feature_branch: null
+last_completed_story: US-12.2
 phase_status: in_progress
 blocked_reason: null
-updated_at: 2026-08-31T03:00:00Z
+updated_at: 2026-08-31T03:35:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1)
@@ -18,7 +18,7 @@ updated_at: 2026-08-31T03:00:00Z
 | Story | Status | Notes |
 |-------|--------|-------|
 | US-12.1 Weekly calendar view | done | BE `9ac84dc` · FE `de2fe1e` · fix `79546ab` · VALIDATION `d642e70` · QA `80766dc` · CLOSE `722e5e0` (5/5 AC; mark published → US-12.2) |
-| US-12.2 Mark manual publication done | CLOSE | VALIDATION `ceacf10` · QA `8b3536f` · merge next |
+| US-12.2 Mark manual publication done | done | BE `6e0fcf0` · FE `513632e` · DB `f62a1a2` · VALIDATION `ceacf10` · QA `8b3536f` · CLOSE `f148e2d` (4/4 AC; metrics → US-13.1) |
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -61,6 +61,7 @@ updated_at: 2026-08-31T03:00:00Z
 
 ## Historial reciente
 
+- 2026-08-30 · US-12.2 CLOSE: 4/4 AC checked; VALIDATION PASS WITH NOTES `ceacf10` (39/39); QA APPROVE `8b3536f` (0 Critical/High); FF-merge `f148e2d` to main; Phase 5 → SELECT **US-13.1** (recommended), US-13.2, or US-8.7.
 - 2026-08-30 · US-12.2 SELECT → PREP. Branch `feature/US-12.2-mark-published` from main; deps US-12.1 ✅.
 - 2026-08-30 · US-12.1 CLOSE: 5/5 AC checked; VALIDATION PASS WITH NOTES `d642e70` (18/18); QA APPROVE WITH CONDITIONS `80766dc` after fix `79546ab` (0 Critical/High); FF-merge `722e5e0` to main; Phase 5 → SELECT **US-12.2** (recommended), US-13.1, or US-8.7.
 - 2026-08-30 · US-11.3 CLOSE: 5/5 AC checked; VALIDATION PASS WITH NOTES `209dcc3` (44/44); QA APPROVE WITH CONDITIONS `04dfe5b` (0 Critical/High); FF-merge `dfdace9` to main; **Sprint 6 complete** (US-11.1/11.2/11.3); Phase 3 → SELECT **US-12.1** (recommended), phase integration, or US-8.5.
