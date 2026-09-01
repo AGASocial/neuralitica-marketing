@@ -156,6 +156,13 @@ export async function applyVideoJobStatusUpdate(
     });
   }
 
+  if (nextStatus === "completed" || nextStatus === "failed") {
+    const { maybeResumeWeeklyCycleFromJob } = await import(
+      "@/lib/orchestration/maybe-resume-weekly-cycle-from-job"
+    );
+    await maybeResumeWeeklyCycleFromJob({ jobKind: "video", jobId: job.id });
+  }
+
   return {
     ok: true,
     jobId: job.id,

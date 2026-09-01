@@ -516,6 +516,18 @@ describe("applyVideoJobStatusUpdate Phase B spend backfill", () => {
   });
 });
 
+describe("applyVideoJobStatusUpdate — weekly-cycle resume wiring", () => {
+  it("calls maybeResumeWeeklyCycleFromJob on terminal completed and failed", () => {
+    const src = readFileSync(
+      path.join(__dirname, "apply-video-job-status-update.ts"),
+      "utf8",
+    );
+    assert.match(src, /maybeResumeWeeklyCycleFromJob\(\{ jobKind: "video", jobId: job\.id \}\)/);
+    assert.match(src, /nextStatus === "completed" \|\| nextStatus === "failed"/);
+    assert.match(src, /onVideoJobCompletedRevision\(\{/);
+  });
+});
+
 describe("persistVideoJobOutputAsset adapter actualCostCents", () => {
   it("forwards fetchAsset.actualCostCents and durationSec from the adapter", async () => {
     const nodeModule = Module as unknown as NodeModuleLoad;

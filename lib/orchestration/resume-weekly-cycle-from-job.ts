@@ -8,11 +8,8 @@ import "server-only";
  * tenant/status/URL/cost claim — this function re-derives truth from the
  * persisted step-run linkage and the owning job's own table.
  *
- * Integration note: the actual webhook handlers that need to call this
- * (`lib/assembly/on-assembly-job-completed.ts`, `lib/qa/on-branding-completed.ts`,
- * video job poll completion) are outside `lib/orchestration/**` ownership —
- * see the follow-up task flagged for media-pipeline-engineer /
- * content-agents-engineer to wire the one-line call.
+ * Integration note: job completion hooks call
+ * `maybeResumeWeeklyCycleFromJob` from video/assembly/branding status writers.
  */
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { loadAssemblyJobScoped } from "@/lib/assembly/load-assembly-job";

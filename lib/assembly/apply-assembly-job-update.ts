@@ -148,6 +148,13 @@ export async function applyAssemblyJobUpdate(
     await onAssemblyJobCompleted({ assemblyJobId: job.id });
   }
 
+  if (nextStatus === "completed" || nextStatus === "failed") {
+    const { maybeResumeWeeklyCycleFromJob } = await import(
+      "@/lib/orchestration/maybe-resume-weekly-cycle-from-job"
+    );
+    await maybeResumeWeeklyCycleFromJob({ jobKind: "assembly", jobId: job.id });
+  }
+
   return {
     ok: true,
     jobId: job.id,

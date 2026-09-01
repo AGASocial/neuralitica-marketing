@@ -177,6 +177,13 @@ export async function applyBrandingJobUpdate(
     });
   }
 
+  if (nextStatus === "completed" || nextStatus === "failed") {
+    const { maybeResumeWeeklyCycleFromJob } = await import(
+      "@/lib/orchestration/maybe-resume-weekly-cycle-from-job"
+    );
+    await maybeResumeWeeklyCycleFromJob({ jobKind: "branding", jobId: job.id });
+  }
+
   return {
     ok: true,
     jobId: job.id,
