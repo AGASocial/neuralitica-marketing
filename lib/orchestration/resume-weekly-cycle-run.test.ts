@@ -234,13 +234,16 @@ describe("resumeWeeklyCycleRun — aggregate resume transitions", () => {
     } finally { restore(); clearModuleCache(); }
   });
 
-  it("QA H1: a paused run with an already-completed step resumes without re-dispatching or rebuilding that step (no double-spend)", async () => {
+  it("QA H1/H2: a paused run with an already-completed step resumes without re-dispatching or rebuilding that step (no double-spend), AND actually advances the slot's chain to its next step (no stall)", async () => {
     const stepRuns = [
       { id: "s0", runId, clientId, slotIndex: 0, step: "primary_video", status: "completed", attempt: 1, jobId: "video-job-1" },
     ];
+    const script = { reelScriptId: "r0", slotIndex: 0, modalidad: "own_avatar", needsBroll: false };
     const { restore, calls } = installMocks({
       runRow: { id: runId, client_id: clientId, week_start: "2026-08-31", status: "paused" },
       stepRuns,
+      strategyRow: { id: "strategy-1" },
+      loadWeeklyCycleSlotScripts: async () => [script],
     });
     try {
       clearModuleCache();
@@ -253,7 +256,83 @@ describe("resumeWeeklyCycleRun — aggregate resume transitions", () => {
       // or re-dispatched.
       assert.equal(calls.createRetryRow.length, 0);
       assert.equal(calls.dispatchOutboxCalls, 0);
+      // QA H2: but the slot's chain must still continue past its paused
+      // step — resume must call advanceWeeklyCycleSlot for it, exactly
+      // once, with fromStep set to the step that was left completed.
+      assert.equal(calls.advanceCalls.length, 1);
+      assert.deepEqual(calls.advanceCalls[0], {
+        runId,
+        clientId,
+        slotIndex: 0,
+        script,
+        fromStep: "primary_video",
+      });
       assert.deepEqual(calls.reconciled, [runId]);
+    } finally { restore(); clearModuleCache(); }
+  });
+
+  it("QA H2: does not re-advance a slot already resolved at approval (terminal), and does not advance a slot that is already correctly in-flight (pending_provider)", async () => {
+    const stepRuns = [
+      // Slot 0: already terminal for this slot — must not be touched.
+      { id: "s0", runId, clientId, slotIndex: 0, step: "approval", status: "completed", attempt: 1, jobId: "approval-0" },
+      // Slot 1: genuinely still in flight (its next step was already
+      // dispatched and is awaiting the provider) — must not be re-advanced.
+      { id: "s1", runId, clientId, slotIndex: 1, step: "tts", status: "completed", attempt: 1, jobId: "tts-1" },
+      { id: "s1b", runId, clientId, slotIndex: 1, step: "broll", status: "pending_provider", attempt: 1, jobId: "video-job-1b" },
+    ];
+    const { restore, calls } = installMocks({
+      runRow: { id: runId, client_id: clientId, week_start: "2026-08-31", status: "paused" },
+      stepRuns,
+      strategyRow: { id: "strategy-1" },
+      loadWeeklyCycleSlotScripts: async () => [
+        { reelScriptId: "r0", slotIndex: 0, modalidad: "own_avatar", needsBroll: false },
+        { reelScriptId: "r1", slotIndex: 1, modalidad: "own_avatar", needsBroll: true },
+      ],
+    });
+    try {
+      clearModuleCache();
+      const { resumeWeeklyCycleRun } = require("./resume-weekly-cycle-run.ts");
+      const result = await resumeWeeklyCycleRun({ runId });
+      assert.deepEqual(result, { ok: true, runId, outcome: "RESUMED" });
+      assert.equal(calls.advanceCalls.length, 0, "neither an already-terminal slot nor an already-in-flight slot should be advanced");
+      assert.equal(calls.createRetryRow.length, 0);
+      assert.equal(calls.dispatchOutboxCalls, 0);
+    } finally { restore(); clearModuleCache(); }
+  });
+
+  it("QA H2: mixed run — advances only the slot genuinely stalled mid-chain, leaving a terminal slot and an in-flight slot untouched", async () => {
+    const stepRuns = [
+      // Slot 0: stalled mid-chain — must be advanced.
+      { id: "s0", runId, clientId, slotIndex: 0, step: "primary_video", status: "completed", attempt: 1, jobId: "video-job-0" },
+      // Slot 1: already terminal — must not be touched.
+      { id: "s1", runId, clientId, slotIndex: 1, step: "approval", status: "completed", attempt: 1, jobId: "approval-1" },
+      // Slot 2: genuinely in flight — must not be touched.
+      { id: "s2", runId, clientId, slotIndex: 2, step: "assembly", status: "dispatch_pending", attempt: 1, jobId: "assembly-2" },
+    ];
+    const slot0Script = { reelScriptId: "r0", slotIndex: 0, modalidad: "own_avatar", needsBroll: false };
+    const { restore, calls } = installMocks({
+      runRow: { id: runId, client_id: clientId, week_start: "2026-08-31", status: "paused" },
+      stepRuns,
+      strategyRow: { id: "strategy-1" },
+      loadWeeklyCycleSlotScripts: async () => [
+        slot0Script,
+        { reelScriptId: "r1", slotIndex: 1, modalidad: "own_avatar", needsBroll: false },
+        { reelScriptId: "r2", slotIndex: 2, modalidad: "own_avatar", needsBroll: false },
+      ],
+    });
+    try {
+      clearModuleCache();
+      const { resumeWeeklyCycleRun } = require("./resume-weekly-cycle-run.ts");
+      const result = await resumeWeeklyCycleRun({ runId });
+      assert.deepEqual(result, { ok: true, runId, outcome: "RESUMED" });
+      assert.equal(calls.advanceCalls.length, 1);
+      assert.deepEqual(calls.advanceCalls[0], {
+        runId,
+        clientId,
+        slotIndex: 0,
+        script: slot0Script,
+        fromStep: "primary_video",
+      });
     } finally { restore(); clearModuleCache(); }
   });
 

@@ -20,6 +20,7 @@ import {
   createOrGetReadyStepRun,
   listStepRunsForRun,
   markStepRunTerminal,
+  type WeeklyCycleStepRunRow,
 } from "@/lib/orchestration/weekly-cycle-step-runs";
 import { dispatchWeeklyCycleOutbox } from "@/lib/orchestration/dispatch-weekly-cycle-outbox";
 import { advanceWeeklyCycleSlot } from "@/lib/orchestration/advance-weekly-cycle-slot";
@@ -77,6 +78,31 @@ export async function resumeWeeklyCycleRun(params: {
   if (run.status === "partial_failed" && retryableFailed.length === 0) {
     return { ok: false, error: { code: "RUN_NOT_RESUMABLE" } };
   }
+
+  // QA H2: a slot whose latest step_run is `completed` but sits before
+  // `approval` in the step order was left mid-chain by a kill-switch pause
+  // (resume-weekly-cycle-from-job.ts's PAUSED_LIVE_DISABLED branch persists
+  // the real "completed" outcome but never itself calls
+  // advanceWeeklyCycleSlot — unlike its normal-completion sibling branch).
+  // Without an explicit continuation here that slot's chain never resumes:
+  // reconcileWeeklyCycleRun immediately resolves the run back to
+  // partial_failed/failed since nothing is pending, and a second resume is
+  // refused (RUN_NOT_RESUMABLE) because the slot's latest row is
+  // "completed", never "failed" — the client's Reel for that slot is never
+  // produced. Identify these slots from the same `stepRuns` snapshot used
+  // above: the latest (by created_at) row per slot, status "completed",
+  // step short of "approval". A slot whose latest row is
+  // ready/dispatch_pending/pending_provider/pending_worker is already
+  // correctly in-flight and is excluded by the status check alone; a slot
+  // whose latest row is the completed "approval" step is already terminal
+  // for that slot and excluded by the step check.
+  const latestRowBySlot = new Map<number, WeeklyCycleStepRunRow>();
+  for (const row of stepRuns) {
+    if (row.slotIndex !== null) latestRowBySlot.set(row.slotIndex, row);
+  }
+  const stalledCompletedSlots = Array.from(latestRowBySlot.values()).filter(
+    (row) => row.status === "completed" && row.step !== "approval",
+  );
 
   if (!isWeeklyCycleLiveAllowedForClient(run.client_id)) {
     return { ok: false, error: { code: "LIVE_DISABLED" } };
@@ -160,6 +186,25 @@ export async function resumeWeeklyCycleRun(params: {
     } else {
       await dispatchWeeklyCycleOutbox(3);
     }
+  }
+
+  // QA H2 fix: mirror resume-weekly-cycle-from-job.ts's normal-completion
+  // continuation for every slot stalled mid-chain by a kill-switch pause.
+  // Distinct from the retryableFailed loop above (which only touches rows
+  // whose latest status is "failed") — these rows are "completed", so the
+  // two sets never overlap and neither loop can double-advance a slot.
+  for (const stalledSlot of stalledCompletedSlots) {
+    if (stalledSlot.slotIndex === null) continue;
+    const script = scripts.find((s) => s.slotIndex === stalledSlot.slotIndex);
+    if (!script) continue;
+
+    await advanceWeeklyCycleSlot({
+      runId: run.id,
+      clientId: run.client_id,
+      slotIndex: stalledSlot.slotIndex,
+      script,
+      fromStep: stalledSlot.step,
+    });
   }
 
   await reconcileWeeklyCycleRun(run.id);
