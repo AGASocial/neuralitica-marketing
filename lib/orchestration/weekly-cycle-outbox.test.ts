@@ -206,6 +206,36 @@ describe("weekly cycle outbox — crash-before/after-dispatch recovery", () => {
     } finally { restore(); clearModuleCache(); }
   });
 
+  it("QA M2: a row that sat pending for a long time (stale available_at) but was JUST claimed (fresh claimed_at) is NOT listed as claimable — staleness must key off claimed_at, not available_at", async () => {
+    const client = makeOutboxClient();
+    const restore = installMocks(client);
+    try {
+      clearModuleCache();
+      const { enqueueOutboxForStepRun, claimOutboxRow, listClaimableOutboxRows } = require("./weekly-cycle-outbox.ts");
+      const row = await enqueueOutboxForStepRun({ runId, stepRunId, eventKind: "dispatch_worker", idempotencyKey });
+
+      // Simulate the row having sat `pending` for well over the 5-minute
+      // staleness window before a worker finally picked it up — routine
+      // under cron cadence / backlog, and unrelated to claim freshness.
+      const longAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+      client.mutateRow(row.id, { available_at: longAgo });
+
+      const firstClaim = await claimOutboxRow(row.id);
+      assert.ok(firstClaim, "the stale available_at must not block the initial legitimate claim");
+      assert.equal(firstClaim?.row.status, "claimed");
+
+      // The claim was just taken (claimed_at is fresh, "now") — a second
+      // worker pass moments later must NOT see it as a stale/reclaimable
+      // candidate, even though available_at is still far in the past.
+      const claimable = await listClaimableOutboxRows(10);
+      assert.deepEqual(
+        claimable.map((r: { id: string }) => r.id),
+        [],
+        "a freshly-claimed row must not be reclaimable just because its available_at happens to be old",
+      );
+    } finally { restore(); clearModuleCache(); }
+  });
+
   it("markOutboxDispatched / markOutboxRetry / markOutboxFailed transition status without losing the row", async () => {
     const client = makeOutboxClient();
     const restore = installMocks(client);

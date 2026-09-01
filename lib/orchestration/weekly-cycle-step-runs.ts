@@ -199,7 +199,7 @@ export async function markStepRunPending(params: {
   jobId: string;
 }): Promise<boolean> {
   const supabase = createServerSupabaseClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from(WEEKLY_CYCLE_STEP_RUN_TABLE)
     .update({
       status: params.status,
@@ -208,8 +208,10 @@ export async function markStepRunPending(params: {
       started_at: new Date().toISOString(),
     })
     .eq("id", params.stepRunId)
-    .in("status", ["dispatch_pending", "ready"]);
-  return !error;
+    .in("status", ["dispatch_pending", "ready"])
+    .select("id")
+    .maybeSingle();
+  return !error && data !== null;
 }
 
 export async function markStepRunTerminal(params: {
@@ -218,7 +220,7 @@ export async function markStepRunTerminal(params: {
   errorCode?: WeeklyCycleErrorCode;
 }): Promise<boolean> {
   const supabase = createServerSupabaseClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from(WEEKLY_CYCLE_STEP_RUN_TABLE)
     .update({
       status: params.status,
@@ -226,8 +228,10 @@ export async function markStepRunTerminal(params: {
       finished_at: new Date().toISOString(),
     })
     .eq("id", params.stepRunId)
-    .not("status", "in", "(completed,failed,skipped)");
-  return !error;
+    .not("status", "in", "(completed,failed,skipped)")
+    .select("id")
+    .maybeSingle();
+  return !error && data !== null;
 }
 
 /** Backoff a dispatch_pending/pending_* row back to `ready` for the next attempt. */
@@ -236,10 +240,12 @@ export async function scheduleStepRunRetry(params: {
   availableAt: string;
 }): Promise<boolean> {
   const supabase = createServerSupabaseClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from(WEEKLY_CYCLE_STEP_RUN_TABLE)
     .update({ status: "ready", available_at: params.availableAt })
     .eq("id", params.stepRunId)
-    .not("status", "in", "(completed,failed,skipped)");
-  return !error;
+    .not("status", "in", "(completed,failed,skipped)")
+    .select("id")
+    .maybeSingle();
+  return !error && data !== null;
 }

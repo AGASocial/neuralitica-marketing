@@ -29,6 +29,7 @@ export type WeeklyCycleOutboxRow = {
   dispatchAttempt: number;
   availableAt: string;
   claimToken: string | null;
+  claimedAt: string | null;
 };
 
 function mapRow(row: Record<string, unknown>): WeeklyCycleOutboxRow {
@@ -42,6 +43,7 @@ function mapRow(row: Record<string, unknown>): WeeklyCycleOutboxRow {
     dispatchAttempt: row.dispatch_attempt as number,
     availableAt: row.available_at as string,
     claimToken: (row.claim_token as string | null) ?? null,
+    claimedAt: (row.claimed_at as string | null) ?? null,
   };
 }
 
@@ -111,8 +113,18 @@ export async function listClaimableOutboxRows(
   return rows
     .filter((row) => {
       if (row.status === "pending") return true;
-      // stale claimed row — reclaimable
-      return row.claimToken !== null && row.availableAt <= staleCutoff;
+      // Stale claimed row — reclaimable. Staleness is measured against
+      // `claimed_at` (when the claim was taken), matching the real atomic
+      // claim in `claimOutboxRow`. `available_at` is unrelated to claim
+      // staleness — it is set at enqueue/retry-scheduling time and never
+      // updated on claim, so using it here would misclassify a
+      // freshly-claimed row as stale whenever it sat `pending` for a while
+      // before being picked up (QA M2).
+      return (
+        row.claimToken !== null &&
+        row.claimedAt !== null &&
+        row.claimedAt <= staleCutoff
+      );
     })
     .slice(0, limit);
 }

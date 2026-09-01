@@ -10,7 +10,11 @@ import "server-only";
  * public entrypoint into this function.
  */
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { WEEKLY_CYCLE_RUNS_TABLE, MAX_WEEKLY_CYCLE_ATTEMPTS } from "@/lib/orchestration/weekly-cycle-live-types";
+import {
+  WEEKLY_CYCLE_RUNS_TABLE,
+  MAX_WEEKLY_CYCLE_ATTEMPTS,
+  RETRYABLE_WEEKLY_CYCLE_ERROR_CODES,
+} from "@/lib/orchestration/weekly-cycle-live-types";
 import { isWeeklyCycleLiveAllowedForClient } from "@/lib/orchestration/weekly-cycle-live-env";
 import {
   createOrGetReadyStepRun,
@@ -54,8 +58,20 @@ export async function resumeWeeklyCycleRun(params: {
   }
 
   const stepRuns = await listStepRunsForRun(run.id);
+  // A step is only auto-retried on generic resume when it is genuinely a
+  // failed step (never a completed one — QA H1: a kill-switch-mid-run
+  // callback now persists a truly-succeeded job as `completed`, so it is
+  // excluded here by status alone) AND its error code is a known-transient
+  // one. Anything outside RETRYABLE_WEEKLY_CYCLE_ERROR_CODES (e.g.
+  // BUDGET_EXCEEDED, CONSENT_REQUIRED, or a stale LIVE_DISABLED-tagged row)
+  // requires deliberate intervention rather than a blind re-dispatch.
   const retryableFailed = stepRuns.filter(
-    (row) => row.status === "failed" && row.attempt < MAX_WEEKLY_CYCLE_ATTEMPTS && row.slotIndex !== null,
+    (row) =>
+      row.status === "failed" &&
+      row.attempt < MAX_WEEKLY_CYCLE_ATTEMPTS &&
+      row.slotIndex !== null &&
+      row.errorCode !== null &&
+      RETRYABLE_WEEKLY_CYCLE_ERROR_CODES.has(row.errorCode),
   );
 
   if (run.status === "partial_failed" && retryableFailed.length === 0) {

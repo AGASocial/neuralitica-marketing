@@ -29,6 +29,7 @@ function installMocks(options: MockOptions) {
     markTerminal: [] as unknown[],
     reconciled: [] as string[],
     advanced: [] as unknown[],
+    paused: [] as string[],
   };
   nodeModule._load = function (request, parent, isMain) {
     if (request === "server-only") return {};
@@ -90,6 +91,14 @@ function installMocks(options: MockOptions) {
     }
     if (isModule("weekly-cycle-live-env")) {
       return { isWeeklyCycleLiveAllowedForClient: options.isLiveAllowed ?? (() => true) };
+    }
+    if (isModule("pause-weekly-cycle-run-cas")) {
+      return {
+        pauseWeeklyCycleRunCas: async (runId: string) => {
+          calls.paused.push(runId);
+          return { outcome: "PAUSED", runId };
+        },
+      };
     }
     if (isModule("weekly-cycle-trusted-steps")) {
       return { loadWeeklyCycleSlotScripts: options.loadWeeklyCycleSlotScripts ?? (async () => []) };
@@ -177,7 +186,7 @@ describe("resumeWeeklyCycleFromJob — authenticated callback trust and direct-s
     } finally { restore(); clearModuleCache(); }
   });
 
-  it("kill switch disabled mid-flight pauses the step as LIVE_DISABLED instead of advancing it", async () => {
+  it("QA H1: kill switch disabled mid-flight for a job that actually COMPLETED marks the step completed (never a synthetic failure) and pauses the run instead of losing the paid-for work", async () => {
     const { restore, calls } = installMocks({
       linkedStepRun: pendingVideoStepRun(),
       videoJobRow: { status: "completed", client_id: clientId },
@@ -188,9 +197,35 @@ describe("resumeWeeklyCycleFromJob — authenticated callback trust and direct-s
       const { resumeWeeklyCycleFromJob } = require("./resume-weekly-cycle-from-job.ts");
       const result = await resumeWeeklyCycleFromJob({ jobKind: "video", jobId: "job-1" });
       assert.deepEqual(result, { ok: true, runId, outcome: "PAUSED_LIVE_DISABLED" });
-      assert.deepEqual(calls.markTerminal[0], { stepRunId: "step-1", status: "failed", errorCode: "LIVE_DISABLED" });
+      // The real outcome is preserved as `completed` — never discarded as a
+      // synthetic LIVE_DISABLED failure (that would strand paid work and, on
+      // a later resume, risk re-dispatching and double-paying for it).
+      assert.deepEqual(calls.markTerminal[0], { stepRunId: "step-1", status: "completed" });
+      // The slot chain must not advance while the run is being paused — the
+      // next step is only dispatched once an Operator resumes.
       assert.equal(calls.advanced.length, 0);
+      // The aggregate run transitions running -> paused via the dedicated CAS.
+      assert.deepEqual(calls.paused, [runId]);
       assert.deepEqual(calls.reconciled, [runId]);
+    } finally { restore(); clearModuleCache(); }
+  });
+
+  it("QA H1: kill switch disabled mid-flight for a job that genuinely FAILED records a real step failure, never a synthetic completion, and does not invoke the pause CAS", async () => {
+    const { restore, calls } = installMocks({
+      linkedStepRun: pendingVideoStepRun(),
+      videoJobRow: { status: "failed", client_id: clientId },
+      isLiveAllowed: () => false,
+    });
+    try {
+      clearModuleCache();
+      const { resumeWeeklyCycleFromJob } = require("./resume-weekly-cycle-from-job.ts");
+      const result = await resumeWeeklyCycleFromJob({ jobKind: "video", jobId: "job-1" });
+      // A genuine failure is orthogonal to the kill switch — normal failure
+      // handling applies, exactly as if live were still allowed.
+      assert.deepEqual(result, { ok: true, runId, outcome: "ADVANCED" });
+      assert.deepEqual(calls.markTerminal[0], { stepRunId: "step-1", status: "failed", errorCode: "PROVIDER_TRANSIENT" });
+      assert.equal(calls.advanced.length, 0, "a failed step is terminal for the slot chain, never advanced");
+      assert.equal(calls.paused.length, 0, "must never pause the run for a step that never actually succeeded");
     } finally { restore(); clearModuleCache(); }
   });
 

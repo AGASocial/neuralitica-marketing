@@ -26,6 +26,7 @@ import { reconcileWeeklyCycleRun } from "@/lib/orchestration/reconcile-weekly-cy
 import { advanceWeeklyCycleSlot } from "@/lib/orchestration/advance-weekly-cycle-slot";
 import { loadWeeklyCycleSlotScripts } from "@/lib/orchestration/weekly-cycle-trusted-steps";
 import { isWeeklyCycleLiveAllowedForClient } from "@/lib/orchestration/weekly-cycle-live-env";
+import { pauseWeeklyCycleRunCas } from "@/lib/orchestration/pause-weekly-cycle-run-cas";
 import type {
   ResumeWeeklyCycleFromJobParams,
   ResumeWeeklyCycleFromJobResult,
@@ -106,12 +107,28 @@ export async function resumeWeeklyCycleFromJob(
     return { ok: true, runId: stepRun.runId, outcome: "DUPLICATE_CALLBACK" };
   }
 
-  if (!isWeeklyCycleLiveAllowedForClient(stepRun.clientId)) {
-    await markStepRunTerminal({ stepRunId: stepRun.id, status: "failed", errorCode: "LIVE_DISABLED" });
+  if (!isWeeklyCycleLiveAllowedForClient(stepRun.clientId) && status === "completed") {
+    // The kill switch is off (or the client went inactive), but the
+    // underlying provider/worker job genuinely completed and was already
+    // paid for. Discarding that as a synthetic "failed" would strand real
+    // spend with no resume path and risk double-spend on a later retry
+    // (QA H1). Persist the real outcome, then pause the aggregate run via
+    // the frozen `running -> paused` CAS instead of letting it resolve to a
+    // terminal `failed`/`partial_failed` state.
+    const marked = await markStepRunTerminal({ stepRunId: stepRun.id, status: "completed" });
+    if (!marked) {
+      // Already terminal — idempotent duplicate callback.
+      return { ok: true, runId: stepRun.runId, outcome: "DUPLICATE_CALLBACK" };
+    }
+    await pauseWeeklyCycleRunCas(stepRun.runId);
+    // Rebuild step_log from the now-completed step row; reconcile never
+    // rewrites `status` away from `paused` (guarded by its own CAS).
     await reconcileWeeklyCycleRun(stepRun.runId);
     return { ok: true, runId: stepRun.runId, outcome: "PAUSED_LIVE_DISABLED" };
   }
 
+  // Either live is allowed, or the job failed for its own reason — a normal
+  // step failure, orthogonal to the kill-switch check above.
   const terminal = status === "completed" ? "completed" : "failed";
   const marked = await markStepRunTerminal({
     stepRunId: stepRun.id,

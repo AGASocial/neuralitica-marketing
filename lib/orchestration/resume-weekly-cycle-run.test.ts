@@ -156,7 +156,7 @@ describe("resumeWeeklyCycleRun — aggregate resume transitions", () => {
   });
 
   it("gates on the live kill switch/allowlist BEFORE the CAS transition", async () => {
-    const stepRuns = [{ id: "s1", runId, clientId, slotIndex: 1, step: "assembly", status: "failed", attempt: 1 }];
+    const stepRuns = [{ id: "s1", runId, clientId, slotIndex: 1, step: "assembly", status: "failed", attempt: 1, errorCode: "PROVIDER_TRANSIENT" }];
     const { restore, calls } = installMocks({
       runRow: { id: runId, client_id: clientId, week_start: "2026-08-31", status: "partial_failed" },
       stepRuns, isLiveAllowed: () => false,
@@ -171,7 +171,7 @@ describe("resumeWeeklyCycleRun — aggregate resume transitions", () => {
   });
 
   it("gates on client active BEFORE the CAS transition", async () => {
-    const stepRuns = [{ id: "s1", runId, clientId, slotIndex: 1, step: "assembly", status: "failed", attempt: 1 }];
+    const stepRuns = [{ id: "s1", runId, clientId, slotIndex: 1, step: "assembly", status: "failed", attempt: 1, errorCode: "PROVIDER_TRANSIENT" }];
     const { restore, calls } = installMocks({
       runRow: { id: runId, client_id: clientId, week_start: "2026-08-31", status: "partial_failed" },
       stepRuns, clientActive: false,
@@ -186,7 +186,7 @@ describe("resumeWeeklyCycleRun — aggregate resume transitions", () => {
   });
 
   it("a CAS race (another resume already won) reports RUN_NOT_RESUMABLE without retrying steps", async () => {
-    const stepRuns = [{ id: "s1", runId, clientId, slotIndex: 1, step: "assembly", status: "failed", attempt: 1 }];
+    const stepRuns = [{ id: "s1", runId, clientId, slotIndex: 1, step: "assembly", status: "failed", attempt: 1, errorCode: "PROVIDER_TRANSIENT" }];
     const { restore, calls } = installMocks({
       runRow: { id: runId, client_id: clientId, week_start: "2026-08-31", status: "partial_failed" },
       stepRuns, casSucceeds: false,
@@ -215,7 +215,7 @@ describe("resumeWeeklyCycleRun — aggregate resume transitions", () => {
   it("creates the next attempt only for retryable failed slots and never rebuilds a completed slot", async () => {
     const stepRuns = [
       { id: "s0", runId, clientId, slotIndex: 0, step: "approval", status: "completed", attempt: 1, jobId: null },
-      { id: "s1", runId, clientId, slotIndex: 1, step: "assembly", status: "failed", attempt: 1, jobId: "assembly-job-1" },
+      { id: "s1", runId, clientId, slotIndex: 1, step: "assembly", status: "failed", attempt: 1, jobId: "assembly-job-1", errorCode: "PROVIDER_TRANSIENT" },
     ];
     const { restore, calls } = installMocks({
       runRow: { id: runId, client_id: clientId, week_start: "2026-08-31", status: "partial_failed" },
@@ -231,6 +231,47 @@ describe("resumeWeeklyCycleRun — aggregate resume transitions", () => {
       assert.equal(calls.createRetryRow.length, 1);
       assert.equal((calls.createRetryRow[0] as { attempt: number }).attempt, 2);
       assert.equal((calls.createRetryRow[0] as { slotIndex: number }).slotIndex, 1);
+    } finally { restore(); clearModuleCache(); }
+  });
+
+  it("QA H1: a paused run with an already-completed step resumes without re-dispatching or rebuilding that step (no double-spend)", async () => {
+    const stepRuns = [
+      { id: "s0", runId, clientId, slotIndex: 0, step: "primary_video", status: "completed", attempt: 1, jobId: "video-job-1" },
+    ];
+    const { restore, calls } = installMocks({
+      runRow: { id: runId, client_id: clientId, week_start: "2026-08-31", status: "paused" },
+      stepRuns,
+    });
+    try {
+      clearModuleCache();
+      const { resumeWeeklyCycleRun } = require("./resume-weekly-cycle-run.ts");
+      const result = await resumeWeeklyCycleRun({ runId });
+      assert.deepEqual(result, { ok: true, runId, outcome: "RESUMED" });
+      assert.equal(calls.casAttempted, 1);
+      // The completed step is `status === "completed"`, never "failed", so
+      // it is excluded from the retry filter entirely and is never rebuilt
+      // or re-dispatched.
+      assert.equal(calls.createRetryRow.length, 0);
+      assert.equal(calls.dispatchOutboxCalls, 0);
+      assert.deepEqual(calls.reconciled, [runId]);
+    } finally { restore(); clearModuleCache(); }
+  });
+
+  it("QA H1/M-hardening: excludes a failed step whose error code is not in RETRYABLE_WEEKLY_CYCLE_ERROR_CODES, even though attempt < MAX (defense-in-depth against blind re-dispatch)", async () => {
+    const stepRuns = [
+      { id: "s1", runId, clientId, slotIndex: 1, step: "primary_video", status: "failed", attempt: 1, errorCode: "LIVE_DISABLED" },
+    ];
+    const { restore, calls } = installMocks({
+      runRow: { id: runId, client_id: clientId, week_start: "2026-08-31", status: "partial_failed" },
+      stepRuns,
+    });
+    try {
+      clearModuleCache();
+      const { resumeWeeklyCycleRun } = require("./resume-weekly-cycle-run.ts");
+      const result = await resumeWeeklyCycleRun({ runId });
+      assert.deepEqual(result, { ok: false, error: { code: "RUN_NOT_RESUMABLE" } });
+      assert.equal(calls.casAttempted, 0);
+      assert.equal(calls.createRetryRow.length, 0);
     } finally { restore(); clearModuleCache(); }
   });
 });
