@@ -8,9 +8,9 @@ current_story: null
 story_status: DONE
 feature_branch: null
 last_completed_story: US-15.1
-phase_status: needs_phase_integration
-blocked_reason: "Re-run Fase 7 integration after task_c263b2c8 fix (commit 313ad23 on feature branch)"
-updated_at: 2026-09-01T11:05:00Z
+phase_status: complete
+blocked_reason: null
+updated_at: 2026-09-01T11:10:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -52,7 +52,7 @@ updated_at: 2026-09-01T11:05:00Z
 |-------|--------|-------|
 | US-15.1 Weekly cycle cron + orchestration | done (A+B) | Phase A CLOSE `b1e4508` (5/5 AC). **Phase B CLOSED** `02b7899` FF-merged + pushed to `main`; BUILD BE/DB `83c5049` · FE `f5204ac` · integrations `464081b`; VALIDATE FAIL→PASS after 3 cycles (`d2f6d9e`→`4148bab`→`a249f3a`→`7ec40a0`); QA 2 fix cycles — H1 kill-switch pause (`60de5f6`), H2 resume-advances-paused-slot (`72c22a9`) — final APPROVE `b54e198`; 4/4 Phase B AC checked. **Known follow-up** (`task_c263b2c8`, PO-accepted): job-completion webhooks not yet wired to `resumeWeeklyCycleFromJob` — defer to Fase 7 phase integration (SC-1..4), not a CLOSE blocker. |
 
-**Sprint 9 CLOSED** — PLAN F7 weekly cron live pipeline complete and on `main`. **Next:** Fase 7 phase integration (integration-checker, SC-1..SC-4) — should also verify/close the job-completion webhook wiring follow-up before CONNECTED.
+**Sprint 9 CLOSED** — PLAN F7 weekly cron live pipeline complete and on `main`. **Fase 7 phase integration CONNECTED** (`313ad23` + `b3942c9` on `main`; 148/148 orchestration tests).
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
@@ -95,6 +95,7 @@ updated_at: 2026-09-01T11:05:00Z
 
 ## Historial reciente
 
+- 2026-09-01 · Loop tick #2 → FF-merge `feature/US-15.1-wire-resume-from-jobs` to `main` (`b3942c9`); Fase 7 integration-checker **CONNECTED** (`PHASE-7.md`; 148/148); `phase_status: complete` — loop `/desarrollar` detenido.
 - 2026-09-01 · Loop tick #1 → BUILD task_c263b2c8: wire resumeWeeklyCycleFromJob in video/assembly/branding hooks (`313ad23` on `feature/US-15.1-wire-resume-from-jobs`). Next: merge + re-run Fase 7 integration.
 - 2026-09-01 · Fase 7 integration-checker GAPS (`docs/development/PHASE-7.md`): 143/143 US-15.1 tests pass; blocker task_c263b2c8 — resumeWeeklyCycleFromJob not wired in completion hooks. Loop /desarrollar cada 5m activo.
 - 2026-08-31 · US-15.1 Phase B QA final re-review APPROVE `b54e198`: H1/H2 both re-confirmed closed independently (advance-loop/CAS traced directly, 14/14 + 203/203 tests run); probed 2 new edge cases (advanceWeeklyCycleSlot throwing mid-loop — confirmed unreachable through any current code path, recorded as non-blocking L2 hardening note; kill switch flipping off mid-advance — confirmed safe, re-checked at every spend boundary independently). Clean-area findings (budget/consent, IDOR, no-publish, FE/DTO) re-spot-checked via diff — untouched by either fix cycle. 0 Critical/High/Medium open. → CLOSE.

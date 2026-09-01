@@ -1,7 +1,7 @@
 # Integration Report — PLAN Fase 7 (Ciclo semanal automatizado)
 
-**Date:** 2026-09-01  
-**Branch reviewed:** `main` (US-15.1 Phase A+B CLOSED, Sprint 9)  
+**Date:** 2026-09-01 (re-run post `313ad23`)  
+**Branch reviewed:** `main` (`313ad23` — US-15.1 task_c263b2c8 wired)  
 **Checker:** integration-checker  
 **Flow scope:** S4.2 Ciclo semanal auto → cola Aprobación · S4.5 Excepciones Operator · SC-1..SC-4 (integration level) · ADR-0001
 
@@ -9,17 +9,17 @@
 
 ---
 
-## Verdict: GAPS
+## Verdict: CONNECTED
 
-US-15.1 delivers a coherent cron → live orchestrator → outbox → trusted-step chain with strong unit coverage (143/143 curated tests pass this gate). Cron live wiring, idempotency, kill-switch pause/resume (H1/H2), partial-failure reconciliation, and the no-publish boundary are **connected within `lib/orchestration/**`**. However, the **cross-module handoff from async job completion back into the weekly cycle is missing**: `resumeWeeklyCycleFromJob` is built and tested but has **zero production call sites** outside `lib/orchestration/`. Without wiring in video poll / assembly / branding completion hooks, async steps stall in `pending_provider`/`pending_worker` and **SC-1 / S4.2 happy path cannot complete to the approval queue without manual intervention**. Phase 7 **cannot close as CONNECTED** until `task_c263b2c8` is resolved.
+US-15.1 delivers a coherent cron → live orchestrator → outbox → trusted-step → **async resume** chain with strong unit coverage (**148/148** curated tests pass this gate). Cron live wiring, idempotency, kill-switch pause/resume (H1/H2), partial-failure reconciliation, the no-publish boundary, and the **cross-module handoff from async job completion back into the weekly cycle** are **connected**. Commit `313ad23` wires `maybeResumeWeeklyCycleFromJob` (→ `resumeWeeklyCycleFromJob`) from all three terminal status writers: video poll, assembly, and branding. Non-cycle jobs no-op via `JOB_LINK_NOT_FOUND`; existing revision auto-chains are preserved. **PLAN Fase 7 may close at code-integration level.** Staging SC-1 smoke for one allowlisted internal client remains recommended before MVP sign-off.
 
 | Metric | Value |
 |--------|-------|
-| **Verdict** | GAPS |
-| **Blocking gaps** | 1 |
+| **Verdict** | CONNECTED |
+| **Blocking gaps** | 0 |
 | **Non-blocking / expected gaps** | 5 |
-| **Phase may close** | No (until webhook/resume wiring) |
-| **Recommended next** | Wire `resumeWeeklyCycleFromJob` → re-run integration → staging SC-1 smoke |
+| **Phase may close** | Yes (code integration); staging SC-1 smoke recommended |
+| **Recommended next** | Staging SC-1 smoke → update `SPRINT-STATE.md` → select Fase 8 P2 or IG gate story |
 
 ---
 
@@ -29,13 +29,13 @@ US-15.1 delivers a coherent cron → live orchestrator → outbox → trusted-st
 |------------------------------------------------|----------|
 | Vercel Cron + `CRON_SECRET` Route Handler | **Yes.** `vercel.json` Monday 06:00 UTC → `app/api/cron/weekly-cycle/route.ts`; Bearer auth first; `runWeeklyCycleCronBatch` |
 | Encolar ciclo por Cliente `active` con onboarding completo | **Partial.** `listEligibleClientsForWeeklyCycle` gates profile + visual mode; **IG connect checklist not enforced** (explicit US-15.1 defer) |
-| Orquestar Estrategia → guion → caption → cost → providers → assembly → QA → Aprobación | **Partial.** Sync global chain + outbox dispatch wired; **async completion → resume not wired** |
+| Orquestar Estrategia → guion → caption → cost → providers → assembly → QA → Aprobación | **Yes (code).** Sync global chain + outbox dispatch + async resume wired; staging SC-1 not yet run |
 | Idempotencia por Cliente + semana | **Yes.** Unique `(client_id, week_start)` · CAS acquire · dry-run re-plan guard · step-run idempotency keys |
-| Ciclo parcial: OK → Aprobación; fallidos → Operator | **Partial.** `reconcileWeeklyCycleRun` + Operator DTO for explicit failures; **stalled `pending_*` from missing resume invisible to Operator** |
+| Ciclo parcial: OK → Aprobación; fallidos → Operator | **Yes.** `reconcileWeeklyCycleRun` + Operator DTO for explicit failures; async resume advances or fails steps instead of stalling |
 | Reintentos auto limitados; luego cola Operator | **Yes.** Outbox backoff (30s/120s, max 3) · `resumeWeeklyCycleRun` retries transient failed steps |
 | UI Operator: disparo manual, inspección | **Yes.** `/operator/cycle` · trigger / preview / resume actions · EN/ES |
 | UI Operator: pausar/skip semana | **Deferred** (US-15.1 out of scope; kill-switch env + pause CAS exist for mid-run safety) |
-| SC-1..SC-4 verificables con Cliente interno | **Not met at integration level** — blocked by async resume gap (SC-1); SC-3/SC-4 need live smoke post-fix |
+| SC-1..SC-4 verificables con Cliente interno | **SC-1 code path connected; staging smoke pending** · SC-2 met (code) · SC-3/SC-4 deferred to ops |
 
 ---
 
@@ -53,7 +53,7 @@ US-15.1 delivers a coherent cron → live orchestrator → outbox → trusted-st
 | 6. Global chain | Strategy → auto-approve CAS → scripts → captions | `runWeeklyCycleLive` L93-155 · `weekly-cycle-trusted-steps.ts` | integrations-engineer / content-agents-engineer |
 | 7. Seed slots | 3 slots → first async/sync step each | `advanceWeeklyCycleSlot({ fromStep: null })` | integrations-engineer |
 | 8. Async dispatch | primary_video / broll / assembly / branding enqueued | `dispatchWeeklyCycleOutbox` → trusted create* seams | integrations-engineer / media-pipeline-engineer |
-| 9. **Job completion → resume** | Poll/webhook marks step terminal + advances successor | **`resumeWeeklyCycleFromJob` not called from any completion hook** | **media-pipeline-engineer / integrations-engineer** |
+| 9. **Job completion → resume** | Poll/webhook marks step terminal + advances successor | **`maybeResumeWeeklyCycleFromJob` called from all three status writers on terminal `completed`/`failed`** | integrations-engineer / media-pipeline-engineer |
 | 10. Sync slot steps | tts → qa → approval inline | `advance-weekly-cycle-slot.ts` sync branch (reachable only after step 9) | integrations-engineer |
 | 11. Approval queue | `pending_client` only; never publish | `ensureApprovalPackageForSystemCycle` | nextjs-backend |
 | 12. Aggregate terminal | `completed` / `partial_failed` / `failed` | `reconcileWeeklyCycleRun` | integrations-engineer |
@@ -75,10 +75,10 @@ US-15.1 delivers a coherent cron → live orchestrator → outbox → trusted-st
 | Strategy agent → cycle | `generateContentStrategyForClient({ invokedBy: "system" })` | System CAS auto-approve | OK |
 | Scripts/captions agents | `generateReelScriptsForClient` / `generateReelCaptionsForClient` batch | Existing F3 contracts | OK |
 | Outbox → video jobs | `dispatchWeeklyCyclePrimaryVideoStep` / `dispatchWeeklyCycleBrollStep` | `neuramark_video_jobs` + spend ledger | OK (dispatch) |
-| **Video poll complete → cycle** | **`resumeWeeklyCycleFromJob({ jobKind: "video", jobId })`** | **`apply-video-job-status-update.ts` only calls `onVideoJobCompletedRevision`** | **GAP** |
+| **Video poll complete → cycle** | **`maybeResumeWeeklyCycleFromJob({ jobKind: "video", jobId })`** | **`apply-video-job-status-update.ts` L159-163** (after revision hook on completed) | **OK** |
 | Outbox → assembly/branding | `createAssemblyJobForClientTrusted` / `createBrandingJobForAssembly` | `neuramark_assembled_reels` | OK (dispatch) |
-| **Assembly complete → cycle** | **`resumeWeeklyCycleFromJob({ jobKind: "assembly", jobId })`** | **`on-assembly-job-completed.ts` → branding auto-chain only** | **GAP** |
-| **Branding complete → cycle** | **`resumeWeeklyCycleFromJob({ jobKind: "branding", jobId })`** | **`on-branding-completed.ts` → QA auto-chain only** | **GAP** |
+| **Assembly complete → cycle** | **`maybeResumeWeeklyCycleFromJob({ jobKind: "assembly", jobId })`** | **`apply-assembly-job-update.ts` L151-155** (after `onAssemblyJobCompleted` on completed) | **OK** |
+| **Branding complete → cycle** | **`maybeResumeWeeklyCycleFromJob({ jobKind: "branding", jobId })`** | **`apply-branding-job-update.ts` L180-184** (after `onBrandingCompleted` on completed) | **OK** |
 | QA → approval (system path) | `runWeeklyCycleQaStep` → `ensureApprovalPackageForSystemCycle` | QA pass required; no Operator override | OK (when reached) |
 | Approval → publish (F6) | Must not auto-publish | Structural scan: zero IG imports in orchestration | OK (SC-2) |
 | Fase 5 metrics → strategy | Optional prompt injection on next cycle | `aggregateReelMetricsByTema` in generate path | OK (inherited) |
@@ -97,7 +97,7 @@ US-15.1 delivers a coherent cron → live orchestrator → outbox → trusted-st
 | Budget/consent block | Step failure with allowlisted `errorCode` | `mapDownstreamErrorCode` + trusted-step gates |
 | QA blocking legal | Never reaches approval | `ensureApprovalPackageForSystemCycle` requires `passed` |
 | Kill switch mid-run | Pause CAS; preserve completed paid work (H1); resume advances chain (H2) | `resume-weekly-cycle-from-job` + `resume-weekly-cycle-run` tests |
-| **Async job completes but cycle not resumed** | System advances to next step automatically | **Not handled — run stays `running` with stale `pending_*` rows** |
+| **Async job completes but cycle not resumed** | System advances to next step automatically | **Handled via `maybeResumeWeeklyCycleFromJob` in status writers; no-ops for non-cycle jobs** |
 | Publish without approval | Impossible on system path | Structural no-publish scan PASS |
 
 S4.1 IG onboarding gate and S4.4 IG publish remain **adjacent** — IG not required for cycle eligibility today (documented defer).
@@ -108,7 +108,7 @@ S4.1 IG onboarding gate and S4.4 IG publish remain **adjacent** — IG not requi
 
 | SC | Integration assessment | Status |
 |----|------------------------|--------|
-| **SC-1** — 3 Reels/week in approval queue without human recording | Cron + sync chain + dispatch work; **async completion handoff missing** → pipeline cannot reliably reach approval | **Not met** |
+| **SC-1** — 3 Reels/week in approval queue without human recording | Cron + sync chain + dispatch + async resume wired at code level; **staging E2E not yet run** | **Code met; ops smoke pending** |
 | **SC-2** — No publish without Cliente approval | Terminal step inserts `pending_client` only; no IG in orchestration | **Met (code)** |
 | **SC-3** — First batch ≤ 7 days post-interview | Depends on full E2E + cron schedule; not provable without resume wiring + staging | **Deferred** |
 | **SC-4** — Cliente review ≤ 30 min | Product/ops metric; blocked on SC-1 delivery | **Deferred** |
@@ -125,13 +125,13 @@ S4.1 IG onboarding gate and S4.4 IG publish remain **adjacent** — IG not requi
 | Phase B POST-H2 | PASS | High → closed `72c22a9` | Resume advances stalled mid-chain slots |
 | Phase B final | PASS (`7ec40a0`) | APPROVE `b54e198` | 0 Critical/High/Medium open at story CLOSE |
 
-**Explicit defer at CLOSE:** `task_c263b2c8` — job-completion hooks → `resumeWeeklyCycleFromJob` (PO-accepted; **must close at Fase 7 integration** per `plan/stories/US-15.1/TASKS.md:94`).
+**Explicit defer at CLOSE:** `task_c263b2c8` — job-completion hooks → `resumeWeeklyCycleFromJob`. **Closed in `313ad23`.**
 
 ---
 
 ## Automated check summary (this gate)
 
-Curated PLAN F7 / US-15.1 orchestration suite (23 files, run in batches on Windows):
+Curated PLAN F7 / US-15.1 orchestration suite (26 files, includes wiring + `maybe-resume`):
 
 ```bash
 npx tsx --test \
@@ -157,32 +157,30 @@ npx tsx --test \
   lib/orchestration/weekly-cycle-live.structural.test.ts \
   lib/orchestration/weekly-cycle-outbox.test.ts \
   lib/orchestration/weekly-cycle-step-runs.test.ts \
-  lib/orchestration/weekly-cycle.test.ts
+  lib/orchestration/weekly-cycle.test.ts \
+  lib/orchestration/maybe-resume-weekly-cycle-from-job.test.ts \
+  lib/assembly/apply-assembly-job-update.test.ts \
+  lib/branding/apply-branding-job-update.test.ts
 ```
 
-**Result:** **143 pass / 0 fail** (~4.2s per batch; full suite aggregated).
+**Result:** **148 pass / 0 fail** (~1.6s aggregated).
 
-**Production call-site audit:** `grep resumeWeeklyCycleFromJob` → definition + tests + comments only; **no imports in** `apply-video-job-status-update.ts`, `on-assembly-job-completed.ts`, `on-branding-completed.ts`, or `apply-branding-job-update.ts`.
+**Wiring tests (structural + behavior):**
+
+| File | Test | Result |
+|------|------|--------|
+| `apply-video-job-status-update.test.ts` | `maybeResumeWeeklyCycleFromJob` on terminal completed/failed | PASS |
+| `apply-assembly-job-update.test.ts` | same | PASS |
+| `apply-branding-job-update.test.ts` | same | PASS |
+| `maybe-resume-weekly-cycle-from-job.test.ts` | swallows `JOB_LINK_NOT_FOUND`; logs other failures | PASS |
+
+**Production call-site audit:** `maybeResumeWeeklyCycleFromJob` imported in all three status writers on terminal `completed`/`failed`. Wrapper delegates to `resumeWeeklyCycleFromJob` and no-ops non-cycle jobs.
 
 ---
 
 ## Gaps (blocks next phase)
 
-| # | Gap | Severity | Owner | Why it blocks |
-|---|-----|----------|-------|---------------|
-| **1** | **Job completion hooks do not call `resumeWeeklyCycleFromJob`** | **High / blocking** | **media-pipeline-engineer** (+ integrations-engineer for jobKind mapping) | After first async step dispatches, provider/worker completion never marks step_run terminal or calls `advanceWeeklyCycleSlot`. Run stalls; SC-1 and ADR-0001 auto-avance fail. Documented at US-15.1 CLOSE as `task_c263b2c8`; TASKS requires wiring before CONNECTED. |
-
-**Required wiring (minimal):**
-
-| Completion hook | Suggested call |
-|-----------------|----------------|
-| `lib/video-jobs/apply-video-job-status-update.ts` (terminal `completed`/`failed`) | `resumeWeeklyCycleFromJob({ jobKind: "video", jobId })` |
-| `lib/assembly/apply-assembly-job-update.ts` or `on-assembly-job-completed.ts` | `resumeWeeklyCycleFromJob({ jobKind: "assembly", jobId: assemblyJobId })` |
-| `lib/branding/apply-branding-job-update.ts` or `on-branding-completed.ts` | `resumeWeeklyCycleFromJob({ jobKind: "branding", jobId: assembledReelId })` |
-
-Preserve existing revision auto-chains (`onVideoJobCompletedRevision`, branding→QA) — weekly-cycle resume is additive and no-ops when `JOB_LINK_NOT_FOUND`.
-
----
+**None.** Previous blocker `task_c263b2c8` closed in `313ad23`.
 
 ## Non-blocking gaps / expected partial MVP
 
@@ -190,7 +188,7 @@ Preserve existing revision auto-chains (`onVideoJobCompletedRevision`, branding�
 |---|-----|----------|-------|-------|
 | 2 | IG connect not in cron eligibility | Low | nextjs-backend | TASKS § F7 onboarding explicitly deferred in US-15.1 |
 | 3 | Operator pause/skip week per client | Low | product-owner | Follow-up story; env kill-switch + mid-run pause CAS exist |
-| 4 | No live staging E2E (cron → 3 approval packages) | Medium | QA | Recommend after gap #1 fix |
+| 4 | No live staging E2E (cron → 3 approval packages) | Medium | QA | Recommend before MVP SC-1 sign-off |
 | 5 | SC-3/SC-4 not operationally measured | Low | product-owner / QA | Need internal Cliente smoke post-fix |
 | 6 | Revision pipeline faceless B-roll gap (inherited) | Medium | media-pipeline-engineer | PHASE-8 #1 — orthogonal to cron but affects revision exception path |
 
@@ -200,20 +198,18 @@ Preserve existing revision auto-chains (`onVideoJobCompletedRevision`, branding�
 
 | Agent | Action |
 |-------|--------|
-| **media-pipeline-engineer** | Wire `resumeWeeklyCycleFromJob` from video poll completion, assembly completion, and branding completion hooks (one-line calls; ignore `JOB_LINK_NOT_FOUND` for non-cycle jobs). |
-| **integrations-engineer** | Verify jobKind/jobId mapping matches `weekly-cycle-step-runs` linkage; add integration test asserting poll completion advances a mocked live run. |
-| **QA** | Staging smoke: enable `WEEKLY_CYCLE_LIVE_ENABLED` + allowlist internal client → cron or manual trigger → wait for poll/worker → confirm 3× `pending_client` approval rows. |
-| **product-owner** | Keep `phase_status: needs_phase_integration` until gap #1 closes; then SELECT Fase 8 P2 or onboarding IG gate story. |
-| **master-orchestrator** | Dispatch wiring story (or fast-follow on `main`) → re-run integration-checker → update `SPRINT-STATE.md` phase_status. |
+| **QA** | Staging smoke: enable `WEEKLY_CYCLE_LIVE_ENABLED` + allowlist internal client → cron or manual trigger → wait for poll/worker → confirm 3× `pending_client` approval rows (SC-1). |
+| **product-owner** | Update `phase_status` to connected; select Fase 8 P2 or onboarding IG gate story. |
+| **master-orchestrator** | Stop Fase 7 loop; dispatch optional follow-ups (IG gate, Operator pause/skip, faceless revision B-roll). |
 
 ---
 
 ## Recommended next orchestrator step
 
-1. **BUILD (blocking):** Wire `task_c263b2c8` — media-pipeline-engineer owns completion hooks; integrations-engineer reviews jobKind linkage and adds cross-module test if needed.
-2. **Re-run Fase 7 phase integration** — expect **CONNECTED** if staging smoke confirms SC-1 for one allowlisted internal client.
+1. **CLOSE Fase 7 integration** — `task_c263b2c8` resolved; code handoffs CONNECTED.
+2. **Optional QA:** Staging SC-1 smoke for one allowlisted internal client before MVP sign-off.
 3. **Optional parallel backlog:** IG onboarding eligibility gate (TASKS § F7) · Operator pause/skip week · inherited faceless revision B-roll (PHASE-8).
-4. **Do not start Fase 8 P2** as MVP-complete until step 2 passes.
+4. **Fase 8 P2** may proceed; MVP SC sign-off waits on staging smoke.
 
 ---
 
@@ -221,12 +217,13 @@ Preserve existing revision auto-chains (`onVideoJobCompletedRevision`, branding�
 
 | Question | Answer |
 |----------|--------|
-| Can PLAN Fase 7 close as CONNECTED? | **No** — async resume handoff missing |
-| Blocking gap count | **1** |
+| Can PLAN Fase 7 close as CONNECTED? | **Yes** — async resume handoff wired (`313ad23`) |
+| Blocking gap count | **0** |
 | Cron → live orchestrator → outbox dispatch connected? | **Yes** |
-| Async job complete → cycle advance connected? | **No** |
+| Async job complete → cycle advance connected? | **Yes** |
 | SC-2 no-publish boundary intact? | **Yes** |
-| SC-1 verifiable without fix? | **No** |
-| Blocks Fase 8 planning? | **No** (can plan); **blocks MVP SC sign-off** |
+| SC-1 verifiable without staging smoke? | **Code yes; ops smoke recommended** |
+| Blocks Fase 8 planning? | **No** |
+| Can orchestrator loop stop? | **Yes** — Fase 7 integration gate passed |
 
-**PLAN Fase 7: OPEN — GAPS (1 blocker)**
+**PLAN Fase 7: CLOSED — CONNECTED**
