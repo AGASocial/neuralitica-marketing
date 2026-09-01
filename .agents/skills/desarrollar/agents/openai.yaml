@@ -1,0 +1,4 @@
+interface:
+  display_name: "Desarrollar"
+  short_description: "Orquesta historias del plan por gates"
+  default_prompt: "Usa $desarrollar para continuar la historia activa desde su gate actual."
