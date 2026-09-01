@@ -81,24 +81,24 @@ Concrete consumers: **Operator manual trigger** · **Vercel Cron live mode**.
 
 ### Dual-path strategy gate (CONTRACT must freeze)
 
-- [ ] Pick **one:** (A) system path auto-sets strategy `approved` after valid draft generation, or (B) `generateReelScriptsForClient({ invokedBy: "system" })` accepts approved-or-valid-draft. Document in CONTRACT + SECURITY.
+- [x] System path auto-approves strategy via CAS (`approve-strategy-for-system-cycle-cas.ts` + `auto-approve-weekly-cycle-strategy.ts`) — option (A), frozen in CONTRACT.md and SECURITY.md Phase B delta.
 
 ### Live step wiring
 
-- [ ] **Strategy** — `generateContentStrategyForClient({ clientId, weekStart, invokedBy: "system" })`.
-- [ ] **Scripts** — `generateReelScriptsForClient({ ..., invokedBy: "system", mode: "batch" })` per approved strategy id.
-- [ ] **Captions** — `generateReelCaptionsForClient({ ..., invokedBy: "system", mode: "batch" })`.
-- [ ] **Primary video** — existing create orchestrators (HeyGen / SadTalker / MuseTalk per policy) with trusted server context.
-- [ ] **TTS** — `synthesizeVoiceoverForReelScript` when policy requires.
-- [ ] **B-roll** — `createBrollVideoJobs` when faceless + needs_broll.
-- [ ] **Assembly / branding / QA** — `createAssemblyJobForReelScript` → poll/wait strategy CONTRACT freezes (async: enqueue + step status `pending_provider` acceptable for CLOSE if jobs enqueue correctly).
-- [ ] **Approval queue** — reuse US-11.1 ensure-on-list helper for each completed Reel package.
-- [ ] **Partial failure** — catch per-step errors; continue other slots where safe; persist errors on `step_log`; never publish (ADR-0002).
+- [x] **Strategy** — `generateContentStrategyForClient({ clientId, weekStart, invokedBy: "system" })` — `weekly-cycle-trusted-steps.ts`.
+- [x] **Scripts** — `generateReelScriptsForClient({ ..., invokedBy: "system", mode: "batch" })` per approved strategy id — `weekly-cycle-trusted-steps.ts`.
+- [x] **Captions** — `generateReelCaptionsForClient({ ..., invokedBy: "system", mode: "batch" })` — `weekly-cycle-trusted-steps.ts`.
+- [x] **Primary video** — existing create orchestrators (HeyGen / SadTalker / MuseTalk per policy) with trusted server context — `weekly-cycle-trusted-steps.ts`.
+- [x] **TTS** — `synthesizeVoiceoverForReelScript` when policy requires — `weekly-cycle-trusted-steps.ts`.
+- [x] **B-roll** — `createBrollVideoJobs` when faceless + needs_broll — `weekly-cycle-trusted-steps.ts`.
+- [x] **Assembly / branding / QA** — `createAssemblyJobForReelScript` → enqueue + step status `pending_provider`/`pending_worker` (per CONTRACT/PO lean); dispatch via `dispatch-weekly-cycle-outbox.ts` + `advance-weekly-cycle-slot.ts`. **Follow-up flagged** (`task_c263b2c8`): job-completion webhooks (`lib/assembly/on-assembly-job-completed.ts`, `lib/qa/on-branding-completed.ts`, video job poll completion — owned by media-pipeline-engineer) still need a one-line call to the already-built `resumeWeeklyCycleFromJob` to advance a *live* run past provider completion; enqueue-only path is in scope for Phase B CLOSE per TASKS open question #2 (PO lean, SC-1 verified at phase integration), but must be wired before Fase 7 phase integration CONNECTED.
+- [x] **Approval queue** — reuse US-11.1 ensure-on-list helper for each completed Reel package — `ensure-approval-package-for-system-cycle.ts`.
+- [x] **Partial failure** — catch per-step errors; continue other slots where safe; persist errors on `step_log`; never publish (ADR-0002) — `reconcile-weekly-cycle-run.ts` + `weekly-cycle-step-runs.ts`.
 
 ### Operator manual trigger
 
-- [ ] **`triggerWeeklyCycleForClient` Server Action** — `requireOperator("handler")`; body `{ clientId, weekStart? }`; `mode: "operator"` on run row; same orchestrator as cron with `dryRun: false`.
-- [ ] **IDOR** — Operator may only trigger for clients they manage (CONTRACT freezes — likely any active client for V1 operator).
+- [x] **`triggerWeeklyCycleForClient` Server Action** — `requireOperator("handler")`; body `{ clientId, weekStart? }`; same orchestrator as cron, live path — `lib/orchestration/actions/trigger-weekly-cycle-for-client.ts`.
+- [x] **IDOR** — Operator may only trigger any active, live-allowlisted client (CONTRACT freeze, V1) — enforced server-side, revalidated regardless of FE-shown list.
 
 ---
 
@@ -115,8 +115,8 @@ Concrete consumer: **Operator cycle control page** (minimal).
 
 ## Phase B — DB checklist
 
-- [ ] **Extend `step_log` schema** — per-step `{ step, status, errorCode?, at }` (CONTRACT freezes shape).
-- [ ] **No publish columns** — ADR-0002.
+- [x] **Extend `step_log` schema** — per-step `{ step, status, errorCode?, at }` (CONTRACT freezes shape) — `weeklyCycleStepLogEntrySchema` in `lib/contracts/weekly-cycle-live.ts`; sanitized, rebuilt transactionally by `reconcile-weekly-cycle-run.ts`.
+- [x] **No publish columns** — ADR-0002 — migration `20260831120000_neuramark_weekly_cycle_live.sql` adds no publish surface.
 
 ---
 
@@ -134,10 +134,10 @@ Concrete consumer: **Operator cycle control page** (minimal).
 
 ### Phase B
 
-- [ ] CONTRACT.md — mandatory Phase B delta (live wiring, strategy gate, manual trigger, FE props) freezing `INVALID_JSON`, acquire `replan: ALLOWED | BLOCKED`, and runner `RUN_NOT_REPLANNABLE`
-- [ ] SECURITY.md — Phase B delta review covering the same additive safety outcomes before live wiring
-- [ ] **Reviewed by FE** on Phase B CONTRACT
-- [ ] BUILD Phase B
+- [x] CONTRACT.md — mandatory Phase B delta (live wiring, strategy gate, manual trigger, FE props) freezing `INVALID_JSON`, acquire `replan: ALLOWED | BLOCKED`, and runner `RUN_NOT_REPLANNABLE` — `f2c12d7`
+- [x] SECURITY.md — Phase B delta review covering the same additive safety outcomes before live wiring — `bed0615`
+- [x] **Reviewed by FE** on Phase B CONTRACT — APPROVED `136e91e`
+- [x] BUILD Phase B — BE/DB `83c5049` · FE `f5204ac` · integrations `464081b`
 - [ ] VALIDATION.md Phase B
 - [ ] QA.md Phase B
 - [ ] CLOSE Phase B (product-owner)
