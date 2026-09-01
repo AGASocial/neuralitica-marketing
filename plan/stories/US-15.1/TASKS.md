@@ -106,10 +106,10 @@ Concrete consumers: **Operator manual trigger** · **Vercel Cron live mode**.
 
 Concrete consumer: **Operator cycle control page** (minimal).
 
-- [ ] **Route `/operator/cycle`** (or section on `/operator/strategy`) — PrimeReact; client selector; "Dry-run plan" + "Run cycle" buttons.
-- [ ] **Display last run** — status, week, step_log summary from server loader.
-- [ ] **EN/ES** — `operator.cycle.*` keys in `messages/en.json` / `messages/es.json`.
-- [ ] **Loading / error / pending states** — disable buttons while run in flight.
+- [x] **Route `/operator/cycle`** (or section on `/operator/strategy`) — PrimeReact; client selector; "Dry-run plan" + "Run cycle" buttons. `app/(app)/operator/cycle/page.tsx` + `components/cycle/OperatorCycleView.tsx`; also adds "Resume" for `canResume` rows per CONTRACT.
+- [x] **Display last run** — status, week, step_log summary from server loader. Minimal `operatorWeeklyCycleRunDtoSchema` table: status Tag, week range, mode, 3 slot Tags (status + current step + sanitized error code on hover) — no raw `step_log`.
+- [x] **EN/ES** — `operator.cycle.*` keys in `messages/en.json` / `messages/es.json`. Includes localized mapping for all `weeklyCycleErrorCodeSchema` + action error codes.
+- [x] **Loading / error / pending states** — disable buttons while run in flight. Covers loading (route `loading.tsx` skeleton), empty (no clients / no runs), load error, triggering/pending, paused, partial-failure, already-running, already-completed; single in-flight action disables all controls (duplicate-control guard).
 
 ---
 

@@ -1806,5 +1806,106 @@
         "internal": "Something went wrong. Please try again later."
       }
     }
+  },
+  "operator": {
+    "cycle": {
+      "page": {
+        "title": "Weekly cycle control",
+        "subtitle": "Trigger, preview, and resume the automated weekly cycle for a client.",
+        "backDashboard": "Back to dashboard",
+        "clientLabel": "Client",
+        "clientPlaceholder": "Select a client",
+        "weekLabel": "Week",
+        "dryRunCta": "Dry-run plan",
+        "dryRunPending": "Planning…",
+        "runCta": "Run cycle",
+        "runPending": "Starting…",
+        "resumeCta": "Resume",
+        "resumePending": "Resuming…",
+        "emptyClients": "No active clients are enabled for the weekly cycle yet.",
+        "emptyRuns": "No weekly cycle runs yet. Trigger a run above to get started.",
+        "loadError": "We could not load weekly cycle runs. Refresh the page to try again.",
+        "selectClientFirst": "Select a client to continue.",
+        "toastDryRunSuccess": "Dry-run plan created.",
+        "toastRunStarted": "Weekly cycle started.",
+        "toastAlreadyRunning": "This client's weekly cycle is already running.",
+        "toastAlreadyCompleted": "This client's weekly cycle for that week is already completed.",
+        "toastResumeSuccess": "Weekly cycle resumed.",
+        "columns": {
+          "client": "Client",
+          "week": "Week",
+          "mode": "Trigger",
+          "status": "Status",
+          "slots": "Slots",
+          "started": "Started",
+          "finished": "Finished",
+          "actions": "Actions"
+        },
+        "mode": {
+          "cron": "Scheduled",
+          "operator": "Manual"
+        },
+        "status": {
+          "dry_run": "Dry-run",
+          "running": "Running",
+          "paused": "Paused",
+          "completed": "Completed",
+          "partial_failed": "Partial failure",
+          "failed": "Failed"
+        },
+        "slotStatus": {
+          "pending": "Pending",
+          "processing": "Processing",
+          "ready_for_approval": "Ready for approval",
+          "failed": "Failed"
+        },
+        "steps": {
+          "strategy": "Weekly strategy",
+          "scripts": "Script packages",
+          "captions": "Captions",
+          "primary_video": "Primary video",
+          "tts": "Voiceover",
+          "broll": "B-roll",
+          "assembly": "Assembly",
+          "branding": "Branding",
+          "qa": "QA",
+          "approval": "Approval queue"
+        },
+        "slotLabel": "Slot {index}",
+        "notStarted": "Not started",
+        "weekOptionCurrent": "This week ({range})",
+        "weekOptionNext": "Next week ({range})",
+        "weekOptionNextTwo": "In 2 weeks ({range})"
+      },
+      "loading": {
+        "page": "Loading weekly cycle control…"
+      },
+      "errors": {
+        "liveDisabled": "Live weekly cycle execution is currently disabled.",
+        "clientInactive": "This client is no longer active.",
+        "tenantScopeMismatch": "That run does not belong to this client.",
+        "budgetExceeded": "This step would exceed the cost policy budget.",
+        "consentRequired": "Avatar consent is required before this step can run.",
+        "consentRevoked": "Avatar consent was revoked for this client.",
+        "policyRejected": "The cost or provider policy rejected this step.",
+        "providerUnavailable": "The provider is temporarily unavailable. Try again later.",
+        "validation": "Please check the request and try again.",
+        "strategyInvalid": "The weekly strategy is invalid for this run.",
+        "strategyStale": "The weekly strategy changed since this run started.",
+        "strategyApprovalConflict": "The weekly strategy approval could not be confirmed.",
+        "dispatchTransient": "A temporary dispatch error occurred. It will retry automatically.",
+        "providerTransient": "A temporary provider error occurred. It will retry automatically.",
+        "workerTransient": "A temporary worker error occurred. It will retry automatically.",
+        "jobTimeout": "This step timed out.",
+        "dependencyFailed": "A required prior step failed, so this step was skipped.",
+        "qaFailed": "QA did not pass for this slot.",
+        "internal": "Something went wrong. Please try again later.",
+        "unauthenticated": "Please log in to continue.",
+        "forbidden": "You do not have access to that.",
+        "notFound": "That client or run was not found.",
+        "runNotReplannable": "This run cannot be re-planned in its current state.",
+        "runNotResumable": "This run cannot be resumed right now."
+      }
+    }
   }
 }

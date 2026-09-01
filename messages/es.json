@@ -1806,5 +1806,106 @@
         "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
       }
     }
+  },
+  "operator": {
+    "cycle": {
+      "page": {
+        "title": "Control del ciclo semanal automatizado",
+        "subtitle": "Dispara, previsualiza y reanuda el Ciclo semanal automatizado para un Cliente.",
+        "backDashboard": "Volver al panel",
+        "clientLabel": "Cliente",
+        "clientPlaceholder": "Selecciona un Cliente",
+        "weekLabel": "Semana",
+        "dryRunCta": "Plan de prueba (dry-run)",
+        "dryRunPending": "Planificando…",
+        "runCta": "Ejecutar ciclo",
+        "runPending": "Iniciando…",
+        "resumeCta": "Reanudar",
+        "resumePending": "Reanudando…",
+        "emptyClients": "Aún no hay Clientes activos habilitados para el ciclo semanal.",
+        "emptyRuns": "Aún no hay ejecuciones del ciclo semanal. Dispara una ejecución arriba para comenzar.",
+        "loadError": "No pudimos cargar las ejecuciones del ciclo semanal. Actualiza la página para intentarlo de nuevo.",
+        "selectClientFirst": "Selecciona un Cliente para continuar.",
+        "toastDryRunSuccess": "Plan dry-run creado.",
+        "toastRunStarted": "Ciclo semanal iniciado.",
+        "toastAlreadyRunning": "El ciclo semanal de este Cliente ya está en ejecución.",
+        "toastAlreadyCompleted": "El ciclo semanal de este Cliente para esa semana ya está completado.",
+        "toastResumeSuccess": "Ciclo semanal reanudado.",
+        "columns": {
+          "client": "Cliente",
+          "week": "Semana",
+          "mode": "Disparo",
+          "status": "Estado",
+          "slots": "Slots",
+          "started": "Inicio",
+          "finished": "Fin",
+          "actions": "Acciones"
+        },
+        "mode": {
+          "cron": "Programado",
+          "operator": "Manual"
+        },
+        "status": {
+          "dry_run": "Dry-run",
+          "running": "En ejecución",
+          "paused": "Pausado",
+          "completed": "Completado",
+          "partial_failed": "Falla parcial",
+          "failed": "Fallido"
+        },
+        "slotStatus": {
+          "pending": "Pendiente",
+          "processing": "Procesando",
+          "ready_for_approval": "Listo para Aprobación",
+          "failed": "Fallido"
+        },
+        "steps": {
+          "strategy": "Estrategia semanal",
+          "scripts": "Paquetes de guion",
+          "captions": "Captions",
+          "primary_video": "Video principal",
+          "tts": "Voz en off",
+          "broll": "B-roll / sin presencia",
+          "assembly": "Ensamblado",
+          "branding": "Marca",
+          "qa": "QA",
+          "approval": "Cola de Aprobación"
+        },
+        "slotLabel": "Slot {index}",
+        "notStarted": "Sin iniciar",
+        "weekOptionCurrent": "Esta semana ({range})",
+        "weekOptionNext": "Próxima semana ({range})",
+        "weekOptionNextTwo": "En 2 semanas ({range})"
+      },
+      "loading": {
+        "page": "Cargando control del ciclo semanal…"
+      },
+      "errors": {
+        "liveDisabled": "La ejecución en vivo del ciclo semanal está deshabilitada por ahora.",
+        "clientInactive": "Este Cliente ya no está activo.",
+        "tenantScopeMismatch": "Esa ejecución no pertenece a este Cliente.",
+        "budgetExceeded": "Este paso superaría el presupuesto de la política de costo.",
+        "consentRequired": "Se requiere consentimiento de avatar antes de este paso.",
+        "consentRevoked": "El consentimiento de avatar fue revocado para este Cliente.",
+        "policyRejected": "La política de costo o de proveedor rechazó este paso.",
+        "providerUnavailable": "El proveedor no está disponible temporalmente. Inténtalo más tarde.",
+        "validation": "Revisa la solicitud e inténtalo de nuevo.",
+        "strategyInvalid": "La Estrategia semanal no es válida para esta ejecución.",
+        "strategyStale": "La Estrategia semanal cambió desde que inició esta ejecución.",
+        "strategyApprovalConflict": "No se pudo confirmar la aprobación de la Estrategia semanal.",
+        "dispatchTransient": "Ocurrió un error temporal de despacho. Se reintentará automáticamente.",
+        "providerTransient": "Ocurrió un error temporal del proveedor. Se reintentará automáticamente.",
+        "workerTransient": "Ocurrió un error temporal del worker. Se reintentará automáticamente.",
+        "jobTimeout": "Este paso superó el tiempo de espera.",
+        "dependencyFailed": "Un paso previo requerido falló, así que este paso se omitió.",
+        "qaFailed": "El Veredicto QA no aprobó este slot.",
+        "internal": "Algo salió mal. Inténtalo más tarde.",
+        "unauthenticated": "Inicia sesión para continuar.",
+        "forbidden": "No tienes acceso a eso.",
+        "notFound": "No se encontró ese Cliente o ejecución.",
+        "runNotReplannable": "Esta ejecución no se puede re-planificar en su estado actual.",
+        "runNotResumable": "Esta ejecución no se puede reanudar en este momento."
+      }
+    }
   }
 }
