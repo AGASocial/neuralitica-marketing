@@ -9,8 +9,8 @@ story_status: DONE
 feature_branch: null
 last_completed_story: US-15.1
 phase_status: needs_phase_integration
-blocked_reason: "Fase 7 integration GAPS — task_c263b2c8: wire resumeWeeklyCycleFromJob in job completion hooks"
-updated_at: 2026-09-01T11:00:00Z
+blocked_reason: "Re-run Fase 7 integration after task_c263b2c8 fix (commit 313ad23 on feature branch)"
+updated_at: 2026-09-01T11:05:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -95,6 +95,7 @@ updated_at: 2026-09-01T11:00:00Z
 
 ## Historial reciente
 
+- 2026-09-01 · Loop tick #1 → BUILD task_c263b2c8: wire resumeWeeklyCycleFromJob in video/assembly/branding hooks (`313ad23` on `feature/US-15.1-wire-resume-from-jobs`). Next: merge + re-run Fase 7 integration.
 - 2026-09-01 · Fase 7 integration-checker GAPS (`docs/development/PHASE-7.md`): 143/143 US-15.1 tests pass; blocker task_c263b2c8 — resumeWeeklyCycleFromJob not wired in completion hooks. Loop /desarrollar cada 5m activo.
 - 2026-08-31 · US-15.1 Phase B QA final re-review APPROVE `b54e198`: H1/H2 both re-confirmed closed independently (advance-loop/CAS traced directly, 14/14 + 203/203 tests run); probed 2 new edge cases (advanceWeeklyCycleSlot throwing mid-loop — confirmed unreachable through any current code path, recorded as non-blocking L2 hardening note; kill switch flipping off mid-advance — confirmed safe, re-checked at every spend boundary independently). Clean-area findings (budget/consent, IDOR, no-publish, FE/DTO) re-spot-checked via diff — untouched by either fix cycle. 0 Critical/High/Medium open. → CLOSE.
 - 2026-08-31 · US-15.1 Phase B POST-H2-FIX VALIDATE PASS `7ec40a0`: disjointness of the two resume loops confirmed at structural level (a slot can't have both an actionable-failed row and a later-completed row); `advanceWeeklyCycleSlot`'s `fromStep` contract verified directly; H1 no-double-spend re-confirmed via concrete `primary_video→tts` trace; 203/203 curated, 1200/1209 full-repo with the 9 fails reproduced identically on a disposable pre-fix worktree (genuine pre-existing pollution, none in `lib/orchestration/**`); 0 new tsc errors. → final QA re-review.
