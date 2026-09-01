@@ -1,3 +1,124 @@
+# QA Final Re-review — US-15.1 Phase B (post-H2 fix, commit `72c22a9`)
+
+**Story:** US-15.1 — Weekly cycle cron endpoint and orchestration (live pipeline)
+**Scope:** Third and final QA pass on Phase B. Confirms H1 (`60de5f6`) and H2 (`72c22a9`) are genuinely closed from a bugs/security/robustness standpoint (not just mechanical correctness), probes edge cases the mechanical trace could miss (exception propagation inside the new resume continuation loop; kill-switch flip mid-advance), and re-spot-checks the original clean-area findings (budget/consent gates, Operator IDOR, no-publish boundary, FE/DTO leakage) for regression across both fix cycles.
+**Branch:** `feature/US-15.1-weekly-cron`
+**Fix commit reviewed:** `72c22a9` (on top of `60de5f6`)
+**Validation reviewed:** `7ec40a0` (POST-H2-FIX VALIDATE — PASS)
+**Date:** 2026-08-31
+**Reviewer:** qa-engineer
+
+### Final verdict: APPROVE
+
+**Current severity counts:** Critical **0** · High **0** · Medium **0** · Low **1 (new, non-blocking hardening recommendation)**
+**Prior findings:** H1 **CLOSED** · H2 **CLOSED** · M1 **CLOSED** · M2 **CLOSED**
+
+**This is CLOSE-ready.** No new blocking finding. Recommend product-owner proceed to CLOSE and merge to `main`.
+
+---
+
+## H1 and H2 — genuinely closed, independently re-verified
+
+I read `git show 72c22a9` in full and re-derived the fix's correctness myself rather than accepting the validator's trace at face value, then specifically probed two edge cases the validator's happy-path trace does not cover: exception propagation inside the new continuation loop, and a kill-switch flip mid-advance.
+
+### H1 (`running → paused`, closed at `60de5f6`): still closed, no regression from `72c22a9`
+
+`72c22a9` touches only `lib/orchestration/resume-weekly-cycle-run.ts` (+ its test). `resume-weekly-cycle-from-job.ts` and `pause-weekly-cycle-run-cas.ts` — the files that actually implement the `running → paused` CAS and the real-outcome-preservation logic — are untouched by this commit (confirmed: `git diff --stat 60de5f6..72c22a9` shows those two files absent from the diff). H1's two original failure modes (permanent stranding of an unresumable `failed` run; double-spend re-dispatch of an already-completed step) remain closed by construction.
+
+### H2 (a slot paused mid-chain never advances on resume, closed at `72c22a9`): confirmed closed
+
+Traced `resume-weekly-cycle-run.ts:82-105,191-208` directly:
+
+- `stalledCompletedSlots` is built from each slot's *latest* `stepRuns` row, filtered to `status === "completed" && step !== "approval"`. `retryableFailed` filters the same array to `status === "failed"` rows. A single row cannot be both, and — the stronger argument the prior VALIDATE also made — a slot cannot simultaneously carry an *actionable* failed row for step A and a completed row for a later step B, because B could only exist once A succeeded. I independently re-derived this by reading `advanceWeeklyCycleSlot`'s recursive `runSyncStep`/dispatch structure (`advance-weekly-cycle-slot.ts:32-166`): the chain only ever moves forward one step at a time, and only after the current step's row is marked `completed`. The two loops cannot double-advance the same slot.
+- `fromStep: stalledSlot.step` is fed straight into `nextStepAfter`, which scans `SLOT_STEP_ORDER` starting at `indexOf(step) + 1` (`advance-weekly-cycle-slot.ts:53`) — strictly the next applicable step, honoring the faceless/no-broll skip rules. This reuses the exact calling convention already exercised by `resume-weekly-cycle-from-job.ts`'s normal-completion continuation and by the pre-existing `retryableFailed` loop's own continuation call three lines below the new one — no new contract was invented.
+- Ran `lib/orchestration/resume-weekly-cycle-run.test.ts` directly: **14/14 pass**, including the three H2 tests, and read them — they assert the actual `advanceWeeklyCycleSlot` call shape (`{ runId, clientId, slotIndex, script, fromStep }`), not just "no double-spend." This is a genuine improvement over the test QA flagged in the prior round as checking the wrong thing.
+- Ran the full curated 22+1-file Phase B suite directly: **203/203 pass**, 37 suites — matches the commit message and the validator's independent run.
+
+### Edge case 1 — what if `advanceWeeklyCycleSlot` itself throws inside the new loop?
+
+This was the sharpest question to probe, since neither prior QA pass nor the validator's trace considered it. Traced the failure surface directly:
+
+`advanceWeeklyCycleSlot` can throw synchronously via `resolveLinkageForStep` (`advance-weekly-cycle-slot.ts:70-88`) — `WEEKLY_CYCLE_ASSEMBLY_LINKAGE_MISSING` or `WEEKLY_CYCLE_BRANDING_LINKAGE_MISSING` if the predecessor step's row lacks a `jobId`. Neither of the two `resumeWeeklyCycleRun` loops (the pre-existing `retryableFailed` loop or the new `stalledCompletedSlots` loop) wraps its `advanceWeeklyCycleSlot` call in `try/catch`, and neither does the Server Action wrapper (`lib/orchestration/actions/resume-weekly-cycle-run.ts`) around the whole `resumeWeeklyCycleRunCore` call. If this threw:
+
+- The `paused → running` CAS write has already committed to the DB before either loop runs, so the run would be left at `status: "running"` — not `paused`, not `partial_failed`.
+- The throw aborts the function before `reconcileWeeklyCycleRun` executes, so nothing resolves the run back to an actionable, visible state.
+- A subsequent resume attempt would be refused (`RUN_NOT_RESUMABLE` requires `paused`/`partial_failed`), and per the validator's own note (confirmed by my own read of `run-weekly-cycle-live.ts:66-69`), no cron tick sweeps an already-`running` run. The run would be stuck indefinitely, and — worse than the original H2 bug — invisible: `running` reads as normal in-progress in the Operator UI, unlike `partial_failed`/`failed`, which at least prompted a second look.
+
+**However, I traced whether this is actually reachable and found it is not, under the current write-path invariants**, which is why this does not rise to a blocking finding: `resolveLinkageForStep` throws only when a predecessor async step's row is `completed` with `job_id` null. I read `markStepRunPending` (`weekly-cycle-step-runs.ts:194-215`, sets `job_id` when the provider/worker job is created, before the row can ever reach `pending_provider`/`pending_worker`) and `markStepRunTerminal` (`:217-235`, its `UPDATE` payload is `status`/`error_code`/`finished_at` only — it never touches `job_id`). So by the time any async step (`primary_video`/`broll`/`assembly`/`branding`) reaches `status: "completed"` through any code path that exists in this repo today, `job_id` was already set and is never cleared. This includes the exact scenario H2 targets — `resumeWeeklyCycleFromJob`'s `PAUSED_LIVE_DISABLED` branch calls `markStepRunTerminal` on a row whose `job_id` was set at dispatch time, long before the pause. The throw path is real code (a defensive check for a state the write paths don't currently produce), not a reachable production bug — it would only fire if a future code change or manual DB edit introduced a completed async row with no linkage.
+
+**This is not a new defect introduced by `72c22a9`.** The identical unguarded-exception pattern already existed in the pre-existing `retryableFailed` loop's own `advanceWeeklyCycleSlot` call (`resume-weekly-cycle-run.ts:176-182`, untouched by this fix) and in `resume-weekly-cycle-from-job.ts`'s normal-completion branch — this fix extends an already-accepted architectural pattern to a second call site, it does not introduce the pattern. I am recording it as a **Low, non-blocking hardening recommendation** (see below), not a finding that reopens or blocks this pass.
+
+### Edge case 2 — kill switch flips off again immediately after resume, mid-advance
+
+Traced `isWeeklyCycleLiveAllowedForClient` (`weekly-cycle-live-env.ts:72-74`) and its call sites. This is not a live DB-backed toggle — it reads only `process.env.WEEKLY_CYCLE_LIVE_ENABLED`/`WEEKLY_CYCLE_LIVE_CLIENT_IDS`, server env vars that cannot change mid-process without a redeploy (which would kill in-flight requests, not silently flip a value mid-execution). Independent of that, the gate is re-checked at every spend-producing boundary, not just once at the top of `resumeWeeklyCycleRun`: inside `advanceWeeklyCycleSlot` itself before creating any new step_run (`advance-weekly-cycle-slot.ts:104-106`), and again inside `dispatchWeeklyCycleOutbox` per-row before actual dispatch (`dispatch-weekly-cycle-outbox.ts:173`). So even in a hypothetical live-toggle architecture, a flip between the new loop's iterations would cause remaining slots to no-op safely rather than spend. **No finding here** — this is solid defense-in-depth, confirmed by direct reading, not just inferred.
+
+---
+
+## Re-scan of the rest of the Phase B surface for regressions across both fix cycles
+
+Per this pass's mandate, I re-checked whether `60de5f6` (H1) and `72c22a9` (H2) together still uphold the original clean-area findings from the first QA pass, by diffing the fix window rather than re-deriving from scratch:
+
+```
+git diff --stat 4da9761..72c22a9 -- lib/orchestration/actions/ lib/orchestration/load-operator-weekly-cycle-runs.ts \
+  components/cycle/ lib/orchestration/ensure-approval-package-for-system-cycle.ts lib/orchestration/weekly-cycle-trusted-steps.ts
+```
+→ **empty diff.** None of these files were touched by either fix commit. This confirms, without needing to re-derive:
+
+- **Budget/consent gates** (`weekly-cycle-trusted-steps.ts` delegating to the existing trusted creators with their own `assertReelBudgetAllowsEstimatedSpend`/`assertActiveAvatarConsentForJobs` checks) — unchanged, still PASS.
+- **Operator IDOR** (`requireOperator` first-await, `.strict()` schemas, non-enumerating `NOT_FOUND` on all three Server Actions) — unchanged, still PASS.
+- **No-publish boundary** (`ensureApprovalPackageForSystemCycle` only ever inserting `pending_client`) — unchanged, still PASS.
+- **FE/DTO leakage** (`load-operator-weekly-cycle-runs.ts` selecting only the minimal columns, `OperatorCycleView.tsx` never importing Supabase) — unchanged, still PASS. The H2 fix's own commit message correctly notes the Operator-visibility gap flagged in the prior round is now moot in practice — since a stalled slot is actively advanced on resume instead of left dangling, the DTO's `processing` branch (`deriveSlotDto`'s third case) is now an accurate read of the slot's state again, not a false read of an orphaned one. No DTO change was needed, and none was made.
+
+The full diff across both fix commits touches exactly 9 files, all under `lib/orchestration/` plus their tests (`pause-weekly-cycle-run-cas.ts` new; `resume-weekly-cycle-from-job.ts`, `resume-weekly-cycle-run.ts`, `weekly-cycle-outbox.ts`, `weekly-cycle-step-runs.ts` modified). This matches what both prior QA passes already scoped their re-reviews to; no new surface area needed re-derivation.
+
+---
+
+## New finding — Low, non-blocking
+
+### L2 — resume's two continuation loops leave the run at `running` (not `paused`/`partial_failed`) if `advanceWeeklyCycleSlot` throws mid-loop
+
+**Files:** `lib/orchestration/resume-weekly-cycle-run.ts:151-189,196-208`; `lib/orchestration/advance-weekly-cycle-slot.ts:70-88`; `lib/orchestration/actions/resume-weekly-cycle-run.ts`
+
+**What:** Neither of `resumeWeeklyCycleRun`'s two loops (the pre-existing `retryableFailed` retry loop, or the new `stalledCompletedSlots` continuation loop) wraps its `advanceWeeklyCycleSlot` call in `try/catch`, nor does the Server Action wrapper around the whole function. If `advanceWeeklyCycleSlot` throws (via `resolveLinkageForStep`'s `WEEKLY_CYCLE_ASSEMBLY_LINKAGE_MISSING`/`WEEKLY_CYCLE_BRANDING_LINKAGE_MISSING`), the run — already CAS'd to `running` — is left stuck there indefinitely: `reconcileWeeklyCycleRun` never runs, a later resume attempt is refused (`RUN_NOT_RESUMABLE`), and no cron sweep touches an already-`running` run.
+
+**Why it's Low, not blocking:** traced end to end and confirmed this throw path is not reachable through any current write path — every code path that can mark an async step `completed` (`markStepRunTerminal`) is only ever reached after `markStepRunPending` has already set that row's `job_id`, and `markStepRunTerminal`'s own `UPDATE` payload never touches `job_id`. So the specific data state (`completed` async row, null `job_id`) `resolveLinkageForStep` guards against cannot currently arise. This is also not new to `72c22a9` — the identical unguarded-exception pattern already existed in the pre-existing `retryableFailed` loop before this fix and in `resume-weekly-cycle-from-job.ts`'s normal-completion branch; H2 extends an already-accepted pattern rather than introducing it.
+
+**Recommended fix direction (follow-up hardening, non-blocking):** wrap each loop's `advanceWeeklyCycleSlot` call in `try/catch`, and on catch, mark that slot's would-be-next step_run `failed` with a `DEPENDENCY_FAILED`/`INTERNAL_ERROR` code (visible, retryable-by-Operator-escalation) instead of letting the exception propagate — then ensure `reconcileWeeklyCycleRun` still runs via `try/finally` so the run always resolves out of `running` into an actionable, Operator-visible state even on an unexpected internal error. Not required before CLOSE; recommended as a future hardening pass alongside the `created_at, id` tiebreaker VALIDATION.md already recommended as non-blocking.
+
+**Fix owner:** `integrations-engineer` (optional follow-up, not a CLOSE condition).
+
+---
+
+## Checks run (this final pass)
+
+| Command | Result |
+|---|---|
+| `git show 72c22a9` (full diff + commit message) | Read in full; confirms scope is exactly the two-loop continuation fix plus 3 regression tests. |
+| `npx tsx --test lib/orchestration/resume-weekly-cycle-run.test.ts` | **14/14 pass**, run directly by this reviewer. |
+| `npx tsx --test` over the curated 22+1-file Phase B suite (full list in `VALIDATION.md`) | **203/203 pass**, 37 suites, run directly by this reviewer. |
+| `git diff --stat 60de5f6..72c22a9` (scope check for H1 regression) | Confirms `resume-weekly-cycle-from-job.ts`/`pause-weekly-cycle-run-cas.ts` untouched by `72c22a9`. |
+| `git diff --stat 4da9761..72c22a9 -- lib/orchestration/actions/ lib/orchestration/load-operator-weekly-cycle-runs.ts components/cycle/ lib/orchestration/ensure-approval-package-for-system-cycle.ts lib/orchestration/weekly-cycle-trusted-steps.ts` | Empty diff — confirms budget/consent gates, Operator IDOR, no-publish boundary, and FE/DTO surfaces are untouched by both fix cycles. |
+| Direct read of `weekly-cycle-step-runs.ts` (`markStepRunPending`, `markStepRunTerminal`) | Confirms `job_id` is set at dispatch time and never cleared by terminal marking — basis for L2's "not currently reachable" conclusion. |
+| Direct read of `weekly-cycle-live-env.ts`, `advance-weekly-cycle-slot.ts:104-106`, `dispatch-weekly-cycle-outbox.ts:173` | Confirms the kill-switch gate is env-var-backed (not live-DB-backed) and re-checked at every spend boundary — basis for clearing the "kill switch flips mid-advance" edge case. |
+
+## What Was Not Covered
+
+- Live Supabase/PostgREST execution against a real database (unchanged scope limit from every prior pass in this story).
+- Deployed Vercel Cron invocation and genuine concurrent-webhook races.
+- The pre-documented, PO-accepted webhook→`resumeWeeklyCycleFromJob` wiring gap (`task_c263b2c8`) — intentionally not re-flagged, consistent with every prior pass.
+- Full-repo test suite re-run (already independently executed and cross-checked against a disposable pre-fix worktree by `requirements-validator` at `7ec40a0`; this pass ran the resume-specific and curated-22+1 suites directly instead, since no source file was modified during this review).
+- Full `npx tsc --noEmit` re-run (already independently diffed to zero-new-errors by `7ec40a0`; not re-run here for the same reason).
+
+## Gate summary
+
+`Phase B · US-15.1 · QA final re-review · qa-engineer · APPROVE`
+
+H1 and H2 are both genuinely closed — independently re-verified from a bugs/security/robustness standpoint, not just mechanical correctness. Two edge cases specific to this pass's mandate were probed and cleared: an unguarded exception inside the new continuation loop is real code but not reachable through any current write path (recorded as L2, a non-blocking hardening recommendation), and a kill-switch flip mid-advance is safely handled by defense-in-depth re-checks at every spend boundary plus the env-var (not live-DB) nature of the gate. The original clean-area findings (budget/consent gates, Operator IDOR, no-publish boundary, FE/DTO leakage) are confirmed untouched by both fix cycles via direct diff, not re-derived from scratch. No Critical, High, or Medium finding remains open.
+
+**CLOSE recommendation: proceed.** This qa-engineer's read: Phase B has no remaining QA-level blocker. Product-owner may CLOSE Phase B and check its acceptance criteria in `USER_STORIES.md` §US-15.1. L2 above is offered as an optional future hardening item, not a condition of CLOSE.
+
+---
+
 # QA Re-review — US-15.1 Phase B (post-H1/M1/M2 fix, commit `60de5f6`)
 
 **Story:** US-15.1 — Weekly cycle cron endpoint and orchestration (live pipeline)
