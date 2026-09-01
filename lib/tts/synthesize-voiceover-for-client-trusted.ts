@@ -164,10 +164,14 @@ export async function synthesizeVoiceoverForClientTrusted(
 
     return {
       ok: true,
-      reelScriptId: params.reelScriptId,
       voiceoverAssetId: inserted.mediaAssetId,
+      reelScriptId: params.reelScriptId,
+      voiceId,
       providerKey,
-      idempotent: false,
+      estimatedCostCents: estimate.estimatedCostCents,
+      actualCostCents: storedAsset.actualCostCents ?? estimate.estimatedCostCents,
+      durationSec: storedAsset.durationSec,
+      jobKind,
     };
   } catch {
     return ttsVoiceoverInternalError();

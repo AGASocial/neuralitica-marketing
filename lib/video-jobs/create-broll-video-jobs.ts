@@ -82,11 +82,14 @@ export async function createBrollVideoJobs(
   options?: CreateBrollVideoJobsOptions,
 ): Promise<CreateBrollVideoJobsResult> {
   try {
-    let operator: { id: string; role: "operator" };
+    let operatorId: string;
     try {
-      operator = options?.operatorClientId
-        ? { id: options.operatorClientId, role: "operator" }
-        : await requireOperator("handler");
+      if (options?.operatorClientId) {
+        operatorId = options.operatorClientId;
+      } else {
+        const operator = await requireOperator("handler");
+        operatorId = operator.id;
+      }
     } catch (error) {
       if (isAuthGuardError(error)) {
         return videoJobMutationError(
@@ -106,7 +109,7 @@ export async function createBrollVideoJobs(
     }
 
     const input = parsed.data;
-    if (input.clientId !== operator.id) {
+    if (input.clientId !== operatorId) {
       return videoJobMutationError("FORBIDDEN");
     }
 
@@ -209,7 +212,7 @@ export async function createBrollVideoJobs(
       providerKey === LTX_PROVIDER_KEY
         ? clampLtxClipDurationSec(5)
         : clampWanClipDurationSec(5);
-    const defaultEstimateCentsPerClip =
+    const defaultEstimateCentsPerClip: number =
       providerKey === LTX_PROVIDER_KEY
         ? LTX_UNIT_COST_CENTS_PER_CLIP
         : WAN_UNIT_COST_CENTS_PER_CLIP;
@@ -250,7 +253,7 @@ export async function createBrollVideoJobs(
         clientId: input.clientId,
         reelScriptId: input.reelScriptId,
         estimatedCostCents: estimateCents,
-        operatorClientId: operator.id,
+        operatorClientId: operatorId,
         providerTier,
       });
 
@@ -286,7 +289,7 @@ export async function createBrollVideoJobs(
             voiceover_asset_id: null,
             parent_job_id: options?.parentJobId ?? null,
             attempt,
-            operator_client_id: operator.id,
+            operator_client_id: operatorId,
           })
           .select(
             "id, client_id, reel_script_id, provider_key, provider_tier, asset_role, external_job_id, status, estimated_cost_cents, actual_cost_cents, failure_reason, portrait_asset_id, voiceover_asset_id, output_media_asset_id, parent_job_id, spend_event_id, operator_client_id, attempt, created_at, updated_at",
@@ -311,7 +314,7 @@ export async function createBrollVideoJobs(
           jobKind,
           estimatedCostCents: estimateCents,
           actualCostCents: null,
-          operatorClientId: operator.id,
+          operatorClientId: operatorId,
           providerKey,
         });
 

@@ -174,7 +174,7 @@ export async function estimateBrollVideoJobsPreview(params: {
     return blockedPreviewEstimate(true, BROLL_BLOCKED_REFERENCE_STILL_MISSING);
   }
 
-  let unitCostCentsPerClip =
+  let unitCostCentsPerClip: number =
     providerKey === LTX_PROVIDER_KEY
       ? LTX_UNIT_COST_CENTS_PER_CLIP
       : WAN_UNIT_COST_CENTS_PER_CLIP;

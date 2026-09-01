@@ -21,9 +21,10 @@ export async function previewBrollVideoJobsEstimate(
 ): Promise<
   PreviewBrollVideoJobsEstimateSuccess | ReturnType<typeof videoJobMutationError>
 > {
-  let operator: { id: string; role: "operator" };
+  let operatorId: string;
   try {
-    operator = await requireOperator("handler");
+    const operator = await requireOperator("handler");
+    operatorId = operator.id;
   } catch (error) {
     if (isAuthGuardError(error)) {
       return videoJobMutationError(
@@ -42,7 +43,7 @@ export async function previewBrollVideoJobsEstimate(
     return videoJobMutationError("VALIDATION_ERROR");
   }
 
-  if (parsed.data.clientId !== operator.id) {
+  if (parsed.data.clientId !== operatorId) {
     return videoJobMutationError("FORBIDDEN");
   }
 
@@ -58,7 +59,7 @@ export async function previewBrollVideoJobsEstimate(
     script,
     clientId: parsed.data.clientId,
     reelScriptId: parsed.data.reelScriptId,
-    operatorClientId: operator.id,
+    operatorClientId: operatorId,
   });
 
   if (estimate.needsBroll && !estimate.blockedReasonKey) {

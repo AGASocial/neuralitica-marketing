@@ -23,7 +23,9 @@ const requestWithRawBody = (method: "GET" | "POST", body: string) => ({
 
 describe("weekly cycle cron route", () => {
   it("runs a valid request and supplies only the resolved weekStart to the batch", async () => withServerOnlyStub(async () => {
-    const { handleWeeklyCycleCron } = await import("./route");
+    const { handleWeeklyCycleCron } = await import(
+      "@/lib/orchestration/handle-weekly-cycle-cron"
+    );
     let received: unknown;
     const response = await handleWeeklyCycleCron(requestWithBody("GET", {}), {
       verify: () => ({ ok: true }), resolveWeekStart: () => "2026-08-31",
@@ -35,7 +37,9 @@ describe("weekly cycle cron route", () => {
   }));
 
   it("rejects authenticated malformed non-empty JSON for GET and POST", async () => withServerOnlyStub(async () => {
-    const { handleWeeklyCycleCron } = await import("./route");
+    const { handleWeeklyCycleCron } = await import(
+      "@/lib/orchestration/handle-weekly-cycle-cron"
+    );
     for (const method of ["GET", "POST"] as const) {
       let calls = 0;
       const response = await handleWeeklyCycleCron(requestWithRawBody(method, "{\"clientId\":"), {
@@ -51,7 +55,9 @@ describe("weekly cycle cron route", () => {
   }));
 
   it("does not call batch after missing or wrong authentication", async () => withServerOnlyStub(async () => {
-    const { handleWeeklyCycleCron } = await import("./route");
+    const { handleWeeklyCycleCron } = await import(
+      "@/lib/orchestration/handle-weekly-cycle-cron"
+    );
     for (const auth of [
       { ok: false as const, status: 401 as const, error: "UNAUTHORIZED" as const },
       { ok: false as const, status: 503 as const, error: "SERVICE_UNAVAILABLE" as const },
@@ -67,7 +73,9 @@ describe("weekly cycle cron route", () => {
   }));
 
   it("rejects forbidden GET and POST body authority before batch", async () => withServerOnlyStub(async () => {
-    const { handleWeeklyCycleCron } = await import("./route");
+    const { handleWeeklyCycleCron } = await import(
+      "@/lib/orchestration/handle-weekly-cycle-cron"
+    );
     for (const method of ["GET", "POST"] as const) {
       let calls = 0;
       const response = await handleWeeklyCycleCron(requestWithBody(method, { clientId: "untrusted", dryRun: false }), {
