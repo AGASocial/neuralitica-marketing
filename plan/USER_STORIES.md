@@ -1256,10 +1256,10 @@ V1 starts on the **low** tier by default. The same assembly pipeline (US-9.x) ru
 
 *Phase B — full pipeline (deferred until Phase A CLOSE)*
 
-- [ ] Happy path auto-advances: `generateContentStrategyForClient({ invokedBy: "system" })` → auto-approve or draft-bypass gate frozen in CONTRACT → `generateReelScriptsForClient` → `generateReelCaptionsForClient` → provider jobs (primary/TTS/B-roll per policy) → assembly → branding → QA (reuse auto-chain) → ensure approval queue (US-11.1 pattern) for all 3 slots
-- [ ] Partial failure: successful slots continue to approval queue; failed slots recorded on run row with step + error code; Operator can inspect run status (FE minimal table or log-only acceptable for CLOSE)
-- [ ] Operator manual trigger Server Action (`requireOperator`) runs same orchestrator for one client+week with `mode: "live"`; shares idempotency ledger with cron
-- [ ] [SEC] System path never publishes to Instagram (ADR-0002); never bypasses Cliente approval gate; inactive clients never enqueued; budget blocks surface as run step failures, not silent skip
+- [x] Happy path auto-advances: `generateContentStrategyForClient({ invokedBy: "system" })` → auto-approve or draft-bypass gate frozen in CONTRACT → `generateReelScriptsForClient` → `generateReelCaptionsForClient` → provider jobs (primary/TTS/B-roll per policy) → assembly → branding → QA (reuse auto-chain) → ensure approval queue (US-11.1 pattern) for all 3 slots
+- [x] Partial failure: successful slots continue to approval queue; failed slots recorded on run row with step + error code; Operator can inspect run status (FE minimal table or log-only acceptable for CLOSE)
+- [x] Operator manual trigger Server Action (`requireOperator`) runs same orchestrator for one client+week with `mode: "live"`; shares idempotency ledger with cron
+- [x] [SEC] System path never publishes to Instagram (ADR-0002); never bypasses Cliente approval gate; inactive clients never enqueued; budget blocks surface as run step failures, not silent skip
 
 **Depends on:** US-4.1 ✅ · US-4.2 ✅ · US-5.1 ✅ · US-6.1 ✅ · US-7.1 ✅ · US-7.2 ✅ · US-8.x ✅ · US-9.1 ✅ · US-9.2 ✅ · US-9.3 ✅ · US-10.1 ✅ · US-11.1 ✅ · US-14.5 ✅ · US-16.1 ✅ · US-16.2 ✅ · US-2.3 ✅ · US-3.1 ✅
 

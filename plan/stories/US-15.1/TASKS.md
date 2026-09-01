@@ -138,9 +138,9 @@ Concrete consumer: **Operator cycle control page** (minimal).
 - [x] SECURITY.md — Phase B delta review covering the same additive safety outcomes before live wiring — `bed0615`
 - [x] **Reviewed by FE** on Phase B CONTRACT — APPROVED `136e91e`
 - [x] BUILD Phase B — BE/DB `83c5049` · FE `f5204ac` · integrations `464081b`
-- [ ] VALIDATION.md Phase B
-- [ ] QA.md Phase B
-- [ ] CLOSE Phase B (product-owner)
+- [x] VALIDATION.md Phase B — FAIL `d2f6d9e` → RE-VALIDATE PASS WITH NOTES `4148bab` → POST-QA-FIX VALIDATE PASS WITH NOTES `a249f3a` → POST-H2-FIX VALIDATE PASS `7ec40a0`
+- [x] QA.md Phase B — APPROVE WITH CONDITIONS `cb218ec` (H1) → re-review `4da9761` (H2) → final re-review APPROVE `b54e198`
+- [x] CLOSE Phase B (product-owner) — 2026-08-31; 4/4 Phase B AC checked
 
 ---
 
