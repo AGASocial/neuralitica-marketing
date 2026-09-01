@@ -3,7 +3,20 @@ import "server-only";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export type WeeklyCycleRunMode = "cron" | "operator";
-export type WeeklyCycleRunStatus = "planned" | "running" | "completed" | "failed" | "dry_run";
+/**
+ * Phase B additive: the migration replaced the ledger's status CHECK with
+ * the aggregate live enum (`dry_run|running|paused|completed|partial_failed|failed`).
+ * Phase A's `planned` never appears in a fresh row (Phase A always inserts
+ * `dry_run`); kept here only for narrowing legacy reads.
+ */
+export type WeeklyCycleRunStatus =
+  | "planned"
+  | "dry_run"
+  | "running"
+  | "paused"
+  | "completed"
+  | "partial_failed"
+  | "failed";
 export type AcquireWeeklyCycleRunResult =
   | {
       outcome: "CREATED" | "ALREADY_EXISTS";
