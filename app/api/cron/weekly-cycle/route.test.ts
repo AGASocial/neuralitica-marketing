@@ -22,7 +22,7 @@ const requestWithRawBody = (method: "GET" | "POST", body: string) => ({
 }) as Request;
 
 describe("weekly cycle cron route", () => {
-  it("runs a valid request and always supplies dryRun true", async () => withServerOnlyStub(async () => {
+  it("runs a valid request and supplies only the resolved weekStart to the batch", async () => withServerOnlyStub(async () => {
     const { handleWeeklyCycleCron } = await import("./route");
     let received: unknown;
     const response = await handleWeeklyCycleCron(requestWithBody("GET", {}), {
@@ -31,7 +31,7 @@ describe("weekly cycle cron route", () => {
     });
     assert.equal(response.status, 200);
     assert.equal(response.headers.get("cache-control"), "no-store");
-    assert.deepEqual(received, { weekStart: "2026-08-31", mode: "cron", dryRun: true });
+    assert.deepEqual(received, { weekStart: "2026-08-31" });
   }));
 
   it("rejects authenticated malformed non-empty JSON for GET and POST", async () => withServerOnlyStub(async () => {

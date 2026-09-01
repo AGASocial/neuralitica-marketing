@@ -127,9 +127,16 @@ function assemblyJobIdFromLinkage(stepRun: WeeklyCycleStepRunRow): string {
   return stepRun.jobId;
 }
 
+/**
+ * `nextDispatchAttempt` is the 0-indexed physical attempt about to run
+ * (`row.dispatchAttempt + 1`; the row's stored `dispatch_attempt` starts at
+ * 0 for the first, non-retried dispatch). CONTRACT.md § "Retries, timeout
+ * and partial failure" freezes 30s before the 2nd attempt and 120s before
+ * the 3rd — i.e. `nextDispatchAttempt === 1` (about to run attempt 2) and
+ * `nextDispatchAttempt === 2` (about to run attempt 3) respectively.
+ */
 function backoffSeconds(nextAttempt: number): number {
-  if (nextAttempt === 2) return WEEKLY_CYCLE_DISPATCH_BACKOFF_SEC[2];
-  if (nextAttempt === 3) return WEEKLY_CYCLE_DISPATCH_BACKOFF_SEC[3];
+  if (nextAttempt <= 1) return WEEKLY_CYCLE_DISPATCH_BACKOFF_SEC[2];
   return WEEKLY_CYCLE_DISPATCH_BACKOFF_SEC[3];
 }
 
@@ -196,14 +203,17 @@ export async function dispatchWeeklyCycleOutbox(
       continue;
     }
 
-    // Transport-level dispatch retry (outbox.dispatch_attempt, 0..3) is
+    // Transport-level dispatch retry (outbox.dispatch_attempt, 0-indexed) is
     // distinct from the step's own spend-capable regeneration attempt
     // (step_run.attempt, 1..3) — CONTRACT § "Retries, timeout and partial
     // failure". This loop only re-claims the same outbox/step_run row; a
     // brand-new attempt row is created later by Operator resume when the
-    // step reaches a genuine terminal failure.
+    // step reaches a genuine terminal failure. `nextDispatchAttempt` is
+    // 0-indexed (0 = first attempt already made, 1 = about to run the 2nd,
+    // 2 = about to run the 3rd), so the ceiling of 3 total attempts is
+    // `nextDispatchAttempt < MAX_WEEKLY_CYCLE_ATTEMPTS`, not `<=`.
     const nextDispatchAttempt = row.dispatchAttempt + 1;
-    const canRetry = outcome.retryable && nextDispatchAttempt <= MAX_WEEKLY_CYCLE_ATTEMPTS;
+    const canRetry = outcome.retryable && nextDispatchAttempt < MAX_WEEKLY_CYCLE_ATTEMPTS;
 
     if (canRetry) {
       const availableAt = new Date(Date.now() + backoffSeconds(nextDispatchAttempt) * 1000).toISOString();

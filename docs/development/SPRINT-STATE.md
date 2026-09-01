@@ -5,12 +5,12 @@
 ```yaml
 current_phase: 7
 current_story: US-15.1
-story_status: signoff
+story_status: build_fix
 feature_branch: feature/US-15.1-weekly-cron
 last_completed_story: US-8.9
 phase_status: sprint_9_prep
 blocked_reason: null
-updated_at: 2026-08-31T22:27:00Z
+updated_at: 2026-08-31T22:35:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -95,6 +95,9 @@ updated_at: 2026-08-31T22:27:00Z
 
 ## Historial reciente
 
+- 2026-08-31 · US-15.1 Phase B VALIDATE FAIL `d2f6d9e`: (1) cron route hard-codes `dryRun: true` — `runWeeklyCycleLiveBatch`/`selectWeeklyCycleLiveClientIds` built but never called, live pipeline unreachable from schedule, breaks "no Operator clicks" AC; (2) zero test coverage vs CONTRACT's 8 mandatory Phase B categories. Minor: `approve-strategy-row.ts` doesn't stamp `approved_by_actor='operator'`; TTS/assembly trusted steps pass `invokedBy:"operator"` not literal `"system"`. Individual mechanisms verified correct field-for-field vs CONTRACT; 0 new tsc errors. → BUILD/FIX re-delegated to integrations-engineer.
+- 2026-08-31 · US-15.1 Phase B BUILD: BE/DB `83c5049` (migration + `lib/contracts/weekly-cycle-live.ts`) · FE `f5204ac` (`/operator/cycle` + i18n) · integrations `464081b` (21 new orchestration modules: CAS, outbox, dispatch, reconcile, trusted-step wiring) — TASKS.md checked off `c5867d6`. Flagged follow-up (`task_c263b2c8`): job-completion webhooks not yet wired to `resumeWeeklyCycleFromJob` (PO-accepted, deferred to phase integration).
+- 2026-08-31 · US-15.1 Phase B FE signoff confirmed `136e91e` (CONTRACT.md "Reviewed by FE Phase B: APPROVED"; BUILD veto cleared) → BUILD Phase B dispatched: integrations-engineer (lib/orchestration/* live wiring, CAS, outbox, resume/reconcile) + nextjs-backend (migration delta + lib/contracts/weekly-cycle-live.ts) + nextjs-frontend (`/operator/cycle` page + i18n), launched in parallel per disjoint ownership.
 - 2026-08-31 · US-15.1 Phase B CONTRACT frozen `f2c12d7`: exact live state machine, CAS strategy approval, idempotent resume/outbox, retries/timeouts, Operator DTO/action, rollout controls, no-publish boundary; next FE signoff.
 - 2026-08-31 · US-15.1 Phase B SECURITY APPROVE WITH CONDITIONS `bed0615`: System auto-approval with CAS selected; generic scripts-side draft bypass vetoed; no user-choice blocker → CONTRACT delta.
 - 2026-08-31 · US-15.1 Phase A CLOSE `b1e4508`: 5/5 Phase A AC checked; Phase B 0/4 deferred; next mandatory Phase B SECURITY → CONTRACT delta → FE signoff.

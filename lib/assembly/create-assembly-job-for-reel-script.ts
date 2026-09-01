@@ -95,7 +95,7 @@ export type CreateAssemblyJobForReelScriptResult = AssembleReelForScriptResult;
 export type CreateAssemblyJobTrustedParams = {
   clientId: string;
   reelScriptId: string;
-  invokedBy: "operator" | "revision";
+  invokedBy: "operator" | "revision" | "system";
 };
 
 /**

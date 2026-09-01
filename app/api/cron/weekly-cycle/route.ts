@@ -1,6 +1,6 @@
 import { findForbiddenWeeklyCycleCronKeys } from "@/lib/orchestration/find-forbidden-weekly-cycle-cron-keys";
 import { resolveWeekStartForCycle } from "@/lib/orchestration/resolve-week-start-for-cycle";
-import { runWeeklyCycleBatch } from "@/lib/orchestration/run-weekly-cycle-batch";
+import { runWeeklyCycleCronBatch } from "@/lib/orchestration/run-weekly-cycle-batch";
 import { verifyCronSecret } from "@/lib/orchestration/verify-cron-secret";
 
 export const dynamic = "force-dynamic";
@@ -9,13 +9,13 @@ const headers = { "Cache-Control": "no-store" };
 
 type WeeklyCycleCronDependencies = {
   verify: typeof verifyCronSecret;
-  runBatch: typeof runWeeklyCycleBatch;
+  runBatch: typeof runWeeklyCycleCronBatch;
   resolveWeekStart: typeof resolveWeekStartForCycle;
 };
 
 const defaultDependencies: WeeklyCycleCronDependencies = {
   verify: verifyCronSecret,
-  runBatch: runWeeklyCycleBatch,
+  runBatch: runWeeklyCycleCronBatch,
   resolveWeekStart: resolveWeekStartForCycle,
 };
 
@@ -36,7 +36,7 @@ export async function handleWeeklyCycleCron(
     }
   }
   if (findForbiddenWeeklyCycleCronKeys(body).length > 0) return Response.json({ error: "FORBIDDEN_FIELDS" }, { status: 400, headers });
-  const result = await dependencies.runBatch({ weekStart: dependencies.resolveWeekStart(), mode: "cron", dryRun: true });
+  const result = await dependencies.runBatch({ weekStart: dependencies.resolveWeekStart() });
   return Response.json(result, { status: 200, headers });
 }
 

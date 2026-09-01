@@ -26,6 +26,7 @@ export async function approveStrategyRow(params: {
     .update({
       status: "approved",
       approved_by: params.approvedBy,
+      approved_by_actor: "operator",
       approved_at: approvedAt,
       updated_at: approvedAt,
     })

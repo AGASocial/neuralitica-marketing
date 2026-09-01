@@ -25,7 +25,7 @@ import { resolveDefaultVoiceId } from "@/lib/tts/voice-catalog";
 export type SynthesizeVoiceoverTrustedParams = {
   clientId: string;
   reelScriptId: string;
-  invokedBy: "operator" | "revision";
+  invokedBy: "operator" | "revision" | "system";
   preferredLocale?: "en" | "es";
 };
 

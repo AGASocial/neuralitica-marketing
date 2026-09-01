@@ -250,7 +250,7 @@ export async function dispatchWeeklyCycleAssemblyStep(params: {
   const result = await createAssemblyJobForClientTrusted({
     clientId: params.clientId,
     reelScriptId: params.reelScriptId,
-    invokedBy: "operator",
+    invokedBy: "system",
   });
 
   if (!result.ok) {
@@ -296,7 +296,7 @@ export async function runWeeklyCycleTtsStep(params: {
   const result = await synthesizeVoiceoverForClientTrusted({
     clientId: params.clientId,
     reelScriptId: params.reelScriptId,
-    invokedBy: "operator",
+    invokedBy: "system",
   });
 
   if (!result.ok) {
