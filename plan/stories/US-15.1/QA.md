@@ -1,3 +1,132 @@
+# QA Report — US-15.1 Phase B
+
+**Story:** US-15.1 — Weekly cycle cron endpoint and orchestration (live pipeline)
+**Scope:** Phase B only — live weekly runner, strategy auto-approval, per-slot step-run/outbox dispatch, kill switch/rollout, Operator manual trigger/preview/resume, minimal Operator UI.
+**Branch:** `feature/US-15.1-weekly-cron`
+**Commits reviewed:** `83c5049` (BE/DB migration + contracts), `f5204ac` (FE operator UI), `464081b` (integrations orchestration), `c5867d6` (docs), `36dc5da` (VALIDATE-FIX: cron live wiring + 131 tests + retry/backoff bugfix + audit fixes)
+**Date:** 2026-08-31
+**Reviewer:** qa-engineer
+**Sources:** `plan/USER_STORIES.md` §US-15.1 Phase B AC/`[SEC]`; `plan/stories/US-15.1/{SECURITY,CONTRACT,VALIDATION}.md`; implementation and executed tests
+
+### Verdict: APPROVE WITH CONDITIONS
+
+**Severity counts:** Critical **0** · High **1** · Medium **2** · Low **1**
+
+Phase B's headline mechanisms are sound: the strategy auto-approval CAS never bypasses draft validation or overwrites an Operator-approved row, live spend genuinely delegates to the existing trusted job creators (which retain their own budget/consent gates — no `operatorClientId` impersonation), the Operator manual actions are correctly gated by first-await `requireOperator` with non-enumerating errors, no raw `step_log`/secrets/payloads reach the FE DTO, and a repo-wide scan confirms zero reachable Instagram/publish call on the weekly-cycle path. However, this review found one High finding — the frozen `running → paused` aggregate transition is never actually implemented, which can (a) permanently strand a run with real completed provider spend and no resume path, and (b) cause genuine double-spend on Operator resume for a slot whose provider job had already completed successfully before the kill switch flipped off — plus two Medium findings in the CAS/outbox layer. None of these are exploitable by an external/unauthenticated actor and none bypass authentication, tenant scoping, or the no-publish boundary; they are operational-integrity defects in the kill-switch/resume recovery path itself. Given the High finding's financial-integrity impact and its direct relevance to a binding SECURITY.md requirement, this is **APPROVE WITH CONDITIONS**, not a clean APPROVE — the High finding should be fixed (or explicitly accepted by product-owner/security-architect as a documented residual risk) before relying on the kill switch as a safe mid-run stop control in production.
+
+---
+
+## Findings
+
+### High
+
+#### H1 — `running → paused` aggregate transition is never implemented; kill-switch-mid-run can strand spent work or cause double-spend on resume
+
+**Files:** `lib/orchestration/resume-weekly-cycle-from-job.ts:109-113`; `lib/orchestration/reconcile-weekly-cycle-run.ts:88-95`; `lib/orchestration/resume-weekly-cycle-run.ts:56-63,109-146`; `lib/orchestration/advance-weekly-cycle-slot.ts:104-106`; `plan/stories/US-15.1/CONTRACT.md:834` (state table: `running → paused`); `plan/stories/US-15.1/SECURITY.md:264` ("transition the run to `paused`... Re-enabling resumes only through the same idempotent resume API")
+
+**What:** CONTRACT.md's frozen aggregate state machine requires `running → paused` when "kill switch disabled, client inactive, or callback terminal bookkeeping cannot advance." A repo-wide grep for `"paused"` under `lib/orchestration/` shows the status is only ever **read** (`.eq("status", "paused")`, `status === "paused"`) — no line anywhere writes `status: "paused"` to `neuramark_weekly_cycle_runs`. `resumeWeeklyCycleFromJob` (the callback continuation) instead marks the **step_run** as `"failed"` with `errorCode: "LIVE_DISABLED"` when the kill switch is off — even when the underlying provider job actually **completed successfully** (`loadOwnedJobTerminalStatus` returned `"completed"`; the real status is discarded and replaced with `"failed"` unconditionally at line 115). `reconcileWeeklyCycleRun` then resolves the aggregate purely from step-run statuses, and since it never assigns `"paused"` (only `"completed"`, `"partial_failed"`, or `"failed"` from `"running"`), a run interrupted before any slot reaches approval resolves to the **terminal** `"failed"` state. `resumeWeeklyCycleRun` only accepts `run.status === "paused" || "partial_failed"` — a `"failed"` run is permanently unresumable.
+
+This is directly confirmed by the test suite itself: `resume-weekly-cycle-from-job.test.ts:180-195` ("kill switch disabled mid-flight pauses the step as LIVE_DISABLED instead of advancing it") asserts `markTerminal[0] = { status: "failed", errorCode: "LIVE_DISABLED" }` for a job whose mocked status is `"completed"` — i.e., the test codifies discarding a successful outcome, and no test anywhere asserts the run row's `status` column is ever set to `"paused"`.
+
+**Why it matters — two concrete failure modes:**
+1. **Permanent stranding of paid work.** If the kill switch is disabled while a run is `running` and no slot has yet reached approval, the run resolves to `"failed"` (terminal) rather than `"paused"`. Re-enabling the kill switch afterward gives the Operator no way to resume it — `resumeWeeklyCycleRun` refuses `"failed"` runs outright — directly contradicting SECURITY.md's frozen guarantee that "Re-enabling resumes only through `resumeWeeklyCycleRun`... Rollback is forward-safe."
+2. **Real double-spend on Operator resume.** For a run that *does* resolve to `"partial_failed"` (≥1 slot already approved), the LIVE_DISABLED-failed step is indistinguishable from a genuine transient failure to `resumeWeeklyCycleRun`'s retry filter (`resume-weekly-cycle-run.ts:57-58`: `status === "failed" && attempt < MAX_WEEKLY_CYCLE_ATTEMPTS`, no `errorCode` check). For an async step (`primary_video`/`broll`/`assembly`/`branding`), resume calls `createOrGetReadyStepRun` for a **new attempt** and dispatches it through the outbox (`resume-weekly-cycle-run.ts:144-146`), which invokes the same trusted job creator again (`dispatch-weekly-cycle-outbox.ts:184` → `invokeTrustedCreator`) — genuinely re-submitting a provider job (real spend) for a step whose *original* job may have already completed and been paid for, because that original success was discarded at the LIVE_DISABLED callback instead of being preserved.
+
+**Fix direction:** Add an explicit `running → paused` write path: when a callback's terminal bookkeeping cannot advance due to `LIVE_DISABLED` (or client-inactive), (a) persist the **actual** job outcome on the step_run (`completed` if the provider really completed, not a synthetic `failed`), and (b) transition the aggregate run row to `status: "paused"` via a dedicated CAS (mirroring `startWeeklyCycleLiveCas`'s pattern) rather than relying on `reconcileWeeklyCycleRun`'s implicit resolution, which has no `paused` branch. `resumeWeeklyCycleRun`'s retry filter should also exclude non-retryable error codes (anything outside `RETRYABLE_WEEKLY_CYCLE_ERROR_CODES`) so a `LIVE_DISABLED`-flagged step, once correctly recorded as `completed`, is never re-dispatched. Add tests: kill switch disabled mid-flight for a step whose underlying job actually succeeded → step recorded `completed`, run recorded `paused`, not `failed`/`partial_failed`; Operator resume after re-enabling the switch does not re-invoke the trusted creator for that already-succeeded step.
+
+**Fix owner:** `integrations-engineer` (dispatcher/callback + resume logic), with `security-architect` sign-off given this touches the binding kill-switch recovery guarantee in SECURITY.md.
+
+### Medium
+
+#### M1 — `markStepRunTerminal` / `markStepRunPending` / `scheduleStepRunRetry` never verify their CAS guard actually matched a row
+
+**Files:** `lib/orchestration/weekly-cycle-step-runs.ts:215-245`
+
+**What:** Unlike every other CAS helper in this story (`claimOutboxRow`, `claimStepRunAsDispatchPending`, `startWeeklyCycleLiveCas`, `approveStrategyForSystemCycleCas` — all of which chain `.select(...).maybeSingle()` after the guarded `.update()` and branch on whether `data` came back), these three functions call `.update(...).eq(...).not("status", "in", "(completed,failed,skipped)")` **without** `.select()` and return `!error`. Supabase/PostgREST does not raise an error for a zero-row `UPDATE` by default, so `error` is `null` regardless of whether the `.not(...)` guard excluded the row. In practice **these functions always return `true`** as long as there is no genuine network/DB failure — they cannot distinguish "I transitioned the row" from "the row was already in a terminal state and my guard correctly blocked the write."
+
+Every caller that treats the boolean as a real CAS result (`resume-weekly-cycle-from-job.ts:121` — `if (!marked) { /* Already terminal — idempotent duplicate callback */ }`) is checking a signal that the underlying function cannot actually produce. This exact function is never covered by its own unit test — there is no `weekly-cycle-step-runs.test.ts`; every consumer test (`dispatch-weekly-cycle-outbox.test.ts`, `resume-weekly-cycle-from-job.test.ts`, etc.) replaces `markStepRunTerminal` with a hand-written mock (e.g. `async (p) => { calls.push(p); return true; }`) via `Module._load` interception, so the "idempotent duplicate callback" test at `resume-weekly-cycle-from-job.test.ts:165-178` passes only because the mock is told to return `false` — it never exercises the real implementation's inability to do so.
+
+**Why it matters:** The intended "already terminal → don't re-advance" branch this function's callers rely on is unreachable in production. In the current call graph the practical blast radius is contained by other, correctly-implemented guards (the outbox's atomic `claimOutboxRow`, and the `(run_id, slot_index, step, attempt)` unique constraint on `neuramark_weekly_cycle_step_runs` absorbing a duplicate `createOrGetReadyStepRun` insert) — so this was not found to cause an actual double-dispatch in the paths traced. But it is a genuine, silent CAS defect in code whose entire purpose is idempotency/concurrency safety, it is exercised by zero real-database-shaped tests, and a future caller that trusts this return value without the same downstream defense-in-depth would not be protected.
+
+**Fix direction:** Add `.select("id").maybeSingle()` to all three functions and return based on whether `data` came back, matching the pattern already used by `claimOutboxRow`/`claimStepRunAsDispatchPending`/`startWeeklyCycleLiveCas`. Add a direct unit test for `weekly-cycle-step-runs.ts` (currently has none) asserting the guard actually blocks a second terminal-mark of an already-terminal row.
+
+**Fix owner:** `integrations-engineer`.
+
+#### M2 — `listClaimableOutboxRows` checks staleness against the wrong timestamp field
+
+**File:** `lib/orchestration/weekly-cycle-outbox.ts:92-118`
+
+**What:** `listClaimableOutboxRows` decides whether a `claimed` row is stale-and-reclaimable using `row.availableAt <= staleCutoff` (line 115), but `available_at` is set at row creation/retry-scheduling time and is **not** updated when a row transitions to `claimed` (`claimOutboxRow`, lines 121-140, only sets `claim_token`/`claimed_at`, never touches `available_at`). The actual atomic claim in `claimOutboxRow`'s `WHERE` clause correctly uses `claimed_at.lte.${staleCutoff}` (line 134). So the candidate list returned by `listClaimableOutboxRows` can include rows that were claimed moments ago (not stale at all) whenever that row's `available_at` happens to be more than 5 minutes old — which is routine for any row that sat `pending` for a while before a worker picked it up (e.g. due to cron cadence or backlog).
+
+**Why it matters:** This does not cause an actual double-dispatch — `claimOutboxRow`'s own atomic `UPDATE ... WHERE status.eq.pending,and(status.eq.claimed,claimed_at.lte.staleCutoff)` is the real, correctly-implemented gate, and a non-stale `claimed` row included by mistake in the candidate list simply fails to actually claim (0 rows affected, `claimOutboxRow` returns `null`, caller does `continue`). The impact is limited to wasted candidate-list slots (an in-flight, legitimately-claimed row can crowd out a `limit`-bounded batch of genuinely claimable rows) — a minor efficiency/correctness-adjacent bug, not a spend or security issue.
+
+**Fix direction:** Filter on `claimedAt` (need to add it to `WeeklyCycleOutboxRow`/`mapRow`, which currently doesn't select it) instead of `availableAt` for the `claimed` branch, matching `claimOutboxRow`'s own staleness definition.
+
+**Fix owner:** `integrations-engineer`.
+
+### Low
+
+#### L1 — System-cycle callback discards a successful job's real outcome even outside the kill-switch scenario is asserted by the code path, not just the LIVE_DISABLED branch
+
+**File:** `lib/orchestration/resume-weekly-cycle-from-job.ts:115`
+
+**What:** `const terminal = status === "completed" ? "completed" : "failed";` — this line itself is correct (it does preserve `"completed"` in the normal path); this Low is scoped narrowly to record that the LIVE_DISABLED branch three lines above (covered by H1) is the *only* place a genuine `"completed"` outcome gets overwritten. No separate action needed beyond H1's fix — recorded here only so the H1 fix is verified against this exact line rather than a broader rewrite.
+
+No new Critical, IDOR, secret-leak, budget/consent-bypass, or Instagram-publish findings were found.
+
+---
+
+## Security and correctness review — Phase B
+
+| Area | Result | Evidence |
+|------|--------|----------|
+| Strategy auto-approval — no draft bypass | **PASS** | `auto-approve-weekly-cycle-strategy.ts` reloads the exact persisted row, validates `contentStrategyBriefSchema`, verifies id/client/week ownership and `STRATEGY_STALE` on a version mismatch; `approve-strategy-for-system-cycle-cas.ts:34-49` performs one conditional `UPDATE ... WHERE id/client_id/week_start/version/status='draft'` with `.select().maybeSingle()` — genuine CAS; a concurrent already-approved-by-this-run replay is the only accepted zero-row outcome, everything else is `STRATEGY_APPROVAL_CONFLICT`. `generateReelScriptsForClient` only ever receives the returned `strategyId` (`weekly-cycle-trusted-steps.ts:130-136`). |
+| Live kill switch — start-of-run | **PASS** | `run-weekly-cycle-live.ts:44-47` checks `isWeeklyCycleLiveAllowedForClient` before any acquire; `weekly-cycle-live-env.ts` reads only `process.env.*`, no request/query/UI authority; allowlist fails **fully closed** (empty set) on any single invalid UUID entry (`getWeeklyCycleLiveClientAllowlist:37-41`). |
+| Live kill switch — mid-run | **FAIL — H1** | See Findings. Blocks new spend correctly but does not implement the frozen `paused` recovery transition, risking stranded spend and double-spend on resume. |
+| Budget/consent/policy gates on live spend | **PASS** | Every provider-spend step (`weekly-cycle-trusted-steps.ts`) delegates to the existing trusted creators (`createTalkingHeadVideoJob`, `createBrollVideoJobs`, `createAssemblyJobForClientTrusted`, `synthesizeVoiceoverForClientTrusted`), passing `operatorClientId: params.clientId` — i.e. never impersonating a different tenant — and those creators retain their own `assertReelBudgetAllowsEstimatedSpend` / `assertActiveAvatarConsentForJobs` checks (verified present in `create-talking-head-video-job.ts`, `create-broll-video-jobs.ts`). `mapDownstreamErrorCode` surfaces `BUDGET_EXCEEDED`/`CONSENT_REQUIRED`/`CONSENT_REVOKED`/`POLICY_REJECTED` as explicit step failures — never a silent skip. |
+| IDOR — manual trigger/preview/resume | **PASS** | All three Server Actions call `requireOperator("handler")` as the first await before any parsing/DB read; `triggerWeeklyCycleForClient`/`previewWeeklyCycleForClient` use `.strict()` Zod input and return an identical non-enumerating `NOT_FOUND` for nonexistent/inactive/non-allowlisted `clientId`; `resumeWeeklyCycleRun` accepts only `{ runId }` (no step/slot/attempt override). Operator broad access to any active client is the documented V1 scope, not an IDOR. |
+| Async callback trust boundary | **PASS (mechanism); accepted gap unchanged** | `resumeWeeklyCycleFromJob` ignores caller-supplied tenant/status/cost, re-derives job ownership from `loadOwnedJobTerminalStatus` scoped by the step run's own persisted `clientId`, and only advances the direct successor. The actual webhook wiring (`on-assembly-job-completed.ts`/`on-branding-completed.ts` calling this function) remains the pre-documented, PO-accepted deferred gap (`task_c263b2c8`) — not re-flagged here. |
+| No-publish boundary (ADR-0002) | **PASS** | Repo-wide grep for `instagram\|graph-api\|graph\.facebook\|publish-now\|createContainer\|publishReel` under `lib/orchestration/`, `lib/content-strategy/`, `lib/assembly/`, `lib/qa/`, `lib/approvals/`, `lib/reel-scripts/`, `lib/reel-captions/`, `lib/tts/`, `lib/video-jobs/` returns zero hits outside the pre-existing, unrelated `buildEffectiveInstagramCaption` caption-formatting helper in `compose-approval-package.ts` (text composition only, not a publish call). `ensureApprovalPackageForSystemCycle` → `insertPendingApproval` only ever writes `status: "pending_client"`. Confirmed independently of, and consistent with, the executed structural scan test (`weekly-cycle-live.structural.test.ts`). |
+| FE/DTO leakage | **PASS** | `load-operator-weekly-cycle-runs.ts` selects only `id, client_id, week_start, mode, status, started_at, finished_at, display_name` plus derived per-slot status/step/errorCode from the step-run table — never `step_log`. `OperatorCycleView.tsx` maps error codes through a static copy dictionary; no raw payload, prompt, secret, or Supabase import in the Client Component. |
+| Retry ceiling / backoff | **PASS** | `MAX_WEEKLY_CYCLE_ATTEMPTS = 3`, `WEEKLY_CYCLE_DISPATCH_BACKOFF_SEC = { 2: 30, 3: 120 }` (`weekly-cycle-live-types.ts:65-66`) match CONTRACT exactly; the previously-fixed off-by-one (verified independently by VALIDATION) still holds under this review's own hand-trace of `dispatch-weekly-cycle-outbox.ts:138-141,215-216`. |
+| Outbox atomic claim (double-dispatch) | **PASS** | `claimOutboxRow` performs a single guarded `UPDATE ... WHERE id=? AND available_at<=now AND (status=pending OR (status=claimed AND claimed_at<=staleCutoff))` with `.select().maybeSingle()` — a genuine single-statement CAS; Postgres row-level locking on the underlying `UPDATE` prevents two concurrent claims of the same row. |
+| CAS/outbox layer — secondary helpers | **FAIL — M1, M2** | See Findings. Contained by the primary CAS above; not exploitable for double-spend in the traced call graph, but real defects. |
+| Idempotency key format | **PASS** | `wc:{runId}:{slotIndex\|global}:{step}:{attempt}` matches `weeklyCycleOutboxPayloadSchema`'s regex exactly (`weekly-cycle-idempotency-key.ts`). |
+| `neuramark_` prefix / RLS | **PASS (re-confirmed by reading, not re-applied live)** | Migration DDL for both new Phase B tables carries `neuramark_` prefixes throughout, `ENABLE ROW LEVEL SECURITY` with zero `CREATE POLICY` statements. |
+| Backdoors / dependencies / secrets | **PASS** | No new dependency, no hardcoded credential beyond the sanctioned `getCurrentUser()` local user, no debug bypass flag, no eval/dynamic code execution, no unexpected outbound network call found in this review's reading of the 21 new orchestration modules + 3 Server Actions + FE. |
+
+---
+
+## Checks Run
+
+| Command | Result |
+|---------|--------|
+| `npx tsx --test app/api/cron/weekly-cycle/route.test.ts lib/content-strategy/approve-strategy-for-system-cycle-cas.test.ts lib/content-strategy/content-strategy.test.ts lib/orchestration/acquire-weekly-cycle-run.test.ts lib/orchestration/actions/trigger-weekly-cycle-for-client.test.ts lib/orchestration/dispatch-weekly-cycle-outbox.test.ts lib/orchestration/ensure-approval-package-for-system-cycle.test.ts lib/orchestration/list-eligible-clients-for-weekly-cycle.test.ts lib/orchestration/persist-weekly-cycle-run-plan.test.ts lib/orchestration/reconcile-weekly-cycle-run.test.ts lib/orchestration/resume-weekly-cycle-from-job.test.ts lib/orchestration/resume-weekly-cycle-run.test.ts lib/orchestration/run-weekly-cycle-batch.test.ts lib/orchestration/run-weekly-cycle-for-client.test.ts lib/orchestration/run-weekly-cycle-live.test.ts lib/orchestration/start-weekly-cycle-live-cas.test.ts lib/orchestration/verify-cron-secret.test.ts lib/orchestration/weekly-cycle-idempotency-key.test.ts lib/orchestration/weekly-cycle-live-env.test.ts lib/orchestration/weekly-cycle-live.structural.test.ts lib/orchestration/weekly-cycle-outbox.test.ts lib/orchestration/weekly-cycle.test.ts` | **191 pass / 0 fail**, 36 suites, re-run independently by this reviewer (not trusted from VALIDATION.md alone). |
+| `npx eslint` over all Phase B production TS/TSX files (route, page/loading, `OperatorCycleView`/`OperatorCycleLoading`, all `lib/orchestration/*.ts` + `actions/*.ts` non-test files, `approve-strategy-for-system-cycle-cas.ts`, `approve-strategy-row.ts`) | **0 errors** in production sources. The 82 errors reported when test files are included are 100% `@typescript-eslint/no-require-imports` inside `*.test.ts` files, from the intentional `Module._load` mocking pattern already used and accepted in Phase A. |
+| Repo-wide grep for `paused` writes under `lib/orchestration/` | Confirms **zero** write sites for `status: "paused"` — basis for H1. |
+| Repo-wide grep for Instagram/publish surfaces under the weekly-cycle-reachable module set | **Zero hits** outside an unrelated pre-existing caption-formatting helper — basis for the no-publish PASS row. |
+| Direct read of `claimOutboxRow`, `claimStepRunAsDispatchPending`, `startWeeklyCycleLiveCas`, `approveStrategyForSystemCycleCas` vs. `markStepRunTerminal`/`markStepRunPending`/`scheduleStepRunRetry` | Confirmed the `.select().maybeSingle()` pattern present in the former four and absent in the latter three — basis for M1. |
+
+---
+
+## What Was Not Covered
+
+- Live Supabase/PostgREST execution against a real database — all reasoning (including H1/M1/M2) is from static code reading plus the existing dependency-injected/mocked test suite, consistent with Phase A's and the prior Phase B validators' documented scope limit.
+- Deployed Vercel Cron invocation, real provider/worker callback delivery, and genuine concurrent-webhook races (the M1 race window is reasoned about, not reproduced under load).
+- The pre-documented, PO-accepted webhook→`resumeWeeklyCycleFromJob` wiring gap (`task_c263b2c8`) — intentionally not re-flagged per this task's instructions.
+- Full `npx tsc --noEmit` re-run (VALIDATION.md already independently re-verified zero new errors against baseline `d2f6d9e`; not re-run here since no source file was modified during this review).
+- Load/soak testing of the outbox dispatcher's `limit`/staleness behavior under real concurrency (M2's impact is reasoned from code, not measured).
+
+---
+
+## Gate summary
+
+`Phase B · US-15.1 · QA · qa-engineer · APPROVE WITH CONDITIONS`
+
+**CLOSE:** Recommend fixing **H1** before relying on the kill switch as a safe production stop control — it is the mechanism SECURITY.md explicitly names as the rollback/recovery safety net, and its absence risks real financial double-spend, not just a UX gap. **M1/M2** are non-blocking hardening items (defense-in-depth already contains their practical impact) but should be scheduled promptly given they sit in the concurrency-critical CAS/outbox layer this story exists to get right. If product-owner/security-architect determine H1's risk is acceptable to defer (e.g. because the kill switch is not expected to be toggled mid-run in the near term), that decision should be recorded explicitly here or in a CONTRACT amendment, the same way the webhook-wiring gap was — it does not currently carry that documented acceptance.
+
+---
+
 # QA Re-review — US-15.1 Phase A
 
 **Story:** US-15.1 — Weekly cycle cron endpoint and orchestration
