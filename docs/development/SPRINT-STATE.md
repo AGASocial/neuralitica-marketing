@@ -4,13 +4,13 @@
 
 ```yaml
 current_phase: 7
-current_story: US-15.1
-story_status: close
-feature_branch: feature/US-15.1-weekly-cron
-last_completed_story: US-8.9
-phase_status: sprint_9_prep
+current_story: null
+story_status: DONE
+feature_branch: null
+last_completed_story: US-15.1
+phase_status: needs_phase_integration
 blocked_reason: null
-updated_at: 2026-08-31T22:35:00Z
+updated_at: 2026-08-31T23:59:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -46,13 +46,13 @@ updated_at: 2026-08-31T22:35:00Z
 
 **Sprint 8 CLOSED** — Operator B-roll generate UI on `/operator/scripts` (Wan low + LTX high via policy) → stitch → branding → QA verified on `main`. **Idle backlog:** QA follow-ups (enqueue-time audio probe · faceless revision B-roll step).
 
-## Sprint 9 — PLAN F7 weekly cron (SIGNOFF Phase B)
+## Sprint 9 — PLAN F7 weekly cron ✅
 
 | Story | Status | Notes |
 |-------|--------|-------|
-| US-15.1 Weekly cycle cron + orchestration | Phase A closed / Phase B signoff | CONTRACT delta `f2c12d7` frozen by BE/SEC · FE reviewing Operator action/DTO/page states/i18n · BUILD veto active |
+| US-15.1 Weekly cycle cron + orchestration | done (A+B) | Phase A CLOSE `b1e4508` (5/5 AC). **Phase B CLOSED** `02b7899` FF-merged + pushed to `main`; BUILD BE/DB `83c5049` · FE `f5204ac` · integrations `464081b`; VALIDATE FAIL→PASS after 3 cycles (`d2f6d9e`→`4148bab`→`a249f3a`→`7ec40a0`); QA 2 fix cycles — H1 kill-switch pause (`60de5f6`), H2 resume-advances-paused-slot (`72c22a9`) — final APPROVE `b54e198`; 4/4 Phase B AC checked. **Known follow-up** (`task_c263b2c8`, PO-accepted): job-completion webhooks not yet wired to `resumeWeeklyCycleFromJob` — defer to Fase 7 phase integration (SC-1..4), not a CLOSE blocker. |
 
-**Sprint 9 SIGNOFF Phase B** — BE/SEC contract is frozen and implementable; frontend contract review is the final gate before live BUILD.
+**Sprint 9 CLOSED** — PLAN F7 weekly cron live pipeline complete and on `main`. **Next:** Fase 7 phase integration (integration-checker, SC-1..SC-4) — should also verify/close the job-completion webhook wiring follow-up before CONNECTED.
 
 ## Fase 3 — Content Strategy + Provider catalog (Sprint 3)
 
