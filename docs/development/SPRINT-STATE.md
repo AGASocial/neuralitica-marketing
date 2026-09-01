@@ -9,8 +9,8 @@ story_status: DONE
 feature_branch: null
 last_completed_story: US-15.1
 phase_status: needs_phase_integration
-blocked_reason: null
-updated_at: 2026-08-31T23:59:00Z
+blocked_reason: "Fase 7 integration GAPS — task_c263b2c8: wire resumeWeeklyCycleFromJob in job completion hooks"
+updated_at: 2026-09-01T11:00:00Z
 ```
 
 ## Fase 5 — Operación semanal (Sprint 7 / P1) ✅
@@ -95,6 +95,7 @@ updated_at: 2026-08-31T23:59:00Z
 
 ## Historial reciente
 
+- 2026-09-01 · Fase 7 integration-checker GAPS (`docs/development/PHASE-7.md`): 143/143 US-15.1 tests pass; blocker task_c263b2c8 — resumeWeeklyCycleFromJob not wired in completion hooks. Loop /desarrollar cada 5m activo.
 - 2026-08-31 · US-15.1 Phase B QA final re-review APPROVE `b54e198`: H1/H2 both re-confirmed closed independently (advance-loop/CAS traced directly, 14/14 + 203/203 tests run); probed 2 new edge cases (advanceWeeklyCycleSlot throwing mid-loop — confirmed unreachable through any current code path, recorded as non-blocking L2 hardening note; kill switch flipping off mid-advance — confirmed safe, re-checked at every spend boundary independently). Clean-area findings (budget/consent, IDOR, no-publish, FE/DTO) re-spot-checked via diff — untouched by either fix cycle. 0 Critical/High/Medium open. → CLOSE.
 - 2026-08-31 · US-15.1 Phase B POST-H2-FIX VALIDATE PASS `7ec40a0`: disjointness of the two resume loops confirmed at structural level (a slot can't have both an actionable-failed row and a later-completed row); `advanceWeeklyCycleSlot`'s `fromStep` contract verified directly; H1 no-double-spend re-confirmed via concrete `primary_video→tts` trace; 203/203 curated, 1200/1209 full-repo with the 9 fails reproduced identically on a disposable pre-fix worktree (genuine pre-existing pollution, none in `lib/orchestration/**`); 0 new tsc errors. → final QA re-review.
 - 2026-08-31 · US-15.1 Phase B QA-FIX H2 `72c22a9`: `resumeWeeklyCycleRun` now runs a second continuation loop after `paused→running` CAS — groups step_runs by slot, finds slots whose latest row is `completed` and `step !== "approval"`, calls `advanceWeeklyCycleSlot({ fromStep })` for each (disjoint from the existing `failed`-retry loop, so no double-advance). Regression test updated to assert continuation, not just no-double-spend; added terminal/in-flight exclusion tests + mixed-run test. 203/203 curated suite; 1200/1209 full-repo run (9 fails = pre-existing cross-file module-cache pollution, reproduced identically on pre-fix baseline via git stash). 0 new tsc errors. → focused re-VALIDATE then QA re-review.
