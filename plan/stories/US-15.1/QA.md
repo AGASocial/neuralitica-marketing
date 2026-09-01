@@ -1,3 +1,114 @@
+# QA Re-review — US-15.1 Phase B (post-H1/M1/M2 fix, commit `60de5f6`)
+
+**Story:** US-15.1 — Weekly cycle cron endpoint and orchestration (live pipeline)
+**Scope:** Re-review of `60de5f6` ("Phase B QA-FIX H1 kill-switch pause + M1/M2 CAS/outbox hygiene") against this document's original H1/M1/M2, plus independent assessment of a new finding surfaced by `requirements-validator`'s focused post-fix VALIDATE (`plan/stories/US-15.1/VALIDATION.md`, commit `a249f3a`) that was outside the original QA scope, plus a re-review of the rest of the Phase B surface for regressions.
+**Branch:** `feature/US-15.1-weekly-cron`
+**Fix commit reviewed:** `60de5f6`
+**Validation reviewed:** `a249f3a`
+**Date:** 2026-08-31
+**Reviewer:** qa-engineer
+
+### Final verdict: APPROVE WITH CONDITIONS
+
+**Current severity counts:** Critical **0** · High **1 (new)** · Medium **0** · Low **1 (pre-existing, non-blocking)**
+**Prior findings:** H1 **CLOSED (with a new gap in the same recovery path — see H2 below)** · M1 **CLOSED** · M2 **CLOSED**
+
+---
+
+## H1/M1/M2 fix verification (independent re-trace, not trusted from VALIDATION.md)
+
+### H1 — `running → paused` transition: confirmed CLOSED for its original two failure modes
+
+Traced `lib/orchestration/resume-weekly-cycle-from-job.ts:110-127` and `lib/orchestration/pause-weekly-cycle-run-cas.ts` directly.
+
+- The kill-switch-off branch (`resume-weekly-cycle-from-job.ts:110`) fires only when `!isWeeklyCycleLiveAllowedForClient(...)` **and** `status === "completed"`. It calls `markStepRunTerminal({ status: "completed" })` — the genuine outcome, never a synthetic `"failed"` — then `pauseWeeklyCycleRunCas(stepRun.runId)`, then `reconcileWeeklyCycleRun`. A job that failed for its own reason while the kill switch happens to be off falls through unchanged to the pre-existing normal-failure branch (`:130-137`). This is exactly the fix direction this report gave.
+- `pause-weekly-cycle-run-cas.ts:28-34` is a genuine single-statement CAS (`UPDATE ... WHERE id=? AND status='running'`, `.select("id").maybeSingle()`), distinguishing `ALREADY_PAUSED` from `NOT_RUNNING` rather than reporting blind success.
+- `reconcile-weekly-cycle-run.ts:62,89` — confirmed unmodified and correct: it only auto-resolves from `currentStatus === "running"`, and by the time reconcile runs after the pause CAS, the DB-loaded `currentStatus` is already `"paused"`, so reconcile only rebuilds `step_log` and never overwrites `"paused"` back to something else.
+- `resume-weekly-cycle-run.ts:56-58` accepts `status === "paused" || "partial_failed"` — a paused run is genuinely resumable; the original "permanently stranded, unresumable `failed` run" failure mode is gone.
+- The new `RETRYABLE_WEEKLY_CYCLE_ERROR_CODES` filter (`resume-weekly-cycle-run.ts:68-74`) requires both `status === "failed"` and a transient error code. Since the H1-paused step is recorded `"completed"`, it is excluded from `retryableFailed` by status alone, so `resumeWeeklyCycleRun`'s retry loop (`:125-163`) never calls `createOrGetReadyStepRun`/`dispatchWeeklyCycleOutbox` for it. **Traced and confirmed: no double-spend on resume for the already-completed step itself.**
+
+Both of this report's original H1 failure modes — permanent stranding, and double-spend of the *already-completed* step — are genuinely closed. I independently re-derived this rather than accepting VALIDATION.md's trace at face value.
+
+### New finding — High (H2) — a slot paused mid-chain never advances after resume; the run permanently dead-ends with no signal to Operator
+
+**Files:** `lib/orchestration/resume-weekly-cycle-run.ts:60-163`; `lib/orchestration/advance-weekly-cycle-slot.ts:32-166`; `lib/orchestration/resume-weekly-cycle-from-job.ts:110-127`; `lib/orchestration/reconcile-weekly-cycle-run.ts:78-95`; `lib/orchestration/load-operator-weekly-cycle-runs.ts:22-50`; `lib/orchestration/run-weekly-cycle-live.ts:66-69`; `plan/stories/US-15.1/SECURITY.md:281` ("the server loads the run and advances only the next eligible step(s)")
+
+**What, independently traced end to end (not just accepting the validator's framing):**
+
+1. Kill switch flips off mid-run while slot 0 is between async steps — e.g. `primary_video` finishes on the provider side. `resumeWeeklyCycleFromJob` records `primary_video` as `"completed"` (correct, per H1's fix) and pauses the run. Critically, this branch (`resume-weekly-cycle-from-job.ts:118-127`) **never calls `advanceWeeklyCycleSlot`** — unlike the normal-completion branch three lines below it (`:145-172`), which does. So slot 0's `tts` step (its next step) is never seeded; no `ready`/`pending_*` row for slot 0 exists beyond `primary_video`.
+2. Kill switch flips back on. Operator clicks Resume. `resumeWeeklyCycleRun` (`:60-163`) loads all step_runs and filters to `retryableFailed`: rows with `status === "failed"`. Slot 0's latest row has `status === "completed"`, so it is **not** in `retryableFailed` — confirmed this is the *only* filter the function applies; there is no separate pass that inspects a `completed`-but-pre-`approval` step and calls `advanceWeeklyCycleSlot` for it. The CAS still flips the run `paused → running` (this succeeds — it doesn't require any failed rows), but the resume loop does nothing for slot 0.
+3. `reconcileWeeklyCycleRun(run.id)` runs immediately after (`resume-weekly-cycle-run.ts:165`). `currentStatus` is now `"running"`. `completedSlots` requires an `approval`-step `completed` row per slot — slot 0 has none. `anyPendingOrRunnable` checks for `ready|dispatch_pending|pending_provider|pending_worker` anywhere — slot 0 has none of those either (its chain never advanced past `primary_video`). So if the other two slots already reached approval (or also have nothing pending), `nextStatus` immediately resolves to `"partial_failed"` (or `"failed"` if zero slots reached approval) — **in the same call that just resumed the run.**
+4. The run is now `"partial_failed"` again, permanently. A second resume attempt: `retryableFailed.length === 0` (still no failed rows — slot 0 is `"completed"`, not `"failed"`) and `run.status === "partial_failed"` triggers the explicit early return `RUN_NOT_RESUMABLE` (`:77-79`). **There is no third path.** I checked every production call site of `advanceWeeklyCycleSlot` (`grep -rn "advanceWeeklyCycleSlot(" lib/orchestration/*.ts`): its own internal sync-step recursion, the normal-completion branch of `resume-weekly-cycle-from-job.ts` (not this pause branch), the retry loop inside `resumeWeeklyCycleRun` (only for `status === "failed"` rows), and the initial seed in `run-weekly-cycle-live.ts`. None fires for this state. `runWeeklyCycleLive`'s own re-acquire path returns `ALREADY_RUNNING` immediately for any `"running"`/`"paused"` run (`run-weekly-cycle-live.ts:66-69`) and does nothing else — a subsequent cron tick is not a sweep and will not touch it either.
+5. **Operator visibility is the sharpest part of this.** `deriveSlotDto` (`load-operator-weekly-cycle-runs.ts:22-50`) has three branches: `approval` completed → `ready_for_approval`; `anyFailed` with nothing pending → `failed`; otherwise → `status: "processing", currentStep: latest.step`. Slot 0 falls into the third branch — it renders in the Operator UI as `processing / primary_video`, **identical to a slot that is genuinely still in flight.** There is no error code, no distinct status, nothing that would tell an Operator this slot is permanently stuck versus five minutes from finishing. The only externally visible symptom is the run row sitting at `partial_failed` (or `failed`) with no resumable path — itself easy to misread as "some other slot failed, but this one's fine, it's still processing."
+
+**This is confirmed by the fix's own regression test**, `resume-weekly-cycle-run.test.ts` ("QA H1: a paused run with an already-completed step resumes without re-dispatching or rebuilding that step (no double-spend)") — I read it directly. It sets up exactly this scenario (slot 0, `primary_video`, `status: "completed"`) and asserts `createRetryRow.length === 0` and `dispatchOutboxCalls === 0`. Those assertions are correct for *not double-spending*, but the test never asserts `advanceWeeklyCycleSlot` was called for slot 0 — because it wasn't, and the implementation has no code path that would do so. The test is the bug written down as a passing assertion.
+
+**Why this is High, not Medium (disagreeing with VALIDATION.md's severity read) — concrete production impact:**
+
+The scenario VALIDATION.md's finding describes is not a rare edge case: it is the *exact* scenario the kill switch exists for — an Operator (or an incident responder) flips `WEEKLY_CYCLE_LIVE_ENABLED` off mid-run for any reason (suspected bug, cost spike, provider incident, a scheduled maintenance window) while a run is mid-chain on at least one slot, then flips it back on expecting the story's own recovery guarantee to apply. Concretely, for a real client:
+
+- That client's Reel for the affected slot **never gets produced** — not delayed, not degraded, *never*, with the current code. The run terminates at `partial_failed`/`failed` with no automated path forward.
+- The Operator UI actively **hides** the problem: the stuck slot reads as `processing`, the same as healthy in-flight work. Nothing prompts an Operator to look twice, let alone escalate.
+- Recovery requires an engineer to intervene directly in the database or ship a code fix — there is no Operator Server Action, button, or supported flow that reaches `advanceWeeklyCycleSlot` for this state today.
+- This directly reads as a violation of the binding text this report already cited SECURITY.md for at H1: "Rollback is forward-safe... Re-enabling resumes only through the same idempotent resume API" (`SECURITY.md:265`) and "the server loads the run and advances only the next eligible step(s)" (`SECURITY.md:281`) — resume is supposed to advance the next eligible step, and for this exact state it provably does not.
+
+This is not a security or tenant-isolation defect, and it does not reopen H1's double-spend risk (that remains genuinely closed). But it breaks a core flow this story exists to deliver — the story's premise is "3 Reels reach the approval queue... on the happy path," and the kill switch is the story's own named safety mechanism for interrupting that path safely. A safety mechanism that silently and permanently drops a client's paid-for Reel, with no operator-visible signal, is a High-severity functional defect by this report's own severity scale ("bug that breaks a core flow"), not a Low/Medium operational nicety. I am overriding VALIDATION.md's "Medium" read here: the validator scoped its judgment to "not a security/tenant-isolation/double-spend defect," which is true but is not the full severity test — the practical business impact (a silently-never-delivered client asset with an actively misleading status display) is squarely High under this report's own scale.
+
+**Fix direction:** In `resumeWeeklyCycleRun`, after the `paused → running` CAS succeeds, in addition to the existing `retryableFailed` loop, load each slot's latest step_run and — for any slot whose latest row is `status: "completed"` but is not the `approval` step — resolve its script and call `advanceWeeklyCycleSlot({ ..., fromStep: <that step> })`, mirroring the normal-completion continuation already implemented in `resume-weekly-cycle-from-job.ts:145-172`. Add a regression test asserting the successor step (e.g. `tts`) is actually created/dispatched for a resumed run with a completed-but-pre-approval step — not just that the completed step itself isn't rebuilt. Separately, consider giving `deriveSlotDto` a way to distinguish "genuinely in flight" from "orphaned after a pause/resume with no successor row" (even a coarse heuristic — no successor row exists for a `completed` non-approval step on a non-`running` run) so Operator has *some* visible signal before this ships to production reliance.
+
+**Fix owner:** `integrations-engineer` (resume continuation logic), with a follow-up FE note for `nextjs-frontend` on the Operator-visibility gap once the underlying continuation exists.
+
+### Minor, non-blocking (re-confirming VALIDATION.md's note, not a new finding)
+
+`resume-weekly-cycle-from-job.ts:123` discards `pauseWeeklyCycleRunCas`'s return value on its `ERROR`/`NOT_RUNNING` outcomes. Confirmed by direct read: the step outcome is still safely persisted either way (no double-spend risk from this alone), but a DB-level failure or a narrow status race during the pause CAS could leave the aggregate run status silently disagreeing with the reported `PAUSED_LIVE_DISABLED` outcome. Worth a follow-up log/metric; not blocking.
+
+---
+
+## M1 — CAS guard on `markStepRunTerminal`/`markStepRunPending`/`scheduleStepRunRetry`: confirmed CLOSED
+
+Read `lib/orchestration/weekly-cycle-step-runs.ts:194-251` directly. All three functions now chain `.select("id").maybeSingle()` after the guarded `.update()` and return `!error && data !== null` — matching `claimOutboxRow`/`claimStepRunAsDispatchPending`/`startWeeklyCycleLiveCas`/`approveStrategyForSystemCycleCas`'s pattern exactly. This is the correct fix for the original defect (a zero-row guarded `UPDATE` does not itself raise a Postgres/PostgREST error, so the old `!error` return was always `true` regardless of whether the guard blocked the write). The new `weekly-cycle-step-runs.test.ts` exercises this against a real conditional-update fake table, not a caller-supplied mock. Closed.
+
+## M2 — `listClaimableOutboxRows` staleness field: confirmed CLOSED
+
+Read the diff directly (`lib/orchestration/weekly-cycle-outbox.ts`): `claimedAt` was added to `WeeklyCycleOutboxRow`/`mapRow`, and the `claimed`-row branch now checks `row.claimedAt !== null && row.claimedAt <= staleCutoff`, matching `claimOutboxRow`'s own atomic `claimed_at.lte.staleCutoff` gate. Closed.
+
+---
+
+## Re-review of the rest of the Phase B surface for regressions from `60de5f6`
+
+Scope: every file this fix touched (`pause-weekly-cycle-run-cas.ts` new; `resume-weekly-cycle-from-job.ts`, `resume-weekly-cycle-run.ts`, `weekly-cycle-outbox.ts`, `weekly-cycle-step-runs.ts` modified) plus every caller of the newly-strict `markStepRunTerminal`/`markStepRunPending`/`scheduleStepRunRetry` return values, since M1's fix means these functions can now genuinely return `false` in production for the first time.
+
+- **`advance-weekly-cycle-slot.ts` callers of `markStepRunTerminal`** (`:160,165`): return values are not checked (fire-and-forget). Since this function only calls `markStepRunTerminal` on a row it just created/read as non-terminal via `createOrGetReadyStepRun`, a `false` return here would only occur on a genuine concurrent double-completion race — not introduced or worsened by this fix, and outside H1/M1/M2's scope. No regression.
+- **`dispatch-weekly-cycle-outbox.ts`** callers of `markStepRunPending`/`scheduleStepRunRetry`/`markStepRunTerminal`: spot-checked: this module already branches on the boolean return (it predates this fix and was written expecting a real CAS signal) — M1's fix makes its existing "already terminal, skip" branches *newly reachable* rather than newly broken. This is a strict improvement, not a regression, and is exercised by the existing `dispatch-weekly-cycle-outbox.test.ts` suite (still green).
+- **`resume-weekly-cycle-run.ts`'s own use of `markStepRunTerminal`** (`:149,158`, inside the sync-step retry branch): unchanged by this fix; still fire-and-forget on a row this same function just created via `createOrGetReadyStepRun`. No new risk.
+- **No other regression found.** `reconcile-weekly-cycle-run.ts` was confirmed unmodified and still correct for the `paused` state (see H1 re-verification above). The CAS/outbox/idempotency-key/retry-backoff/kill-switch/no-publish/auth surfaces this report originally reviewed in detail were not touched by `60de5f6` outside the five files listed above, and I re-confirmed no import, dependency, or route-level change accompanied this commit (`git show --stat 60de5f6` — five `lib/orchestration/*.ts` files plus their new/changed tests only).
+
+---
+
+## Checks run (this re-review)
+
+| Command | Result |
+|---|---|
+| `git show 60de5f6 -- lib/orchestration/weekly-cycle-outbox.ts` and direct reads of all five touched production files | Confirms M1/M2 fixes and H1's `resume-weekly-cycle-from-job.ts`/`pause-weekly-cycle-run-cas.ts` implementation as described above. |
+| `grep -rn "advanceWeeklyCycleSlot(" lib/orchestration/*.ts lib/orchestration/actions/*.ts` | Confirms the four call sites named above and no fifth site covering the H2 gap. |
+| Direct read of `resume-weekly-cycle-run.test.ts`'s "QA H1" test | Confirms the test asserts non-double-spend only, never chain continuation — the H2 gap is exactly what this test does not check. |
+| Direct read of `load-operator-weekly-cycle-runs.ts:22-50` (`deriveSlotDto`) | Confirms the stuck slot renders as `processing`, indistinguishable from healthy in-flight work — basis for the Operator-visibility part of H2. |
+| Direct read of `run-weekly-cycle-live.ts:66-69` | Confirms no cron-tick sweep exists for an already-`running`/`paused` run. |
+
+No test suite was re-run in this pass beyond direct code reading, since `requirements-validator`'s `a249f3a` VALIDATE already independently executed the full 22+1-file suite (201/201) for this exact commit and this report's own H1/M1/M2 re-verification above depended on reading the implementation, not re-running tests that do not cover the new finding.
+
+---
+
+## Gate summary
+
+`Phase B · US-15.1 · QA re-review · qa-engineer · APPROVE WITH CONDITIONS`
+
+H1's original two failure modes (permanent stranding of an unresumable `failed` run; double-spend re-dispatch of an already-completed step) are genuinely closed, independently re-verified. M1 and M2 are genuinely closed. This re-review found one new **High** finding (H2, above) in the same recovery path H1 just fixed: a slot paused mid-chain never advances past its paused step after Operator resume, permanently orphaning that slot's Reel with no automated recovery and no distinguishing signal in the Operator UI. This is not a security, tenant-isolation, or spend-safety defect, and it does not reopen anything this report or VALIDATION.md previously tested — but it means the kill switch, as shipped, is still not a *complete* safe mid-run stop-and-resume control for a run that has any slot mid-chain when the switch flips off.
+
+**CLOSE recommendation:** Fix H2 (advance a `completed`-but-pre-`approval` slot on resume, per the fix direction above) before relying on the kill switch as a safe production stop control for a run with in-progress async slot work — the same threshold this report applied to the original H1. If product-owner/security-architect judge the residual risk acceptable to defer (e.g., because the kill switch is not expected to be toggled mid-run before a follow-up ships), that acceptance should be recorded explicitly here or in a CONTRACT/SECURITY amendment, consistent with how this document has handled every other accepted residual gap (the webhook-wiring deferral, Phase A's `INVALID_JSON` note). Absent that explicit acceptance, this qa-engineer's default reading is the same as for H1: fix before production reliance on kill-switch pause/resume.
+
+---
+
 # QA Report — US-15.1 Phase B
 
 **Story:** US-15.1 — Weekly cycle cron endpoint and orchestration (live pipeline)
