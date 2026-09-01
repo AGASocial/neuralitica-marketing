@@ -156,3 +156,117 @@ None found. All new files map to a name explicitly listed in `CONTRACT.md` or `T
 3. **nextjs-backend**: patch `approve-strategy-row.ts` to set `approved_by_actor: "operator"` on the existing Operator approval write (low effort, low risk — additive column, no behavior change).
 4. **integrations-engineer**: either add a `"system"` literal to `synthesizeVoiceoverForClientTrusted`/`createAssemblyJobForClientTrusted`'s `invokedBy` union (preferred, matches CONTRACT literally) or get a CONTRACT amendment accepting `"operator"` as the System-cycle actor label for these two seams, with a short rationale recorded.
 5. Return to **security-architect** and **product-owner** for a decision on whether item 1 must land before Phase B CLOSE (this validator's reading: yes — it is the core mechanism the story exists to deliver) or whether Phase B should CLOSE with cron-live-wiring explicitly re-scoped as a documented follow-up, the way the webhook-resume gap already was. Given TASKS.md never flagged the cron-wiring gap as an accepted deferral (unlike the webhook gap, which has an explicit task id `task_c263b2c8` and PO-lean quote), this validator does **not** believe it qualifies for the same treatment without an explicit new PO decision.
+
+---
+
+## Validation Report — US-15.1 Phase B (RE-VALIDATE)
+
+### Verdict: PASS WITH NOTES
+
+Commit `36dc5da` ("US-15.1: Phase B VALIDATE-FIX — cron live wiring + Phase B test suite + audit fixes") closes both blockers and both minor deviations from the prior **FAIL**. This is an independent re-verification — every claim below was checked against the actual diff and, where testable, executed directly by this validator rather than trusted from the commit message.
+
+**Commit reviewed:** `36dc5da` (on top of `83c5049`/`f5204ac`/`464081b`/`c5867d6`, previously reviewed and FAILed at `d2f6d9e`).
+
+### Blocker 1 — Cron live wiring: CLOSED
+
+`app/api/cron/weekly-cycle/route.ts:3,12,16,39` now imports and calls `runWeeklyCycleCronBatch` (not the Phase A-only `runWeeklyCycleBatch`) with only `{ weekStart }` — the `dryRun: true` literal is gone from the route entirely.
+
+Traced `runWeeklyCycleCronBatch` (`lib/orchestration/run-weekly-cycle-batch.ts:63-95`) end to end:
+- `!isLiveEnabled()` → delegates unchanged to `runDryRunBatch` (Phase A path, byte-identical response shape `{ dryRun: true, ... }`). `isWeeklyCycleLiveEnabled()` reads only `process.env.WEEKLY_CYCLE_LIVE_ENABLED === "true"` (`weekly-cycle-live-env.ts:16-18`) — no request/query/UI authority, matching CONTRACT's "Neither request/query/cookie/UI data... enables live."
+- Live enabled but `selectWeeklyCycleLiveClientIds(eligibleIds)` returns `[]` (nothing allowlisted, or an invalid `WEEKLY_CYCLE_LIVE_CLIENT_IDS` entry — `getWeeklyCycleLiveClientAllowlist` fails the *whole* allowlist closed to `new Set()` on any single bad UUID, `weekly-cycle-live-env.ts:36-45`) → also falls back to the Phase A dry-run batch. Fail-closed confirmed.
+- Live enabled with a non-empty selection: every eligible client **not** in the live set still gets routed through `runDryRunForClient({ ..., mode: "cron", dryRun: true })` (Phase A behavior, unchanged, in original deterministic order), and only the allowlisted, capped subset is handed to `runWeeklyCycleLiveBatch` (`run-weekly-cycle-live.ts:180-219`), which — for the first time — has an actual caller. `runWeeklyCycleLiveBatch` calls `runWeeklyCycleLive` per client, which performs the full CAS chain (`acquireWeeklyCycleRun` → `startWeeklyCycleLiveCas` → strategy → scripts → captions → per-slot `advanceWeeklyCycleSlot` → `reconcileWeeklyCycleRun`), i.e. the exact chain the prior FAIL confirmed was correctly built but unreachable.
+- `selectWeeklyCycleLiveClientIds` (`weekly-cycle-live-env.ts:77-91`) selects the first `getWeeklyCycleLiveMaxClients()` (bounded 1–25, default 3) allowlisted IDs from the eligible list in order — matches CONTRACT's "cron selects the first allowlisted eligible clients in existing deterministic order."
+- The composed live response (`run-weekly-cycle-batch.ts:87-94`) matches `weeklyCycleLiveCronHttpResponseSchema` (`CONTRACT.md:1015-1022`) field-for-field: `dryRun: false`, `eligibleCount` (all eligible this tick), `processedCount`/`failedCount`/`clients` scoped to the live batch only.
+- `runWeeklyCycleLiveBatch`'s per-client error mapping (`run-weekly-cycle-live.ts:207`) collapses the non-frozen `CLIENT_INACTIVE` outcome to `INTERNAL_ERROR` before it reaches the response, keeping `errorCode` inside the frozen 4-value enum (`LIVE_DISABLED | RUN_NOT_REPLANNABLE | RUN_NOT_RESUMABLE | INTERNAL_ERROR`) — correct, deliberate.
+
+This is a genuine, testable fix, not a cosmetic rename: `route.ts` now has a real path from a Vercel Cron tick to `runWeeklyCycleLive`, gated exactly by the three frozen rollout env vars, with the majority (non-allowlisted) path staying byte-identical to Phase A.
+
+**Note (non-blocking):** for eligible clients excluded from a live tick, the response's `processedCount`/`failedCount`/`clients` report only the live subset — the dry-run refresh those other clients silently receive isn't reflected in the cron HTTP response. This is required by the frozen `.strict()` `weeklyCycleLiveCronHttpResponseSchema` (no room for an extra count field) and is a reasonable reading of "rollout-excluded with no live acquisition or ledger mutation" (no *live* mutation — the pre-existing, idempotent, non-spending Phase A dry-run refresh is unaffected). Worth recording explicitly in CONTRACT's next maintenance pass, as Phase A Note 1 already did for a similar additive-behavior gap.
+
+### Blocker 2 — Phase B test coverage: CLOSED
+
+Ran the full test suite myself (not just trusted the commit message) — all 22 Phase B + pre-existing suites under `lib/orchestration/`, `lib/content-strategy/`, and `app/api/cron/weekly-cycle/`:
+
+```text
+npx tsx --test app/api/cron/weekly-cycle/route.test.ts \
+  lib/content-strategy/approve-strategy-for-system-cycle-cas.test.ts lib/content-strategy/content-strategy.test.ts \
+  lib/orchestration/acquire-weekly-cycle-run.test.ts lib/orchestration/actions/trigger-weekly-cycle-for-client.test.ts \
+  lib/orchestration/dispatch-weekly-cycle-outbox.test.ts lib/orchestration/ensure-approval-package-for-system-cycle.test.ts \
+  lib/orchestration/list-eligible-clients-for-weekly-cycle.test.ts lib/orchestration/persist-weekly-cycle-run-plan.test.ts \
+  lib/orchestration/reconcile-weekly-cycle-run.test.ts lib/orchestration/resume-weekly-cycle-from-job.test.ts \
+  lib/orchestration/resume-weekly-cycle-run.test.ts lib/orchestration/run-weekly-cycle-batch.test.ts \
+  lib/orchestration/run-weekly-cycle-for-client.test.ts lib/orchestration/run-weekly-cycle-live.test.ts \
+  lib/orchestration/start-weekly-cycle-live-cas.test.ts lib/orchestration/verify-cron-secret.test.ts \
+  lib/orchestration/weekly-cycle-idempotency-key.test.ts lib/orchestration/weekly-cycle-live-env.test.ts \
+  lib/orchestration/weekly-cycle-live.structural.test.ts lib/orchestration/weekly-cycle-outbox.test.ts \
+  lib/orchestration/weekly-cycle.test.ts
+```
+
+Result: **191 passed, 0 failed**, 36 suites (nested `describe` blocks), 0 skipped/todo. All 8 CONTRACT-required categories are covered with meaningful, non-stub assertions — spot-checked directly:
+
+| Category | Suite | Sample assertions (not just "does not throw") |
+|---|---|---|
+| Strategy CAS races | `approve-strategy-for-system-cycle-cas.test.ts` | "rejects a second concurrent winner (different run) as `STRATEGY_APPROVAL_CONFLICT`"; "rejects a row already approved by the Operator path as a conflict, never overwriting it" |
+| Aggregate transitions | `start-weekly-cycle-live-cas.test.ts`, `reconcile-weekly-cycle-run.test.ts`, `resume-weekly-cycle-run.test.ts` | "never transitions back: a second call after STARTED reports ALREADY_STARTED"; "resolves running → partial_failed when 1-2 slots approved and nothing else is pending/runnable"; "rejects partial_failed with zero retryable failed steps as RUN_NOT_RESUMABLE" |
+| Outbox crash recovery | `weekly-cycle-outbox.test.ts` | "a claimed-but-not-yet-dispatched row is NOT claimable again while fresh (crash window still open)"; "a stale claimed row (crash after claim, before dispatch) is reclaimable with a new token" |
+| Spend-gate freshness | `run-weekly-cycle-live.test.ts` | "gate 1 (kill switch + rollout): LIVE_DISABLED short-circuits before acquire is ever called"; "gate 3 (active re-check): CLIENT_INACTIVE short-circuits before acquire is ever called" |
+| Retry/backoff | `dispatch-weekly-cycle-outbox.test.ts` | Reads the actual scheduled `availableAt` timestamp and asserts the delta is `29–31s` for the first retry and `119–121s` for the second (see off-by-one verification below) — real time-math assertions, not label checks |
+| Kill-switch/allowlist/cap | `weekly-cycle-live-env.test.ts`, `dispatch-weekly-cycle-outbox.test.ts` | "fails the ENTIRE allowlist closed (empty set) when any single entry is invalid"; "bounds `WEEKLY_CYCLE_LIVE_MAX_CLIENTS` to 1..25, default 3"; "kill switch disabled mid-flight fails the claim as LIVE_DISABLED... (no new spend)" |
+| Manual-trigger auth | `trigger-weekly-cycle-for-client.test.ts` | "calls `requireOperator` as the first await, before any input parsing or DB read"; "returns the same non-enumerating NOT_FOUND for nonexistent, inactive, and not-allowlisted clients" |
+| Structural no-publish scan | `weekly-cycle-live.structural.test.ts` | Greps every Phase B orchestration/action file for `instagram`/`graph-api`/`publish-now`/`createContainer`/etc.; separately asserts the terminal step only ever writes a `pending_client` approval row |
+| Cron live wiring (new behavior this fix introduces) | `run-weekly-cycle-batch.test.ts` | "routes allowlisted clients to the live batch and leaves the rest on the Phase A dry-run plan, in deterministic order"; "processes both the dry-run and live passes sequentially, never in parallel" |
+
+This is genuine executed coverage, not coverage-shaped stubs — assertions check concrete outcomes (conflict codes, timestamps, call ordering, which functions were/weren't invoked) rather than "resolves without throwing."
+
+### Off-by-one retry/backoff fix: independently verified against CONTRACT
+
+`CONTRACT.md:964-966` freezes: max 3 total attempts; 30s backoff before attempt 2; 120s backoff before attempt 3.
+
+`dispatch_attempt` in the outbox row is 0-indexed (0 = the first, non-retried dispatch already made). Traced `backoffSeconds`/`canRetry` in `dispatch-weekly-cycle-outbox.ts:135-142,206-219` by hand against this indexing:
+
+| `row.dispatchAttempt` (attempts already made) | `nextDispatchAttempt` | Meaning | Fixed backoff | Fixed `canRetry` |
+|---|---|---|---|---|
+| 0 (1st attempt made) | 1 | about to run 2nd attempt | `nextAttempt <= 1` → `BACKOFF_SEC[2]` = **30s** ✓ | `1 < 3` → true ✓ |
+| 1 (2nd attempt made) | 2 | about to run 3rd attempt | falls through → `BACKOFF_SEC[3]` = **120s** ✓ | `2 < 3` → true ✓ |
+| 2 (3rd attempt made) | 3 | would be a 4th attempt | n/a, never reached | `3 < 3` → **false**, correctly blocked ✓ |
+
+This matches CONTRACT exactly and closes the described bug (old code returned 120s on the first retry and 30s on the second — inverted — and allowed `nextDispatchAttempt <= 3`, i.e. a 4th physical dispatch past the 3-attempt ceiling). Independently confirmed via the executed test assertions above (`29–31s` / `119–121s` deltas measured against real `Date.now()` deltas, and "exhausts the retry ceiling... still marks terminal failed, never a 4th attempt").
+
+### Minor deviations: both fixed
+
+- `lib/content-strategy/approve-strategy-row.ts:29` now sets `approved_by_actor: "operator"` on the existing Operator approval `UPDATE`, alongside the pre-existing `approved_by`/`approved_at`/`status` fields. Verified against the migration: `supabase/migrations/20260831120000_neuramark_weekly_cycle_live.sql:11-12` constrains `approved_by_actor CHECK (approved_by_actor IN ('operator', 'system'))` — `'operator'` is a valid value, so this write will not violate the check constraint.
+- `lib/tts/synthesize-voiceover-for-client-trusted.ts:28` and `lib/assembly/create-assembly-job-for-reel-script.ts:98` both widened `invokedBy` to `"operator" | "revision" | "system"`, and `lib/orchestration/weekly-cycle-trusted-steps.ts:253,299` now pass `invokedBy: "system"` for the TTS and assembly System-cycle calls, matching `CONTRACT.md`'s exact wiring table literally instead of mislabeling them as Operator-invoked.
+
+### `npx tsc --noEmit -p tsconfig.json`: zero new errors, independently confirmed
+
+Ran it myself on this branch: **315 `error TS` lines**. Then checked out the pre-fix commit (`d2f6d9e`, the state this validator originally FAILed) into a disposable worktree, symlinked `node_modules`, and ran the identical command: also **315 `error TS` lines**. Normalized both outputs to `path(line,col): TSxxxx` and diffed them — **zero differences**, all 315 entries identical between the two commits. Every error is in a pre-existing, unrelated `.test.ts` file (`lib/media/media-assets.test.ts`, `lib/video-jobs/video-jobs.test.ts`, `lib/agents/content/*.test.ts`, `lib/qa/*.test.ts`, `lib/assembly/*.test.ts`, `lib/providers/video/*.test.ts`, `lib/visual-preferences/visual-preferences.test.ts`, etc.) — none in any Phase B file. This independently confirms the commit message's claim; it was not merely trusted.
+
+### Updated Acceptance Criteria (Phase B)
+
+| # | Criterion | Prior status | Current status | Evidence |
+|---|---|---|---|---|
+| 1 | Happy path auto-advances via cron without Operator clicks | **FAIL** | **PASS** | See "Blocker 1" above — `route.ts` → `runWeeklyCycleCronBatch` → `runWeeklyCycleLiveBatch` → `runWeeklyCycleLive` is now a real, gated, tested chain. |
+| 2 | Partial failure: successful slots continue; failed slots recorded; Operator can inspect | PASS WITH NOTES (unexercised, no tests) | **PASS** | Now exercised by `reconcile-weekly-cycle-run.test.ts` (`running → partial_failed`/`failed`/`completed` resolution) and `resume-weekly-cycle-run.test.ts`, in addition to the previously-reviewed FE table. |
+| 3 | Operator manual trigger shares idempotency ledger with cron | PASS | **PASS** | Unaffected by this fix; now additionally covered by `trigger-weekly-cycle-for-client.test.ts`'s auth/validation/non-enumeration tests. |
+| 4 | [SEC] No IG publish; no approval-gate bypass; inactive never enqueued; budget blocks surface as step failures | PASS | **PASS** | Unaffected by this fix; now additionally covered by the structural no-publish scan and `run-weekly-cycle-live.test.ts`'s gate-freshness tests. |
+| — | Binding CONTRACT: "Phase B tests required before CLOSE" (8 categories) | **FAIL** | **PASS** | See "Blocker 2" above — all 8 categories covered, 191/191 tests executed and passing by this validator directly. |
+
+### Gaps (what blocks PASS)
+
+None found. Both original blockers and both minor deviations are genuinely closed, independently re-verified rather than trusted from the commit message.
+
+### Notes
+
+1. The live cron HTTP response's `processedCount`/`failedCount`/`clients` are scoped to the live-selected subset only (not the full eligible list) — see the non-blocking note under Blocker 1. Recommend recording this explicitly in CONTRACT's next maintenance pass, the same way Phase A's `INVALID_JSON` additive behavior was recorded.
+2. As in Phase A, Supabase behavior is exercised through dependency-injected in-memory doubles, not a live migration/RLS/PostgREST environment. The migration DDL, CHECK constraints, and idempotency-key uniqueness were separately verified by direct reading (`20260831120000_neuramark_weekly_cycle_live.sql`); deployed DB concurrency remains an integration/QA concern, consistent with Phase A's Note 2.
+3. `npx tsc --noEmit` was run and diffed against `d2f6d9e` (the exact commit this validator originally FAILed at), not against an older ancestor — this is the correct, tightest possible baseline for "did this fix introduce new type errors."
+
+### Scope Creep
+
+None found. All changes in `36dc5da` map directly to the four items this validator's prior FAIL asked for (cron wiring, Phase B tests, `approved_by_actor` stamp, `invokedBy: "system"` literal) plus the off-by-one fix discovered incidentally while writing the retry/backoff tests — itself squarely inside "write retry/backoff tests" scope, not an unrelated addition.
+
+### Recommended Next Actions
+
+1. **QA**: Phase B is unblocked for QA re-review. This validator's read: no remaining VALIDATE-level blocker.
+2. **product-owner**: on QA APPROVE, may CLOSE Phase B and check the four Phase B acceptance criteria boxes in `USER_STORIES.md` §US-15.1.
+3. Optional, non-blocking: record the live-cron-response counting scope (Note 1 above) in `CONTRACT.md`'s next maintenance edit for future readers.
