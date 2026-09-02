@@ -365,6 +365,20 @@ describe("LocalDiskStorage + S3 stub", () => {
     assert.equal(existsSync(full), false);
   });
 
+  it("puts client logo keys with nested neuramark/ paths", async () => {
+    const storage = new LocalDiskStorage(tmp);
+    const key =
+      "neuramark/11111111-1111-4111-8111-111111111111/logo-a1b2c3d4-e5f6-4789-a012-3456789abcde.png";
+    await storage.put(key, pngBuffer(128), {
+      contentType: "image/png",
+      sizeBytes: 128,
+    });
+    const full = path.join(tmp, key);
+    assert.equal(existsSync(full), true);
+    await storage.delete(key);
+    assert.equal(existsSync(full), false);
+  });
+
   it("S3Storage stub throws not configured", async () => {
     const s3 = new S3Storage();
     await assert.rejects(
@@ -654,6 +668,15 @@ describe("deleteAvatarReferenceAsset", () => {
     const restore = installMediaMocks({
       mediaRoot: tmp,
       from: (table: string) => {
+        if (table === "neuramark_video_jobs") {
+          return {
+            select: () => ({
+              or: () => ({
+                limit: async () => ({ data: [], error: null }),
+              }),
+            }),
+          };
+        }
         if (table !== "neuramark_media_assets") {
           throw new Error(table);
         }

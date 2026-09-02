@@ -4,20 +4,8 @@ import { createReadStream, promises as fs } from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
 
-import {
-  ASSEMBLED_REEL_STORAGE_KEY_REGEX,
-  STORAGE_KEY_REGEX,
-  VOICEOVER_STORAGE_KEY_REGEX,
-} from "@/lib/contracts/media-assets";
+import { isAllowedMediaStorageKey } from "@/lib/media/storage/allowed-storage-key";
 import type { MediaStorage } from "@/lib/media/storage/media-storage";
-
-function isAllowedStorageKey(key: string): boolean {
-  return (
-    STORAGE_KEY_REGEX.test(key) ||
-    VOICEOVER_STORAGE_KEY_REGEX.test(key) ||
-    ASSEMBLED_REEL_STORAGE_KEY_REGEX.test(key)
-  );
-}
 
 export class UnsafeStorageKeyError extends Error {
   constructor(key: string) {
@@ -46,11 +34,8 @@ export class LocalDiskStorage implements MediaStorage {
   }
 
   assertSafeKey(key: string): void {
-    if (typeof key !== "string" || !isAllowedStorageKey(key)) {
+    if (!isAllowedMediaStorageKey(key)) {
       throw new UnsafeStorageKeyError(String(key ?? ""));
-    }
-    if (key.includes("..") || key.startsWith("/") || key.includes("\\")) {
-      throw new UnsafeStorageKeyError(key);
     }
   }
 

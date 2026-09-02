@@ -147,7 +147,10 @@ export async function uploadClientLogo(
         contentType: prepared.detectedMime,
         sizeBytes: prepared.sizeBytes,
       });
-    } catch {
+    } catch (error) {
+      console.error("[profile] logo storage put failed", {
+        name: error instanceof Error ? error.name : undefined,
+      });
       return mediaUploadInternalError();
     }
 
@@ -167,6 +170,9 @@ export async function uploadClientLogo(
       .single();
 
     if (insertError || !inserted || typeof (inserted as { id?: unknown }).id !== "string") {
+      console.error("[profile] logo asset insert failed", {
+        ...(insertError?.code ? { code: insertError.code } : {}),
+      });
       try {
         await storage.delete(prepared.storageKey);
       } catch {
