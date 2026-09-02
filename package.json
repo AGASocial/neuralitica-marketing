@@ -8,7 +8,9 @@
     "prebuild": "node scripts/sync-plan-static.js",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:e2e": "playwright test",
+    "test:e2e:interview": "playwright test e2e/interview.spec.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.5",
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.51.1",
     "@types/node": "^20.19.43",
     "@types/react": "^19",
     "@types/react-dom": "^19",
