@@ -1,8 +1,8 @@
 # TASKS — neuralitica-marketing
 
-> Checklist trazable a `SPEC.md` y `PLAN.md`. Marcar `[x]` al completar.
-
-Leyenda: `→ SPEC §3 Módulo` · `→ Flujo S4.#`
+> **HISTORICAL / DERIVED — not the live tracker.**  
+> Canonical backlog: `plan/USER_STORIES.md`. Operational status: GitHub Issues/Project.  
+> Orchestrator cursor: `docs/development/SPRINT-STATE.md`. See `AGENTS.md` precedence (D4).
 
 ---
 

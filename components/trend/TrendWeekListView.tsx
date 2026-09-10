@@ -142,23 +142,7 @@ export function TrendWeekListView({
     }
   }
 
-  if (!result.ok) {
-    return (
-      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-        <PageHeader copy={copy} onPublish={() => setPublishOpen(true)} />
-        <Message severity="error" text={copy.loadError} style={{ width: "100%" }} />
-        <Button
-          type="button"
-          label={copy.backDashboard}
-          className="p-button-text"
-          style={{ marginTop: "1rem" }}
-          onClick={() => router.push("/dashboard")}
-        />
-      </div>
-    );
-  }
-
-  const weeks = result.weeks;
+  const weeks = result.ok ? result.weeks : [];
   const normalizedWeekStart = pickedDate
     ? normalizeToIsoMonday(pickedDate)
     : null;
@@ -168,7 +152,18 @@ export function TrendWeekListView({
       <Toast ref={toastRef} />
       <PageHeader copy={copy} onPublish={() => setPublishOpen(true)} />
 
-      {weeks.length === 0 ? (
+      {!result.ok ? (
+        <>
+          <Message severity="error" text={copy.loadError} style={{ width: "100%" }} />
+          <Button
+            type="button"
+            label={copy.backDashboard}
+            className="p-button-text"
+            style={{ marginTop: "1rem" }}
+            onClick={() => router.push("/dashboard")}
+          />
+        </>
+      ) : weeks.length === 0 ? (
         <Message severity="info" text={copy.empty} style={{ width: "100%" }} />
       ) : (
         <DataTable value={weeks} stripedRows emptyMessage={copy.empty}>

@@ -1387,3 +1387,13 @@ Before marking a story **done**:
 4. EN + ES strings for new UI  
 5. Story acceptance criteria checked  
 6. Downstream stories unblocked (contract/types stable)
+
+---
+
+## Governance note (2026-09-10)
+
+- **US-X.3:** Likely **SUPERSEDED BY US-14.5** (session-backed `getCurrentUser()`). Confirm against code before flipping status in backlog.
+- **US-X.1 / US-X.2:** Require focused audit vs code before manual close; do not mark done from memory.
+- Instagram Graph Publish remains **in V1** (ADR-0002 / Decision Gate #3 D1) even if unimplemented.
+- Deferred AC inside closed stories must become independent issues — no silent pending criteria.
+

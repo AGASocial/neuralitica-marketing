@@ -10,7 +10,9 @@
     "start": "next start",
     "lint": "next lint",
     "test:e2e": "playwright test",
-    "test:e2e:interview": "playwright test e2e/interview.spec.ts"
+    "test:e2e:interview": "playwright test e2e/interview.spec.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/run-unit-tests.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.5",
@@ -33,6 +35,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.20",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   }
 }

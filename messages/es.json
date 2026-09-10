@@ -53,6 +53,8 @@
     "confirmReject": "Cancelar",
     "nav": {
       "dashboard": "Panel",
+      "profile": "Ficha viva",
+      "preferences": "Preferencias",
       "approvals": "Aprobaciones",
       "readyToPublish": "Listo para publicar",
       "playbook": "Playbook de formatos",

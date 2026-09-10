@@ -37,6 +37,12 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
           <Link href="/dashboard" style={{ color: "#374151", textDecoration: "none" }}>
             {t.header.nav.dashboard}
           </Link>
+          <Link href="/profile" style={{ color: "#374151", textDecoration: "none" }}>
+            {t.header.nav.profile}
+          </Link>
+          <Link href="/settings/preferences" style={{ color: "#374151", textDecoration: "none" }}>
+            {t.header.nav.preferences}
+          </Link>
           <Link href="/approvals" style={{ color: "#374151", textDecoration: "none" }}>
             {t.header.nav.approvals}
           </Link>

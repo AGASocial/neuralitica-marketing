@@ -7,6 +7,18 @@ CREATE TYPE public.neuramark_visual_modality AS ENUM (
   'faceless'
 );
 
+-- CHECK constraints cannot contain a subquery directly, so the dedup check
+-- is wrapped in an IMMUTABLE function.
+CREATE FUNCTION public.neuramark_visual_modality_array_is_distinct(
+  arr public.neuramark_visual_modality[]
+)
+RETURNS boolean
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT cardinality(arr) = cardinality(ARRAY(SELECT DISTINCT unnest(arr)));
+$$;
+
 CREATE TABLE public.neuramark_visual_preferences (
   client_id uuid PRIMARY KEY
     REFERENCES public.neuramark_clients (id) ON DELETE CASCADE,
@@ -28,7 +40,7 @@ CREATE TABLE public.neuramark_visual_preferences (
       ]::public.neuramark_visual_modality[]
     ),
   CONSTRAINT neuramark_visual_preferences_allowed_modes_unique_chk
-    CHECK (cardinality(allowed_modes) = cardinality(ARRAY(SELECT DISTINCT unnest(allowed_modes)))),
+    CHECK (public.neuramark_visual_modality_array_is_distinct(allowed_modes)),
   CONSTRAINT neuramark_visual_preferences_faceless_style_size_chk
     CHECK (
       faceless_style IS NULL

@@ -53,6 +53,8 @@
     "confirmReject": "Cancel",
     "nav": {
       "dashboard": "Dashboard",
+      "profile": "Living profile",
+      "preferences": "Preferences",
       "approvals": "Approvals",
       "readyToPublish": "Ready to publish",
       "playbook": "Format catalog",

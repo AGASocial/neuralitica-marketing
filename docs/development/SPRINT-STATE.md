@@ -1,5 +1,9 @@
 # Sprint State — Master Orchestrator
 
+> **QUARANTINED:** Do not run `$desarrollar` / autonomous master-orchestrator until `docs/governance/READINESS.md` is READY (issue #2).  
+> This file is the **orchestrator cursor only** — not the backlog tracker (`plan/USER_STORIES.md` + GitHub Issues).
+
+
 > Mantenido por `master-orchestrator`. No editar manualmente salvo para corregir un atasco.
 
 ```yaml

@@ -6,6 +6,20 @@ This README is the entry point for **humans and AI agents** (Cursor, Codex, Clau
 
 ---
 
+## 0. Governance (read first)
+
+See [`AGENTS.md`](./AGENTS.md) and [`docs/governance/`](./docs/governance/).
+
+**Document precedence:** SPEC.md + CONTEXT.md → ADRs → `plan/USER_STORIES.md` → story `CONTRACT.md` → code/tests → GitHub Issues/Project.  
+**Derived only:** PLAN.md (roadmap), this README (map), `docs/development/SPRINT-STATE.md` (orchestrator cursor).  
+**`TASKS.md` is not the live tracker** (historical checklist).
+
+**Orchestrator:** `$desarrollar` / `master-orchestrator` are **quarantined** until [`docs/governance/READINESS.md`](./docs/governance/READINESS.md) is **READY** (audit [#2](https://github.com/AGASocial/neuralitica-marketing/issues/2)).
+
+**Completion ladder:** CODE COMPLETE → INTEGRATION VERIFIED → OPERATIONALLY VALIDATED.
+
+---
+
 ## 1. Where everything lives
 
 | Path | What it is |
@@ -19,7 +33,7 @@ This README is the entry point for **humans and AI agents** (Cursor, Codex, Clau
 | `plan/stories/US-x.y/` | Per-story working folders, **created lazily when a story enters a sprint** (see §4). |
 | `lib/providers/` | **Provider adapter interfaces** (US-8.1, US-X.4): `VideoProviderAdapter`, `TtsProviderAdapter`, `LlmProviderAdapter`, registry, `resolveProvider()`. Server-only. |
 | `lib/contracts/providers.ts` | Zod schemas mirroring provider types — validate at server boundaries. |
-| `../AGENTS.md` (repo root) | **Hard project rules** — architecture defaults, planning, frontend, and backend rules. Binding for every agent and human. Read it before writing any code. |
+| `AGENTS.md` (this repo) and `../AGENTS.md` (monorepo defaults) | **Hard project rules** — architecture defaults, planning, frontend, and backend rules. Binding for every agent and human. Read it before writing any code. |
 | `.cursor/agents/*.md` | The agent team definitions (see §5). Written as portable markdown role files usable by Cursor, Codex, Claude, or any agent runtime. |
 
 Open the provider tier comparison: [plan/PROVIDER_TIERS.html](plan/PROVIDER_TIERS.html)
@@ -100,7 +114,7 @@ Rules of the flow:
 
 ## 5. The agent team (`.cursor/agents/`)
 
-Six role definitions, usable by any AI agent runtime (Cursor subagents, Codex, Claude). Each file contains the role, required context reading, working rules, and output format. **Every agent must read `../AGENTS.md` (repo root) first — it is a hard constraint.**
+Six role definitions, usable by any AI agent runtime (Cursor subagents, Codex, Claude). Each file contains the role, required context reading, working rules, and output format. **Every agent must read `AGENTS.md` (this repo) and `../AGENTS.md` (monorepo defaults) first — it is a hard constraint.**
 
 | Agent file | Role | Writes to |
 |---|---|---|
