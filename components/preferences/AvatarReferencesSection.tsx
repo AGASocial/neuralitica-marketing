@@ -102,6 +102,47 @@ function isVideoMime(mime: MediaDetectedMime): boolean {
   return mime === "video/mp4" || mime === "video/quicktime";
 }
 
+const IMAGE_MIB = 1024 * 1024;
+const CLIENT_MAX_IMAGE_BYTES = AVATAR_REFERENCE_HINT_MAX_IMAGE_MIB * IMAGE_MIB;
+const CLIENT_MAX_VIDEO_BYTES = AVATAR_REFERENCE_HINT_MAX_VIDEO_MIB * IMAGE_MIB;
+
+/** Soft client preflight — server magic-byte + size checks remain authority. */
+function clientFileTooLarge(file: File): boolean {
+  const type = file.type.toLowerCase();
+  const name = file.name.toLowerCase();
+  const looksVideo =
+    type.startsWith("video/") ||
+    name.endsWith(".mp4") ||
+    name.endsWith(".mov");
+  const looksImage =
+    type.startsWith("image/") ||
+    name.endsWith(".jpg") ||
+    name.endsWith(".jpeg") ||
+    name.endsWith(".png") ||
+    name.endsWith(".webp");
+
+  if (looksVideo) {
+    return file.size > CLIENT_MAX_VIDEO_BYTES;
+  }
+  if (looksImage) {
+    return file.size > CLIENT_MAX_IMAGE_BYTES;
+  }
+  return file.size > CLIENT_MAX_VIDEO_BYTES;
+}
+
+function isPayloadTooLargeError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("413") ||
+    message.includes("body exceeded") ||
+    message.includes("payload too large") ||
+    message.includes("request entity too large")
+  );
+}
+
 function uploadMessageForCode(
   code: MediaUploadErrorCode,
   copy: AvatarReferencesCopy,
@@ -169,11 +210,11 @@ export function AvatarReferencesSection({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadFailed = "loadFailed" in initial && initial.loadFailed;
+  // Consent must track RSC props after grant/revoke + router.refresh() —
+  // useState(initial) would stay stale until a full remount.
+  const consentActive = initial.ownAvatarConsentActive;
   const [assets, setAssets] = useState<AvatarReferenceAssetItem[]>(
     () => initial.assets,
-  );
-  const [consentActive, setConsentActive] = useState(
-    () => initial.ownAvatarConsentActive,
   );
   const [pendingUpload, setPendingUpload] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -208,6 +249,11 @@ export function AvatarReferencesSection({
       return;
     }
 
+    if (clientFileTooLarge(file)) {
+      setBanner(copy.errors.fileTooLarge);
+      return;
+    }
+
     setPendingUpload(true);
     clearFeedback();
 
@@ -224,7 +270,6 @@ export function AvatarReferencesSection({
           }
           return [...prev, result.asset];
         });
-        setConsentActive(true);
         toastRef.current?.show({
           severity: "success",
           summary: copy.toastUploadSuccess,
@@ -235,8 +280,12 @@ export function AvatarReferencesSection({
       }
 
       setBanner(uploadMessageForCode(result.error.code, copy));
-    } catch {
-      setBanner(copy.errors.internal);
+    } catch (error) {
+      setBanner(
+        isPayloadTooLargeError(error)
+          ? copy.errors.fileTooLarge
+          : copy.errors.internal,
+      );
     } finally {
       setPendingUpload(false);
     }

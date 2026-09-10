@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: MANUAL_UPLOAD_SERVER_ACTION_BODY_LIMIT,
     },
+    // Middleware clones the request body before Server Actions run. Default
+    // is 10MB — without matching bodySizeLimit, avatar/manual video uploads
+    // above that are truncated or rejected (HTTP 413) despite the action limit.
+    middlewareClientMaxBodySize: MANUAL_UPLOAD_SERVER_ACTION_BODY_LIMIT,
   },
   async headers() {
     return [
