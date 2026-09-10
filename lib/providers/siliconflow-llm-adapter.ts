@@ -10,16 +10,34 @@ import { computeLlmActualCost } from "@/lib/cost-policy/compute-llm-actual-cost"
 const SILICONFLOW_CHAT_URL =
   "https://api.siliconflow.cn/v1/chat/completions";
 
+const AI_GATEWAY_CHAT_URL =
+  "https://ai-gateway.vercel.sh/v1/chat/completions";
+
+const AI_GATEWAY_ENV_KEY = "AI_GATEWAY_API_KEY";
+
 type SiliconFlowModelMap = Record<string, string>;
 
-const DEFAULT_MODEL_BY_KEY: SiliconFlowModelMap = {
+/** Native SiliconFlow OpenAI-compatible model ids. */
+const SILICONFLOW_MODEL_BY_KEY: SiliconFlowModelMap = {
   siliconflow_deepseek_flash: "deepseek-ai/DeepSeek-V3",
   siliconflow_qwen: "Qwen/Qwen2.5-7B-Instruct",
 };
 
-function resolveModel(providerKey: string): string {
-  return DEFAULT_MODEL_BY_KEY[providerKey] ?? "deepseek-ai/DeepSeek-V3";
-}
+/**
+ * Vercel AI Gateway model ids used when SILICONFLOW_API_KEY is unset
+ * but AI_GATEWAY_API_KEY is configured (production default today).
+ */
+const AI_GATEWAY_MODEL_BY_KEY: SiliconFlowModelMap = {
+  siliconflow_deepseek_flash: "deepseek/deepseek-v3.2",
+  siliconflow_qwen: "alibaba/qwen3.5-flash",
+};
+
+type LlmBackend = {
+  apiKey: string;
+  chatUrl: string;
+  model: string;
+  transport: "siliconflow" | "ai_gateway";
+};
 
 function extractJsonContent(raw: string): string {
   const trimmed = raw.trim();
@@ -30,15 +48,48 @@ function extractJsonContent(raw: string): string {
   return trimmed;
 }
 
+function resolveBackend(
+  providerKey: string,
+  envKeyName: string,
+): LlmBackend | null {
+  const siliconKey = process.env[envKeyName]?.trim();
+  if (siliconKey) {
+    return {
+      apiKey: siliconKey,
+      chatUrl: SILICONFLOW_CHAT_URL,
+      model:
+        SILICONFLOW_MODEL_BY_KEY[providerKey] ?? "deepseek-ai/DeepSeek-V3",
+      transport: "siliconflow",
+    };
+  }
+
+  const gatewayKey = process.env[AI_GATEWAY_ENV_KEY]?.trim();
+  const gatewayModel = AI_GATEWAY_MODEL_BY_KEY[providerKey];
+  if (gatewayKey && gatewayModel) {
+    return {
+      apiKey: gatewayKey,
+      chatUrl: AI_GATEWAY_CHAT_URL,
+      model: gatewayModel,
+      transport: "ai_gateway",
+    };
+  }
+
+  return null;
+}
+
 export class SiliconFlowLlmAdapter implements LlmProviderAdapter {
   readonly providerKey: string;
   private readonly apiKey: string;
   private readonly model: string;
+  private readonly chatUrl: string;
+  private readonly transport: LlmBackend["transport"];
 
-  constructor(providerKey: string, apiKey: string) {
+  constructor(providerKey: string, backend: LlmBackend) {
     this.providerKey = providerKey;
-    this.apiKey = apiKey;
-    this.model = resolveModel(providerKey);
+    this.apiKey = backend.apiKey;
+    this.model = backend.model;
+    this.chatUrl = backend.chatUrl;
+    this.transport = backend.transport;
   }
 
   async estimateCost(): Promise<{
@@ -54,7 +105,7 @@ export class SiliconFlowLlmAdapter implements LlmProviderAdapter {
   }
 
   async complete(input: LlmCompletionInput): Promise<LlmCompletionResult> {
-    const response = await fetch(SILICONFLOW_CHAT_URL, {
+    const response = await fetch(this.chatUrl, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
@@ -74,8 +125,9 @@ export class SiliconFlowLlmAdapter implements LlmProviderAdapter {
     });
 
     if (!response.ok) {
-      console.error("[llm] siliconflow request failed", {
+      console.error("[llm] chat request failed", {
         providerKey: this.providerKey,
+        transport: this.transport,
         status: response.status,
         clientId: input.clientId,
       });
@@ -111,13 +163,28 @@ export class SiliconFlowLlmAdapter implements LlmProviderAdapter {
   }
 }
 
+/**
+ * Builds the LLM adapter for catalog SiliconFlow keys.
+ * Prefers `envKeyName` (SILICONFLOW_API_KEY). Falls back to
+ * AI_GATEWAY_API_KEY + Vercel AI Gateway when SiliconFlow is unset.
+ */
 export function createSiliconFlowLlmAdapter(
   providerKey: string,
   envKeyName: string,
 ): LlmProviderAdapter | null {
-  const apiKey = process.env[envKeyName];
-  if (!apiKey || apiKey.trim().length === 0) {
+  const backend = resolveBackend(providerKey, envKeyName);
+  if (!backend) {
+    console.error("[llm] provider key missing", {
+      providerKey,
+      envKeyName,
+      aiGatewayConfigured: Boolean(process.env[AI_GATEWAY_ENV_KEY]?.trim()),
+    });
     return null;
   }
-  return new SiliconFlowLlmAdapter(providerKey, apiKey);
+
+  if (backend.transport === "ai_gateway") {
+    console.info("[llm] using AI Gateway fallback", { providerKey });
+  }
+
+  return new SiliconFlowLlmAdapter(providerKey, backend);
 }
