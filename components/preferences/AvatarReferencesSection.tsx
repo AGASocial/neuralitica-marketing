@@ -21,6 +21,10 @@ import {
   AVATAR_REFERENCE_MAX_ASSETS,
 } from "@/lib/contracts/media-assets";
 import { deleteAvatarReferenceAsset } from "@/lib/media/delete-avatar-reference-asset";
+import {
+  AVATAR_REFERENCE_UPLOAD_SAFE_MAX_BYTES,
+  prepareAvatarReferenceUpload,
+} from "@/lib/media/prepare-avatar-reference-upload";
 import { uploadAvatarReferenceAsset } from "@/lib/media/upload-avatar-reference-asset";
 
 export type AvatarReferencesCopy = {
@@ -258,8 +262,22 @@ export function AvatarReferencesSection({
     clearFeedback();
 
     try {
+      const prepared = await prepareAvatarReferenceUpload(file);
+      const preparedIsImage =
+        prepared.type.startsWith("image/") ||
+        /\.(jpe?g|png|webp)$/i.test(prepared.name);
+      // Images are compressed client-side; if still over the request budget,
+      // fail closed. Videos keep the app-level size gate only.
+      if (
+        preparedIsImage &&
+        prepared.size > AVATAR_REFERENCE_UPLOAD_SAFE_MAX_BYTES
+      ) {
+        setBanner(copy.errors.fileTooLarge);
+        return;
+      }
+
       const formData = new FormData();
-      formData.set("file", file);
+      formData.set("file", prepared);
 
       const result = await uploadAvatarReferenceAsset(formData);
 

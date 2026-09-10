@@ -77,6 +77,11 @@ export async function middleware(
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|woff2?)$).*)",
+    /*
+     * Skip `/settings/preferences` so Server Action uploads are not buffered
+     * through Edge middleware (platform body caps reject ~4.5MB+ payloads).
+     * Page/layout `requireActive()` remains the auth boundary.
+     */
+    "/((?!_next/static|_next/image|favicon.ico|settings/preferences(?:/)?$|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|woff2?)$).*)",
   ],
 };
