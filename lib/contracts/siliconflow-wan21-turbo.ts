@@ -21,10 +21,11 @@ export const WAN_PROVIDER_KEY = "siliconflow_wan21_turbo" as const;
 export const WAN_VIDEO_ASSET_ROLE = "broll" as const;
 
 /**
- * SiliconFlow control-plane host family — same as CosyVoice2 TTS.
- * Adapter must not accept caller-supplied base URL.
+ * Default international SiliconFlow origin (same family as CosyVoice2 TTS).
+ * Runtime may resolve via SILICONFLOW_BASE_URL allowlist; adapters must not
+ * accept caller-supplied base URLs.
  */
-export const WAN_API_BASE_URL = "https://api.siliconflow.cn" as const;
+export const WAN_API_BASE_URL = "https://api.siliconflow.com" as const;
 
 /** Submit async I2V job. */
 export const WAN_SUBMIT_PATH = "/v1/video/submit" as const;

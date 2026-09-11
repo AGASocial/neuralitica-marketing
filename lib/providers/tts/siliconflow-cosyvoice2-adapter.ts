@@ -8,7 +8,6 @@ import {
   PROVIDER_CONFIG_MISSING,
   PROVIDER_REQUEST_FAILED,
   PROVIDER_RESPONSE_INVALID,
-  SILICONFLOW_TTS_SPEECH_URL,
   TTS_MAX_AUDIO_BYTES,
 } from "@/lib/contracts/tts-voiceover";
 import { getMediaStorage } from "@/lib/media/storage/get-media-storage";
@@ -16,6 +15,7 @@ import {
   ProviderAdapterError,
   sanitizeProviderErrorMessage,
 } from "@/lib/providers/normalize-provider-response";
+import { resolveSiliconFlowTtsSpeechUrl } from "@/lib/providers/siliconflow-base-url";
 import type {
   SynthesizeSpeechInput,
   TtsProviderAdapter,
@@ -129,7 +129,7 @@ export function createSiliconflowCosyvoice2Adapter(
         );
       }
 
-      const response = await fetchImpl(SILICONFLOW_TTS_SPEECH_URL, {
+      const response = await fetchImpl(resolveSiliconFlowTtsSpeechUrl(), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,

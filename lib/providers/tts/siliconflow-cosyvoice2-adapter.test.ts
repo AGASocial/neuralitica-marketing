@@ -38,6 +38,7 @@ function clearTtsModuleCache() {
       normalized.includes("/lib/providers/tts/siliconflow-cosyvoice2-adapter") ||
       normalized.includes("/lib/providers/create-provider-registry") ||
       normalized.includes("/lib/providers/normalize-provider-response") ||
+      normalized.includes("/lib/providers/siliconflow-base-url") ||
       normalized.includes("/lib/tts/voice-catalog") ||
       normalized.includes("/lib/media/upload-voiceover-buffer") ||
       normalized.includes("/lib/media/storage/")

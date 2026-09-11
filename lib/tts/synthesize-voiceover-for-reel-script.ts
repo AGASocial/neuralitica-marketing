@@ -152,19 +152,27 @@ export async function synthesizeVoiceoverForReelScript(
     try {
       storedAsset = await adapter.synthesize(resolvedInput);
     } catch (error) {
-      if (error instanceof ProviderAdapterError) {
-        if (
-          error.code === "PROVIDER_CONFIG_MISSING" ||
-          error.code === "PROVIDER_REQUEST_FAILED" ||
-          error.code === "PROVIDER_RESPONSE_INVALID"
-        ) {
-          return ttsVoiceoverProviderUnavailableError();
-        }
+      const code =
+        error instanceof ProviderAdapterError
+          ? error.code
+          : typeof error === "object" &&
+              error !== null &&
+              "code" in error &&
+              typeof (error as { code: unknown }).code === "string"
+            ? (error as { code: string }).code
+            : null;
+      if (
+        code === "PROVIDER_CONFIG_MISSING" ||
+        code === "PROVIDER_REQUEST_FAILED" ||
+        code === "PROVIDER_RESPONSE_INVALID"
+      ) {
+        return ttsVoiceoverProviderUnavailableError();
       }
       console.error("[tts] synthesize failed", {
         clientId,
         reelScriptId,
         name: error instanceof Error ? error.name : "unknown",
+        code,
       });
       return ttsVoiceoverInternalError();
     }

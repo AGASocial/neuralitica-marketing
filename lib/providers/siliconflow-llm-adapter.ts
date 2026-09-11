@@ -7,8 +7,7 @@ import type {
 } from "@/lib/providers/provider-adapters";
 import { computeLlmActualCost } from "@/lib/cost-policy/compute-llm-actual-cost";
 
-const SILICONFLOW_CHAT_URL =
-  "https://api.siliconflow.cn/v1/chat/completions";
+import { resolveSiliconFlowChatCompletionsUrl } from "@/lib/providers/siliconflow-base-url";
 
 const AI_GATEWAY_CHAT_URL =
   "https://ai-gateway.vercel.sh/v1/chat/completions";
@@ -56,7 +55,7 @@ function resolveBackend(
   if (siliconKey) {
     return {
       apiKey: siliconKey,
-      chatUrl: SILICONFLOW_CHAT_URL,
+      chatUrl: resolveSiliconFlowChatCompletionsUrl(),
       model:
         SILICONFLOW_MODEL_BY_KEY[providerKey] ?? "deepseek-ai/DeepSeek-V3",
       transport: "siliconflow",

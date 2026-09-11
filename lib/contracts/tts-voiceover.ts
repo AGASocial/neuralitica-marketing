@@ -9,8 +9,9 @@ export const PROVIDER_CONFIG_MISSING = "PROVIDER_CONFIG_MISSING" as const;
 export const PROVIDER_REQUEST_FAILED = "PROVIDER_REQUEST_FAILED" as const;
 export const PROVIDER_RESPONSE_INVALID = "PROVIDER_RESPONSE_INVALID" as const;
 
+/** Default international TTS URL; runtime may resolve via SILICONFLOW_BASE_URL. */
 export const SILICONFLOW_TTS_SPEECH_URL =
-  "https://api.siliconflow.cn/v1/audio/speech" as const;
+  "https://api.siliconflow.com/v1/audio/speech" as const;
 export const COSYVOICE2_MODEL = "FunAudioLLM/CosyVoice2-0.5B" as const;
 export const SILICONFLOW_COSYVOICE2_PROVIDER_KEY =
   "siliconflow_cosyvoice2" as const;

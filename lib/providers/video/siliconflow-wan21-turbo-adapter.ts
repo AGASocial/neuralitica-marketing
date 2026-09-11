@@ -13,8 +13,6 @@ import {
   WAN_INPUT_URL_TTL_SEC,
   WAN_MODEL_ID,
   WAN_PROVIDER_KEY,
-  WAN_STATUS_URL,
-  WAN_SUBMIT_URL,
   WAN_UNIT_COST_CENTS_PER_CLIP,
   WAN_VIDEO_ASSET_ROLE,
   clampWanClipCount,
@@ -22,6 +20,10 @@ import {
   type WanVendorStatus,
   WAN_VENDOR_STATUS_MAP,
 } from "@/lib/contracts/siliconflow-wan21-turbo";
+import {
+  resolveSiliconFlowWanStatusUrl,
+  resolveSiliconFlowWanSubmitUrl,
+} from "@/lib/providers/siliconflow-base-url";
 import {
   costEstimateSchema,
   resolvedCreateVideoJobInputSchema,
@@ -370,7 +372,7 @@ export function createSiliconflowWan21TurboAdapter(
       const response = await siliconflowRequest(
         fetchImpl,
         token,
-        WAN_SUBMIT_URL,
+        resolveSiliconFlowWanSubmitUrl(),
         {
           model: WAN_MODEL_ID,
           prompt,
@@ -409,7 +411,7 @@ export function createSiliconflowWan21TurboAdapter(
       const response = await siliconflowRequest(
         fetchImpl,
         token,
-        WAN_STATUS_URL,
+        resolveSiliconFlowWanStatusUrl(),
         { requestId: externalJobId },
       );
 
