@@ -9,7 +9,10 @@ import {
   createServerSupabaseClient,
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
-import { isAllowedVoiceId } from "@/lib/tts/voice-catalog";
+import {
+  isAllowedVoiceId,
+  resolveContentLocale,
+} from "@/lib/tts/voice-catalog";
 
 export type ReelScriptForVoiceover = {
   reelScriptId: string;
@@ -109,6 +112,14 @@ export async function loadReelScriptForVoiceover(params: {
     preferredVoiceId = rawVoiceId;
   }
 
+  const profilePreferredLocale = (profile.fields as Record<string, unknown>)
+    .preferredLocale;
+  // Content language for TTS must match script generation locale — not UI chrome.
+  const contentLocale = resolveContentLocale(
+    profilePreferredLocale ?? params.preferredLocale,
+    "es",
+  );
+
   return {
     reelScriptId: raw.id as string,
     clientId: params.clientId,
@@ -119,7 +130,7 @@ export async function loadReelScriptForVoiceover(params: {
     modalidad: slot.modalidad,
     preferredVoiceId,
     profileTone,
-    preferredLocale: params.preferredLocale,
+    preferredLocale: contentLocale,
     targetDurationSec: raw.target_duration_sec,
   };
 }

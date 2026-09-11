@@ -20,7 +20,7 @@ import {
   ttsVoiceoverProviderUnavailableError,
 } from "@/lib/tts/errors";
 import { loadReelScriptForVoiceover } from "@/lib/tts/load-reel-script-for-voiceover";
-import { resolveDefaultVoiceId } from "@/lib/tts/voice-catalog";
+import { resolveSynthesisVoiceId } from "@/lib/tts/voice-catalog";
 
 export type SynthesizeVoiceoverTrustedParams = {
   clientId: string;
@@ -43,11 +43,11 @@ export async function synthesizeVoiceoverForClientTrusted(
       return ttsVoiceoverNotFoundError();
     }
 
-    const locale = params.preferredLocale ?? "en";
     const script = await loadReelScriptForVoiceover({
       reelScriptId: params.reelScriptId,
       clientId: params.clientId,
-      preferredLocale: locale,
+      // Loader resolves content locale from profile (script language), not UI chrome.
+      preferredLocale: params.preferredLocale ?? "es",
     });
     if (!script) {
       return ttsVoiceoverNotFoundError();
@@ -57,12 +57,11 @@ export async function synthesizeVoiceoverForClientTrusted(
       return ttsVoiceoverEmptyTextError();
     }
 
-    const voiceId =
-      script.preferredVoiceId ??
-      resolveDefaultVoiceId({
-        preferredLocale: script.preferredLocale,
-        profileTone: script.profileTone,
-      });
+    const voiceId = resolveSynthesisVoiceId({
+      preferredVoiceId: script.preferredVoiceId,
+      contentLocale: script.preferredLocale,
+      profileTone: script.profileTone,
+    });
 
     const providerResult = await resolveProviderForJob({
       clientId: params.clientId,

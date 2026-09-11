@@ -31,7 +31,7 @@ import {
   ttsVoiceoverValidationError,
 } from "@/lib/tts/errors";
 import { loadReelScriptForVoiceover } from "@/lib/tts/load-reel-script-for-voiceover";
-import { resolveDefaultVoiceId } from "@/lib/tts/voice-catalog";
+import { resolveSynthesisVoiceId } from "@/lib/tts/voice-catalog";
 
 function authGuardEnvelope(error: {
   status: 401 | 403;
@@ -83,12 +83,11 @@ export async function synthesizeVoiceoverForReelScript(
       return ttsVoiceoverEmptyTextError();
     }
 
-    const voiceId =
-      script.preferredVoiceId ??
-      resolveDefaultVoiceId({
-        preferredLocale: script.preferredLocale,
-        profileTone: script.profileTone,
-      });
+    const voiceId = resolveSynthesisVoiceId({
+      preferredVoiceId: script.preferredVoiceId,
+      contentLocale: script.preferredLocale,
+      profileTone: script.profileTone,
+    });
 
     const providerResult = await resolveProviderForJob({
       clientId,

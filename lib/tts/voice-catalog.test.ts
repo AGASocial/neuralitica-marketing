@@ -114,6 +114,36 @@ describe("US-9.3 voice catalog", () => {
     );
   });
 
+
+  it("7 — alignVoiceIdToLocale remaps EN prefs voice to ES content locale", () => {
+    const { alignVoiceIdToLocale, resolveSynthesisVoiceId, resolveContentLocale } =
+      loadVoiceCatalogModule();
+    assert.equal(alignVoiceIdToLocale("en_warm_female", "es"), "es_warm_female");
+    assert.equal(
+      alignVoiceIdToLocale("en_professional_male", "es"),
+      "es_professional_male",
+    );
+    assert.equal(alignVoiceIdToLocale("es_warm_female", "es"), "es_warm_female");
+    assert.equal(resolveContentLocale(undefined), "es");
+    assert.equal(resolveContentLocale("en"), "en");
+    assert.equal(
+      resolveSynthesisVoiceId({
+        preferredVoiceId: "en_warm_female",
+        contentLocale: "es",
+        profileTone: "",
+      }),
+      "es_warm_female",
+    );
+    assert.equal(
+      resolveSynthesisVoiceId({
+        preferredVoiceId: null,
+        contentLocale: "es",
+        profileTone: "friendly",
+      }),
+      "es_warm_female",
+    );
+  });
+
   it("6 — module includes import server-only", () => {
     const source = readFileSync(path.join(__dirname, "voice-catalog.ts"), "utf8");
     assert.match(source, /import ["']server-only["']/);

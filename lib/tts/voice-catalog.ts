@@ -131,3 +131,59 @@ export function resolveDefaultVoiceId(params: {
 
   return locale === "es" ? "es_warm_female" : "en_warm_female";
 }
+
+
+/**
+ * Content/script locale — same rule as generate-reel-scripts-for-client:
+ * profile.fields.preferredLocale when en|es, otherwise Spanish.
+ * Do not use operator UI chrome locale for TTS.
+ */
+export function resolveContentLocale(
+  preferredLocale: unknown,
+  fallback: SupportedLocale = "es",
+): SupportedLocale {
+  if (preferredLocale === "en" || preferredLocale === "es") {
+    return preferredLocale;
+  }
+  return fallback;
+}
+
+/**
+ * Remap a catalog voice to the same tone family in `locale`.
+ * Keeps Preferencias tone choice when the UI locale and content locale diverge.
+ */
+export function alignVoiceIdToLocale(
+  voiceId: TtsVoiceId,
+  locale: SupportedLocale,
+): TtsVoiceId {
+  const voice = getVoiceById(voiceId);
+  if (!voice || voice.locale === locale) {
+    return voiceId;
+  }
+  const toneSuffix = voiceId.includes("professional")
+    ? "professional_male"
+    : "warm_female";
+  const aligned = `${locale}_${toneSuffix}`;
+  return isAllowedVoiceId(aligned) ? aligned : resolveDefaultVoiceId({
+    preferredLocale: locale,
+    profileTone: "",
+  });
+}
+
+/**
+ * Final voice for synthesis: Preferencias voice aligned to content locale,
+ * else tone heuristic for that locale.
+ */
+export function resolveSynthesisVoiceId(params: {
+  preferredVoiceId: TtsVoiceId | null;
+  contentLocale: SupportedLocale;
+  profileTone: string;
+}): TtsVoiceId {
+  if (params.preferredVoiceId) {
+    return alignVoiceIdToLocale(params.preferredVoiceId, params.contentLocale);
+  }
+  return resolveDefaultVoiceId({
+    preferredLocale: params.contentLocale,
+    profileTone: params.profileTone,
+  });
+}
