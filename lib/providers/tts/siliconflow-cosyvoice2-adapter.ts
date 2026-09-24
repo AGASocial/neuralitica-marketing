@@ -129,7 +129,8 @@ export function createSiliconflowCosyvoice2Adapter(
         );
       }
 
-      const response = await fetchImpl(resolveSiliconFlowTtsSpeechUrl(), {
+      const speechUrl = resolveSiliconFlowTtsSpeechUrl();
+      const response = await fetchImpl(speechUrl, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -140,22 +141,26 @@ export function createSiliconflowCosyvoice2Adapter(
           input: input.text,
           voice: catalogVoice.providerVoice,
           response_format: "mp3",
+          // Docs default stream=true; we need a full binary body for Storage upload.
+          stream: false,
           speed: 1.0,
         }),
       });
 
       if (!response.ok) {
         const bodyText = await response.text().catch(() => "");
+        const sanitized = sanitizeProviderErrorMessage(bodyText);
         console.error("[tts] siliconflow request failed", {
           providerKey: DEFAULT_LOW_TIER_PROVIDER_KEYS.tts,
           status: response.status,
+          host: new URL(speechUrl).host,
+          voiceId: input.voiceId,
+          textLength: input.text.length,
           clientId: input.clientId,
           reelScriptId: input.reelScriptId,
+          providerMessage: sanitized.slice(0, 240),
         });
-        throw new ProviderAdapterError(
-          PROVIDER_REQUEST_FAILED,
-          sanitizeProviderErrorMessage(bodyText),
-        );
+        throw new ProviderAdapterError(PROVIDER_REQUEST_FAILED, sanitized);
       }
 
       const contentType = response.headers.get("content-type") ?? "";
