@@ -15,6 +15,11 @@ export type TtsCatalogVoice = {
   /** SiliconFlow model id (CosyVoice for EN; Fish Speech for ES). */
   providerModel: string;
   providerVoice: string;
+  /**
+   * ElevenLabs premade voice id (multilingual_v2).
+   * Sarah (warm) / George (professional) — strong Spanish + English.
+   */
+  elevenLabsVoiceId: string;
   sampleAssetPath: string;
 };
 
@@ -26,6 +31,7 @@ export const TTS_VOICE_CATALOG: readonly TtsCatalogVoice[] = [
     toneTags: ["warm", "gentle"],
     providerModel: "FunAudioLLM/CosyVoice2-0.5B",
     providerVoice: "FunAudioLLM/CosyVoice2-0.5B:claire",
+    elevenLabsVoiceId: "EXAVITQu4vr4xnSDxMaL", // Sarah
     sampleAssetPath: "public/tts-samples/en_warm_female.mp3",
   },
   {
@@ -35,6 +41,7 @@ export const TTS_VOICE_CATALOG: readonly TtsCatalogVoice[] = [
     toneTags: ["professional", "steady"],
     providerModel: "FunAudioLLM/CosyVoice2-0.5B",
     providerVoice: "FunAudioLLM/CosyVoice2-0.5B:alex",
+    elevenLabsVoiceId: "JBFqnCBsd6RMkjVDRZzb", // George
     sampleAssetPath: "public/tts-samples/en_professional_male.mp3",
   },
   {
@@ -45,6 +52,7 @@ export const TTS_VOICE_CATALOG: readonly TtsCatalogVoice[] = [
     // CosyVoice EN presets keep a gringo accent on Spanish; Fish Speech is stronger multilingual.
     providerModel: "fishaudio/fish-speech-1.5",
     providerVoice: "fishaudio/fish-speech-1.5:diana",
+    elevenLabsVoiceId: "EXAVITQu4vr4xnSDxMaL", // Sarah — multilingual Spanish
     sampleAssetPath: "public/tts-samples/es_warm_female.mp3",
   },
   {
@@ -54,6 +62,7 @@ export const TTS_VOICE_CATALOG: readonly TtsCatalogVoice[] = [
     toneTags: ["professional", "deep"],
     providerModel: "fishaudio/fish-speech-1.5",
     providerVoice: "fishaudio/fish-speech-1.5:alex",
+    elevenLabsVoiceId: "JBFqnCBsd6RMkjVDRZzb", // George — multilingual Spanish
     sampleAssetPath: "public/tts-samples/es_professional_male.mp3",
   },
 ] as const;

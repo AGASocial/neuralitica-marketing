@@ -1,6 +1,11 @@
 import "server-only";
 
 import {
+  ELEVENLABS_ENV_KEY_NAME,
+  ELEVENLABS_TTS_PROVIDER_KEY,
+  ELEVENLABS_UNIT_COST_CENTS_PER_1M_CHARS,
+} from "@/lib/contracts/elevenlabs-tts";
+import {
   HEYGEN_APPROX_PER_MINUTE_CENTS,
   HEYGEN_DEFAULT_AVATAR_ID_ENV,
   HEYGEN_UNIT_COST_CENTS_PER_SECOND,
@@ -19,6 +24,7 @@ import { createHeygenHighAdapter } from "@/lib/providers/video/heygen-high-adapt
 import { createManualUploadAdapter } from "@/lib/providers/video/manual-upload-adapter";
 import { createMusetalkLowAdapter } from "@/lib/providers/video/musetalk-low-adapter";
 import { createSadtalkerLowAdapter } from "@/lib/providers/video/sadtalker-low-adapter";
+import { createElevenlabsTtsAdapter } from "@/lib/providers/tts/elevenlabs-tts-adapter";
 import { createSiliconflowCosyvoice2Adapter } from "@/lib/providers/tts/siliconflow-cosyvoice2-adapter";
 import { createLtxBrollHighAdapter } from "@/lib/providers/video/ltx-broll-high-adapter";
 import { createSiliconflowWan21TurboAdapter } from "@/lib/providers/video/siliconflow-wan21-turbo-adapter";
@@ -132,6 +138,22 @@ function buildBootstrapCatalog(): ProviderCatalogRow[] {
         metadata: { model: "cosyvoice2" },
       },
       envKeyName: "SILICONFLOW_API_KEY",
+    },
+    {
+      key: ELEVENLABS_TTS_PROVIDER_KEY,
+      assetRole: "tts",
+      tier: "high",
+      active: true,
+      costModel: {
+        billingUnit: "per_1m_chars",
+        unitCostCents: ELEVENLABS_UNIT_COST_CENTS_PER_1M_CHARS,
+        metadata: {
+          plan: "multilingual",
+          vendor: "elevenlabs",
+          model: "eleven_multilingual_v2",
+        },
+      },
+      envKeyName: ELEVENLABS_ENV_KEY_NAME,
     },
     {
       key: "siliconflow_wan21_turbo",
@@ -270,6 +292,25 @@ export function createProviderRegistry(
       registry.registerTts(
         createSiliconflowCosyvoice2Adapter({
           defaultUnitCostCents: ttsUnitCostCents,
+          envKeyName,
+        }),
+      );
+    }
+  }
+
+  if (catalogKeys.has(ELEVENLABS_TTS_PROVIDER_KEY)) {
+    const envKeyName =
+      catalog.find((row) => row.key === ELEVENLABS_TTS_PROVIDER_KEY)
+        ?.envKeyName ?? ELEVENLABS_ENV_KEY_NAME;
+    const apiKey = process.env[envKeyName];
+    if (apiKey && apiKey.trim().length > 0) {
+      registry.registerTts(
+        createElevenlabsTtsAdapter({
+          defaultUnitCostCents: unitCostCentsFromCatalog(
+            catalog,
+            ELEVENLABS_TTS_PROVIDER_KEY,
+            ELEVENLABS_UNIT_COST_CENTS_PER_1M_CHARS,
+          ),
           envKeyName,
         }),
       );

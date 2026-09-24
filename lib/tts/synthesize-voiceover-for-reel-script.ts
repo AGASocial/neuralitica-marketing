@@ -4,7 +4,6 @@ import type { SynthesizeVoiceoverForReelScriptResult } from "@/lib/contracts/tts
 import {
   synthesizeVoiceoverForReelScriptInputSchema,
 } from "@/lib/contracts/tts-voiceover";
-import { DEFAULT_LOW_TIER_PROVIDER_KEYS } from "@/lib/contracts/providers";
 import { resolvedSynthesizeSpeechInputSchema } from "@/lib/contracts/providers";
 import { assertReelBudgetAllowsEstimatedSpend } from "@/lib/cost-policy/assert-reel-budget-allows-estimated-spend";
 import { recordReelSpendEvent } from "@/lib/cost-policy/record-reel-spend-event";
@@ -31,6 +30,7 @@ import {
   ttsVoiceoverValidationError,
 } from "@/lib/tts/errors";
 import { loadReelScriptForVoiceover } from "@/lib/tts/load-reel-script-for-voiceover";
+import { resolveTtsProviderForSynthesis } from "@/lib/tts/resolve-tts-provider-for-synthesis";
 import { resolveSynthesisVoiceId } from "@/lib/tts/voice-catalog";
 
 function authGuardEnvelope(error: {
@@ -107,10 +107,17 @@ export async function synthesizeVoiceoverForReelScript(
       return ttsVoiceoverProviderUnavailableError();
     }
 
-    const providerKey = providerResult.decision.providerKey;
-    if (providerKey !== DEFAULT_LOW_TIER_PROVIDER_KEYS.tts) {
+    const registry = await initializeProviderRegistryFromCatalog();
+    const ttsProvider = resolveTtsProviderForSynthesis({
+      resolvedProviderKey: providerResult.decision.providerKey,
+      resolvedProviderTier: providerResult.decision.providerTier,
+      registry,
+    });
+    if (!ttsProvider) {
       return ttsVoiceoverProviderUnavailableError();
     }
+
+    const { providerKey, providerTier } = ttsProvider;
 
     const resolvedInput = resolvedSynthesizeSpeechInputSchema.parse({
       reelScriptId,
@@ -121,7 +128,6 @@ export async function synthesizeVoiceoverForReelScript(
       locale: script.preferredLocale,
     });
 
-    const registry = await initializeProviderRegistryFromCatalog();
     const adapter = registry.getTtsAdapter(providerKey);
     const estimate = await adapter.estimateCost(resolvedInput);
 
@@ -130,7 +136,7 @@ export async function synthesizeVoiceoverForReelScript(
       reelScriptId,
       estimatedCostCents: estimate.estimatedCostCents,
       operatorClientId: operator.id,
-      providerTier: providerResult.decision.providerTier,
+      providerTier,
     });
 
     if (!budget.ok) {
@@ -215,7 +221,7 @@ export async function synthesizeVoiceoverForReelScript(
       voiceoverAssetId: inserted.mediaAssetId,
       reelScriptId,
       voiceId,
-      providerKey: DEFAULT_LOW_TIER_PROVIDER_KEYS.tts,
+      providerKey,
       estimatedCostCents: estimate.estimatedCostCents,
       actualCostCents: storedAsset.actualCostCents,
       durationSec: storedAsset.durationSec,

@@ -107,7 +107,7 @@ export const synthesizeVoiceoverForReelScriptSuccessSchema = z
     voiceoverAssetId: z.string().uuid(),
     reelScriptId: z.string().uuid(),
     voiceId: ttsVoiceIdSchema,
-    providerKey: z.literal("siliconflow_cosyvoice2"),
+    providerKey: z.enum(["siliconflow_cosyvoice2", "elevenlabs_tts_high"]),
     estimatedCostCents: z.number(),
     actualCostCents: z.number(),
     durationSec: z.number().positive().optional(),
