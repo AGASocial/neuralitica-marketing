@@ -97,6 +97,9 @@ export const WAN_ALLOWED_OUTPUT_HOSTS: readonly string[] = [
   "sc-maas.oss-cn-beijing.aliyuncs.com",
   "sf-maas-prod.oss-cn-shanghai.aliyuncs.com",
   "sf-maas-sgp-ap-southeast-1.oss-ap-southeast-1.aliyuncs.com",
+  /** SiliconFlow international / 6scloud CDN (Wan2.2 I2V outputs). */
+  "s3.6scloud.com",
+  "6scloud.com",
 ];
 
 /** Alias frozen in SECURITY — same array. */
