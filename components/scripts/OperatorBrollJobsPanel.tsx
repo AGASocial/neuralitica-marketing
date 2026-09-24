@@ -130,6 +130,8 @@ export function OperatorBrollJobsPanel({
             status: update.status,
             failureReason: update.failureReason,
             updatedAt: update.updatedAt,
+            outputMediaAssetId:
+              update.outputMediaAssetId ?? clip.outputMediaAssetId,
           };
         }),
       );
@@ -206,27 +208,49 @@ export function OperatorBrollJobsPanel({
             key={clip.jobId}
             style={{
               display: "flex",
-              flexWrap: "wrap",
-              gap: "0.5rem",
-              alignItems: "center",
-              padding: "0.35rem 0",
+              flexDirection: "column",
+              gap: "0.35rem",
+              padding: "0.5rem 0",
               borderBottom: "1px solid var(--surface-border)",
             }}
           >
-            <span style={{ minWidth: "4.5rem", fontSize: "0.875rem" }}>
-              {formatClipLabel(copy.clipLabel, index + 1)}
-            </span>
-            <Tag
-              value={copy.status[clip.status] ?? clip.status}
-              severity={statusSeverity(clip.status)}
-            />
-            <span style={{ fontSize: "0.8rem", color: "var(--text-color-secondary)" }}>
-              {providerLabel(clip.providerKey, copy)}
-            </span>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+                alignItems: "center",
+              }}
+            >
+              <span style={{ minWidth: "4.5rem", fontSize: "0.875rem" }}>
+                {formatClipLabel(copy.clipLabel, index + 1)}
+              </span>
+              <Tag
+                value={copy.status[clip.status] ?? clip.status}
+                severity={statusSeverity(clip.status)}
+              />
+              <span style={{ fontSize: "0.8rem", color: "var(--text-color-secondary)" }}>
+                {providerLabel(clip.providerKey, copy)}
+              </span>
+            </div>
             {clip.failureReason ? (
-              <span style={{ fontSize: "0.8rem", color: "var(--red-500)", width: "100%" }}>
+              <span style={{ fontSize: "0.8rem", color: "var(--red-500)" }}>
                 {copy.failureReasonLabel}: {clip.failureReason}
               </span>
+            ) : null}
+            {clip.status === "completed" && clip.outputMediaAssetId ? (
+              <video
+                controls
+                preload="metadata"
+                src={`/api/media/assets/${clip.outputMediaAssetId}`}
+                style={{
+                  width: "100%",
+                  maxWidth: "240px",
+                  aspectRatio: "16 / 9",
+                  background: "#111827",
+                  borderRadius: "0.375rem",
+                }}
+              />
             ) : null}
           </li>
         ))}

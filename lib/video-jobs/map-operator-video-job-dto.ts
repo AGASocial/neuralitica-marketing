@@ -42,6 +42,7 @@ export async function mapOperatorVideoJobStatusDto(
     attempt: job.attempt,
     regenerationCount,
     failureReason: job.failureReason,
+    outputMediaAssetId: job.outputMediaAssetId,
     canRetry: retryState.canRetry,
     retryBlockedReasonKey: retryState.retryBlockedReasonKey,
     createdAt: job.createdAt,

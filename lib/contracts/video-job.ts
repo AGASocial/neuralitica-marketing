@@ -235,6 +235,7 @@ export const operatorVideoJobStatusDtoSchema = persistedVideoJobStatusSchema
     attempt: z.number().int().min(1),
     regenerationCount: z.number().int().min(0),
     failureReason: z.string().max(2000).nullable(),
+    outputMediaAssetId: z.string().uuid().nullable().optional(),
     canRetry: z.boolean(),
     retryBlockedReasonKey: z.string().nullable().optional(),
     createdAt: z.string().datetime({ offset: true }),
