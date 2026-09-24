@@ -265,6 +265,33 @@ export type OperatorVideoJobsByReelMap = z.infer<
   typeof operatorVideoJobsByReelMapSchema
 >;
 
+/** Operator B-roll clip row (US-8.5 status surface). */
+export const operatorBrollJobClipDtoSchema = z
+  .object({
+    jobId: z.string().uuid(),
+    reelScriptId: z.string().uuid(),
+    status: videoJobStatusSchema,
+    providerKey: z.string().min(1),
+    failureReason: z.string().max(2000).nullable(),
+    outputMediaAssetId: z.string().uuid().nullable(),
+    createdAt: z.string().datetime({ offset: true }),
+    updatedAt: z.string().datetime({ offset: true }),
+  })
+  .strict();
+
+export type OperatorBrollJobClipDto = z.infer<
+  typeof operatorBrollJobClipDtoSchema
+>;
+
+export const operatorBrollJobsByReelMapSchema = z.record(
+  z.string().uuid(),
+  z.array(operatorBrollJobClipDtoSchema),
+);
+
+export type OperatorBrollJobsByReelMap = z.infer<
+  typeof operatorBrollJobsByReelMapSchema
+>;
+
 export const applyVideoJobStatusUpdateInputSchema = z
   .object({
     jobId: z.string().uuid(),

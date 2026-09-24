@@ -49,6 +49,10 @@ import {
   type BrollGenerateOutcome,
 } from "@/components/scripts/BrollGenerateConfirmDialog";
 import {
+  OperatorBrollJobsPanel,
+  type OperatorBrollJobsCopy,
+} from "@/components/scripts/OperatorBrollJobsPanel";
+import {
   HeygenGenerateControl,
   type HeygenGenerateConfirmCopy,
 } from "@/components/scripts/HeygenGenerateConfirmDialog";
@@ -113,6 +117,7 @@ import type {
   ReelScriptListItem,
 } from "@/lib/contracts/reel-script";
 import type {
+  OperatorBrollJobsByReelMap,
   OperatorVideoJobSummaryDto,
   OperatorVideoJobsByReelMap,
 } from "@/lib/contracts/video-job";
@@ -233,6 +238,7 @@ type ScriptsPageCopy = {
   };
   heygen: HeygenGenerateConfirmCopy;
   broll: BrollGenerateConfirmCopy;
+  brollStatus: OperatorBrollJobsCopy;
   voiceover: OperatorVoiceoverCopy;
   assembly: OperatorAssemblyCopy & {
     reassembleConfirm: AssemblyReassembleConfirmCopy;
@@ -1514,6 +1520,7 @@ export function ScriptsPageView({
                 copy={copy}
                 reelCostRollups={reelCostRollups}
                 videoJobsByReelScriptId={videoJobsByReelScriptId}
+                brollJobsByReelScriptId={data.brollJobsByReelScriptId}
                 voiceoverByReelScriptId={voiceoverByReelScriptId}
                 assemblyByReelScriptId={assemblyByReelScriptId}
                 qaByAssembledReelId={qaByAssembledReelId}
@@ -1705,6 +1712,7 @@ type ReelDetailPanelProps = {
   copy: ScriptsPageCopy;
   reelCostRollups: ReelCostRollupsMap;
   videoJobsByReelScriptId: OperatorVideoJobsByReelMap;
+  brollJobsByReelScriptId: OperatorBrollJobsByReelMap;
   voiceoverByReelScriptId: VoiceoverSummaryByReelMap;
   assemblyByReelScriptId: OperatorAssemblyJobsByReelMap;
   qaByAssembledReelId: OperatorQaReportsByAssembledReelMap;
@@ -1750,6 +1758,7 @@ function ReelDetailPanel({
   copy,
   reelCostRollups,
   videoJobsByReelScriptId,
+  brollJobsByReelScriptId,
   voiceoverByReelScriptId,
   assemblyByReelScriptId,
   qaByAssembledReelId,
@@ -1785,6 +1794,8 @@ function ReelDetailPanel({
     row.scriptId !== null ? reelCostRollups[row.scriptId] : undefined;
   const videoJob =
     row.scriptId !== null ? videoJobsByReelScriptId[row.scriptId] : null;
+  const brollClips =
+    row.scriptId !== null ? (brollJobsByReelScriptId[row.scriptId] ?? []) : [];
   const voiceoverSummary =
     row.scriptId !== null ? voiceoverByReelScriptId[row.scriptId] : null;
   const assemblyJob =
@@ -1857,6 +1868,10 @@ function ReelDetailPanel({
           onError={onBrollGenerateError}
         />
       ) : null}
+      <OperatorBrollJobsPanel
+        initialClips={brollClips}
+        copy={copy.brollStatus}
+      />
       <OperatorVideoJobSummaryPanel
         initialJob={videoJob}
         locale={locale}

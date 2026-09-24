@@ -11,7 +11,10 @@ import {
 import { operatorAssemblyJobsByReelMapSchema } from "@/lib/contracts/assembly-job";
 import { operatorQaReportsByAssembledReelMapSchema } from "@/lib/contracts/qa-report";
 import { voiceoverSummaryByReelMapSchema } from "@/lib/contracts/tts-voiceover";
-import { operatorVideoJobsByReelMapSchema } from "@/lib/contracts/video-job";
+import {
+  operatorBrollJobsByReelMapSchema,
+  operatorVideoJobsByReelMapSchema,
+} from "@/lib/contracts/video-job";
 import { reelCaptionSummarySchema } from "@/lib/contracts/reel-caption";
 import { reelScriptReadabilitySchema } from "@/lib/contracts/reel-script-readability";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
@@ -103,6 +106,8 @@ export const getReelScriptsForWeekSuccessSchema = z
     reelCostRollups: reelCostRollupsMapSchema,
     /** US-8.4 — Operator-only latest primary video job per reelScriptId. */
     videoJobsByReelScriptId: operatorVideoJobsByReelMapSchema,
+    /** US-8.5 — Operator-only latest B-roll job batch per reelScriptId. */
+    brollJobsByReelScriptId: operatorBrollJobsByReelMapSchema,
     /** US-9.3 — Operator-only latest voiceover asset per reelScriptId. */
     voiceoverByReelScriptId: voiceoverSummaryByReelMapSchema,
     /** US-9.1 — Operator-only latest assembly job per reelScriptId. */

@@ -21,6 +21,7 @@ import { buildReelScriptListForStrategy } from "@/lib/reel-scripts/list-reel-scr
 import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved-strategy-for-week";
 import { getAssemblyJobsForReelScripts } from "@/lib/assembly/get-assembly-jobs-for-reel-scripts";
 import { getVideoJobsForReelScripts } from "@/lib/video-jobs/get-video-jobs-for-reel-scripts";
+import { getBrollJobsForReelScripts } from "@/lib/video-jobs/get-broll-jobs-for-reel-scripts";
 import { getVoiceoverSummariesForReelScripts } from "@/lib/tts/get-voiceover-summaries-for-reel-scripts";
 import { getQaReportsForAssembledReels } from "@/lib/qa/get-qa-reports-for-assembled-reels";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
@@ -77,6 +78,7 @@ export async function getReelScriptsForWeek(
         costSummary: emptyWeekCostSummary(weekStart, clientId),
         reelCostRollups: {},
         videoJobsByReelScriptId: {},
+        brollJobsByReelScriptId: {},
         voiceoverByReelScriptId: {},
         assemblyByReelScriptId: {},
         qaByAssembledReelId: {},
@@ -126,6 +128,11 @@ export async function getReelScriptsForWeek(
     );
 
     const videoJobsByReelScriptId = await getVideoJobsForReelScripts({
+      clientId,
+      reelScriptIds: rollupScriptIds,
+    });
+
+    const brollJobsByReelScriptId = await getBrollJobsForReelScripts({
       clientId,
       reelScriptIds: rollupScriptIds,
     });
@@ -180,6 +187,7 @@ export async function getReelScriptsForWeek(
       costSummary,
       reelCostRollups,
       videoJobsByReelScriptId,
+      brollJobsByReelScriptId,
       voiceoverByReelScriptId,
       assemblyByReelScriptId,
       qaByAssembledReelId,

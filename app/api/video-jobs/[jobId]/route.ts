@@ -8,14 +8,19 @@ import {
 import { operatorVideoJobSummaryDtoSchema } from "@/lib/contracts/video-job";
 import { loadVideoJobScoped } from "@/lib/video-jobs/load-video-job";
 import { mapOperatorVideoJobSummaryDto } from "@/lib/video-jobs/map-operator-video-job-dto";
+import { pollVideoJobOnce } from "@/lib/video-jobs/poll-video-job-until-terminal";
+import { isTerminalVideoJobStatus } from "@/lib/video-jobs/retry-eligibility";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /**
  * Operator-only video job poll (US-8.4 / US-7.3 Phase B).
- * Frontend consumer: `/operator/scripts` expand — OperatorVideoJobSummaryPanel.
- * Returns summary including OperatorProductionJobCostDto (`cost`).
+ * Frontend consumer: `/operator/scripts` expand — OperatorVideoJobSummaryPanel
+ * and OperatorBrollJobsPanel.
+ *
+ * When Fly/cron is unavailable, a non-terminal job triggers one vendor status
+ * tick before returning the Operator summary DTO.
  */
 export async function GET(
   _request: Request,
@@ -42,7 +47,7 @@ export async function GET(
     });
   }
 
-  const job = await loadVideoJobScoped({
+  let job = await loadVideoJobScoped({
     jobId,
     clientId: operator.id,
   });
@@ -55,6 +60,22 @@ export async function GET(
         "Cache-Control": "private, no-store",
       },
     });
+  }
+
+  if (!isTerminalVideoJobStatus(job.status)) {
+    try {
+      await pollVideoJobOnce(job.id);
+      job =
+        (await loadVideoJobScoped({
+          jobId,
+          clientId: operator.id,
+        })) ?? job;
+    } catch (error) {
+      console.error("[video-jobs] operator poll tick failed", {
+        jobId,
+        name: error instanceof Error ? error.name : "unknown",
+      });
+    }
   }
 
   const dto = await mapOperatorVideoJobSummaryDto(job, {

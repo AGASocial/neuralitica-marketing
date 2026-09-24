@@ -1451,6 +1451,14 @@
       },
       "failure": {
         "referenceStillMissing": "A reference still image is required before generating B-roll."
+      },
+      "statusPanel": {
+        "title": "B-roll clips",
+        "empty": "No B-roll jobs yet for this Reel.",
+        "clipLabel": "Clip {index}",
+        "polling": "Refreshing status…",
+        "failureReasonLabel": "Failure reason",
+        "providerOther": "{provider}"
       }
     },
     "heygen": {
