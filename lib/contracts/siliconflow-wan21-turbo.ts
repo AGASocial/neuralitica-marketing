@@ -37,13 +37,14 @@ export const WAN_SUBMIT_URL = `${WAN_API_BASE_URL}${WAN_SUBMIT_PATH}` as const;
 export const WAN_STATUS_URL = `${WAN_API_BASE_URL}${WAN_STATUS_PATH}` as const;
 
 /**
- * Full SiliconFlow model id for Wan2.1 I2V Turbo (catalog metadata shorthand
- * `wan2.1-i2v-turbo`). ~$0.21/clip on SiliconFlow.
+ * SiliconFlow I2V model id. Wan2.1 Turbo/base return vendor code 30003
+ * "Model disabled."; Wan2.2 I2V is the active replacement (same submit/status API).
+ * Catalog key remains `siliconflow_wan21_turbo` for policy continuity.
  */
-export const WAN_MODEL_ID = "Wan-AI/Wan2.1-I2V-14B-720P-Turbo" as const;
+export const WAN_MODEL_ID = "Wan-AI/Wan2.2-I2V-A14B" as const;
 
 /** Catalog cost_model.metadata.model lean alias (bootstrap parity). */
-export const WAN_MODEL_METADATA_ALIAS = "wan2.1-i2v-turbo" as const;
+export const WAN_MODEL_METADATA_ALIAS = "wan2.2-i2v-a14b" as const;
 
 /** Vertical Reel frame — 9:16. */
 export const WAN_DEFAULT_IMAGE_SIZE = "720x1280" as const;

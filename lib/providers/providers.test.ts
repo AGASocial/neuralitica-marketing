@@ -111,7 +111,7 @@ function row(
     siliconflow_wan21_turbo: {
       billingUnit: "per_clip",
       unitCostCents: 21,
-      metadata: { clipDurationSec: 5, model: "wan2.1-i2v-turbo" },
+      metadata: { clipDurationSec: 5, model: "wan2.2-i2v-a14b" },
     },
     manual: { billingUnit: "per_run", unitCostCents: 0 },
     heygen_high: {
