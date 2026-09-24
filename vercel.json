@@ -1,5 +1,6 @@
 {
   "crons": [
-    { "path": "/api/cron/weekly-cycle", "schedule": "0 6 * * 1" }
+    { "path": "/api/cron/weekly-cycle", "schedule": "0 6 * * 1" },
+    { "path": "/api/cron/video-jobs", "schedule": "* * * * *" }
   ]
 }

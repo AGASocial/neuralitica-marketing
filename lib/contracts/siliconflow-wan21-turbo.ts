@@ -108,7 +108,8 @@ export const WAN_FETCH_MAX_BYTES = 104_857_600 as const;
 export const WAN_FETCH_MAX_REDIRECTS = 3 as const;
 
 /** Short-lived provider-readable reference still URL TTL (seconds). */
-export const WAN_INPUT_URL_TTL_SEC = 300 as const;
+/** Signed still URL lifetime — must outlast SiliconFlow queue wait. */
+export const WAN_INPUT_URL_TTL_SEC = 3_600 as const;
 
 /** MIME types accepted for I2V reference stills resolved server-side. */
 export const WAN_IMAGE_MIME_ALLOWLIST = [

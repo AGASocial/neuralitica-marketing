@@ -107,6 +107,14 @@ describe("public allowlist", () => {
     assert.equal(isPublicPath("/interview"), false);
     assert.equal(isPublicPath("/profile"), false);
     assert.equal(isPublicPath("/api/anything"), false);
+    assert.equal(
+      isPublicPath(
+        "/api/media/provider-assets/00000000-0000-4000-8000-000000000001",
+      ),
+      true,
+    );
+    assert.equal(isPublicPath("/api/media/provider-assets/not-a-uuid"), false);
+    assert.equal(isPublicPath("/api/media/assets/00000000-0000-4000-8000-000000000001"), false);
   });
 });
 
