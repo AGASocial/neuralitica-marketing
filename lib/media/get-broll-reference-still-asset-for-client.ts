@@ -45,7 +45,8 @@ async function findOwnedImageAssetById(params: {
 }
 
 /**
- * Resolve an owned still for Wan I2V (US-8.5 CONTRACT).
+ * Resolve an owned still for LTX I2V B-roll (US-8.5 / US-8.8).
+ * Wan faceless B-roll is T2V and does not use this resolver.
  * Priority:
  * 1. Script-linked cover still for this Reel (`assembled_reels.cover_media_asset_id`)
  * 2. Client-wide cover_frame → client_logo → earliest avatar_reference with image MIME

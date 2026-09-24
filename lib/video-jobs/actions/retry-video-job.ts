@@ -149,7 +149,7 @@ export async function previewRetryVideoJobEstimate(
     referenceImageAssetId: isBroll
       ? (failedJob.portraitAssetId ?? undefined)
       : undefined,
-    prompt: isBroll ? "Cinematic B-roll. <<BEAT>>retry<</BEAT>>" : undefined,
+    prompt: isBroll ? "Faceless cinematic B-roll. <<BEAT>>retry<</BEAT>>" : undefined,
     clipCount: isBroll ? 1 : undefined,
   });
 

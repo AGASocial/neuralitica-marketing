@@ -166,12 +166,17 @@ export async function estimateBrollVideoJobsPreview(params: {
     return blockedPreviewEstimate(true, BROLL_BLOCKED_PROVIDER_UNAVAILABLE);
   }
 
-  const still = await getBrollReferenceStillAssetForClient(
-    params.clientId,
-    params.reelScriptId,
-  );
-  if (!still?.assetId) {
-    return blockedPreviewEstimate(true, BROLL_BLOCKED_REFERENCE_STILL_MISSING);
+  // Wan T2V is faceless/prompt-only. LTX still needs an owned I2V still.
+  let stillAssetId: string | null = null;
+  if (providerKey === LTX_PROVIDER_KEY) {
+    const still = await getBrollReferenceStillAssetForClient(
+      params.clientId,
+      params.reelScriptId,
+    );
+    if (!still?.assetId) {
+      return blockedPreviewEstimate(true, BROLL_BLOCKED_REFERENCE_STILL_MISSING);
+    }
+    stillAssetId = still.assetId;
   }
 
   let unitCostCentsPerClip: number =
@@ -194,8 +199,12 @@ export async function estimateBrollVideoJobsPreview(params: {
       providerTier,
       assetRole: "broll",
       targetDurationSec: durationSec,
-      referenceImageAssetId: still.assetId,
-      portraitAssetId: still.assetId,
+      ...(stillAssetId
+        ? {
+            referenceImageAssetId: stillAssetId,
+            portraitAssetId: stillAssetId,
+          }
+        : {}),
       clipCount: 1,
     });
     unitCostCentsPerClip = estimate.estimatedCostCents;

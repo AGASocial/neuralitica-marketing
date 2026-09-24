@@ -1,5 +1,5 @@
 /**
- * US-8.5 Phase A — SiliconFlow Wan2.1 I2V Turbo adapter — mocked HTTP only.
+ * US-8.5 Phase A — SiliconFlow Wan2.2 T2V adapter — mocked HTTP only.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -419,10 +419,12 @@ describe("US-8.5 Wan adapter (Phase A)", () => {
 
       await adapter.createJob(baseJobInput({ targetDurationSec: 12 }));
       assert.equal(submitBody?.model, WAN_MODEL_ID);
-      assert.equal(submitBody?.duration, 5);
       assert.equal(submitBody?.image_size, "720x1280");
       assert.equal(typeof submitBody?.prompt, "string");
-      assert.equal(typeof submitBody?.image, "string");
+      assert.equal(submitBody?.image, undefined);
+      assert.equal(submitBody?.duration, undefined);
+      assert.equal(typeof submitBody?.negative_prompt, "string");
+      assert.match(String(submitBody?.negative_prompt), /face/);
 
       await adapter.getJobStatus(REQUEST_ID);
       assert.equal(statusBody?.requestId, REQUEST_ID);

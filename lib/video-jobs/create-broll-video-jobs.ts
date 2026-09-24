@@ -72,8 +72,14 @@ export type CreateBrollVideoJobsOptions = {
 export function buildWanBrollPrompt(params: {
   beatText: string;
 }): string {
-  const beat = params.beatText.trim().slice(0, 300);
-  const wrapped = `Cinematic B-roll. ${WAN_PROMPT_BEAT_OPEN}${beat}${WAN_PROMPT_BEAT_CLOSE}`;
+  const beat = params.beatText.trim().slice(0, 280);
+  const wrapped = [
+    "Faceless cinematic B-roll for a vertical 9:16 Instagram Reel.",
+    "Dynamic camera with continuous motion: smooth push-in, subtle orbit, or tracking shot.",
+    "Energetic pacing, shallow depth of field, natural light, rich texture, high detail.",
+    "No people, no faces, no logos, no on-screen text, no watermarks.",
+    `Scene: ${WAN_PROMPT_BEAT_OPEN}${beat}${WAN_PROMPT_BEAT_CLOSE}`,
+  ].join(" ");
   return wrapped.slice(0, WAN_PROMPT_MAX_CHARS);
 }
 
@@ -180,20 +186,24 @@ export async function createBrollVideoJobs(
       return videoJobMutationError("BROLL_PROVIDER_UNAVAILABLE");
     }
 
-    let referenceStillAssetId =
-      options?.singleClipRetry?.referenceStillAssetId ?? null;
-    if (!referenceStillAssetId) {
-      const still = await getBrollReferenceStillAssetForClient(
-        input.clientId,
-        input.reelScriptId,
-      );
-      referenceStillAssetId = still?.assetId ?? null;
-    }
+    // Wan T2V is prompt-only (faceless). LTX remains I2V and needs an owned still.
+    let referenceStillAssetId: string | null = null;
+    if (providerKey === LTX_PROVIDER_KEY) {
+      referenceStillAssetId =
+        options?.singleClipRetry?.referenceStillAssetId ?? null;
+      if (!referenceStillAssetId) {
+        const still = await getBrollReferenceStillAssetForClient(
+          input.clientId,
+          input.reelScriptId,
+        );
+        referenceStillAssetId = still?.assetId ?? null;
+      }
 
-    if (!referenceStillAssetId) {
-      return videoJobMutationError("BROLL_REFERENCE_STILL_MISSING", {
-        messageKey: WAN_REFERENCE_STILL_MISSING_MESSAGE_KEY,
-      });
+      if (!referenceStillAssetId) {
+        return videoJobMutationError("BROLL_REFERENCE_STILL_MISSING", {
+          messageKey: WAN_REFERENCE_STILL_MISSING_MESSAGE_KEY,
+        });
+      }
     }
 
     const registry = await initializeProviderRegistryFromCatalog();
@@ -231,8 +241,12 @@ export async function createBrollVideoJobs(
         providerTier,
         assetRole: "broll" as const,
         targetDurationSec: durationSec,
-        referenceImageAssetId: referenceStillAssetId,
-        portraitAssetId: referenceStillAssetId,
+        ...(referenceStillAssetId
+          ? {
+              referenceImageAssetId: referenceStillAssetId,
+              portraitAssetId: referenceStillAssetId,
+            }
+          : {}),
         prompt,
         clipCount: 1,
       };

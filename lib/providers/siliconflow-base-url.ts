@@ -58,3 +58,7 @@ export function resolveSiliconFlowWanSubmitUrl(): string {
 export function resolveSiliconFlowWanStatusUrl(): string {
   return `${resolveSiliconFlowApiBaseUrl()}/v1/video/status`;
 }
+
+export function resolveSiliconFlowImagesGenerationsUrl(): string {
+  return `${resolveSiliconFlowApiBaseUrl()}/v1/images/generations`;
+}

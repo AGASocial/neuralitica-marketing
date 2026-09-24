@@ -484,9 +484,32 @@ describe("US-8.9 previewBrollVideoJobsEstimate", () => {
     });
   });
 
-  it("10 — missing still → blocked referenceStillMissing", async () => {
+  it("10 — Wan T2V preview succeeds without still", async () => {
     await withServerOnlyStub(async () => {
       const mock = installMocks({ stillAssetId: null });
+      try {
+        const { previewBrollVideoJobsEstimate } = require("./preview-broll-video-jobs-estimate.ts");
+        const result = await previewBrollVideoJobsEstimate({
+          reelScriptId: REEL_SCRIPT_ID,
+          clientId: CLIENT_ID,
+        });
+        assert.equal(result.ok, true);
+        assert.equal(result.blockedReasonKey, undefined);
+        assert.equal(result.providerKey, "siliconflow_wan21_turbo");
+        assert.ok((result.estimatedCostCents ?? 0) > 0);
+      } finally {
+        mock.restore();
+      }
+    });
+  });
+
+  it("10b — LTX missing still → blocked referenceStillMissing", async () => {
+    await withServerOnlyStub(async () => {
+      const mock = installMocks({
+        stillAssetId: null,
+        providerKey: "ltx_broll_high",
+        providerTier: "high",
+      });
       try {
         const { previewBrollVideoJobsEstimate } = require("./preview-broll-video-jobs-estimate.ts");
         const result = await previewBrollVideoJobsEstimate({

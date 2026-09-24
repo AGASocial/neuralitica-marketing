@@ -8,15 +8,13 @@ import {
   WAN_FETCH_MAX_BYTES,
   WAN_FETCH_MAX_REDIRECTS,
   WAN_FETCH_TIMEOUT_MS,
-  WAN_IMAGE_MIME_ALLOWLIST,
   WAN_IMAGE_SIZE_ALLOWLIST,
-  WAN_INPUT_URL_TTL_SEC,
   WAN_MODEL_ID,
+  WAN_NEGATIVE_PROMPT,
   WAN_PROVIDER_KEY,
   WAN_UNIT_COST_CENTS_PER_CLIP,
   WAN_VIDEO_ASSET_ROLE,
   clampWanClipCount,
-  clampWanClipDurationSec,
   type WanVendorStatus,
   WAN_VENDOR_STATUS_MAP,
 } from "@/lib/contracts/siliconflow-wan21-turbo";
@@ -31,7 +29,6 @@ import {
   type CreateVideoJobInput,
   type ExternalJobId,
 } from "@/lib/contracts/providers";
-import { resolveMediaAssetUrlForProvider } from "@/lib/media/resolve-media-asset-url-for-provider";
 import {
   uploadGeneratedVideoBuffer,
   type UploadGeneratedVideoArgs,
@@ -69,6 +66,9 @@ type JobContext = {
 export type CreateSiliconflowWan21TurboAdapterParams = {
   defaultEstimateCents: number;
   unitCostCentsPerClip?: number;
+  /**
+   * @deprecated Wan T2V is prompt-only; retained for call-site compatibility.
+   */
   resolveMediaAssetUrl?: (
     assetId: string,
     clientId: string,
@@ -93,17 +93,6 @@ function getSiliconflowApiKey(): string {
   return token.trim();
 }
 
-function resolveReferenceStillAssetId(input: CreateVideoJobInput): string {
-  const assetId = input.referenceImageAssetId ?? input.portraitAssetId;
-  if (!assetId) {
-    throw new ProviderAdapterError(
-      "INVALID_PROVIDER_INPUT",
-      "Reference image asset is required for Wan B-roll",
-    );
-  }
-  return assetId;
-}
-
 function validateCreateJobInput(input: CreateVideoJobInput): void {
   resolvedCreateVideoJobInputSchema.parse(input);
 
@@ -120,8 +109,6 @@ function validateCreateJobInput(input: CreateVideoJobInput): void {
       "Wan does not accept reference video loops",
     );
   }
-
-  resolveReferenceStillAssetId(input);
 
   const prompt = input.prompt?.trim() ?? "";
   if (prompt.length === 0) {
@@ -324,21 +311,10 @@ export function createSiliconflowWan21TurboAdapter(
   const {
     defaultEstimateCents,
     unitCostCentsPerClip = defaultEstimateCents || WAN_UNIT_COST_CENTS_PER_CLIP,
-    resolveMediaAssetUrl,
     uploadGeneratedVideo = uploadGeneratedVideoBuffer,
     fetchImpl = fetch,
     initialJobContexts,
   } = params;
-
-  const resolveAssetUrl =
-    resolveMediaAssetUrl ??
-    (async (assetId: string, clientId: string, _kind: "image" | "portrait") =>
-      resolveMediaAssetUrlForProvider({
-        assetId,
-        clientId,
-        allowedMimeTypes: WAN_IMAGE_MIME_ALLOWLIST,
-        ttlSec: WAN_INPUT_URL_TTL_SEC,
-      }));
 
   const jobContextByExternalId = new Map<ExternalJobId, JobContext>(
     initialJobContexts ?? [],
@@ -360,13 +336,7 @@ export function createSiliconflowWan21TurboAdapter(
       validateCreateJobInput(input);
       const token = getSiliconflowApiKey();
 
-      const stillAssetId = resolveReferenceStillAssetId(input);
-      const imageUrl = await resolveAssetUrl(
-        stillAssetId,
-        input.clientId,
-        "image",
-      );
-      const duration = clampWanClipDurationSec(input.targetDurationSec);
+      // Faceless T2V: prompt + image_size only — never send logo/avatar stills.
       const prompt = input.prompt!.trim();
 
       const response = await siliconflowRequest(
@@ -376,9 +346,8 @@ export function createSiliconflowWan21TurboAdapter(
         {
           model: WAN_MODEL_ID,
           prompt,
-          image: imageUrl,
           image_size: resolveImageSize(input),
-          duration,
+          negative_prompt: WAN_NEGATIVE_PROMPT,
         },
       );
 

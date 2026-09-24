@@ -1,7 +1,8 @@
 /**
- * Frozen SiliconFlow Wan2.1 I2V Turbo / siliconflow_wan21_turbo contract
- * constants (US-8.5 CONTRACT). FE-safe — no secrets. Adapter reads env via
- * WAN_ENV_KEY_NAME at runtime.
+ * Frozen SiliconFlow Wan2.2 T2V / siliconflow_wan21_turbo contract
+ * constants (US-8.5 CONTRACT + faceless T2V). FE-safe — no secrets.
+ * Adapter reads env via WAN_ENV_KEY_NAME at runtime.
+ * Catalog key remains `siliconflow_wan21_turbo` for policy continuity.
  */
 import { z } from "zod";
 
@@ -27,7 +28,7 @@ export const WAN_VIDEO_ASSET_ROLE = "broll" as const;
  */
 export const WAN_API_BASE_URL = "https://api.siliconflow.com" as const;
 
-/** Submit async I2V job. */
+/** Submit async T2V job. */
 export const WAN_SUBMIT_PATH = "/v1/video/submit" as const;
 
 /** Poll job status (POST body with requestId — not GET). */
@@ -37,14 +38,13 @@ export const WAN_SUBMIT_URL = `${WAN_API_BASE_URL}${WAN_SUBMIT_PATH}` as const;
 export const WAN_STATUS_URL = `${WAN_API_BASE_URL}${WAN_STATUS_PATH}` as const;
 
 /**
- * SiliconFlow I2V model id. Wan2.1 Turbo/base return vendor code 30003
- * "Model disabled."; Wan2.2 I2V is the active replacement (same submit/status API).
- * Catalog key remains `siliconflow_wan21_turbo` for policy continuity.
+ * SiliconFlow T2V model id — faceless B-roll from prompt only (no reference still).
+ * Same submit/status API as I2V; catalog key remains `siliconflow_wan21_turbo`.
  */
-export const WAN_MODEL_ID = "Wan-AI/Wan2.2-I2V-A14B" as const;
+export const WAN_MODEL_ID = "Wan-AI/Wan2.2-T2V-A14B" as const;
 
 /** Catalog cost_model.metadata.model lean alias (bootstrap parity). */
-export const WAN_MODEL_METADATA_ALIAS = "wan2.2-i2v-a14b" as const;
+export const WAN_MODEL_METADATA_ALIAS = "wan2.2-t2v-a14b" as const;
 
 /** Vertical Reel frame — 9:16. */
 export const WAN_DEFAULT_IMAGE_SIZE = "720x1280" as const;
@@ -97,7 +97,7 @@ export const WAN_ALLOWED_OUTPUT_HOSTS: readonly string[] = [
   "sc-maas.oss-cn-beijing.aliyuncs.com",
   "sf-maas-prod.oss-cn-shanghai.aliyuncs.com",
   "sf-maas-sgp-ap-southeast-1.oss-ap-southeast-1.aliyuncs.com",
-  /** SiliconFlow international / 6scloud CDN (Wan2.2 I2V outputs). */
+  /** SiliconFlow international / 6scloud CDN (Wan2.2 outputs). */
   "s3.6scloud.com",
   "6scloud.com",
 ];
@@ -114,7 +114,10 @@ export const WAN_FETCH_MAX_REDIRECTS = 3 as const;
 /** Signed still URL lifetime — must outlast SiliconFlow queue wait. */
 export const WAN_INPUT_URL_TTL_SEC = 3_600 as const;
 
-/** MIME types accepted for I2V reference stills resolved server-side. */
+/**
+ * MIME types accepted for optional owned stills (LTX / legacy I2V paths).
+ * Wan T2V does not consume a reference still.
+ */
 export const WAN_IMAGE_MIME_ALLOWLIST = [
   "image/jpeg",
   "image/png",
@@ -136,14 +139,20 @@ export const WAN_VENDOR_STATUS_MAP = {
 
 export type WanVendorStatus = keyof typeof WAN_VENDOR_STATUS_MAP;
 
-/** Max chars for server-authored I2V prompt (beat + script wrap). */
+/** Max chars for server-authored T2V prompt (beat + script wrap). */
 export const WAN_PROMPT_MAX_CHARS = 2000 as const;
 
 /** Delimiter wrap for untrusted beat text inside server-authored prompt. */
 export const WAN_PROMPT_BEAT_OPEN = "<<BEAT>>" as const;
 export const WAN_PROMPT_BEAT_CLOSE = "<</BEAT>>" as const;
 
-/** i18n messageKey when no owned reference still exists. */
+/**
+ * Negative prompt for faceless B-roll — suppress identity / talking-head artifacts.
+ */
+export const WAN_NEGATIVE_PROMPT =
+  "people, person, human, face, faces, portrait, selfie, talking head, hands close-up, logo, brand mark, watermark, text, subtitles, captions, blurry, low quality, static frame, slideshow" as const;
+
+/** i18n messageKey when no owned reference still exists (LTX I2V only). */
 export const WAN_REFERENCE_STILL_MISSING_MESSAGE_KEY =
   "scripts.broll.failure.referenceStillMissing" as const;
 

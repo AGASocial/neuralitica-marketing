@@ -26,6 +26,9 @@ export const MEDIA_ASSET_TYPE_CLIENT_LOGO = "client_logo" as const;
 /** Cover frame JPEG from branded output (US-9.2 enum). */
 export const MEDIA_ASSET_TYPE_COVER_FRAME = "cover_frame" as const;
 
+/** Faceless B-roll T2I keyframe before Wan/LTX I2V. */
+export const MEDIA_ASSET_TYPE_BROLL_KEYFRAME = "broll_keyframe" as const;
+
 /** US-9.1 assembled output keys */
 export const ASSEMBLED_REEL_STORAGE_KEY_REGEX =
   /^neuramark\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/assembled-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.mp4$/;

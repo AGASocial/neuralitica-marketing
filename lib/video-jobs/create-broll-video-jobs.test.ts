@@ -476,7 +476,7 @@ describe("US-8.5 Phase B createBrollVideoJobs", () => {
         assert.equal(row?.asset_role, "broll");
         assert.equal(row?.client_id, CLIENT_ID);
         assert.equal(row?.voiceover_asset_id, null);
-        assert.equal(row?.portrait_asset_id, STILL_ASSET_ID);
+        assert.equal(row?.portrait_asset_id, null);
       } finally {
         mock.restore();
       }
@@ -500,12 +500,43 @@ describe("US-8.5 Phase B createBrollVideoJobs", () => {
     });
   });
 
-  it("10 — missing reference still → BROLL_REFERENCE_STILL_MISSING; primary untouched", async () => {
+  it("10 — Wan T2V creates without reference still (faceless)", async () => {
     await withServerOnlyStub(async () => {
+      let createInput: Record<string, unknown> | null = null;
       const primaryJobsTouched = { count: 0 };
       const mock = installMocks({
         stillAssetId: null,
         primaryJobsTouched,
+        onCreateJob: (input) => {
+          createInput = input;
+        },
+      });
+      try {
+        const { createBrollVideoJobs } = require("./create-broll-video-jobs.ts");
+        const result = await createBrollVideoJobs({
+          reelScriptId: REEL_SCRIPT_ID,
+          clientId: CLIENT_ID,
+        });
+        assert.equal(result.ok, true);
+        assert.ok(result.createdCount >= 1);
+        assert.equal(createInput?.referenceImageAssetId, undefined);
+        assert.equal(createInput?.portraitAssetId, undefined);
+        assert.equal(mock.getInsertedRows()[0]?.portrait_asset_id, null);
+        assert.equal(primaryJobsTouched.count, 0);
+        assert.match(String(createInput?.prompt ?? ""), /Faceless cinematic B-roll/);
+        assert.match(String(createInput?.prompt ?? ""), /Dynamic camera/);
+      } finally {
+        mock.restore();
+      }
+    });
+  });
+
+  it("10b — LTX missing reference still → BROLL_REFERENCE_STILL_MISSING", async () => {
+    await withServerOnlyStub(async () => {
+      const mock = installMocks({
+        stillAssetId: null,
+        providerKey: "ltx_broll_high",
+        providerTier: "high",
       });
       try {
         const { createBrollVideoJobs } = require("./create-broll-video-jobs.ts");
@@ -516,7 +547,6 @@ describe("US-8.5 Phase B createBrollVideoJobs", () => {
         assert.equal(result.ok, false);
         assert.equal(result.error.code, "BROLL_REFERENCE_STILL_MISSING");
         assert.equal(mock.getCreateCallCount(), 0);
-        assert.equal(primaryJobsTouched.count, 0);
       } finally {
         mock.restore();
       }
