@@ -21,6 +21,7 @@ import type {
   TtsProviderAdapter,
 } from "@/lib/providers/provider-adapters";
 import {
+  buildCosyVoiceSpeechInput,
   getVoiceById,
   type TtsCatalogVoice,
 } from "@/lib/tts/voice-catalog";
@@ -138,7 +139,7 @@ export function createSiliconflowCosyvoice2Adapter(
         },
         body: JSON.stringify({
           model: COSYVOICE2_MODEL,
-          input: input.text,
+          input: buildCosyVoiceSpeechInput(input.text, input.locale),
           voice: catalogVoice.providerVoice,
           response_format: "mp3",
           // Docs default stream=true; we need a full binary body for Storage upload.

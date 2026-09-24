@@ -187,3 +187,65 @@ export function resolveSynthesisVoiceId(params: {
     profileTone: params.profileTone,
   });
 }
+
+/**
+ * Infer content language from voiceover/script text.
+ * Spanish wins when accented/punctuated Spanish or common Spanish tokens appear.
+ */
+export function detectContentLocaleFromText(text: string): SupportedLocale | null {
+  const trimmed = text.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+
+  const spanishChars = (trimmed.match(/[¿¡áéíóúüñÁÉÍÓÚÜÑ]/g) ?? []).length;
+  if (spanishChars >= 1) {
+    return "es";
+  }
+
+  const spanishToken =
+    /\b(el|la|los|las|un|una|de|que|qué|cómo|también|para|con|por|más|muy|casa|trabajo|precio|pintura|usted|nosotros|esto|esta|ese|esa)\b/i;
+  if (spanishToken.test(trimmed)) {
+    return "es";
+  }
+
+  const englishToken =
+    /\b(the|and|you|your|with|this|that|from|have|will|house|paint|price|work)\b/i;
+  if (englishToken.test(trimmed)) {
+    return "en";
+  }
+
+  return null;
+}
+
+/**
+ * Resolve locale for synthesis: script text first, then profile/UI fallbacks.
+ */
+export function resolveSynthesisContentLocale(params: {
+  voiceoverText: string;
+  profilePreferredLocale?: unknown;
+  fallbackLocale?: SupportedLocale;
+}): SupportedLocale {
+  return (
+    detectContentLocaleFromText(params.voiceoverText) ??
+    resolveContentLocale(
+      params.profilePreferredLocale,
+      params.fallbackLocale ?? "es",
+    )
+  );
+}
+
+/**
+ * CosyVoice2 language steering — preset voices are multilingual via instruction.
+ * Keep instruction English (vendor parses it more reliably than Spanish prefixes).
+ */
+export function buildCosyVoiceSpeechInput(
+  text: string,
+  locale: SupportedLocale,
+): string {
+  const trimmed = text.trim();
+  if (locale === "es") {
+    return `Please speak Spanish with a Latin American accent.<|endofprompt|>${trimmed}`;
+  }
+  return `Please speak clear natural English.<|endofprompt|>${trimmed}`;
+}

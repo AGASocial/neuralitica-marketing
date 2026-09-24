@@ -148,6 +148,42 @@ describe("US-9.3 voice catalog", () => {
     const source = readFileSync(path.join(__dirname, "voice-catalog.ts"), "utf8");
     assert.match(source, /import ["']server-only["']/);
   });
+
+  it("8 — detect script language and CosyVoice language instruction", () => {
+    const {
+      detectContentLocaleFromText,
+      resolveSynthesisContentLocale,
+      buildCosyVoiceSpeechInput,
+      resolveSynthesisVoiceId,
+    } = loadVoiceCatalogModule();
+    assert.equal(
+      detectContentLocaleFromText("¿Ahorraste mucho pintando tú mismo?"),
+      "es",
+    );
+    assert.equal(
+      detectContentLocaleFromText("Save money painting your house yourself"),
+      "en",
+    );
+    assert.equal(
+      resolveSynthesisContentLocale({
+        voiceoverText: "Un trabajo profesional asegura calidad.",
+        profilePreferredLocale: "en",
+      }),
+      "es",
+    );
+    assert.equal(
+      resolveSynthesisVoiceId({
+        preferredVoiceId: null,
+        contentLocale: "es",
+        profileTone: "",
+      }),
+      "es_warm_female",
+    );
+    assert.match(
+      buildCosyVoiceSpeechInput("Hola", "es"),
+      /^Please speak Spanish with a Latin American accent\.<\|endofprompt\|>Hola$/,
+    );
+  });
 });
 
 describe("computeVoicePickerVisible", () => {

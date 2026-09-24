@@ -11,7 +11,7 @@ import {
 } from "@/lib/supabase/server";
 import {
   isAllowedVoiceId,
-  resolveContentLocale,
+  resolveSynthesisContentLocale,
 } from "@/lib/tts/voice-catalog";
 
 export type ReelScriptForVoiceover = {
@@ -114,11 +114,12 @@ export async function loadReelScriptForVoiceover(params: {
 
   const profilePreferredLocale = (profile.fields as Record<string, unknown>)
     .preferredLocale;
-  // Content language for TTS must match script generation locale — not UI chrome.
-  const contentLocale = resolveContentLocale(
-    profilePreferredLocale ?? params.preferredLocale,
-    "es",
-  );
+  // Prefer language detected from the script text (Spanish copy must not use EN voice).
+  const contentLocale = resolveSynthesisContentLocale({
+    voiceoverText,
+    profilePreferredLocale: profilePreferredLocale ?? params.preferredLocale,
+    fallbackLocale: "es",
+  });
 
   return {
     reelScriptId: raw.id as string,

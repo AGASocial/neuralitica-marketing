@@ -205,6 +205,8 @@ describe("US-9.3 CosyVoice2 adapter", () => {
       assert.equal(requestBody?.voice, "FunAudioLLM/CosyVoice2-0.5B:claire");
       assert.equal(requestBody?.response_format, "mp3");
       assert.equal(requestBody?.stream, false);
+      assert.match(String(requestBody?.input), /<\|endofprompt\|>/);
+      assert.match(String(requestBody?.input), /English/);
       assert.match(String(uploaded.storageKey), /^neuramark\/.+\/.+\/.+\.mp3$/);
       assert.equal(result.mimeType, "audio/mpeg");
       assert.equal(result.sizeBytes, FAKE_MP3.length);
