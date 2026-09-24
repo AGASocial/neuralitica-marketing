@@ -13,6 +13,8 @@ export const PROVIDER_RESPONSE_INVALID = "PROVIDER_RESPONSE_INVALID" as const;
 export const SILICONFLOW_TTS_SPEECH_URL =
   "https://api.siliconflow.com/v1/audio/speech" as const;
 export const COSYVOICE2_MODEL = "FunAudioLLM/CosyVoice2-0.5B" as const;
+/** Better multilingual Spanish than CosyVoice presets on SiliconFlow. */
+export const FISH_SPEECH_MODEL = "fishaudio/fish-speech-1.5" as const;
 export const SILICONFLOW_COSYVOICE2_PROVIDER_KEY =
   "siliconflow_cosyvoice2" as const;
 

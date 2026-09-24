@@ -12,6 +12,8 @@ export type TtsCatalogVoice = {
   locale: SupportedLocale;
   labelKey: string;
   toneTags: readonly string[];
+  /** SiliconFlow model id (CosyVoice for EN; Fish Speech for ES). */
+  providerModel: string;
   providerVoice: string;
   sampleAssetPath: string;
 };
@@ -22,6 +24,7 @@ export const TTS_VOICE_CATALOG: readonly TtsCatalogVoice[] = [
     locale: "en",
     labelKey: "settings.preferences.voice.enWarmFemale",
     toneTags: ["warm", "gentle"],
+    providerModel: "FunAudioLLM/CosyVoice2-0.5B",
     providerVoice: "FunAudioLLM/CosyVoice2-0.5B:claire",
     sampleAssetPath: "public/tts-samples/en_warm_female.mp3",
   },
@@ -30,6 +33,7 @@ export const TTS_VOICE_CATALOG: readonly TtsCatalogVoice[] = [
     locale: "en",
     labelKey: "settings.preferences.voice.enProfessionalMale",
     toneTags: ["professional", "steady"],
+    providerModel: "FunAudioLLM/CosyVoice2-0.5B",
     providerVoice: "FunAudioLLM/CosyVoice2-0.5B:alex",
     sampleAssetPath: "public/tts-samples/en_professional_male.mp3",
   },
@@ -38,7 +42,9 @@ export const TTS_VOICE_CATALOG: readonly TtsCatalogVoice[] = [
     locale: "es",
     labelKey: "settings.preferences.voice.esWarmFemale",
     toneTags: ["warm", "passionate"],
-    providerVoice: "FunAudioLLM/CosyVoice2-0.5B:bella",
+    // CosyVoice EN presets keep a gringo accent on Spanish; Fish Speech is stronger multilingual.
+    providerModel: "fishaudio/fish-speech-1.5",
+    providerVoice: "fishaudio/fish-speech-1.5:diana",
     sampleAssetPath: "public/tts-samples/es_warm_female.mp3",
   },
   {
@@ -46,7 +52,8 @@ export const TTS_VOICE_CATALOG: readonly TtsCatalogVoice[] = [
     locale: "es",
     labelKey: "settings.preferences.voice.esProfessionalMale",
     toneTags: ["professional", "deep"],
-    providerVoice: "FunAudioLLM/CosyVoice2-0.5B:benjamin",
+    providerModel: "fishaudio/fish-speech-1.5",
+    providerVoice: "fishaudio/fish-speech-1.5:alex",
     sampleAssetPath: "public/tts-samples/es_professional_male.mp3",
   },
 ] as const;
@@ -236,16 +243,33 @@ export function resolveSynthesisContentLocale(params: {
 }
 
 /**
- * CosyVoice2 language steering — preset voices are multilingual via instruction.
- * Keep instruction English (vendor parses it more reliably than Spanish prefixes).
+ * Build vendor `input` for SiliconFlow TTS.
+ * CosyVoice uses <|endofprompt|> language steering; Fish Speech gets plain script text
+ * (it handles Spanish more naturally without English-instruction prefixes).
  */
+export function buildSiliconFlowSpeechInput(params: {
+  text: string;
+  locale: SupportedLocale;
+  providerModel: string;
+}): string {
+  const trimmed = params.text.trim();
+  if (params.providerModel.startsWith("fishaudio/")) {
+    return trimmed;
+  }
+  if (params.locale === "es") {
+    return `Please speak Spanish with a Latin American accent.<|endofprompt|>${trimmed}`;
+  }
+  return `Please speak clear natural English.<|endofprompt|>${trimmed}`;
+}
+
+/** @deprecated Use buildSiliconFlowSpeechInput */
 export function buildCosyVoiceSpeechInput(
   text: string,
   locale: SupportedLocale,
 ): string {
-  const trimmed = text.trim();
-  if (locale === "es") {
-    return `Please speak Spanish with a Latin American accent.<|endofprompt|>${trimmed}`;
-  }
-  return `Please speak clear natural English.<|endofprompt|>${trimmed}`;
+  return buildSiliconFlowSpeechInput({
+    text,
+    locale,
+    providerModel: "FunAudioLLM/CosyVoice2-0.5B",
+  });
 }

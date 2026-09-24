@@ -4,7 +4,6 @@ import { randomUUID } from "node:crypto";
 
 import { DEFAULT_LOW_TIER_PROVIDER_KEYS } from "@/lib/contracts/providers";
 import {
-  COSYVOICE2_MODEL,
   PROVIDER_CONFIG_MISSING,
   PROVIDER_REQUEST_FAILED,
   PROVIDER_RESPONSE_INVALID,
@@ -21,7 +20,7 @@ import type {
   TtsProviderAdapter,
 } from "@/lib/providers/provider-adapters";
 import {
-  buildCosyVoiceSpeechInput,
+  buildSiliconFlowSpeechInput,
   getVoiceById,
   type TtsCatalogVoice,
 } from "@/lib/tts/voice-catalog";
@@ -138,8 +137,12 @@ export function createSiliconflowCosyvoice2Adapter(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: COSYVOICE2_MODEL,
-          input: buildCosyVoiceSpeechInput(input.text, input.locale),
+          model: catalogVoice.providerModel,
+          input: buildSiliconFlowSpeechInput({
+            text: input.text,
+            locale: input.locale,
+            providerModel: catalogVoice.providerModel,
+          }),
           voice: catalogVoice.providerVoice,
           response_format: "mp3",
           // Docs default stream=true; we need a full binary body for Storage upload.
@@ -156,6 +159,7 @@ export function createSiliconflowCosyvoice2Adapter(
           status: response.status,
           host: new URL(speechUrl).host,
           voiceId: input.voiceId,
+          providerModel: catalogVoice.providerModel,
           textLength: input.text.length,
           clientId: input.clientId,
           reelScriptId: input.reelScriptId,

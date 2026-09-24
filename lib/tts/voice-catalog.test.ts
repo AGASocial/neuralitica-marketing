@@ -183,6 +183,18 @@ describe("US-9.3 voice catalog", () => {
       buildCosyVoiceSpeechInput("Hola", "es"),
       /^Please speak Spanish with a Latin American accent\.<\|endofprompt\|>Hola$/,
     );
+    const { buildSiliconFlowSpeechInput, getVoiceById } = loadVoiceCatalogModule();
+    const esVoice = getVoiceById("es_warm_female");
+    assert.ok(esVoice);
+    assert.equal(esVoice.providerModel, "fishaudio/fish-speech-1.5");
+    assert.equal(
+      buildSiliconFlowSpeechInput({
+        text: "Hola",
+        locale: "es",
+        providerModel: esVoice.providerModel,
+      }),
+      "Hola",
+    );
   });
 });
 
