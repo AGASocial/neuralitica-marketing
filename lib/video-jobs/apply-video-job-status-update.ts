@@ -29,7 +29,12 @@ function isAllowedTransition(
 
   switch (from) {
     case "queued":
-      return to === "processing" || to === "failed" || to === "cancelled";
+      return (
+        to === "processing" ||
+        to === "completed" ||
+        to === "failed" ||
+        to === "cancelled"
+      );
     case "processing":
       return to === "completed" || to === "failed" || to === "cancelled";
     default:
