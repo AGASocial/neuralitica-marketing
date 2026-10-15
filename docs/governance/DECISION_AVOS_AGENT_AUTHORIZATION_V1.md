@@ -39,7 +39,7 @@ Erick confirmó que `gabrielvega` y `byagasocial` son las dos cuentas de Gabriel
    - tipado y lint;
    - documentación.
 3. **Erick puede fusionar** los PRs de esas clases sin intervención de Gabriel, solo después del Human Gate de ese PR y de ese SHA de head. Hace falta CI verde, salvo un PR de reparación de CI mientras dure el bootstrap. La aprobación vale para ese SHA. Si el head se mueve, la aprobación no viaja.
-4. **Presupuesto:** USD 0, o un tope explícito que se escriba al registrar la decisión (`budget_usd_cap`). A0 no gasta. No hay `model_call` mientras la cuota sea 0.
+4. **Presupuesto:** USD 0. USD 0 significa cero gasto incremental: no hay API keys de pago, ni suscripciones nuevas, ni gasto medido. Usar las cuotas ya incluidas en las suscripciones actuales de Erick a Cursor y a Codex está permitido. `model_call` no es una línea de presupuesto aparte; solo está permitido dentro de esas cuotas incluidas. A0 no gasta.
 5. **Vigencia:** 90 días desde el merge de esta decisión en Neuralítica. **Revocable en cualquier momento** por Erick o por Gabriel, con un comentario en el PR de la decisión o con un PR que la revierta. La revocación de Gabriel sale de la cuenta designada.
 
 ## Bootstrap de CI
@@ -59,13 +59,13 @@ Nombres de tests que fallan en esa línea base: `cross-tenant broll clip → fai
 Mientras el bootstrap esté abierto, un PR puede no tener CI verde solo si es de reparación de CI y cumple todo esto:
 
 - es solo reparación de CI de esos tres jobs (tipado, lint o tests ya en rojo). No cubre documentación, parches de dependencia ni nada reservado;
-- cero regresiones nuevas frente a la línea base registrada: en cada job, el mismo número de errores o menos; ningún nombre de test que falle y que la línea base no tuviera;
-- el conteo de errores baja de forma estricta en al menos un job;
-- el PR incluye los números de la línea base contra la que se compara y la evidencia de la comparación.
+- cero regresiones nuevas en los diagnósticos de typecheck, de lint y de tests frente a la línea base registrada: ningún diagnóstico nuevo; en cada job, el mismo número de errores o menos;
+- el conteo de errores baja de forma estricta en al menos un job, y esa reducción es verificable;
+- el PR incluye los números de la línea base, la comparación de diagnósticos y la evidencia.
 
 La línea base inicial es la tabla de arriba. Cada PR de reparación que se fusiona la sustituye por sus conteos nuevos, solo hacia abajo, y esos números quedan en ese PR. El siguiente se compara con esa línea base ya bajada.
 
-El bootstrap termina solo cuando los tres jobs están verdes. No se reabre. Desde ese momento hace falta CI verde en todo PR delegado.
+El bootstrap termina, y no se reabre, si los tres jobs están verdes, si vencen los 90 días de la delegación, o si la delegación se revoca. Cuando termina porque los tres jobs están verdes, hace falta CI verde en todo PR delegado.
 
 ## Reservado a Gabriel y Erick en conjunto
 
@@ -122,7 +122,7 @@ AVOS no abre el PR, y Erick no fusiona bajo esta delegación, si ocurre cualquie
 
 1. Un humano abre un PR en `AGASocial/neuralitica-marketing` con este texto en `docs/governance/DECISION_AVOS_AGENT_AUTHORIZATION_V1.md`, y lo enlaza desde `AGENTS.md`. El PR #6 es la excepción ya abierta bajo el GO 2. No se repite.
 2. Erick da el Human Gate: un GO en su chat con Grok Bot que nombre este PR y el SHA del head, registrado en el PR con origen `human_chat_go`. Un review o comentario desde `erickgvl` no basta.
-3. Gabriel aprueba desde la cuenta designada (`byagasocial`). El bootstrap de CI cambia lo que él aceptó: los dos tienen que aceptarlo de forma explícita.
+3. Gabriel aprueba desde la cuenta designada (`byagasocial`). El bootstrap de CI y el sentido de USD 0 cambian lo que él aceptó: los dos tienen que aceptarlos de forma explícita.
 4. Un humano fusiona ese PR. AVOS no lo fusiona.
 5. Después de ese merge se puede copiar el registro al manifiesto de AVOS como `neuralitica_authorization.status = RECORDED`, con `gabriel_approving_login` igual a la cuenta designada, las clases de arriba, `branches` `avos/*`, `autonomy_level` `A2`, el tope de presupuesto y `expires_at` a 90 días.
 6. Hasta ese merge, AVOS no abre otros PRs en Neuralítica.
@@ -136,7 +136,8 @@ Frente a `avos-core` `abb7cd46704807f761c27f868ab4f7d71ccbeef1` (`docs/ventures/
 - **Cuenta.** El default `byagasocial` queda fijado como la cuenta designada.
 - **GO.** El GO del hotfix en `#4` queda citado como el GO 2 de Gabriel: https://github.com/AGASocial/neuralitica-marketing/issues/4#issuecomment-6196175686.
 - **Excepción de registro.** El PR #6 lo abrió un agente bajo ese GO 2. No es autoridad operativa general. El texto autorizado decía que AVOS no copia este archivo a este repo.
-- **Bootstrap de CI.** Cambia la CI verde que Gabriel aceptó. Línea base del run 38764427554: typecheck 321, lint 474, tests 11. Solo PRs de reparación de CI, sin regresiones nuevas, con baja estricta en al menos un job, números y evidencia en el PR, y fin automático cuando los tres jobs estén verdes. Exige acuerdo explícito de Erick y de Gabriel (`byagasocial`) antes del merge.
-- **Human Gate.** La cuenta `erickgvl` ya no basta como aprobación. Hace falta el GO de Erick en el chat con Grok Bot (PR y SHA, origen `human_chat_go`) o un review de `byagasocial` / `gabrielvega`.
+- **Bootstrap de CI.** Cambia la CI verde que Gabriel aceptó. Solo reparación de CI. Reducción verificable: baja estricta en al menos un job, cero regresiones nuevas en los diagnósticos de typecheck, lint y tests, números y evidencia en el PR. Línea base del run 38764427554: typecheck 321, lint 474, tests 11. Termina, y no se reabre, cuando los tres jobs están verdes, cuando vencen los 90 días, o cuando la delegación se revoca. Exige acuerdo explícito de Erick y de Gabriel (`byagasocial`) antes del merge.
+- **Human Gate.** La cuenta `erickgvl` ya no basta como aprobación. Una escritura del agente con `erickgvl` no es la aprobación humana de Erick. Hace falta el GO de Erick en el chat con Grok Bot (PR y SHA, origen `human_chat_go`) o un review de `byagasocial` / `gabrielvega`.
+- **Presupuesto.** USD 0 ya no es «no hay `model_call` mientras la cuota sea 0», ni un tope distinto que se escriba al registrar. USD 0 es cero gasto incremental: sin API keys de pago, sin suscripciones nuevas y sin gasto medido. Las cuotas ya incluidas en las suscripciones actuales de Erick a Cursor y a Codex sí se pueden usar. `model_call` no es una línea aparte; solo cabe dentro de esas cuotas.
 
-No cambian la cuarentena de `$desarrollar`, lo reservado a los dos, las clases, las ramas `avos/*`, el presupuesto ni la vigencia.
+No cambian la cuarentena de `$desarrollar`, lo reservado a los dos, las clases, las ramas `avos/*` ni la vigencia de 90 días.
