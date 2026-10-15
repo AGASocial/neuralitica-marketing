@@ -48,6 +48,10 @@ Do not:
 
 Allowed without READY: human-supervised hotfixes, single-story work with review, Track A production reliability fixes.
 
+## AVOS authorization
+
+[`DECISION_AVOS_AGENT_AUTHORIZATION_V1`](docs/governance/DECISION_AVOS_AGENT_AUTHORIZATION_V1.md) — **PROPOSED_FOR_REGISTRATION**, effective on merge. Until that merge, AVOS has no authority in this repo.
+
 ## Documentary states
 
 Use these labels on phases/stories:
