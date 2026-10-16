@@ -3,7 +3,8 @@
  */
 import assert from "node:assert/strict";
 import { ChildProcess } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import Module from "node:module";
 import { PassThrough } from "node:stream";
 import path from "node:path";
@@ -239,7 +240,6 @@ describe("computeAssemblyInputFingerprint", () => {
   });
 
   it("five-part formula includes ordered broll ids and path_tag", () => {
-    const { createHash } = require("node:crypto");
     const { computeAssemblyInputFingerprint } = require("@/lib/assembly/compute-input-fingerprint");
     const brollA = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
     const brollB = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -468,7 +468,6 @@ describe("assembly security grep guards", () => {
     const appDir = path.join(repoRoot, "app");
 
     function scanDir(dir: string) {
-      const { readdirSync, statSync } = require("node:fs");
       for (const entry of readdirSync(dir)) {
         const full = path.join(dir, entry);
         if (statSync(full).isDirectory()) {
@@ -502,7 +501,6 @@ describe("assembly security grep guards", () => {
 
   it("has no fetch( for asset download in lib/assembly", () => {
     const assemblyDir = path.join(repoRoot, "lib/assembly");
-    const { readdirSync, statSync } = require("node:fs");
 
     function scanDir(dir: string) {
       for (const entry of readdirSync(dir)) {

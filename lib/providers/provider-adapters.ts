@@ -382,6 +382,12 @@ export async function estimateVideoJobCost(
 ): Promise<CostEstimate> {
   const resolvedRegistry =
     registry ??
+    // create-provider-registry.ts statically imports InMemoryProviderRegistry
+    // from this module. A static import of the registry here would close that
+    // cycle while this module is still initializing. import() would make this
+    // fallback asynchronous and change the bundler split. Callers that pass
+    // registry never evaluate this path.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- lazy getProviderRegistry avoids the init cycle
     (require("./create-provider-registry") as typeof import("./create-provider-registry")).getProviderRegistry();
   const row = resolveProvider(catalog, {
     ...context,

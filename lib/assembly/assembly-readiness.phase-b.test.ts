@@ -362,7 +362,12 @@ function createVideoJobsQuery(rows: Array<Record<string, unknown>>) {
     then: undefined as unknown,
   };
 
-  (builder as { then?: Function }).then = (
+  (builder as {
+    then?: (
+      resolve: (value: unknown) => void,
+      reject?: (reason: unknown) => void,
+    ) => void;
+  }).then = (
     resolve: (v: unknown) => void,
     reject?: (e: unknown) => void,
   ) => {

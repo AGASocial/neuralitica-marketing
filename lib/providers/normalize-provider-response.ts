@@ -60,7 +60,7 @@ export function sanitizeProviderErrorMessage(raw: unknown): string {
     return "Provider request failed";
   }
 
-  let message = raw
+  const message = raw
     .replace(/Bearer\s+\S+/gi, "[redacted]")
     .replace(/Key\s+\S+/gi, "[redacted]")
     .replace(/sk-[a-zA-Z0-9_-]+/g, "[redacted]")
