@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import Module from "node:module";
+import path from "node:path";
 import { describe, it } from "node:test";
 
 type NodeModuleLoad = {
@@ -147,8 +149,6 @@ describe("ensureApprovalPackageForSystemCycle — approval/publish boundary and 
   });
 
   it("never sets Cliente approval status directly — only ever inserts a pending row (source-level check)", () => {
-    const { readFileSync } = require("node:fs") as typeof import("node:fs");
-    const path = require("node:path") as typeof import("node:path");
     const source = readFileSync(path.join(process.cwd(), "lib/orchestration/ensure-approval-package-for-system-cycle.ts"), "utf8");
     assert.equal(/status:\s*["']approved["']/.test(source), false);
     assert.equal(source.includes("instagram"), false);

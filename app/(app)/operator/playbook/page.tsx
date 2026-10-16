@@ -25,7 +25,7 @@ export default async function PlaybookListPage() {
   const locale = resolveLocale(user?.preferredLocale);
   const t = getTranslations(locale);
 
-  let result = await loadPlaybookListForOperator().catch((error: unknown) => {
+  const result = await loadPlaybookListForOperator().catch((error: unknown) => {
     if (isNextNavigationError(error)) {
       throw error;
     }

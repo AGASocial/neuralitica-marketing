@@ -3,6 +3,7 @@
  */
 import assert from "node:assert/strict";
 import { ChildProcess, spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { PassThrough } from "node:stream";
 import { writeFile } from "node:fs/promises";
 import Module from "node:module";
@@ -328,7 +329,6 @@ describe("runAssemblyJob mocked pipeline", () => {
 });
 
 function primaryPathFingerprint() {
-  const { createHash } = require("node:crypto");
   const payload = `${PRIMARY_ASSET_ID}||reel_v1_basic||primary`;
   return createHash("sha256").update(payload).digest("hex");
 }

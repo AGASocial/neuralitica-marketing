@@ -48,7 +48,6 @@ function withServerOnlyStub<T>(run: () => T): T {
 function loadBaseUrlModule() {
   clearBaseUrlModuleCache();
   return withServerOnlyStub(() => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require(path.join(__dirname, "siliconflow-base-url.ts")) as {
       resolveSiliconFlowApiBaseUrl: () => string;
       resolveSiliconFlowTtsSpeechUrl: () => string;
