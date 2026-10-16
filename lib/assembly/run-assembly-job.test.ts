@@ -338,6 +338,27 @@ function baseJobRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/**
+ * These fixtures never link a weekly-cycle step run. The post-failure resume
+ * lookup must observe that and return, the same as production with no row.
+ */
+type UnlinkedStepRunQuery = {
+  select: () => UnlinkedStepRunQuery;
+  eq: () => UnlinkedStepRunQuery;
+  in: () => UnlinkedStepRunQuery;
+  maybeSingle: () => Promise<{ data: null; error: null }>;
+};
+
+function unlinkedWeeklyCycleStepRunQuery(): UnlinkedStepRunQuery {
+  const query: UnlinkedStepRunQuery = {
+    select: () => query,
+    eq: () => query,
+    in: () => query,
+    maybeSingle: async () => ({ data: null, error: null }),
+  };
+  return query;
+}
+
 async function withAssemblyMocks(
   options: {
     assemblyJobs: Array<Record<string, unknown>>;
@@ -372,6 +393,9 @@ async function withAssemblyMocks(
             }
             if (table === "neuramark_media_assets") {
               return createMediaAssetsQuery(options);
+            }
+            if (table === "neuramark_weekly_cycle_step_runs") {
+              return unlinkedWeeklyCycleStepRunQuery();
             }
             throw new Error(`Unexpected table ${table}`);
           },

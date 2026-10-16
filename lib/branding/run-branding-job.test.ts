@@ -579,6 +579,27 @@ function baseBrandingJobRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/**
+ * These fixtures never link a weekly-cycle step run. The post-failure resume
+ * lookup must observe that and return, the same as production with no row.
+ */
+type UnlinkedStepRunQuery = {
+  select: () => UnlinkedStepRunQuery;
+  eq: () => UnlinkedStepRunQuery;
+  in: () => UnlinkedStepRunQuery;
+  maybeSingle: () => Promise<{ data: null; error: null }>;
+};
+
+function unlinkedWeeklyCycleStepRunQuery(): UnlinkedStepRunQuery {
+  const query: UnlinkedStepRunQuery = {
+    select: () => query,
+    eq: () => query,
+    in: () => query,
+    maybeSingle: async () => ({ data: null, error: null }),
+  };
+  return query;
+}
+
 async function withBrandingMocks(
   options: {
     jobs: Array<Record<string, unknown>>;
@@ -634,6 +655,9 @@ async function withBrandingMocks(
                 options.scriptOnScreenText ?? "Beat one\nBeat two",
                 options.scriptVoiceoverText ?? "one two three four",
               );
+            }
+            if (table === "neuramark_weekly_cycle_step_runs") {
+              return unlinkedWeeklyCycleStepRunQuery();
             }
             throw new Error(`Unexpected table ${table}`);
           },
