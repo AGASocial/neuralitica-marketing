@@ -166,7 +166,7 @@ function installRollupMocks(options: {
           policyOk
             ? {
                 ok: true as const,
-                policy: { max_cost_cents: maxCostCents },
+                policy: { maxCostCents },
                 scope: "global" as const,
               }
             : { ok: false as const, code: "COST_POLICY_UNAVAILABLE" as const },

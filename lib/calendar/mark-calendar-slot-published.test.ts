@@ -21,6 +21,7 @@ import {
   operatorLocalCalendarDate,
   publishedAtUtcNoonIsoFromDateInput,
 } from "@/lib/calendar/operator-local-calendar-date";
+import { computeReelMetricsEditable } from "@/lib/metrics/reel-metrics-edit-window";
 import { normalizeToIsoMonday } from "@/lib/trend/normalize-week-start";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -70,6 +71,23 @@ const baseSlotRow = {
   tema: "Promo del martes",
   goal: "local_sale" as const,
 };
+
+/** No persisted metrics row. Counters match buildReelMetricsDtoForPublishedReel; editable uses the real 7-day rule on the publishedAt this test writes. */
+function emptyPublishedReelMetrics() {
+  return {
+    views: 0,
+    likes: 0,
+    comments: 0,
+    saves: 0,
+    dms: 0,
+    recordedAt: null,
+    editable: computeReelMetricsEditable({
+      latestPublishedAt: new Date(
+        publishedAtUtcNoonIsoFromDateInput(PUBLISH_DATE),
+      ),
+    }),
+  };
+}
 
 const readyAssemblyJob = {
   jobId: ASSEMBLED_REEL_ID,
@@ -208,6 +226,7 @@ function installMarkPublishedMocks(options: MarkPublishedMockOptions = {}): () =
             ? `${row.publishedAtRaw.slice(0, 10)}T12:00:00.000Z`
             : null,
           instagramPostUrl: row.instagramPostUrlRaw,
+          metrics: emptyPublishedReelMetrics(),
         }),
       };
     }
@@ -499,10 +518,11 @@ describe("markCalendarSlotPublishedCore", () => {
         if (!result.ok) {
           assert.fail(`expected ok, got ${result.error.code}`);
         }
-        assert.equal(
-          calendarSlotDetailDtoSchema.safeParse(result.slot).success,
-          true,
-        );
+        const parsed = calendarSlotDetailDtoSchema.safeParse(result.slot);
+        assert.equal(parsed.success, true);
+        if (parsed.success) {
+          assert.deepEqual(parsed.data.metrics, emptyPublishedReelMetrics());
+        }
         assert.equal(updateCalls.length, 1);
         assert.equal(updateCalls[0]?.publish_status, "published");
         assert.equal(
