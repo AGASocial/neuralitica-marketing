@@ -84,7 +84,9 @@ function installSpendSummaryMocks(spendRows: unknown[]) {
   };
 }
 
-async function loadGetReelCostSummaryForWeek() {
+async function loadGetReelCostSummaryForWeek(): Promise<
+  typeof import("./get-reel-cost-summary-for-week")
+> {
   clearCostSummaryModuleCache();
   return import(`./get-reel-cost-summary-for-week.ts?run=${Date.now()}`);
 }

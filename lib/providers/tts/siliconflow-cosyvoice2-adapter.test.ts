@@ -168,7 +168,9 @@ describe("US-9.3 CosyVoice2 adapter", () => {
     const previousKey = process.env.SILICONFLOW_API_KEY;
     process.env.SILICONFLOW_API_KEY = "sf_test_key";
 
-    let requestBody: Record<string, unknown> | null = null;
+    const captured: { requestBody: Record<string, unknown> | null } = {
+      requestBody: null,
+    };
     const uploaded: { storageKey?: string; sizeBytes?: number } = {};
 
     try {
@@ -183,7 +185,10 @@ describe("US-9.3 CosyVoice2 adapter", () => {
               : (init?.headers as Record<string, string> | undefined)
                   ?.Authorization;
           assert.equal(authHeader, "Bearer sf_test_key");
-          requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+          captured.requestBody = JSON.parse(String(init?.body)) as Record<
+            string,
+            unknown
+          >;
           return new Response(FAKE_MP3, {
             status: 200,
             headers: { "Content-Type": "audio/mpeg" },
@@ -200,6 +205,7 @@ describe("US-9.3 CosyVoice2 adapter", () => {
       });
 
       const result = await adapter.synthesize(baseSynthesizeInput());
+      const requestBody = captured.requestBody;
 
       assert.equal(requestBody?.model, "FunAudioLLM/CosyVoice2-0.5B");
       assert.equal(requestBody?.voice, "FunAudioLLM/CosyVoice2-0.5B:claire");

@@ -67,7 +67,10 @@ function loadMusetalkAdapterModule() {
 }
 
 function loadNormalizeModule() {
-  return withServerOnlyStub(() => require("../normalize-provider-response.ts"));
+  return withServerOnlyStub(
+    () =>
+      require("../normalize-provider-response.ts") as typeof import("../normalize-provider-response"),
+  );
 }
 
 function loadContractsModule() {
@@ -282,7 +285,9 @@ describe("US-8.6 MuseTalk adapter", () => {
     assert.throws(
       () => validateProviderOutputUrl("https://evil.com/x", MUSETALK_ALLOWED_OUTPUT_HOSTS),
       (err: unknown) => {
-        assert.ok(err instanceof ProviderAdapterError);
+        if (!(err instanceof ProviderAdapterError)) {
+          assert.fail("expected ProviderAdapterError");
+        }
         assert.equal(err.code, INVALID_PROVIDER_OUTPUT_URL);
         return true;
       },

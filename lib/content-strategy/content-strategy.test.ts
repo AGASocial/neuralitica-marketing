@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import {
   contentStrategyBriefEditableSchema,
   contentStrategyBriefSchema,
+  type ContentStrategyBrief,
   contentStrategyErrorCodeSchema,
   contentStrategySlotEditableSchema,
   contentStrategySlotSchema,
@@ -36,7 +37,7 @@ const VALID_SLOT = {
   tacticaTendenciaSlug: "cold-open-mejor-toma",
 };
 
-const VALID_BRIEF = {
+const VALID_BRIEF: ContentStrategyBrief = {
   pillars: ["Confianza local", "Educación práctica"],
   themes: ["Invierno: mantenimiento preventivo"],
   slots: [
@@ -690,7 +691,9 @@ describe("generateContentStrategy action", () => {
   });
 
   it("happy path INSERTs version 1 draft", async () => {
-    let inserted: Record<string, unknown> | null = null;
+    const insertedCapture: { value: Record<string, unknown> | null } = {
+      value: null,
+    };
     const restore = installStrategyMocks({
       from: (table: string) => {
         if (table === "neuramark_content_strategies") {
@@ -700,7 +703,7 @@ describe("generateContentStrategy action", () => {
                 maybeSingle: async () => ({ data: null, error: null }),
               }),
             insert: (row: Record<string, unknown>) => {
-              inserted = row;
+              insertedCapture.value = row;
               return chainableQuery({
                 single: async () => ({
                   data: { id: STRATEGY_ID, version: 1 },
@@ -741,6 +744,7 @@ describe("generateContentStrategy action", () => {
         assert.ok(result.slotCount >= 3);
         assert.equal(result.strategyId, STRATEGY_ID);
       }
+      const inserted = insertedCapture.value;
       assert.equal(inserted?.status, "draft");
       assert.equal(inserted?.version, 1);
     } finally {
@@ -1578,12 +1582,14 @@ describe("updateContentStrategyBrief action (US-4.2)", () => {
   });
 
   it("happy path UPDATEs draft keeping same version", async () => {
-    let updatePayload: Record<string, unknown> | null = null;
+    const updatePayloadCapture: { value: Record<string, unknown> | null } = {
+      value: null,
+    };
     const restore = installStrategyMocks({
       from: () =>
         strategyTableMock(draftStrategyRow(), {
           onUpdate: (payload) => {
-            updatePayload = payload;
+            updatePayloadCapture.value = payload;
           },
         }),
     });
@@ -1601,6 +1607,7 @@ describe("updateContentStrategyBrief action (US-4.2)", () => {
         assert.equal(result.version, 2);
         assert.equal(result.status, "draft");
       }
+      const updatePayload = updatePayloadCapture.value;
       assert.ok(updatePayload?.brief);
     } finally {
       restore();
@@ -1735,12 +1742,14 @@ describe("approveContentStrategy action (US-4.2)", () => {
   });
 
   it("happy path approves draft with audit metadata", async () => {
-    let updatePayload: Record<string, unknown> | null = null;
+    const updatePayloadCapture: { value: Record<string, unknown> | null } = {
+      value: null,
+    };
     const restore = installStrategyMocks({
       from: () =>
         strategyTableMock(draftStrategyRow(), {
           onUpdate: (payload) => {
-            updatePayload = payload;
+            updatePayloadCapture.value = payload;
           },
         }),
     });
@@ -1758,6 +1767,7 @@ describe("approveContentStrategy action (US-4.2)", () => {
         assert.equal(result.approvedBy.id, OPERATOR_ID);
         assert.ok(result.approvedAt);
       }
+      const updatePayload = updatePayloadCapture.value;
       assert.equal(updatePayload?.status, "approved");
       assert.equal(updatePayload?.approved_by, OPERATOR_ID);
     } finally {

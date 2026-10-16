@@ -19,6 +19,10 @@ import type { ReelScriptPackage } from "@/lib/contracts/reel-script";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+function checkKeyString(check: { checkKey: string }): string {
+  return check.checkKey;
+}
+
 type NodeModuleLoad = {
   _load: (
     request: string,
@@ -390,14 +394,13 @@ describe("run-reel-qa agent (US-10.1)", () => {
 
     const parsed = parseAndValidateReelQaOutput(completion.content);
     assert.equal(
-      parsed.checks.some((c) => c.checkKey === "invented_legal_bypass"),
+      parsed.checks.some((c) => checkKeyString(c) === "invented_legal_bypass"),
       false,
     );
 
     const normalized = applyCatalogSeverityToLlmCheck({
       checkKey: "tone",
       status: "fail",
-      // @ts-expect-error intentional smuggle
       severity: "blocking",
     });
     assert.equal(normalized?.severity, "overridable");
