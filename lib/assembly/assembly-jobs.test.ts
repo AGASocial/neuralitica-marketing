@@ -68,6 +68,16 @@ function loadAssemblyModule<T = Record<string, unknown>>(
   return require(relativePath) as T;
 }
 
+type AssemblyJobConfigReadersModule =
+  typeof import("@/lib/assembly/assembly-job-config-readers");
+type FindForbiddenAssemblyKeysModule =
+  typeof import("@/lib/assembly/find-forbidden-assembly-keys");
+type CreateAssemblyJobForReelScriptModule =
+  typeof import("@/lib/assembly/create-assembly-job-for-reel-script");
+type ApplyAssemblyJobUpdateModule =
+  typeof import("@/lib/assembly/apply-assembly-job-update");
+type RunFfmpegModule = typeof import("@/lib/assembly/run-ffmpeg");
+
 function chainableQuery(terminal: Record<string, unknown>) {
   const builder: Record<string, unknown> = {};
   const self = () => builder;
@@ -158,7 +168,9 @@ describe("assembly-job-config-readers", () => {
       readAssemblyStaleTimeoutMin,
       readAssemblyDurationToleranceSec,
       readAssemblyJobPollIntervalMs,
-    } = loadAssemblyModule("@/lib/assembly/assembly-job-config-readers");
+    } = loadAssemblyModule<AssemblyJobConfigReadersModule>(
+      "@/lib/assembly/assembly-job-config-readers",
+    );
 
     delete process.env.NEURAMARK_ASSEMBLY_STALE_TIMEOUT_MIN;
     delete process.env.NEURAMARK_ASSEMBLY_DURATION_TOLERANCE_SEC;
@@ -181,9 +193,10 @@ describe("assembly-job-config-readers", () => {
 
 describe("findForbiddenAssemblyKeys", () => {
   it("rejects primaryVideoAssetId on assemble input", async () => {
-    const { findForbiddenAssemblyKeys } = loadAssemblyModule(
-      "@/lib/assembly/find-forbidden-assembly-keys",
-    );
+    const { findForbiddenAssemblyKeys } =
+      loadAssemblyModule<FindForbiddenAssemblyKeysModule>(
+        "@/lib/assembly/find-forbidden-assembly-keys",
+      );
     const keys = findForbiddenAssemblyKeys({
       reelScriptId: REEL_SCRIPT_ID,
       primaryVideoAssetId: PRIMARY_ASSET_ID,
@@ -192,9 +205,10 @@ describe("findForbiddenAssemblyKeys", () => {
   });
 
   it("rejects Phase B broll/path authority keys", async () => {
-    const { findForbiddenAssemblyKeys } = loadAssemblyModule(
-      "@/lib/assembly/find-forbidden-assembly-keys",
-    );
+    const { findForbiddenAssemblyKeys } =
+      loadAssemblyModule<FindForbiddenAssemblyKeysModule>(
+        "@/lib/assembly/find-forbidden-assembly-keys",
+      );
     for (const key of [
       "brollAssetIds",
       "clipPaths",
@@ -277,9 +291,10 @@ describe("createAssemblyJobForReelScript security", () => {
       };
 
       try {
-        const { createAssemblyJobForReelScript } = loadAssemblyModule(
-          "@/lib/assembly/create-assembly-job-for-reel-script",
-        );
+        const { createAssemblyJobForReelScript } =
+          loadAssemblyModule<CreateAssemblyJobForReelScriptModule>(
+            "@/lib/assembly/create-assembly-job-for-reel-script",
+          );
 
         const result = await createAssemblyJobForReelScript({
           reelScriptId: REEL_SCRIPT_ID,
@@ -318,9 +333,10 @@ describe("createAssemblyJobForReelScript security", () => {
       };
 
       try {
-        const { createAssemblyJobForReelScript } = loadAssemblyModule(
-          "@/lib/assembly/create-assembly-job-for-reel-script",
-        );
+        const { createAssemblyJobForReelScript } =
+          loadAssemblyModule<CreateAssemblyJobForReelScriptModule>(
+            "@/lib/assembly/create-assembly-job-for-reel-script",
+          );
 
         const result = await createAssemblyJobForReelScript({
           reelScriptId: REEL_SCRIPT_ID,
@@ -386,9 +402,10 @@ describe("applyAssemblyJobUpdate transitions", () => {
       };
 
       try {
-        const { applyAssemblyJobUpdate } = loadAssemblyModule(
-          "@/lib/assembly/apply-assembly-job-update",
-        );
+        const { applyAssemblyJobUpdate } =
+          loadAssemblyModule<ApplyAssemblyJobUpdateModule>(
+            "@/lib/assembly/apply-assembly-job-update",
+          );
 
         const result = await applyAssemblyJobUpdate({
           assemblyJobId: JOB_ID,
@@ -408,7 +425,9 @@ describe("applyAssemblyJobUpdate transitions", () => {
 describe("runFfmpeg spawn contract", () => {
   it("passes args array with shell false", async () => {
     await withServerOnlyStub(async () => {
-      const { runFfmpeg } = loadAssemblyModule("@/lib/assembly/run-ffmpeg");
+      const { runFfmpeg } = loadAssemblyModule<RunFfmpegModule>(
+        "@/lib/assembly/run-ffmpeg",
+      );
       let receivedArgs: string[] | null = null;
       let receivedShell: boolean | undefined;
 
