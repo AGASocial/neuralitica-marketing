@@ -70,6 +70,11 @@ function jpegBuffer(size = 256): Buffer {
   return buf;
 }
 
+/** Copy into a DOM BlobPart. Node's generic Buffer is not a BlobPart. */
+function bufferBlobPart(buf: Buffer): Uint8Array<ArrayBuffer> {
+  return Uint8Array.from(buf);
+}
+
 function pngBuffer(size = 256): Buffer {
   const sig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
   const buf = Buffer.alloc(size, 0);
@@ -116,6 +121,19 @@ function loadMediaModule<T = Record<string, unknown>>(relativePath: string): T {
   // Prefer require so Module._load mocks rebind after cache clear (ESM import cache sticks).
   return require(relativePath) as T;
 }
+
+type UploadValidationModule = typeof import("./upload-validation");
+type HasOwnAvatarReferenceAssetsModule =
+  typeof import("./has-own-avatar-reference-assets");
+type GetMediaStorageModule = typeof import("./storage/get-media-storage");
+type UploadAvatarReferenceAssetModule =
+  typeof import("./upload-avatar-reference-asset");
+type DeleteAvatarReferenceAssetModule =
+  typeof import("./delete-avatar-reference-asset");
+type GetAvatarReferenceAssetsForClientModule =
+  typeof import("./get-avatar-reference-assets-for-client");
+type MediaAssetRouteModule =
+  typeof import("../../app/api/media/assets/[assetId]/route");
 
 function chainableQuery(terminal: {
   maybeSingle?: () => Promise<{ data: unknown; error: unknown }>;
@@ -307,7 +325,7 @@ describe("media contracts + helpers", () => {
 
   it("lists forbidden FormData keys for upload", () => {
     const fd = new FormData();
-    fd.append("file", new Blob([jpegBuffer()]), "x.jpg");
+    fd.append("file", new Blob([bufferBlobPart(jpegBuffer())]), "x.jpg");
     fd.append("client_id", VICTIM_ID);
     assert.ok(findForbiddenUploadFormKeys(fd).includes("client_id"));
     assert.ok(FORBIDDEN_MEDIA_UPLOAD_FORM_KEYS.includes("storage_key"));
@@ -400,7 +418,7 @@ describe("validateAndPrepareMediaUpload", () => {
       hasActiveAvatarConsent: async () => true,
     });
     try {
-            const { validateAndPrepareMediaUpload } = loadMediaModule("./upload-validation.ts");
+            const { validateAndPrepareMediaUpload } = loadMediaModule<UploadValidationModule>("./upload-validation.ts");
 
       const ok = await validateAndPrepareMediaUpload({
         userId: CLIENT_ID,
@@ -473,7 +491,7 @@ describe("validateAndPrepareMediaUpload", () => {
       hasActiveAvatarConsent: async () => false,
     });
     try {
-            const { validateAndPrepareMediaUpload } = loadMediaModule("./upload-validation.ts");
+            const { validateAndPrepareMediaUpload } = loadMediaModule<UploadValidationModule>("./upload-validation.ts");
       const noConsent = await validateAndPrepareMediaUpload({
         userId: CLIENT_ID,
         assetType: "avatar_reference",
@@ -508,7 +526,7 @@ describe("hasOwnAvatarReferenceAssets", () => {
         chainableQuery({ count: 0 }),
     });
     try {
-            const { hasOwnAvatarReferenceAssets } = loadMediaModule("./has-own-avatar-reference-assets.ts");
+            const { hasOwnAvatarReferenceAssets } = loadMediaModule<HasOwnAvatarReferenceAssetsModule>("./has-own-avatar-reference-assets.ts");
       assert.equal(await hasOwnAvatarReferenceAssets(""), false);
       assert.equal(await hasOwnAvatarReferenceAssets(CLIENT_ID), false);
     } finally {
@@ -520,7 +538,7 @@ describe("hasOwnAvatarReferenceAssets", () => {
         chainableQuery({ count: 1 }),
     });
     try {
-            const { hasOwnAvatarReferenceAssets } = loadMediaModule("./has-own-avatar-reference-assets.ts");
+            const { hasOwnAvatarReferenceAssets } = loadMediaModule<HasOwnAvatarReferenceAssetsModule>("./has-own-avatar-reference-assets.ts");
       assert.equal(await hasOwnAvatarReferenceAssets(CLIENT_ID), true);
     } finally {
       restoreOne();
@@ -537,7 +555,9 @@ describe("hasOwnAvatarReferenceAssets", () => {
 describe("uploadAvatarReferenceAsset", () => {
   it("happy path writes disk + returns DTO without storage_key; rejects forbidden/unauth", async () => {
     const tmp = mkdtempSync(path.join(tmpdir(), "neuramark-up-"));
-    let inserted: Record<string, unknown> | null = null;
+    const insertedCapture: { row: Record<string, unknown> | null } = {
+      row: null,
+    };
     const revalidated: string[] = [];
 
     const restore = installMediaMocks({
@@ -556,7 +576,7 @@ describe("uploadAvatarReferenceAsset", () => {
             }),
           }),
           insert: (row: Record<string, unknown>) => {
-            inserted = row;
+            insertedCapture.row = row;
             return {
               select: () => ({
                 single: async () => ({
@@ -579,15 +599,17 @@ describe("uploadAvatarReferenceAsset", () => {
     try {
       clearMediaModuleCache();
       // reset storage singleton
-      const { resetMediaStorageCacheForTests } = loadMediaModule("./storage/get-media-storage.ts");
+      const { resetMediaStorageCacheForTests } = loadMediaModule<GetMediaStorageModule>("./storage/get-media-storage.ts");
       resetMediaStorageCacheForTests();
 
-      const { uploadAvatarReferenceAsset } = loadMediaModule("./upload-avatar-reference-asset.ts");
+      const { uploadAvatarReferenceAsset } = loadMediaModule<UploadAvatarReferenceAssetModule>("./upload-avatar-reference-asset.ts");
 
       const fd = new FormData();
       fd.append(
         "file",
-        new File([jpegBuffer(400)], "portrait.jpg", { type: "image/jpeg" }),
+        new File([bufferBlobPart(jpegBuffer(400))], "portrait.jpg", {
+          type: "image/jpeg",
+        }),
       );
 
       const result = await uploadAvatarReferenceAsset(fd);
@@ -601,16 +623,17 @@ describe("uploadAvatarReferenceAsset", () => {
         assert.equal(json.includes("storage_key"), false);
         assert.equal(result.asset.previewUrl, `/api/media/assets/${ASSET_ID}`);
       }
+      const inserted = insertedCapture.row;
       assert.ok(inserted);
-      assert.equal(inserted!.client_id, CLIENT_ID);
-      assert.equal(inserted!.asset_type, "avatar_reference");
-      assert.ok(typeof inserted!.storage_key === "string");
-      assert.ok(existsSync(path.join(tmp, String(inserted!.storage_key))));
+      assert.equal(inserted.client_id, CLIENT_ID);
+      assert.equal(inserted.asset_type, "avatar_reference");
+      assert.ok(typeof inserted.storage_key === "string");
+      assert.ok(existsSync(path.join(tmp, String(inserted.storage_key))));
       assert.deepEqual(revalidated, ["/settings/preferences"]);
 
       // forbidden fields
       const bad = new FormData();
-      bad.append("file", new File([jpegBuffer(200)], "x.jpg"));
+      bad.append("file", new File([bufferBlobPart(jpegBuffer(200))], "x.jpg"));
       bad.append("client_id", VICTIM_ID);
       const forbidden = await uploadAvatarReferenceAsset(bad);
       assert.equal(forbidden.ok, false);
@@ -632,9 +655,9 @@ describe("uploadAvatarReferenceAsset", () => {
       },
     });
     try {
-            const { uploadAvatarReferenceAsset } = loadMediaModule("./upload-avatar-reference-asset.ts");
+            const { uploadAvatarReferenceAsset } = loadMediaModule<UploadAvatarReferenceAssetModule>("./upload-avatar-reference-asset.ts");
       const fd = new FormData();
-      fd.append("file", new File([jpegBuffer(100)], "x.jpg"));
+      fd.append("file", new File([bufferBlobPart(jpegBuffer(100))], "x.jpg"));
       const result = await uploadAvatarReferenceAsset(fd);
       assert.equal(result.ok, false);
       if (!result.ok) assert.equal(result.error.code, "UNAUTHENTICATED");
@@ -708,9 +731,9 @@ describe("deleteAvatarReferenceAsset", () => {
     });
 
     try {
-            const { resetMediaStorageCacheForTests } = loadMediaModule("./storage/get-media-storage.ts");
+            const { resetMediaStorageCacheForTests } = loadMediaModule<GetMediaStorageModule>("./storage/get-media-storage.ts");
       resetMediaStorageCacheForTests();
-      const { deleteAvatarReferenceAsset } = loadMediaModule("./delete-avatar-reference-asset.ts");
+      const { deleteAvatarReferenceAsset } = loadMediaModule<DeleteAvatarReferenceAssetModule>("./delete-avatar-reference-asset.ts");
 
       const result = await deleteAvatarReferenceAsset({ assetId: ASSET_ID });
       assert.equal(result.ok, true);
@@ -736,7 +759,7 @@ describe("deleteAvatarReferenceAsset", () => {
       }),
     });
     try {
-            const { deleteAvatarReferenceAsset } = loadMediaModule("./delete-avatar-reference-asset.ts");
+            const { deleteAvatarReferenceAsset } = loadMediaModule<DeleteAvatarReferenceAssetModule>("./delete-avatar-reference-asset.ts");
       const result = await deleteAvatarReferenceAsset({
         assetId: "00000000-0000-4000-8000-000000000099",
       });
@@ -777,7 +800,7 @@ describe("getAvatarReferenceAssetsForClient", () => {
       }),
     });
     try {
-            const { getAvatarReferenceAssetsForClient } = loadMediaModule("./get-avatar-reference-assets-for-client.ts");
+            const { getAvatarReferenceAssetsForClient } = loadMediaModule<GetAvatarReferenceAssetsForClientModule>("./get-avatar-reference-assets-for-client.ts");
       const result = await getAvatarReferenceAssetsForClient();
       assert.equal(
         avatarReferenceAssetsForClientSchema.safeParse(result).success,
@@ -835,9 +858,9 @@ describe("GET serve route", () => {
     });
 
     try {
-            const { resetMediaStorageCacheForTests } = loadMediaModule("./storage/get-media-storage.ts");
+            const { resetMediaStorageCacheForTests } = loadMediaModule<GetMediaStorageModule>("./storage/get-media-storage.ts");
       resetMediaStorageCacheForTests();
-      const { GET } = loadMediaModule("../../app/api/media/assets/[assetId]/route.ts");
+      const { GET } = loadMediaModule<MediaAssetRouteModule>("../../app/api/media/assets/[assetId]/route.ts");
       const res = await GET(new Request("http://localhost/api/media/assets/" + ASSET_ID), {
         params: Promise.resolve({ assetId: ASSET_ID }),
       });
@@ -873,9 +896,9 @@ describe("GET serve route", () => {
       }),
     });
     try {
-            const { resetMediaStorageCacheForTests } = loadMediaModule("./storage/get-media-storage.ts");
+            const { resetMediaStorageCacheForTests } = loadMediaModule<GetMediaStorageModule>("./storage/get-media-storage.ts");
       resetMediaStorageCacheForTests();
-      const { GET } = loadMediaModule("../../app/api/media/assets/[assetId]/route.ts");
+      const { GET } = loadMediaModule<MediaAssetRouteModule>("../../app/api/media/assets/[assetId]/route.ts");
       const res = await GET(
         new Request("http://localhost/api/media/assets/" + VICTIM_ID),
         { params: Promise.resolve({ assetId: VICTIM_ID }) },
@@ -922,9 +945,9 @@ describe("GET serve route", () => {
     });
 
     try {
-      const { resetMediaStorageCacheForTests } = loadMediaModule("./storage/get-media-storage.ts");
+      const { resetMediaStorageCacheForTests } = loadMediaModule<GetMediaStorageModule>("./storage/get-media-storage.ts");
       resetMediaStorageCacheForTests();
-      const { GET } = loadMediaModule("../../app/api/media/assets/[assetId]/route.ts");
+      const { GET } = loadMediaModule<MediaAssetRouteModule>("../../app/api/media/assets/[assetId]/route.ts");
       const res = await GET(new Request("http://localhost/api/media/assets/" + ASSET_ID), {
         params: Promise.resolve({ assetId: ASSET_ID }),
       });
@@ -970,9 +993,9 @@ describe("GET serve route", () => {
     });
 
     try {
-      const { resetMediaStorageCacheForTests } = loadMediaModule("./storage/get-media-storage.ts");
+      const { resetMediaStorageCacheForTests } = loadMediaModule<GetMediaStorageModule>("./storage/get-media-storage.ts");
       resetMediaStorageCacheForTests();
-      const { GET } = loadMediaModule("../../app/api/media/assets/[assetId]/route.ts");
+      const { GET } = loadMediaModule<MediaAssetRouteModule>("../../app/api/media/assets/[assetId]/route.ts");
       const res = await GET(new Request("http://localhost/api/media/assets/" + ASSET_ID), {
         params: Promise.resolve({ assetId: ASSET_ID }),
       });
@@ -1028,9 +1051,9 @@ describe("GET serve route", () => {
     });
 
     try {
-      const { resetMediaStorageCacheForTests } = loadMediaModule("./storage/get-media-storage.ts");
+      const { resetMediaStorageCacheForTests } = loadMediaModule<GetMediaStorageModule>("./storage/get-media-storage.ts");
       resetMediaStorageCacheForTests();
-      const { GET } = loadMediaModule("../../app/api/media/assets/[assetId]/route.ts");
+      const { GET } = loadMediaModule<MediaAssetRouteModule>("../../app/api/media/assets/[assetId]/route.ts");
       const res = await GET(
         new Request("http://localhost/api/media/assets/" + VICTIM_ID),
         { params: Promise.resolve({ assetId: VICTIM_ID }) },
@@ -1063,7 +1086,7 @@ describe("png allowlist smoke", () => {
       hasActiveAvatarConsent: async () => true,
     });
     try {
-            const { validateAndPrepareMediaUpload } = loadMediaModule("./upload-validation.ts");
+            const { validateAndPrepareMediaUpload } = loadMediaModule<UploadValidationModule>("./upload-validation.ts");
       const result = await validateAndPrepareMediaUpload({
         userId: CLIENT_ID,
         assetType: "avatar_reference",
