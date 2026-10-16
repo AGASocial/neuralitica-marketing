@@ -56,7 +56,21 @@ const clientUser = {
   active: true,
 };
 
-const baseSlotRow = {
+const baseSlotRow: {
+  id: string;
+  clientId: string;
+  clientDisplayName: string;
+  weekStart: string;
+  scheduledDate: string;
+  slotIndex: number;
+  strategyId: string;
+  reelScriptId: string;
+  publishStatus: "ready" | "published";
+  publishedAtRaw: string | null;
+  instagramPostUrlRaw: string | null;
+  tema: string;
+  goal: "local_sale";
+} = {
   id: SLOT_ID,
   clientId: CLIENT_A,
   clientDisplayName: "Cafe Luna",
@@ -65,11 +79,11 @@ const baseSlotRow = {
   slotIndex: 1,
   strategyId: STRATEGY_ID,
   reelScriptId: REEL_SCRIPT_ID,
-  publishStatus: "ready" as const,
+  publishStatus: "ready",
   publishedAtRaw: null,
   instagramPostUrlRaw: null,
   tema: "Promo del martes",
-  goal: "local_sale" as const,
+  goal: "local_sale",
 };
 
 /** No persisted metrics row. Counters match buildReelMetricsDtoForPublishedReel; editable uses the real 7-day rule on the publishedAt this test writes. */
@@ -96,9 +110,12 @@ const readyAssemblyJob = {
   outputMediaAssetId: ASSET_ID,
 };
 
-const approvedApproval = {
+const approvedApproval: {
+  id: string;
+  status: "approved" | "pending_client" | "rejected";
+} = {
   id: APPROVAL_ID,
-  status: "approved" as const,
+  status: "approved",
 };
 
 type NodeModuleLoad = {

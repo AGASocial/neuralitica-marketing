@@ -65,7 +65,10 @@ function loadWanAdapterModule() {
 }
 
 function loadNormalizeModule() {
-  return withServerOnlyStub(() => require("../normalize-provider-response.ts"));
+  return withServerOnlyStub(
+    () =>
+      require("../normalize-provider-response.ts") as typeof import("../normalize-provider-response"),
+  );
 }
 
 function loadContractsModule() {
@@ -276,7 +279,9 @@ describe("US-8.5 Wan adapter (Phase A)", () => {
           WAN_ALLOWED_OUTPUT_HOSTS,
         ),
       (err: unknown) => {
-        assert.ok(err instanceof ProviderAdapterError);
+        if (!(err instanceof ProviderAdapterError)) {
+          assert.fail("expected ProviderAdapterError");
+        }
         assert.equal(err.code, INVALID_PROVIDER_OUTPUT_URL);
         return true;
       },
@@ -289,7 +294,9 @@ describe("US-8.5 Wan adapter (Phase A)", () => {
           WAN_ALLOWED_OUTPUT_HOSTS,
         ),
       (err: unknown) => {
-        assert.ok(err instanceof ProviderAdapterError);
+        if (!(err instanceof ProviderAdapterError)) {
+          assert.fail("expected ProviderAdapterError");
+        }
         assert.equal(err.code, INVALID_PROVIDER_OUTPUT_URL);
         return true;
       },
@@ -386,13 +393,18 @@ describe("US-8.5 Wan adapter (Phase A)", () => {
     const { WAN_MODEL_ID, WAN_SUBMIT_URL, WAN_STATUS_URL } =
       loadContractsModule();
 
-    let submitBody: Record<string, unknown> | null = null;
-    let statusBody: Record<string, unknown> | null = null;
+    const captured: {
+      submitBody: Record<string, unknown> | null;
+      statusBody: Record<string, unknown> | null;
+    } = { submitBody: null, statusBody: null };
 
     const fetchImpl = mockFetchSequence([
       (url, init) => {
         assert.equal(url, WAN_SUBMIT_URL);
-        submitBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+        captured.submitBody = JSON.parse(String(init?.body)) as Record<
+          string,
+          unknown
+        >;
         return new Response(JSON.stringify({ requestId: REQUEST_ID }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
@@ -401,7 +413,10 @@ describe("US-8.5 Wan adapter (Phase A)", () => {
       (url, init) => {
         assert.equal(url, WAN_STATUS_URL);
         assert.equal(init?.method, "POST");
-        statusBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+        captured.statusBody = JSON.parse(String(init?.body)) as Record<
+          string,
+          unknown
+        >;
         return new Response(JSON.stringify({ status: "InQueue" }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
@@ -418,6 +433,7 @@ describe("US-8.5 Wan adapter (Phase A)", () => {
       });
 
       await adapter.createJob(baseJobInput({ targetDurationSec: 12 }));
+      const submitBody = captured.submitBody;
       assert.equal(submitBody?.model, WAN_MODEL_ID);
       assert.equal(submitBody?.image_size, "720x1280");
       assert.equal(typeof submitBody?.prompt, "string");
@@ -427,6 +443,7 @@ describe("US-8.5 Wan adapter (Phase A)", () => {
       assert.match(String(submitBody?.negative_prompt), /face/);
 
       await adapter.getJobStatus(REQUEST_ID);
+      const statusBody = captured.statusBody;
       assert.equal(statusBody?.requestId, REQUEST_ID);
     } finally {
       if (previousToken === undefined) {

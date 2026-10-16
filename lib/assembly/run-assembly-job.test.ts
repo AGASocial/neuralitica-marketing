@@ -2,7 +2,8 @@
  * US-9.1 assembly worker — mocked ffmpeg spawn and runAssemblyJob.
  */
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { ChildProcess, spawn } from "node:child_process";
+import { PassThrough } from "node:stream";
 import { writeFile } from "node:fs/promises";
 import Module from "node:module";
 import { afterEach, describe, it } from "node:test";
@@ -67,6 +68,15 @@ type AssemblyJobConfigReadersModule =
 type EnqueueAssemblyJobModule = typeof import("./enqueue-assembly-job");
 type RunAssemblyJobModule = typeof import("./run-assembly-job");
 
+function ffmpegChildThatCloses(code: number): ChildProcess {
+  const child = new ChildProcess();
+  child.stderr = new PassThrough();
+  queueMicrotask(() => {
+    child.emit("close", code);
+  });
+  return child;
+}
+
 describe("runFfmpeg spawn contract", () => {
   it("invokes spawn with args array and shell false", async () => {
     await withServerOnlyStub(async () => {
@@ -75,18 +85,11 @@ describe("runFfmpeg spawn contract", () => {
 
       const fakeSpawn = (
         cmd: string,
-        args: readonly string[],
-        options: { shell?: boolean },
+        args: readonly string[] | undefined,
+        options: { shell?: boolean | string } | undefined,
       ) => {
-        calls.push({ cmd, args: [...args], options });
-        return {
-          stderr: { on: () => undefined },
-          on: (event: string, cb: (code: number) => void) => {
-            if (event === "close") {
-              cb(0);
-            }
-          },
-        } as ReturnType<typeof spawn>;
+        calls.push({ cmd, args: [...(args ?? [])], options });
+        return ffmpegChildThatCloses(0);
       };
 
       const { runFfmpeg } = loadAssemblyModule<RunFfmpegModule>(

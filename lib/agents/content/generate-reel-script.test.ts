@@ -67,6 +67,8 @@ async function loadReelScriptModule() {
 const CLIENT_ID = "11111111-1111-4111-8111-111111111111";
 const WEEK_START = "2026-01-05";
 
+const preferredLocaleField = { preferredLocale: "es" as const };
+
 const PROFILE: BusinessProfileForAgentsView = {
   exists: true,
   clientId: CLIENT_ID,
@@ -75,7 +77,11 @@ const PROFILE: BusinessProfileForAgentsView = {
     services: { items: ["Plomería residencial"] },
     zone: { description: "Austin TX" },
     tone: { description: "Experto cercano" },
-    preferredLocale: "es",
+    offers: { items: ["Estimado gratis"] },
+    objections: { items: ["Precio"] },
+    style: { description: "Antes/después limpio" },
+    restrictions: { items: [] },
+    ...preferredLocaleField,
   },
   visualModeSummary: {
     allowedModes: ["faceless", "generic_avatar"],

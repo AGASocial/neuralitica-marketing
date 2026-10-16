@@ -502,13 +502,15 @@ describe("US-8.5 Phase B createBrollVideoJobs", () => {
 
   it("10 — Wan T2V creates without reference still (faceless)", async () => {
     await withServerOnlyStub(async () => {
-      let createInput: Record<string, unknown> | null = null;
+      const createInputCapture: { value: Record<string, unknown> | null } = {
+        value: null,
+      };
       const primaryJobsTouched = { count: 0 };
       const mock = installMocks({
         stillAssetId: null,
         primaryJobsTouched,
         onCreateJob: (input) => {
-          createInput = input;
+          createInputCapture.value = input;
         },
       });
       try {
@@ -519,6 +521,7 @@ describe("US-8.5 Phase B createBrollVideoJobs", () => {
         });
         assert.equal(result.ok, true);
         assert.ok(result.createdCount >= 1);
+        const createInput = createInputCapture.value;
         assert.equal(createInput?.referenceImageAssetId, undefined);
         assert.equal(createInput?.portraitAssetId, undefined);
         assert.equal(mock.getInsertedRows()[0]?.portrait_asset_id, null);
@@ -555,11 +558,13 @@ describe("US-8.5 Phase B createBrollVideoJobs", () => {
 
   it("11 — singleClipRetry stays broll + Wan (no primary hardcode)", async () => {
     await withServerOnlyStub(async () => {
-      let createInput: Record<string, unknown> | null = null;
+      const createInputCapture: { value: Record<string, unknown> | null } = {
+        value: null,
+      };
       const mock = installMocks({
         brollBeats: ["A", "B", "C"],
         onCreateJob: (input) => {
-          createInput = input;
+          createInputCapture.value = input;
         },
       });
       try {
@@ -579,6 +584,7 @@ describe("US-8.5 Phase B createBrollVideoJobs", () => {
         );
         assert.equal(result.ok, true);
         assert.equal(result.createdCount, 1);
+        const createInput = createInputCapture.value;
         assert.equal(createInput?.assetRole, "broll");
         assert.equal(createInput?.providerKey, "siliconflow_wan21_turbo");
         assert.equal(mock.getInsertedRows()[0]?.asset_role, "broll");
@@ -871,13 +877,15 @@ describe("US-8.8 Phase B createBrollVideoJobs (LTX high tier)", () => {
 
   it("13 — singleClipRetry LTX parent stays broll + ltx_broll_high", async () => {
     await withServerOnlyStub(async () => {
-      let createInput: Record<string, unknown> | null = null;
+      const createInputCapture: { value: Record<string, unknown> | null } = {
+        value: null,
+      };
       const mock = installMocks({
         providerKey: "ltx_broll_high",
         providerTier: "high",
         brollBeats: ["A", "B", "C"],
         onCreateJob: (input) => {
-          createInput = input;
+          createInputCapture.value = input;
         },
       });
       try {
@@ -897,6 +905,7 @@ describe("US-8.8 Phase B createBrollVideoJobs (LTX high tier)", () => {
         );
         assert.equal(result.ok, true);
         assert.equal(result.createdCount, 1);
+        const createInput = createInputCapture.value;
         assert.equal(createInput?.assetRole, "broll");
         assert.equal(createInput?.providerKey, "ltx_broll_high");
         assert.equal(mock.getInsertedRows()[0]?.provider_key, "ltx_broll_high");

@@ -172,7 +172,9 @@ describe("US-9.3 Phase B ElevenLabs TTS adapter", () => {
     try {
       const { createElevenlabsTtsAdapter } = loadAdapterModule();
       let capturedUrl = "";
-      let capturedBody: Record<string, unknown> | null = null;
+      const captured: { requestBody: Record<string, unknown> | null } = {
+        requestBody: null,
+      };
       let capturedApiKey = "";
 
       const adapter = createElevenlabsTtsAdapter({
@@ -190,7 +192,7 @@ describe("US-9.3 Phase B ElevenLabs TTS adapter", () => {
           capturedApiKey = String(
             (init?.headers as Record<string, string>)?.["xi-api-key"] ?? "",
           );
-          capturedBody = JSON.parse(String(init?.body ?? "{}")) as Record<
+          captured.requestBody = JSON.parse(String(init?.body ?? "{}")) as Record<
             string,
             unknown
           >;
@@ -214,6 +216,7 @@ describe("US-9.3 Phase B ElevenLabs TTS adapter", () => {
         ),
       );
       assert.equal(capturedApiKey, "el_test_key");
+      const capturedBody = captured.requestBody;
       assert.equal(capturedBody?.model_id, ELEVENLABS_MODEL_ID);
       assert.equal(
         capturedBody?.text,

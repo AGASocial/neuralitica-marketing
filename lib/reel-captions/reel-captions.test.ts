@@ -1149,7 +1149,15 @@ describe("reel caption helpers (US-6.1)", () => {
   it("batch without override aborts on budget block with zero LLM calls (US-7.1)", async () => {
     let llmCalls = 0;
     const restore = installReelCaptionMocks({
-      assertReelBudgetAllowsSpend: async (input: { reelScriptId: string }) => {
+      assertReelBudgetAllowsSpend: async (input: unknown) => {
+        if (
+          typeof input !== "object" ||
+          input === null ||
+          !("reelScriptId" in input) ||
+          typeof input.reelScriptId !== "string"
+        ) {
+          throw new Error("reelScriptId required");
+        }
         if (input.reelScriptId === SCRIPT_ROW_1.id) {
           return { ok: false, code: "BUDGET_EXCEEDED" };
         }

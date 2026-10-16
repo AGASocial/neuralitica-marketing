@@ -64,7 +64,10 @@ function loadHeygenAdapterModule() {
 }
 
 function loadNormalizeModule() {
-  return withServerOnlyStub(() => require("../normalize-provider-response.ts"));
+  return withServerOnlyStub(
+    () =>
+      require("../normalize-provider-response.ts") as typeof import("../normalize-provider-response"),
+  );
 }
 
 function loadContractsModule() {
@@ -267,10 +270,12 @@ describe("US-8.7 HeyGen adapter", () => {
     process.env.HEYGEN_API_KEY = API_KEY;
     process.env.HEYGEN_DEFAULT_AVATAR_ID = "avatar_studio_001";
 
-    let postedBody: Record<string, unknown> | null = null;
+    const captured: { postedBody: Record<string, unknown> | null } = {
+      postedBody: null,
+    };
     const fetchImpl = mockFetchSequence([
       (_url, init) => {
-        postedBody = JSON.parse(String(init?.body ?? "{}")) as Record<
+        captured.postedBody = JSON.parse(String(init?.body ?? "{}")) as Record<
           string,
           unknown
         >;
@@ -294,11 +299,12 @@ describe("US-8.7 HeyGen adapter", () => {
       });
 
       await adapter.createJob(genericAvatarInput());
+      const postedBody = captured.postedBody;
       assert.ok(postedBody);
-      assert.equal(postedBody!.type, "avatar");
-      assert.equal(postedBody!.avatar_id, "avatar_studio_001");
-      assert.deepEqual(postedBody!.engine, { type: "avatar_iii" });
-      assert.equal("engine" in postedBody!, true);
+      assert.equal(postedBody.type, "avatar");
+      assert.equal(postedBody.avatar_id, "avatar_studio_001");
+      assert.deepEqual(postedBody.engine, { type: "avatar_iii" });
+      assert.equal("engine" in postedBody, true);
     } finally {
       if (previousToken === undefined) delete process.env.HEYGEN_API_KEY;
       else process.env.HEYGEN_API_KEY = previousToken;
@@ -314,10 +320,12 @@ describe("US-8.7 HeyGen adapter", () => {
     const previousToken = process.env.HEYGEN_API_KEY;
     process.env.HEYGEN_API_KEY = API_KEY;
 
-    let postedBody: Record<string, unknown> | null = null;
+    const captured: { postedBody: Record<string, unknown> | null } = {
+      postedBody: null,
+    };
     const fetchImpl = mockFetchSequence([
       (_url, init) => {
-        postedBody = JSON.parse(String(init?.body ?? "{}")) as Record<
+        captured.postedBody = JSON.parse(String(init?.body ?? "{}")) as Record<
           string,
           unknown
         >;
@@ -343,9 +351,10 @@ describe("US-8.7 HeyGen adapter", () => {
       });
 
       await adapter.createJob(ownAvatarInput());
+      const postedBody = captured.postedBody;
       assert.ok(postedBody);
-      assert.equal(postedBody!.type, "image");
-      assert.equal("engine" in postedBody!, false);
+      assert.equal(postedBody.type, "image");
+      assert.equal("engine" in postedBody, false);
     } finally {
       if (previousToken === undefined) delete process.env.HEYGEN_API_KEY;
       else process.env.HEYGEN_API_KEY = previousToken;
@@ -431,7 +440,9 @@ describe("US-8.7 HeyGen adapter", () => {
           HEYGEN_ALLOWED_OUTPUT_HOSTS,
         ),
       (err: unknown) => {
-        assert.ok(err instanceof ProviderAdapterError);
+        if (!(err instanceof ProviderAdapterError)) {
+          assert.fail("expected ProviderAdapterError");
+        }
         assert.equal(err.code, INVALID_PROVIDER_OUTPUT_URL);
         return true;
       },
@@ -444,7 +455,9 @@ describe("US-8.7 HeyGen adapter", () => {
           HEYGEN_ALLOWED_OUTPUT_HOSTS,
         ),
       (err: unknown) => {
-        assert.ok(err instanceof ProviderAdapterError);
+        if (!(err instanceof ProviderAdapterError)) {
+          assert.fail("expected ProviderAdapterError");
+        }
         assert.equal(err.code, INVALID_PROVIDER_OUTPUT_URL);
         return true;
       },
@@ -457,7 +470,9 @@ describe("US-8.7 HeyGen adapter", () => {
           HEYGEN_ALLOWED_OUTPUT_HOSTS,
         ),
       (err: unknown) => {
-        assert.ok(err instanceof ProviderAdapterError);
+        if (!(err instanceof ProviderAdapterError)) {
+          assert.fail("expected ProviderAdapterError");
+        }
         assert.equal(err.code, INVALID_PROVIDER_OUTPUT_URL);
         return true;
       },

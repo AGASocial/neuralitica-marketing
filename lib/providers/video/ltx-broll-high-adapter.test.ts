@@ -67,7 +67,10 @@ function loadLtxAdapterModule() {
 }
 
 function loadNormalizeModule() {
-  return withServerOnlyStub(() => require("../normalize-provider-response.ts"));
+  return withServerOnlyStub(
+    () =>
+      require("../normalize-provider-response.ts") as typeof import("../normalize-provider-response"),
+  );
 }
 
 function loadContractsModule() {
@@ -344,11 +347,16 @@ describe("US-8.8 LTX adapter (Phase A)", () => {
     process.env.FAL_API_KEY = API_KEY;
     const { LTX_SUBMIT_URL } = loadContractsModule();
 
-    let submitBody: Record<string, unknown> | null = null;
+    const captured: { submitBody: Record<string, unknown> | null } = {
+      submitBody: null,
+    };
     const fetchImpl = mockFetchSequence([
       (url, init) => {
         assert.equal(url, LTX_SUBMIT_URL);
-        submitBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+        captured.submitBody = JSON.parse(String(init?.body)) as Record<
+          string,
+          unknown
+        >;
         return new Response(JSON.stringify({ request_id: REQUEST_ID }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
@@ -365,6 +373,7 @@ describe("US-8.8 LTX adapter (Phase A)", () => {
       });
 
       await adapter.createJob(baseJobInput({ targetDurationSec: 5 }));
+      const submitBody = captured.submitBody;
       assert.equal(submitBody?.duration, 6);
       assert.equal(submitBody?.aspect_ratio, "9:16");
       assert.equal(submitBody?.generate_audio, false);
@@ -394,7 +403,9 @@ describe("US-8.8 LTX adapter (Phase A)", () => {
           LTX_ALLOWED_OUTPUT_HOSTS,
         ),
       (err: unknown) => {
-        assert.ok(err instanceof ProviderAdapterError);
+        if (!(err instanceof ProviderAdapterError)) {
+          assert.fail("expected ProviderAdapterError");
+        }
         assert.equal(err.code, INVALID_PROVIDER_OUTPUT_URL);
         return true;
       },
@@ -407,7 +418,9 @@ describe("US-8.8 LTX adapter (Phase A)", () => {
           LTX_ALLOWED_OUTPUT_HOSTS,
         ),
       (err: unknown) => {
-        assert.ok(err instanceof ProviderAdapterError);
+        if (!(err instanceof ProviderAdapterError)) {
+          assert.fail("expected ProviderAdapterError");
+        }
         assert.equal(err.code, INVALID_PROVIDER_OUTPUT_URL);
         return true;
       },
@@ -578,10 +591,15 @@ describe("US-8.8 LTX adapter (Phase A)", () => {
     const previousToken = process.env.FAL_API_KEY;
     process.env.FAL_API_KEY = API_KEY;
 
-    let submitBody: Record<string, unknown> | null = null;
+    const captured: { submitBody: Record<string, unknown> | null } = {
+      submitBody: null,
+    };
     const fetchImpl = mockFetchSequence([
       (_url, init) => {
-        submitBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+        captured.submitBody = JSON.parse(String(init?.body)) as Record<
+          string,
+          unknown
+        >;
         return new Response(JSON.stringify({ request_id: REQUEST_ID }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
@@ -598,6 +616,7 @@ describe("US-8.8 LTX adapter (Phase A)", () => {
       });
 
       await adapter.createJob(baseJobInput());
+      const submitBody = captured.submitBody;
       assert.equal(submitBody?.aspect_ratio, "9:16");
       assert.equal(submitBody?.generate_audio, false);
     } finally {

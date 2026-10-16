@@ -71,7 +71,10 @@ function withServerOnlyStub<T>(run: () => T): T {
 }
 
 function loadProviderAdapters() {
-  return withServerOnlyStub(() => require("./provider-adapters.ts"));
+  return withServerOnlyStub(
+    () =>
+      require("./provider-adapters.ts") as typeof import("./provider-adapters"),
+  );
 }
 
 function row(
@@ -426,7 +429,9 @@ describe("resolveProvider (US-X.4)", () => {
       assert.throws(
         () => resolveProvider(catalog, { assetRole, tier: "high" }),
         (err: unknown) => {
-          assert.ok(err instanceof ProviderResolveError);
+          if (!(err instanceof ProviderResolveError)) {
+          assert.fail("expected ProviderResolveError");
+        }
           assert.equal(err.code, PROVIDER_NOT_FOUND);
           return true;
         },

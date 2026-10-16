@@ -13,6 +13,10 @@ import {
 import { QA_CHECK_SEVERITY } from "./check-classes";
 import { GENERIC_AVATAR_NOT_OWNER_CHECK_KEY } from "../contracts/qa";
 
+function checkKeyString(check: { checkKey: string }): string {
+  return check.checkKey;
+}
+
 type NodeModuleLoad = {
   _load: (
     request: string,
@@ -251,7 +255,6 @@ describe("mergeQaChecks (US-10.1)", () => {
       const withBogus = applyCatalogSeverityToLlmCheck({
         checkKey: "dangerous_claims",
         status: "pass",
-        // @ts-expect-error — model may smuggle severity
         severity: "blocking",
       });
       assert.equal(withBogus?.severity, "overridable");
@@ -287,7 +290,7 @@ describe("mergeQaChecks (US-10.1)", () => {
       assert.equal(tone?.severity, "overridable");
       assert.equal(deriveQaReportStatus(merged), "failed");
       assert.equal(
-        merged.some((c) => c.checkKey === "invented_legal_bypass"),
+        merged.some((c) => checkKeyString(c) === "invented_legal_bypass"),
         false,
       );
     });

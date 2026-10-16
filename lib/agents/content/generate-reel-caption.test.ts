@@ -71,6 +71,8 @@ async function loadReelCaptionModule() {
 
 const CLIENT_ID = "11111111-1111-4111-8111-111111111111";
 
+const preferredLocaleField = { preferredLocale: "es" as const };
+
 const PROFILE_WITH_ZONE: BusinessProfileForAgentsView = {
   exists: true,
   clientId: CLIENT_ID,
@@ -79,7 +81,11 @@ const PROFILE_WITH_ZONE: BusinessProfileForAgentsView = {
     services: { items: ["Plomería residencial"] },
     zone: { description: "Denver CO" },
     tone: { description: "Experto cercano" },
-    preferredLocale: "es",
+    offers: { items: ["Estimado gratis"] },
+    objections: { items: ["Precio"] },
+    style: { description: "Antes/después limpio" },
+    restrictions: { items: [] },
+    ...preferredLocaleField,
   },
   visualModeSummary: {
     allowedModes: ["faceless"],
@@ -89,12 +95,16 @@ const PROFILE_WITH_ZONE: BusinessProfileForAgentsView = {
 
 const PROFILE_NO_ZONE: BusinessProfileForAgentsView = {
   ...PROFILE_WITH_ZONE,
-  fields: {
-    services: { items: ["Plomería residencial"] },
-    tone: { description: "Experto cercano" },
-    preferredLocale: "es",
-  },
+  fields: omitZone(PROFILE_WITH_ZONE.fields),
 };
+
+function omitZone(
+  fields: BusinessProfileForAgentsView["fields"],
+): BusinessProfileForAgentsView["fields"] {
+  const next: Record<string, unknown> = { ...fields };
+  delete next.zone;
+  return next as BusinessProfileForAgentsView["fields"];
+}
 
 const SLOT: ContentStrategySlot = {
   slotIndex: 0,

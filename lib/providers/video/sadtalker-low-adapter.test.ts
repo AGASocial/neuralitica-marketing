@@ -62,7 +62,10 @@ function loadSadtalkerAdapterModule() {
 }
 
 function loadNormalizeModule() {
-  return withServerOnlyStub(() => require("../normalize-provider-response.ts"));
+  return withServerOnlyStub(
+    () =>
+      require("../normalize-provider-response.ts") as typeof import("../normalize-provider-response"),
+  );
 }
 
 function loadContractsModule() {
@@ -237,7 +240,9 @@ describe("US-8.2 SadTalker adapter", () => {
     assert.throws(
       () => validateProviderOutputUrl("https://evil.com/x", SADTALKER_ALLOWED_OUTPUT_HOSTS),
       (err: unknown) => {
-        assert.ok(err instanceof ProviderAdapterError);
+        if (!(err instanceof ProviderAdapterError)) {
+          assert.fail("expected ProviderAdapterError");
+        }
         assert.equal(err.code, INVALID_PROVIDER_OUTPUT_URL);
         return true;
       },
@@ -256,7 +261,9 @@ describe("US-8.2 SadTalker adapter", () => {
           SADTALKER_ALLOWED_OUTPUT_HOSTS,
         ),
       (err: unknown) => {
-        assert.ok(err instanceof ProviderAdapterError);
+        if (!(err instanceof ProviderAdapterError)) {
+          assert.fail("expected ProviderAdapterError");
+        }
         assert.equal(err.code, INVALID_PROVIDER_OUTPUT_URL);
         return true;
       },

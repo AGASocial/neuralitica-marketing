@@ -2,8 +2,10 @@
  * US-9.1 assembly orchestrator, security, and FFmpeg args tests.
  */
 import assert from "node:assert/strict";
+import { ChildProcess } from "node:child_process";
 import { readFileSync } from "node:fs";
 import Module from "node:module";
+import { PassThrough } from "node:stream";
 import path from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -422,28 +424,34 @@ describe("applyAssemblyJobUpdate transitions", () => {
   });
 });
 
+function ffmpegChildThatCloses(code: number): ChildProcess {
+  const child = new ChildProcess();
+  child.stderr = new PassThrough();
+  queueMicrotask(() => {
+    child.emit("close", code);
+  });
+  return child;
+}
+
 describe("runFfmpeg spawn contract", () => {
   it("passes args array with shell false", async () => {
     await withServerOnlyStub(async () => {
       const { runFfmpeg } = loadAssemblyModule<RunFfmpegModule>(
         "@/lib/assembly/run-ffmpeg",
       );
-      let receivedArgs: string[] | null = null;
-      let receivedShell: boolean | undefined;
+      let receivedArgs: readonly string[] | undefined;
+      let receivedShell: boolean | string | undefined;
 
       await runFfmpeg(["-y", "-i", "primary.mp4", "out.mp4"], {
-        spawnImpl: ((cmd, args, opts) => {
+        spawnImpl: ((
+          cmd: string,
+          args: readonly string[] | undefined,
+          opts: { shell?: boolean | string } | undefined,
+        ) => {
           assert.equal(cmd, "ffmpeg");
           receivedArgs = args;
           receivedShell = opts?.shell;
-          return {
-            stderr: { on: () => undefined },
-            on: (event: string, cb: (code: number) => void) => {
-              if (event === "close") {
-                cb(0);
-              }
-            },
-          };
+          return ffmpegChildThatCloses(0);
         }) as typeof import("node:child_process").spawn,
       });
 

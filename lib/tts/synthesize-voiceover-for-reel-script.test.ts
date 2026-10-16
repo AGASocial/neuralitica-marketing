@@ -212,7 +212,7 @@ describe("synthesizeVoiceoverForReelScript", () => {
   it("rejects forbidden providerKey on input", async () => {
     await withServerOnlyStub(async () => {
       const mocks = installMocks();
-      const { synthesizeVoiceoverForReelScript } = loadTtsModule(
+      const { synthesizeVoiceoverForReelScript } = loadTtsModule<typeof import("../tts/synthesize-voiceover-for-reel-script")>(
         "../tts/synthesize-voiceover-for-reel-script",
       );
       const result = await synthesizeVoiceoverForReelScript({
@@ -230,7 +230,7 @@ describe("synthesizeVoiceoverForReelScript", () => {
   it("returns 403 envelope for non-operator", async () => {
     await withServerOnlyStub(async () => {
       const mocks = installMocks({ role: "client" });
-      const { synthesizeVoiceoverForReelScript } = loadTtsModule(
+      const { synthesizeVoiceoverForReelScript } = loadTtsModule<typeof import("../tts/synthesize-voiceover-for-reel-script")>(
         "../tts/synthesize-voiceover-for-reel-script",
       );
       const result = await synthesizeVoiceoverForReelScript({
@@ -247,7 +247,7 @@ describe("synthesizeVoiceoverForReelScript", () => {
   it("blocks budget before vendor I/O", async () => {
     await withServerOnlyStub(async () => {
       const mocks = installMocks({ budgetOk: false });
-      const { synthesizeVoiceoverForReelScript } = loadTtsModule(
+      const { synthesizeVoiceoverForReelScript } = loadTtsModule<typeof import("../tts/synthesize-voiceover-for-reel-script")>(
         "../tts/synthesize-voiceover-for-reel-script",
       );
       const result = await synthesizeVoiceoverForReelScript({
@@ -266,7 +266,7 @@ describe("synthesizeVoiceoverForReelScript", () => {
   it("rejects empty voiceover text without vendor call", async () => {
     await withServerOnlyStub(async () => {
       const mocks = installMocks({ voiceoverText: "" });
-      const { synthesizeVoiceoverForReelScript } = loadTtsModule(
+      const { synthesizeVoiceoverForReelScript } = loadTtsModule<typeof import("../tts/synthesize-voiceover-for-reel-script")>(
         "../tts/synthesize-voiceover-for-reel-script",
       );
       const result = await synthesizeVoiceoverForReelScript({
@@ -284,7 +284,7 @@ describe("synthesizeVoiceoverForReelScript", () => {
   it("happy path records spend after insert", async () => {
     await withServerOnlyStub(async () => {
       const mocks = installMocks();
-      const { synthesizeVoiceoverForReelScript } = loadTtsModule(
+      const { synthesizeVoiceoverForReelScript } = loadTtsModule<typeof import("../tts/synthesize-voiceover-for-reel-script")>(
         "../tts/synthesize-voiceover-for-reel-script",
       );
       const result = await synthesizeVoiceoverForReelScript({
@@ -306,7 +306,7 @@ describe("synthesizeVoiceoverForReelScript", () => {
       const mocks = installMocks({
         priorVoiceoverAssetId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       });
-      const { synthesizeVoiceoverForReelScript } = loadTtsModule(
+      const { synthesizeVoiceoverForReelScript } = loadTtsModule<typeof import("../tts/synthesize-voiceover-for-reel-script")>(
         "../tts/synthesize-voiceover-for-reel-script",
       );
       const result = await synthesizeVoiceoverForReelScript({
@@ -323,7 +323,7 @@ describe("synthesizeVoiceoverForReelScript", () => {
   it("rejects actualCostCents on synthesize payload (US-7.3-B)", async () => {
     await withServerOnlyStub(async () => {
       const mocks = installMocks();
-      const { synthesizeVoiceoverForReelScript } = loadTtsModule(
+      const { synthesizeVoiceoverForReelScript } = loadTtsModule<typeof import("../tts/synthesize-voiceover-for-reel-script")>(
         "../tts/synthesize-voiceover-for-reel-script",
       );
       const result = await synthesizeVoiceoverForReelScript({
@@ -342,7 +342,7 @@ describe("synthesizeVoiceoverForReelScript", () => {
   it("rejects durationSec on synthesize payload (US-7.3-B)", async () => {
     await withServerOnlyStub(async () => {
       const mocks = installMocks();
-      const { synthesizeVoiceoverForReelScript } = loadTtsModule(
+      const { synthesizeVoiceoverForReelScript } = loadTtsModule<typeof import("../tts/synthesize-voiceover-for-reel-script")>(
         "../tts/synthesize-voiceover-for-reel-script",
       );
       const result = await synthesizeVoiceoverForReelScript({
@@ -366,7 +366,9 @@ describe("synthesizeVoiceoverForClientTrusted duration (US-7.3-B)", () => {
   it("persists durationSec on spend INSERT when adapter knows duration", async () => {
     await withServerOnlyStub(async () => {
       const mocks = installMocks({ durationSec: 12.5 });
-      const { synthesizeVoiceoverForClientTrusted } = loadTtsModule(
+      const { synthesizeVoiceoverForClientTrusted } = loadTtsModule<
+        typeof import("../tts/synthesize-voiceover-for-client-trusted")
+      >(
         "../tts/synthesize-voiceover-for-client-trusted",
       );
       const result = await synthesizeVoiceoverForClientTrusted({

@@ -141,7 +141,7 @@ describe("mapPlaybookPayloadToAgentDto outcomes", () => {
     assert.equal(formato?.editingHints?.[0], "Cold open con el resultado final.");
   });
 
-  it("returns null when dto would violate strict schema", () => {
+  it("rejects hook_type outside the payload schema", () => {
     const payload = {
       ...VALID_PAYLOAD,
       guion_hints: ["ok"],
@@ -149,10 +149,6 @@ describe("mapPlaybookPayloadToAgentDto outcomes", () => {
     };
     const parsed = playbookPayloadCoreSchema.safeParse(payload);
     assert.equal(parsed.success, false);
-    if (parsed.success) {
-      const formato = mapPlaybookPayloadToAgentDto("tip-rapido", parsed.data);
-      assert.equal(formato, null);
-    }
   });
 
   it("agent DTO schema .strict() rejects over-disclosure keys", () => {
