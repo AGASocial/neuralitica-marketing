@@ -8,7 +8,7 @@ import {
   businessProfileViewSchema,
 } from "../contracts/profile";
 import { interviewAnswersCompleteSchema } from "../contracts/interview";
-import { mapBusinessProfileRow } from "./map-business-profile-row.ts";
+import { mapBusinessProfileRow } from "./map-business-profile-row";
 
 const COMPLETE_FIELDS = {
   services: { items: ["Residential cleaning", "Office cleaning"] },
@@ -53,7 +53,7 @@ describe("getBusinessProfileForClient signature (IDOR / auth arity)", () => {
     try {
       clearProfileModuleCache();
       const { getBusinessProfileForClient } = await import(
-        "./get-business-profile-for-client.ts"
+        "./get-business-profile-for-client"
       );
       assert.equal(getBusinessProfileForClient.length, 0);
     } finally {
@@ -201,7 +201,7 @@ describe("getProfileStubSummary thin adapter mapping", () => {
     try {
       clearProfileModuleCache();
       const { getProfileStubSummary } = await import(
-        "./get-profile-stub-summary.ts"
+        "./get-profile-stub-summary"
       );
       assert.equal(getProfileStubSummary.length, 0);
     } finally {

@@ -5,8 +5,8 @@ import { describe, it } from "node:test";
 import {
   genericAvatarNotOwnerCheckInputSchema,
   genericAvatarNotOwnerCheckResultSchema,
-} from "../contracts/qa.ts";
-import { QA_CHECK_SEVERITY } from "./check-classes.ts";
+} from "../contracts/qa";
+import { QA_CHECK_SEVERITY } from "./check-classes";
 
 type NodeModuleLoad = {
   _load: (
@@ -47,7 +47,7 @@ describe("evaluateGenericAvatarNotOwnerCheck (CONTRACT fixtures)", () => {
       const {
         evaluateGenericAvatarNotOwnerCheck,
         GENERIC_AVATAR_NOT_OWNER_CHECK_KEY,
-      } = await import("./checks/generic-avatar-not-owner.ts");
+      } = await import("./checks/generic-avatar-not-owner");
       assert.equal(GENERIC_AVATAR_NOT_OWNER_CHECK_KEY, "generic_avatar_not_owner");
 
       const input = {
@@ -70,7 +70,7 @@ describe("evaluateGenericAvatarNotOwnerCheck (CONTRACT fixtures)", () => {
   it("fails when flag true and owner claim without disclosure", async () => {
     await withServerOnlyStub(async () => {
       const { evaluateGenericAvatarNotOwnerCheck } = await import(
-        "./checks/generic-avatar-not-owner.ts"
+        "./checks/generic-avatar-not-owner"
       );
       const result = evaluateGenericAvatarNotOwnerCheck({
         mustDiscloseNotOwner: true,
@@ -90,7 +90,7 @@ describe("evaluateGenericAvatarNotOwnerCheck (CONTRACT fixtures)", () => {
   it("passes when flag true, owner claim, and EN disclosure present", async () => {
     await withServerOnlyStub(async () => {
       const { evaluateGenericAvatarNotOwnerCheck } = await import(
-        "./checks/generic-avatar-not-owner.ts"
+        "./checks/generic-avatar-not-owner"
       );
       const result = evaluateGenericAvatarNotOwnerCheck({
         mustDiscloseNotOwner: true,
@@ -105,7 +105,7 @@ describe("evaluateGenericAvatarNotOwnerCheck (CONTRACT fixtures)", () => {
   it("passes when flag true and ES disclosure present", async () => {
     await withServerOnlyStub(async () => {
       const { evaluateGenericAvatarNotOwnerCheck } = await import(
-        "./checks/generic-avatar-not-owner.ts"
+        "./checks/generic-avatar-not-owner"
       );
       const result = evaluateGenericAvatarNotOwnerCheck({
         mustDiscloseNotOwner: true,
@@ -119,7 +119,7 @@ describe("evaluateGenericAvatarNotOwnerCheck (CONTRACT fixtures)", () => {
   it("passes when flag true and no owner-claim detected", async () => {
     await withServerOnlyStub(async () => {
       const { evaluateGenericAvatarNotOwnerCheck } = await import(
-        "./checks/generic-avatar-not-owner.ts"
+        "./checks/generic-avatar-not-owner"
       );
       const result = evaluateGenericAvatarNotOwnerCheck({
         mustDiscloseNotOwner: true,
@@ -132,7 +132,7 @@ describe("evaluateGenericAvatarNotOwnerCheck (CONTRACT fixtures)", () => {
   it("does not match third-person owner references", async () => {
     await withServerOnlyStub(async () => {
       const { evaluateGenericAvatarNotOwnerCheck } = await import(
-        "./checks/generic-avatar-not-owner.ts"
+        "./checks/generic-avatar-not-owner"
       );
       const result = evaluateGenericAvatarNotOwnerCheck({
         mustDiscloseNotOwner: true,
@@ -145,7 +145,7 @@ describe("evaluateGenericAvatarNotOwnerCheck (CONTRACT fixtures)", () => {
   it("fails on I'm the owner without disclosure", async () => {
     await withServerOnlyStub(async () => {
       const { evaluateGenericAvatarNotOwnerCheck } = await import(
-        "./checks/generic-avatar-not-owner.ts"
+        "./checks/generic-avatar-not-owner"
       );
       const result = evaluateGenericAvatarNotOwnerCheck({
         mustDiscloseNotOwner: true,
@@ -158,7 +158,7 @@ describe("evaluateGenericAvatarNotOwnerCheck (CONTRACT fixtures)", () => {
   it("fails on soy el dueño without disclosure", async () => {
     await withServerOnlyStub(async () => {
       const { evaluateGenericAvatarNotOwnerCheck } = await import(
-        "./checks/generic-avatar-not-owner.ts"
+        "./checks/generic-avatar-not-owner"
       );
       const result = evaluateGenericAvatarNotOwnerCheck({
         mustDiscloseNotOwner: true,
@@ -183,7 +183,7 @@ describe("buildGenericDisclosurePromptHint", () => {
   it("returns null when disclosure not required", async () => {
     await withServerOnlyStub(async () => {
       const { buildGenericDisclosurePromptHint } = await import(
-        "./build-generic-disclosure-prompt-hint.ts"
+        "./build-generic-disclosure-prompt-hint"
       );
       assert.equal(buildGenericDisclosurePromptHint(false, "en"), null);
       assert.equal(buildGenericDisclosurePromptHint(false, "es"), null);
@@ -193,7 +193,7 @@ describe("buildGenericDisclosurePromptHint", () => {
   it("returns EN/ES hints when disclosure required", async () => {
     await withServerOnlyStub(async () => {
       const { buildGenericDisclosurePromptHint } = await import(
-        "./build-generic-disclosure-prompt-hint.ts"
+        "./build-generic-disclosure-prompt-hint"
       );
       const en = buildGenericDisclosurePromptHint(true, "en");
       const es = buildGenericDisclosurePromptHint(true, "es");

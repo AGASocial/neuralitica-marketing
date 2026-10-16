@@ -96,7 +96,7 @@ describe("forbidden budget keys on generate actions", () => {
 describe("resolveLlmProviderLabel", () => {
   it("maps known provider keys without envKeyName", async () => {
     const { resolveLlmProviderLabel } = await import(
-      "../cost-policy/llm-provider-label.ts"
+      "../cost-policy/llm-provider-label"
     );
     const label = resolveLlmProviderLabel("siliconflow_deepseek_flash");
     assert.equal(label, "DeepSeek Flash");

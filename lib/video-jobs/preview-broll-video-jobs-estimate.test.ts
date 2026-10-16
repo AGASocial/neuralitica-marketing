@@ -7,7 +7,7 @@ import path from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { previewBrollVideoJobsEstimateSuccessSchema } from "../contracts/video-job.ts";
+import { previewBrollVideoJobsEstimateSuccessSchema } from "../contracts/video-job";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

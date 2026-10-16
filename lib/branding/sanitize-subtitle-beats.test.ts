@@ -7,11 +7,11 @@ import { describe, it } from "node:test";
 
 import { REEL_SCRIPT_MAX_CHARS_PER_BEAT_LINE } from "@/lib/contracts/reel-script-readability";
 
-import { resolveSubtitleBeats } from "./resolve-subtitle-beats.ts";
+import { resolveSubtitleBeats } from "./resolve-subtitle-beats";
 import {
   sanitizeOnScreenText,
   sanitizeSubtitleBeats,
-} from "./sanitize-subtitle-beats.ts";
+} from "./sanitize-subtitle-beats";
 
 describe("resolveSubtitleBeats", () => {
   it("splits on newlines, trims, drops empty, caps at 8", () => {

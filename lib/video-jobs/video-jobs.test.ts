@@ -252,7 +252,7 @@ describe("provider asset URL secret", () => {
       process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-key";
 
       const { getProviderAssetUrlSecret } = await import(
-        "../media/provider-asset-url-secret.ts"
+        "../media/provider-asset-url-secret"
       );
       assert.equal(getProviderAssetUrlSecret(), null);
     });
@@ -265,7 +265,7 @@ describe("provider asset URL secret", () => {
       process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-key";
 
       const { getProviderAssetUrlSecret } = await import(
-        "../media/provider-asset-url-secret.ts"
+        "../media/provider-asset-url-secret"
       );
       assert.equal(getProviderAssetUrlSecret(), "dedicated-secret");
     });
@@ -278,7 +278,7 @@ describe("provider asset URL secret", () => {
       process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-key";
 
       const { getProviderAssetUrlSecret } = await import(
-        "../media/provider-asset-url-secret.ts"
+        "../media/provider-asset-url-secret"
       );
       assert.equal(getProviderAssetUrlSecret(), "service-role-key");
     });

@@ -63,13 +63,13 @@ function withServerOnlyStub<T>(run: () => Promise<T>): Promise<T> {
 
 async function loadQaAgentModule() {
   return withServerOnlyStub(async () => {
-    const agent = await import("./run-reel-qa.ts");
+    const agent = await import("./run-reel-qa");
     const stub = await import(
-      "@/lib/providers/llm/stub-reel-qa-llm-adapter.ts"
+      "@/lib/providers/llm/stub-reel-qa-llm-adapter"
     );
-    const merge = await import("@/lib/qa/merge-qa-checks.ts");
+    const merge = await import("@/lib/qa/merge-qa-checks");
     const deterministic = await import(
-      "@/lib/qa/run-deterministic-qa-checks.ts"
+      "@/lib/qa/run-deterministic-qa-checks"
     );
     return { ...agent, ...stub, ...merge, ...deterministic };
   });

@@ -7,7 +7,7 @@ import { describe, it } from "node:test";
 import {
   clampCoverSeekSec,
   extractCoverFrameArgs,
-} from "./extract-cover-frame-args.ts";
+} from "./extract-cover-frame-args";
 
 const BRANDED = "/tmp/neuramark-branding/job-1/branded.mp4";
 const COVER = "/tmp/neuramark-branding/job-1/cover.jpg";

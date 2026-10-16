@@ -380,7 +380,7 @@ describe("logOut cookie replay", () => {
       process.env.SUPABASE_ANON_KEY = "test-anon-key";
       process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role";
 
-      const { logOut } = await import("./actions/log-out.ts");
+      const { logOut } = await import("./actions/log-out");
       const result = await logOut();
       assert.deepEqual(result, { ok: true, redirectTo: "/login" });
       assert.equal(refreshTokenRevoked, true);
@@ -390,7 +390,7 @@ describe("logOut cookie replay", () => {
       jar.splice(0, jar.length, ...captured.map((cookie) => ({ ...cookie })));
       assert.equal(jar[0]?.value, PRE_LOGOUT_VALUE);
 
-      const { getCurrentUser } = await import("./get-current-user.ts");
+      const { getCurrentUser } = await import("./get-current-user");
       const replayedUser = await getCurrentUser();
       assert.equal(replayedUser, null);
 

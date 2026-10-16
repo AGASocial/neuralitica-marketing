@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import Module from "node:module";
 import { describe, it } from "node:test";
 
-import { preferencesUnauthenticatedError } from "./errors.ts";
+import { preferencesUnauthenticatedError } from "./errors";
 
 const CLIENT_ID = "11111111-1111-4111-8111-111111111111";
 

@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { buildReelV1BasicArgs } from "./build-reel-v1-basic-args.ts";
+import { buildReelV1BasicArgs } from "./build-reel-v1-basic-args";
 
 const PRIMARY = "/tmp/neuramark-assembly/job-1/primary.mp4";
 const OUTPUT = "/tmp/neuramark-assembly/job-1/output.mp4";

@@ -414,7 +414,7 @@ describe("getInterviewDashboardSummary signature (IDOR)", () => {
         }
       }
       const { getInterviewDashboardSummary } = await import(
-        "./get-interview-dashboard-summary.ts"
+        "./get-interview-dashboard-summary"
       );
       assert.equal(getInterviewDashboardSummary.length, 0);
     } finally {
@@ -630,7 +630,7 @@ describe("submitInterview signature (optional empty body)", () => {
         }
       }
       const { submitInterview } = await import(
-        "./actions/submit-interview.ts"
+        "./actions/submit-interview"
       );
       assert.ok(submitInterview.length <= 1);
     } finally {
@@ -664,7 +664,7 @@ describe("getProfileStubSummary signature (IDOR)", () => {
         }
       }
       const { getProfileStubSummary } = await import(
-        "../profile/get-profile-stub-summary.ts"
+        "../profile/get-profile-stub-summary"
       );
       assert.equal(getProfileStubSummary.length, 0);
     } finally {

@@ -22,7 +22,7 @@ import {
 } from "../contracts/providers";
 import { isPublicPath } from "../auth/public-routes";
 import type { ProviderCatalogRow } from "../contracts/providers";
-import { mapProviderCatalogRows } from "./map-provider-catalog-rows.ts";
+import { mapProviderCatalogRows } from "./map-provider-catalog-rows";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../..");

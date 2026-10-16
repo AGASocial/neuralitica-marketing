@@ -35,7 +35,7 @@ const APPROVAL_ID = "11111111-2222-4333-8444-555555555555";
 describe("build-revision-context (US-11.2)", () => {
   it("wrapUntrustedChangeRequestNote wraps notes in frozen delimiters", async () => {
     const { wrapUntrustedChangeRequestNote } = await withServerOnlyStub(async () =>
-      import("@/lib/approvals/build-revision-context.ts"),
+      import("@/lib/approvals/build-revision-context"),
     );
 
     const wrapped = wrapUntrustedChangeRequestNote("Hook feels too salesy.");
@@ -49,7 +49,7 @@ describe("build-revision-context (US-11.2)", () => {
 
   it("buildRevisionContext delimits notesByTag and summary", async () => {
     const { buildRevisionContext } = await withServerOnlyStub(async () =>
-      import("@/lib/approvals/build-revision-context.ts"),
+      import("@/lib/approvals/build-revision-context"),
     );
 
     const ctx = buildRevisionContext({
@@ -85,7 +85,7 @@ describe("build-revision-context (US-11.2)", () => {
 
   it("buildRevisionContext omits empty notes and unselected tags", async () => {
     const { buildRevisionContext } = await withServerOnlyStub(async () =>
-      import("@/lib/approvals/build-revision-context.ts"),
+      import("@/lib/approvals/build-revision-context"),
     );
 
     const ctx = buildRevisionContext({
@@ -108,10 +108,10 @@ describe("build-revision-context (US-11.2)", () => {
 describe("revision-prompt-sections (US-11.2)", () => {
   it("buildRevisionPromptSectionsForScript includes script, caption, and summary blocks", async () => {
     const { buildRevisionContext } = await withServerOnlyStub(async () =>
-      import("@/lib/approvals/build-revision-context.ts"),
+      import("@/lib/approvals/build-revision-context"),
     );
     const { buildRevisionPromptSectionsForScript } = await withServerOnlyStub(
-      async () => import("./revision-prompt-sections.ts"),
+      async () => import("./revision-prompt-sections"),
     );
 
     const ctx = buildRevisionContext({
@@ -137,10 +137,10 @@ describe("revision-prompt-sections (US-11.2)", () => {
 
   it("buildRevisionPromptSectionsForCaption includes caption notes only", async () => {
     const { buildRevisionContext } = await withServerOnlyStub(async () =>
-      import("@/lib/approvals/build-revision-context.ts"),
+      import("@/lib/approvals/build-revision-context"),
     );
     const { buildRevisionPromptSectionsForCaption } = await withServerOnlyStub(
-      async () => import("./revision-prompt-sections.ts"),
+      async () => import("./revision-prompt-sections"),
     );
 
     const ctx = buildRevisionContext({

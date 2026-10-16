@@ -12,7 +12,7 @@ import {
   playbookPayloadCoreSchema,
 } from "../contracts/playbook";
 import { isPublicPath } from "../auth/public-routes";
-import { mapPlaybookPayloadToAgentDto } from "./map-playbook-row.ts";
+import { mapPlaybookPayloadToAgentDto } from "./map-playbook-row";
 
 const VALID_PAYLOAD = {
   titulo: "Tip rápido",
@@ -90,7 +90,7 @@ describe("getPlaybookForAgents module (server-only)", () => {
   it("export arity is 0 (global catalog)", async () => {
     await withServerOnlyStub(async () => {
       const { getPlaybookForAgents } = await import(
-        "./get-playbook-for-agents.ts"
+        "./get-playbook-for-agents"
       );
       assert.equal(getPlaybookForAgents.length, 0);
     });
