@@ -61,9 +61,9 @@ function withServerOnlyStub<T>(run: () => Promise<T>): Promise<T> {
 
 async function loadReelCaptionModule() {
   return withServerOnlyStub(async () => {
-    const agent = await import("./generate-reel-caption.ts");
+    const agent = await import("./generate-reel-caption");
     const stub = await import(
-      "@/lib/providers/llm/stub-reel-caption-llm-adapter.ts"
+      "@/lib/providers/llm/stub-reel-caption-llm-adapter"
     );
     return { ...agent, ...stub };
   });
@@ -133,7 +133,7 @@ const DEEPSEEK_PROVIDER: ProviderCatalogRow = {
 describe("reelCaptionAgentOutputSchema", () => {
   it("accepts 2-4 ctaVariants", async () => {
     const { reelCaptionAgentOutputSchema } = await import(
-      "@/lib/contracts/reel-caption.ts"
+      "@/lib/contracts/reel-caption"
     );
     const base = {
       caption: "Antes del primer frío, revisa estos puntos.",
@@ -158,7 +158,7 @@ describe("reelCaptionAgentOutputSchema", () => {
 
   it("rejects 1 ctaVariant", async () => {
     const { reelCaptionAgentOutputSchema } = await import(
-      "@/lib/contracts/reel-caption.ts"
+      "@/lib/contracts/reel-caption"
     );
     assert.equal(
       reelCaptionAgentOutputSchema.safeParse({
@@ -172,7 +172,7 @@ describe("reelCaptionAgentOutputSchema", () => {
 
   it("rejects 5 ctaVariants", async () => {
     const { reelCaptionAgentOutputSchema } = await import(
-      "@/lib/contracts/reel-caption.ts"
+      "@/lib/contracts/reel-caption"
     );
     assert.equal(
       reelCaptionAgentOutputSchema.safeParse({
@@ -186,7 +186,7 @@ describe("reelCaptionAgentOutputSchema", () => {
 
   it("rejects caption over 2200 chars", async () => {
     const { reelCaptionAgentOutputSchema } = await import(
-      "@/lib/contracts/reel-caption.ts"
+      "@/lib/contracts/reel-caption"
     );
     assert.equal(
       reelCaptionAgentOutputSchema.safeParse({
@@ -200,7 +200,7 @@ describe("reelCaptionAgentOutputSchema", () => {
 
   it("rejects 31 hashtags", async () => {
     const { reelCaptionAgentOutputSchema } = await import(
-      "@/lib/contracts/reel-caption.ts"
+      "@/lib/contracts/reel-caption"
     );
     assert.equal(
       reelCaptionAgentOutputSchema.safeParse({
@@ -214,7 +214,7 @@ describe("reelCaptionAgentOutputSchema", () => {
 
   it("rejects HTML in caption", async () => {
     const { reelCaptionAgentOutputSchema } = await import(
-      "@/lib/contracts/reel-caption.ts"
+      "@/lib/contracts/reel-caption"
     );
     assert.equal(
       reelCaptionAgentOutputSchema.safeParse({
@@ -228,7 +228,7 @@ describe("reelCaptionAgentOutputSchema", () => {
 
   it("rejects unknown keys via strict()", async () => {
     const { reelCaptionAgentOutputSchema } = await import(
-      "@/lib/contracts/reel-caption.ts"
+      "@/lib/contracts/reel-caption"
     );
     assert.equal(
       reelCaptionAgentOutputSchema.safeParse({
@@ -243,7 +243,7 @@ describe("reelCaptionAgentOutputSchema", () => {
 
   it("rejects 11 keywords", async () => {
     const { reelCaptionAgentOutputSchema } = await import(
-      "@/lib/contracts/reel-caption.ts"
+      "@/lib/contracts/reel-caption"
     );
     assert.equal(
       reelCaptionAgentOutputSchema.safeParse({
@@ -274,7 +274,7 @@ describe("generate-reel-caption agent module", () => {
   it("resolveProvider default selects siliconflow_deepseek_flash", async () => {
     await withServerOnlyStub(async () => {
       const { resolveProvider } = await import(
-        "@/lib/providers/provider-adapters.ts"
+        "@/lib/providers/provider-adapters"
       );
       const catalog: ProviderCatalogRow[] = [
         DEEPSEEK_PROVIDER,
@@ -339,7 +339,7 @@ describe("generate-reel-caption agent module", () => {
   it("buildReelCaptionPrompts injects delimited revision context when present", async () => {
     const { buildReelCaptionPrompts } = await loadReelCaptionModule();
     const { buildRevisionContext } = await withServerOnlyStub(async () =>
-      import("@/lib/approvals/build-revision-context.ts"),
+      import("@/lib/approvals/build-revision-context"),
     );
 
     const revisionContext = buildRevisionContext({
@@ -465,7 +465,7 @@ describe("generate-reel-caption agent module", () => {
       generateReelCaptionForScript,
     } = await loadReelCaptionModule();
     const { reelCaptionAgentOutputSchema } = await import(
-      "@/lib/contracts/reel-caption.ts"
+      "@/lib/contracts/reel-caption"
     );
 
     const stub = createStubReelCaptionLlmAdapter(DEEPSEEK_PROVIDER.key);
@@ -517,14 +517,14 @@ describe("generate-reel-caption agent module", () => {
 
 describe("reel caption contract helpers", () => {
   it("normalizeHashtag adds leading hash when missing", async () => {
-    const { normalizeHashtag } = await import("@/lib/contracts/reel-caption.ts");
+    const { normalizeHashtag } = await import("@/lib/contracts/reel-caption");
     assert.equal(normalizeHashtag("HVAC"), "#HVAC");
     assert.equal(normalizeHashtag("#HVAC"), "#HVAC");
   });
 
   it("buildReelCaptionRecord sets hashtagsOverConfiguredMax when count exceeds warn max", async () => {
     const { buildReelCaptionRecord } = await import(
-      "@/lib/contracts/reel-caption.ts"
+      "@/lib/contracts/reel-caption"
     );
     const record = buildReelCaptionRecord({
       caption: "Caption with many hashtags",

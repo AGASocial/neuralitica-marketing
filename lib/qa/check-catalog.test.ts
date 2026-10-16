@@ -9,9 +9,9 @@ import {
   QA_OVERRIDABLE_CHECK_KEYS,
   catalogSeverityForCheckKey,
   deriveQaReportStatus,
-} from "../contracts/qa-report.ts";
-import { QA_CHECK_SEVERITY } from "./check-classes.ts";
-import { GENERIC_AVATAR_NOT_OWNER_CHECK_KEY } from "../contracts/qa.ts";
+} from "../contracts/qa-report";
+import { QA_CHECK_SEVERITY } from "./check-classes";
+import { GENERIC_AVATAR_NOT_OWNER_CHECK_KEY } from "../contracts/qa";
 
 type NodeModuleLoad = {
   _load: (
@@ -42,7 +42,7 @@ function withServerOnlyStub<T>(run: () => Promise<T>): Promise<T> {
 describe("check-catalog (US-10.1)", () => {
   it("freezes V1 keys and blocking/overridable partition", async () => {
     await withServerOnlyStub(async () => {
-      const catalog = await import("./check-catalog.ts");
+      const catalog = await import("./check-catalog");
       assert.deepEqual([...catalog.QA_CHECK_KEYS], [...QA_CHECK_KEYS]);
       assert.deepEqual(
         [...catalog.QA_BLOCKING_CHECK_KEYS],
@@ -72,7 +72,7 @@ describe("check-catalog (US-10.1)", () => {
   it("maps severity from catalog only", async () => {
     await withServerOnlyStub(async () => {
       const { severityForCheckKey, QA_CHECK_SEVERITY_BY_KEY } = await import(
-        "./check-catalog.ts"
+        "./check-catalog"
       );
       for (const key of QA_CHECK_KEYS) {
         assert.equal(
@@ -101,7 +101,7 @@ describe("deterministic QA runners (US-10.1)", () => {
   it("own_avatar_consent skips when not own_avatar", async () => {
     await withServerOnlyStub(async () => {
       const { evaluateOwnAvatarConsentCheck } = await import(
-        "./checks/own-avatar-consent.ts"
+        "./checks/own-avatar-consent"
       );
       const result = evaluateOwnAvatarConsentCheck({
         modalidad: "faceless",
@@ -118,7 +118,7 @@ describe("deterministic QA runners (US-10.1)", () => {
   it("own_avatar_consent fails when consent missing", async () => {
     await withServerOnlyStub(async () => {
       const { evaluateOwnAvatarConsentCheck } = await import(
-        "./checks/own-avatar-consent.ts"
+        "./checks/own-avatar-consent"
       );
       const result = evaluateOwnAvatarConsentCheck({
         modalidad: "own_avatar",
@@ -136,7 +136,7 @@ describe("deterministic QA runners (US-10.1)", () => {
   it("own_avatar_consent passes when consent active", async () => {
     await withServerOnlyStub(async () => {
       const { evaluateOwnAvatarConsentCheck } = await import(
-        "./checks/own-avatar-consent.ts"
+        "./checks/own-avatar-consent"
       );
       const result = evaluateOwnAvatarConsentCheck({
         modalidad: "own_avatar",
@@ -153,7 +153,7 @@ describe("deterministic QA runners (US-10.1)", () => {
   it("cta_presence resolves selected → first variant → script cta", async () => {
     await withServerOnlyStub(async () => {
       const { resolveCtaUnderTest, evaluateCtaPresenceCheck } = await import(
-        "./checks/cta-presence.ts"
+        "./checks/cta-presence"
       );
 
       assert.equal(
@@ -213,7 +213,7 @@ describe("deterministic QA runners (US-10.1)", () => {
   it("runDeterministicQaChecks returns blocking generic_avatar fail", async () => {
     await withServerOnlyStub(async () => {
       const { runDeterministicQaChecks } = await import(
-        "./run-deterministic-qa-checks.ts"
+        "./run-deterministic-qa-checks"
       );
       const checks = runDeterministicQaChecks({
         modalidad: "generic_avatar",
@@ -245,7 +245,7 @@ describe("mergeQaChecks (US-10.1)", () => {
   it("overwrites LLM severity from catalog and drops unknown keys", async () => {
     await withServerOnlyStub(async () => {
       const { mergeQaChecks, applyCatalogSeverityToLlmCheck } = await import(
-        "./merge-qa-checks.ts"
+        "./merge-qa-checks"
       );
 
       const withBogus = applyCatalogSeverityToLlmCheck({
@@ -295,7 +295,7 @@ describe("mergeQaChecks (US-10.1)", () => {
 
   it("omits LLM keys when llmChecks is null (never invent pass)", async () => {
     await withServerOnlyStub(async () => {
-      const { mergeQaChecks } = await import("./merge-qa-checks.ts");
+      const { mergeQaChecks } = await import("./merge-qa-checks");
       const merged = mergeQaChecks({
         deterministic: [
           {
@@ -331,7 +331,7 @@ describe("mergeQaChecks (US-10.1)", () => {
 
   it("server-skips ai_disclosure when not required", async () => {
     await withServerOnlyStub(async () => {
-      const { mergeQaChecks } = await import("./merge-qa-checks.ts");
+      const { mergeQaChecks } = await import("./merge-qa-checks");
       const merged = mergeQaChecks({
         deterministic: [
           {

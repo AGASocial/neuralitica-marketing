@@ -10,7 +10,7 @@ import {
   computeVoiceoverTimingHash,
   computeVoProportionalBeatTimings,
   tokenizeVoiceoverWords,
-} from "./compute-vo-proportional-beat-timings.ts";
+} from "./compute-vo-proportional-beat-timings";
 
 describe("tokenizeVoiceoverWords", () => {
   it("matches US-5.2 whitespace tokenizer", () => {

@@ -17,12 +17,12 @@ import {
 } from "../contracts/avatar-consent";
 import {
   findForbiddenGrantAvatarConsentKeys,
-} from "./avatar-consent-helpers.ts";
+} from "./avatar-consent-helpers";
 import {
   grantConsentAffirmationRequiredError,
   grantConsentVersionMismatchError,
   revokeConsentNotActiveError,
-} from "./avatar-consent-errors.ts";
+} from "./avatar-consent-errors";
 
 const CLIENT_ID = "11111111-1111-4111-8111-111111111111";
 const VICTIM_ID = "00000000-0000-4000-8000-000000000099";

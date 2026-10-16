@@ -448,7 +448,7 @@ describe("aggregateReelMetricsByTema", () => {
 describe("computeStrategyMetricsWindow", () => {
   it("computes 28-day exclusive windowEnd on weekStart", async () => {
     const { computeStrategyMetricsWindow } = await import(
-      "./compute-strategy-metrics-window.ts"
+      "./compute-strategy-metrics-window"
     );
     const window = computeStrategyMetricsWindow(WEEK_START);
     assert.equal(window.windowEnd, WEEK_START);

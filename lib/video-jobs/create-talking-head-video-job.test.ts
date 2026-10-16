@@ -514,7 +514,7 @@ describe("resolveMediaAssetUrlForProvider kind seam", () => {
         }
 
         const { resolveMediaAssetUrlForProvider } = await import(
-          "../media/resolve-media-asset-url-for-provider.ts"
+          "../media/resolve-media-asset-url-for-provider"
         );
 
         await assert.rejects(

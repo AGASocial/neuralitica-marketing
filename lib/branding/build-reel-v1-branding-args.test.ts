@@ -4,8 +4,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { BUNDLED_FONT_DIR } from "./constants.ts";
-import { buildReelV1BrandingArgs } from "./build-reel-v1-branding-args.ts";
+import { BUNDLED_FONT_DIR } from "./constants";
+import { buildReelV1BrandingArgs } from "./build-reel-v1-branding-args";
 
 const BASE = "/tmp/neuramark-branding/job-1/base.mp4";
 const BRANDED = "/tmp/neuramark-branding/job-1/branded.mp4";

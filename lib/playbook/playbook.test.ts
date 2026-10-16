@@ -19,7 +19,7 @@ import { isPublicPath } from "../auth/public-routes";
 import {
   mapPlaybookPayloadToAgentDto,
   type PlaybookSelectRow,
-} from "./map-playbook-row.ts";
+} from "./map-playbook-row";
 
 const OPERATOR_ID = "22222222-2222-4222-8222-222222222222";
 
