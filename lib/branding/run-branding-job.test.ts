@@ -68,15 +68,28 @@ function loadBrandingModule<T = Record<string, unknown>>(
   return require(relativePath) as T;
 }
 
+type BrandingJobConfigReadersModule =
+  typeof import("./branding-job-config-readers");
+type EnqueueBrandingJobModule = typeof import("./enqueue-branding-job");
+type RunBrandingJobModule = typeof import("./run-branding-job");
+type RunFfmpegModule = typeof import("../assembly/run-ffmpeg");
+
 describe("readBrandingJobPollMode", () => {
   it("inherits assembly poll mode when unset", () => {
-    const { readBrandingJobPollMode } = loadBrandingModule<{
-      readBrandingJobPollMode: Function;
-    }>("./branding-job-config-readers.ts");
+    const { readBrandingJobPollMode } =
+      loadBrandingModule<BrandingJobConfigReadersModule>(
+        "./branding-job-config-readers.ts",
+      );
 
-    assert.equal(readBrandingJobPollMode({}, "development"), "in_process");
     assert.equal(
-      readBrandingJobPollMode({ BRANDING_JOB_POLL_MODE: "fly" }),
+      readBrandingJobPollMode({ NODE_ENV: "test" }, "development"),
+      "in_process",
+    );
+    assert.equal(
+      readBrandingJobPollMode({
+        NODE_ENV: "test",
+        BRANDING_JOB_POLL_MODE: "fly",
+      }),
       "fly",
     );
   });
@@ -91,9 +104,9 @@ describe("enqueueBrandingJob dev seam", () => {
   it("no-ops when fly mode", () => {
     withServerOnlyStub(() => {
       process.env.BRANDING_JOB_POLL_MODE = "fly";
-      const { enqueueBrandingJob } = loadBrandingModule<{
-        enqueueBrandingJob: (id: string) => void;
-      }>("./enqueue-branding-job.ts");
+      const { enqueueBrandingJob } = loadBrandingModule<EnqueueBrandingJobModule>(
+        "./enqueue-branding-job.ts",
+      );
 
       assert.doesNotThrow(() => enqueueBrandingJob(JOB_ID));
     });
@@ -117,10 +130,7 @@ describe("runBrandingJob mocked pipeline", () => {
       async ({ updates }) => {
         let ffmpegCalled = false;
         const { runBrandingJob, BRANDING_FAILURE_TENANCY_MISMATCH } =
-          loadBrandingModule<{
-            runBrandingJob: Function;
-            BRANDING_FAILURE_TENANCY_MISMATCH: string;
-          }>("./run-branding-job.ts");
+          loadBrandingModule<RunBrandingJobModule>("./run-branding-job.ts");
 
         await runBrandingJob(JOB_ID, {
           runFfmpeg: async () => {
@@ -169,7 +179,7 @@ describe("runBrandingJob mocked pipeline", () => {
         storage,
       },
       async ({ updates, spawnCalls }) => {
-        const { runBrandingJob } = loadBrandingModule<{ runBrandingJob: Function }>(
+        const { runBrandingJob } = loadBrandingModule<RunBrandingJobModule>(
           "./run-branding-job.ts",
         );
 
@@ -235,10 +245,7 @@ describe("runBrandingJob mocked pipeline", () => {
       async ({ updates }) => {
         let ffmpegCalled = false;
         const { runBrandingJob, BRANDING_FAILURE_VOICEOVER_TIMING_HASH } =
-          loadBrandingModule<{
-            runBrandingJob: Function;
-            BRANDING_FAILURE_VOICEOVER_TIMING_HASH: string;
-          }>("./run-branding-job.ts");
+          loadBrandingModule<RunBrandingJobModule>("./run-branding-job.ts");
 
         await runBrandingJob(JOB_ID, {
           runFfmpeg: async () => {
@@ -298,9 +305,9 @@ describe("runBrandingJob mocked pipeline", () => {
       },
       async ({ updates }) => {
         let ffmpegCalled = false;
-        const { runBrandingJob } = loadBrandingModule<{
-          runBrandingJob: Function;
-        }>("./run-branding-job.ts");
+        const { runBrandingJob } = loadBrandingModule<RunBrandingJobModule>(
+          "./run-branding-job.ts",
+        );
 
         await runBrandingJob(JOB_ID, {
           runFfmpeg: async (args: string[]) => {
@@ -367,9 +374,9 @@ describe("runBrandingJob mocked pipeline", () => {
       },
       async ({ updates }) => {
         let ffmpegCalled = false;
-        const { runBrandingJob } = loadBrandingModule<{
-          runBrandingJob: Function;
-        }>("./run-branding-job.ts");
+        const { runBrandingJob } = loadBrandingModule<RunBrandingJobModule>(
+          "./run-branding-job.ts",
+        );
 
         await runBrandingJob(JOB_ID, {
           runFfmpeg: async (args: string[]) => {
@@ -411,7 +418,7 @@ describe("runBrandingJob mocked pipeline", () => {
       },
       async ({ updates }) => {
         let ffmpegCalled = false;
-        const { runBrandingJob } = loadBrandingModule<{ runBrandingJob: Function }>(
+        const { runBrandingJob } = loadBrandingModule<RunBrandingJobModule>(
           "./run-branding-job.ts",
         );
 
@@ -447,7 +454,7 @@ describe("runBrandingJob mocked pipeline", () => {
       },
       async ({ updates }) => {
         let ffmpegCalled = false;
-        const { runBrandingJob } = loadBrandingModule<{ runBrandingJob: Function }>(
+        const { runBrandingJob } = loadBrandingModule<RunBrandingJobModule>(
           "./run-branding-job.ts",
         );
 
@@ -496,10 +503,8 @@ describe("runBrandingJob mocked pipeline", () => {
       },
       async ({ updates }) => {
         let ffmpegCalled = false;
-        const { runBrandingJob, BRANDING_FAILURE_CONFIG } = loadBrandingModule<{
-          runBrandingJob: Function;
-          BRANDING_FAILURE_CONFIG: string;
-        }>("./run-branding-job.ts");
+        const { runBrandingJob, BRANDING_FAILURE_CONFIG } =
+          loadBrandingModule<RunBrandingJobModule>("./run-branding-job.ts");
 
         await runBrandingJob(JOB_ID, {
           runFfmpeg: async () => {
@@ -539,7 +544,7 @@ describe("runFfmpeg spawn contract (branding reuses assembly runner)", () => {
         } as ReturnType<typeof spawn>;
       };
 
-      const { runFfmpeg } = loadBrandingModule<{ runFfmpeg: Function }>(
+      const { runFfmpeg } = loadBrandingModule<RunFfmpegModule>(
         "../assembly/run-ffmpeg.ts",
       );
 
