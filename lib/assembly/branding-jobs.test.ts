@@ -51,6 +51,11 @@ function loadBrandingModule<T = Record<string, unknown>>(relativePath: string): 
   return require(relativePath) as T;
 }
 
+type CreateBrandingJobForAssemblyModule =
+  typeof import("@/lib/assembly/create-branding-job-for-assembly");
+type MapOperatorAssemblyJobDtoModule =
+  typeof import("@/lib/assembly/map-operator-assembly-job-dto");
+
 describe("computeBrandingFingerprint", () => {
   it("returns stable 64-char hex", () => {
     const config = {
@@ -178,9 +183,10 @@ describe("applyBrandingForAssembly security", () => {
       };
 
       try {
-        const { applyBrandingForAssemblyInner } = loadBrandingModule(
-          "@/lib/assembly/create-branding-job-for-assembly",
-        );
+        const { applyBrandingForAssemblyInner } =
+          loadBrandingModule<CreateBrandingJobForAssemblyModule>(
+            "@/lib/assembly/create-branding-job-for-assembly",
+          );
         const result = await applyBrandingForAssemblyInner({
           assemblyJobId: JOB_ID,
         });
@@ -196,9 +202,10 @@ describe("applyBrandingForAssembly security", () => {
 
   it("returns FORBIDDEN_FIELDS for voiceoverText", async () => {
     await withServerOnlyStub(async () => {
-      const { applyBrandingForAssemblyInner } = loadBrandingModule(
-        "@/lib/assembly/create-branding-job-for-assembly",
-      );
+      const { applyBrandingForAssemblyInner } =
+        loadBrandingModule<CreateBrandingJobForAssemblyModule>(
+          "@/lib/assembly/create-branding-job-for-assembly",
+        );
       const result = await applyBrandingForAssemblyInner({
         assemblyJobId: JOB_ID,
         voiceoverText: "inject",
@@ -212,9 +219,10 @@ describe("applyBrandingForAssembly security", () => {
 
   it("returns VALIDATION_ERROR for coverFrameSec out of range", async () => {
     await withServerOnlyStub(async () => {
-      const { applyBrandingForAssemblyInner } = loadBrandingModule(
-        "@/lib/assembly/create-branding-job-for-assembly",
-      );
+      const { applyBrandingForAssemblyInner } =
+        loadBrandingModule<CreateBrandingJobForAssemblyModule>(
+          "@/lib/assembly/create-branding-job-for-assembly",
+        );
       for (const coverFrameSec of [-1, 46, "1;rm"] as const) {
         const result = await applyBrandingForAssemblyInner({
           assemblyJobId: JOB_ID,
@@ -260,9 +268,10 @@ describe("mapOperatorAssemblyJobDto branding flags", () => {
       };
 
       try {
-        const { mapOperatorAssemblyJobDto } = loadBrandingModule(
-          "@/lib/assembly/map-operator-assembly-job-dto",
-        );
+        const { mapOperatorAssemblyJobDto } =
+          loadBrandingModule<MapOperatorAssemblyJobDtoModule>(
+            "@/lib/assembly/map-operator-assembly-job-dto",
+          );
         const dto = await mapOperatorAssemblyJobDto(
           {
             id: JOB_ID,
@@ -283,6 +292,8 @@ describe("mapOperatorAssemblyJobDto branding flags", () => {
             brandingFingerprint: null,
             preBrandingOutputMediaAssetId: null,
             coverMediaAssetId: null,
+            brollAssetIds: [],
+            assemblyPathTag: "primary",
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           },

@@ -1000,7 +1000,7 @@ describe("reel script mutations (US-5.1)", () => {
     });
     try {
       clearReelScriptModuleCache();
-      const { getReelScriptsForWeek } = require("./actions/get-reel-scripts-for-week.ts");
+      const { getReelScriptsForWeek } = require("./actions/get-reel-scripts-for-week.ts") as typeof import("./actions/get-reel-scripts-for-week");
       const result = await getReelScriptsForWeek({ weekStart: WEEK_START });
       assert.equal(result.ok, true);
       if (result.ok) {
@@ -1438,11 +1438,29 @@ describe("reel script agent (US-5.1)", () => {
   it("batch without override aborts on budget block with zero LLM calls (US-7.1)", async () => {
     let llmCalls = 0;
     const restore = installReelScriptMocks({
-      resolveReelScriptBudgetContext: async (params: { slotIndex: number }) => ({
-        reelScriptId: `11111111-1111-4111-8111-11111111111${params.slotIndex}`,
-        persisted: false,
-      }),
-      assertReelBudgetAllowsSpend: async (input: { reelScriptId: string }) => {
+      resolveReelScriptBudgetContext: async (params: unknown) => {
+        if (
+          typeof params !== "object" ||
+          params === null ||
+          !("slotIndex" in params) ||
+          typeof params.slotIndex !== "number"
+        ) {
+          throw new Error("slotIndex required");
+        }
+        return {
+          reelScriptId: `11111111-1111-4111-8111-11111111111${params.slotIndex}`,
+          persisted: false,
+        };
+      },
+      assertReelBudgetAllowsSpend: async (input: unknown) => {
+        if (
+          typeof input !== "object" ||
+          input === null ||
+          !("reelScriptId" in input) ||
+          typeof input.reelScriptId !== "string"
+        ) {
+          throw new Error("reelScriptId required");
+        }
         if (input.reelScriptId.endsWith("1")) {
           return { ok: false, code: "BUDGET_EXCEEDED" };
         }

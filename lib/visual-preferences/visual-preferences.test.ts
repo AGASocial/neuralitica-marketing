@@ -21,7 +21,7 @@ import {
   preferencesPayloadTooLargeError,
   preferencesUnauthenticatedError,
   preferencesValidationError,
-} from "./errors.ts";
+} from "./errors";
 import {
   buildVisualPreferencesUpsertPayload,
   deriveVisualPreferencesRules,
@@ -31,7 +31,7 @@ import {
   mapVisualPreferencesRow,
   resolveVisualPreferencesRules,
   zodPreferencesErrorToFieldErrors,
-} from "./helpers.ts";
+} from "./helpers";
 
 const CLIENT_ID = "11111111-1111-4111-8111-111111111111";
 
@@ -535,7 +535,7 @@ describe("hasActiveAvatarConsent fail-closed", () => {
       delete process.env.SUPABASE_SECRET_KEY;
       clearVisualPrefsModuleCache();
       const { hasActiveAvatarConsent } = await import(
-        "./has-active-avatar-consent.ts"
+        "./has-active-avatar-consent"
       );
       assert.equal(await hasActiveAvatarConsent(CLIENT_ID), false);
     } finally {
@@ -601,7 +601,7 @@ describe("hasActiveAvatarConsent fail-closed", () => {
     try {
       clearVisualPrefsModuleCache();
       const { hasActiveAvatarConsent } = await import(
-        "./has-active-avatar-consent.ts"
+        "./has-active-avatar-consent"
       );
       assert.equal(await hasActiveAvatarConsent(CLIENT_ID), false);
     } finally {

@@ -7,7 +7,7 @@ import { describe, it } from "node:test";
 import {
   buildBrollConcatArgs,
   formatBrollConcatListContents,
-} from "./build-broll-concat-args.ts";
+} from "./build-broll-concat-args";
 
 const TEMP = "/tmp/neuramark-assembly/job-b";
 const CONCAT = `${TEMP}/concat.txt`;

@@ -2,7 +2,9 @@
  * US-9.1 assembly worker — mocked ffmpeg spawn and runAssemblyJob.
  */
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { ChildProcess, spawn } from "node:child_process";
+import { createHash } from "node:crypto";
+import { PassThrough } from "node:stream";
 import { writeFile } from "node:fs/promises";
 import Module from "node:module";
 import { afterEach, describe, it } from "node:test";
@@ -61,6 +63,21 @@ function loadAssemblyModule<T = Record<string, unknown>>(
   return require(relativePath) as T;
 }
 
+type RunFfmpegModule = typeof import("./run-ffmpeg");
+type AssemblyJobConfigReadersModule =
+  typeof import("./assembly-job-config-readers");
+type EnqueueAssemblyJobModule = typeof import("./enqueue-assembly-job");
+type RunAssemblyJobModule = typeof import("./run-assembly-job");
+
+function ffmpegChildThatCloses(code: number): ChildProcess {
+  const child = new ChildProcess();
+  child.stderr = new PassThrough();
+  queueMicrotask(() => {
+    child.emit("close", code);
+  });
+  return child;
+}
+
 describe("runFfmpeg spawn contract", () => {
   it("invokes spawn with args array and shell false", async () => {
     await withServerOnlyStub(async () => {
@@ -69,21 +86,14 @@ describe("runFfmpeg spawn contract", () => {
 
       const fakeSpawn = (
         cmd: string,
-        args: readonly string[],
-        options: { shell?: boolean },
+        args: readonly string[] | undefined,
+        options: { shell?: boolean | string } | undefined,
       ) => {
-        calls.push({ cmd, args: [...args], options });
-        return {
-          stderr: { on: () => undefined },
-          on: (event: string, cb: (code: number) => void) => {
-            if (event === "close") {
-              cb(0);
-            }
-          },
-        } as ReturnType<typeof spawn>;
+        calls.push({ cmd, args: [...(args ?? [])], options });
+        return ffmpegChildThatCloses(0);
       };
 
-      const { runFfmpeg } = loadAssemblyModule<{ runFfmpeg: Function }>(
+      const { runFfmpeg } = loadAssemblyModule<RunFfmpegModule>(
         "./run-ffmpeg.ts",
       );
 
@@ -108,12 +118,22 @@ describe("runFfmpeg spawn contract", () => {
 
 describe("readAssemblyJobPollMode", () => {
   it("defaults to in_process outside production", () => {
-    const { readAssemblyJobPollMode } = loadAssemblyModule<{
-      readAssemblyJobPollMode: Function;
-    }>("./assembly-job-config-readers.ts");
+    const { readAssemblyJobPollMode } =
+      loadAssemblyModule<AssemblyJobConfigReadersModule>(
+        "./assembly-job-config-readers.ts",
+      );
 
-    assert.equal(readAssemblyJobPollMode({}, "development"), "in_process");
-    assert.equal(readAssemblyJobPollMode({ ASSEMBLY_JOB_POLL_MODE: "fly" }), "fly");
+    assert.equal(
+      readAssemblyJobPollMode({ NODE_ENV: "test" }, "development"),
+      "in_process",
+    );
+    assert.equal(
+      readAssemblyJobPollMode({
+        NODE_ENV: "test",
+        ASSEMBLY_JOB_POLL_MODE: "fly",
+      }),
+      "fly",
+    );
   });
 });
 
@@ -125,12 +145,13 @@ describe("enqueueAssemblyJob dev seam", () => {
   it("no-ops when fly mode", () => {
     withServerOnlyStub(() => {
       process.env.ASSEMBLY_JOB_POLL_MODE = "fly";
-      const { readAssemblyJobPollMode } = loadAssemblyModule<{
-        readAssemblyJobPollMode: Function;
-      }>("./assembly-job-config-readers.ts");
-      const { enqueueAssemblyJob } = loadAssemblyModule<{
-        enqueueAssemblyJob: (id: string) => void;
-      }>("./enqueue-assembly-job.ts");
+      const { readAssemblyJobPollMode } =
+        loadAssemblyModule<AssemblyJobConfigReadersModule>(
+          "./assembly-job-config-readers.ts",
+        );
+      const { enqueueAssemblyJob } = loadAssemblyModule<EnqueueAssemblyJobModule>(
+        "./enqueue-assembly-job.ts",
+      );
 
       assert.equal(readAssemblyJobPollMode(process.env), "fly");
       assert.doesNotThrow(() => enqueueAssemblyJob(JOB_ID));
@@ -159,10 +180,7 @@ describe("runAssemblyJob mocked pipeline", () => {
       async ({ updates }) => {
         let ffmpegCalled = false;
         const { runAssemblyJob, ASSEMBLY_FAILURE_TENANCY_MISMATCH } =
-          loadAssemblyModule<{
-            runAssemblyJob: Function;
-            ASSEMBLY_FAILURE_TENANCY_MISMATCH: string;
-          }>("./run-assembly-job.ts");
+          loadAssemblyModule<RunAssemblyJobModule>("./run-assembly-job.ts");
 
         await runAssemblyJob(JOB_ID, {
           runFfmpeg: async () => {
@@ -209,14 +227,14 @@ describe("runAssemblyJob mocked pipeline", () => {
         storage,
       },
       async ({ updates }) => {
-        let spawnArgs: string[] | null = null;
-        const { runAssemblyJob } = loadAssemblyModule<{ runAssemblyJob: Function }>(
+        const spawnCapture: { args: string[] | null } = { args: null };
+        const { runAssemblyJob } = loadAssemblyModule<RunAssemblyJobModule>(
           "./run-assembly-job.ts",
         );
 
         await runAssemblyJob(JOB_ID, {
           runFfmpeg: async (args: string[]) => {
-            spawnArgs = args;
+            spawnCapture.args = args;
             const outputPath = args.at(-1);
             if (typeof outputPath === "string") {
               await writeFile(outputPath, Buffer.from("fake-output-mp4"));
@@ -231,9 +249,10 @@ describe("runAssemblyJob mocked pipeline", () => {
           },
         });
 
-        assert.ok(Array.isArray(spawnArgs));
-        assert.equal(spawnArgs?.[0], "-y");
-        assert.ok(spawnArgs?.includes("0:a:0?"));
+        const spawnArgs = spawnCapture.args;
+        assert.ok(spawnArgs);
+        assert.equal(spawnArgs[0], "-y");
+        assert.ok(spawnArgs.includes("0:a:0?"));
 
         const completed = updates.find((u) => u.status === "completed");
         assert.ok(completed);
@@ -258,7 +277,7 @@ describe("runAssemblyJob mocked pipeline", () => {
       },
       async ({ updates }) => {
         let ffmpegCalled = false;
-        const { runAssemblyJob } = loadAssemblyModule<{ runAssemblyJob: Function }>(
+        const { runAssemblyJob } = loadAssemblyModule<RunAssemblyJobModule>(
           "./run-assembly-job.ts",
         );
 
@@ -291,7 +310,7 @@ describe("runAssemblyJob mocked pipeline", () => {
       },
       async ({ updates }) => {
         let ffmpegCalled = false;
-        const { runAssemblyJob } = loadAssemblyModule<{ runAssemblyJob: Function }>(
+        const { runAssemblyJob } = loadAssemblyModule<RunAssemblyJobModule>(
           "./run-assembly-job.ts",
         );
 
@@ -310,7 +329,6 @@ describe("runAssemblyJob mocked pipeline", () => {
 });
 
 function primaryPathFingerprint() {
-  const { createHash } = require("node:crypto");
   const payload = `${PRIMARY_ASSET_ID}||reel_v1_basic||primary`;
   return createHash("sha256").update(payload).digest("hex");
 }
@@ -336,6 +354,27 @@ function baseJobRow(overrides: Record<string, unknown> = {}) {
     updated_at: "2026-08-30T12:00:00.000Z",
     ...overrides,
   };
+}
+
+/**
+ * These fixtures never link a weekly-cycle step run. The post-failure resume
+ * lookup must observe that and return, the same as production with no row.
+ */
+type UnlinkedStepRunQuery = {
+  select: () => UnlinkedStepRunQuery;
+  eq: () => UnlinkedStepRunQuery;
+  in: () => UnlinkedStepRunQuery;
+  maybeSingle: () => Promise<{ data: null; error: null }>;
+};
+
+function unlinkedWeeklyCycleStepRunQuery(): UnlinkedStepRunQuery {
+  const query: UnlinkedStepRunQuery = {
+    select: () => query,
+    eq: () => query,
+    in: () => query,
+    maybeSingle: async () => ({ data: null, error: null }),
+  };
+  return query;
 }
 
 async function withAssemblyMocks(
@@ -372,6 +411,9 @@ async function withAssemblyMocks(
             }
             if (table === "neuramark_media_assets") {
               return createMediaAssetsQuery(options);
+            }
+            if (table === "neuramark_weekly_cycle_step_runs") {
+              return unlinkedWeeklyCycleStepRunQuery();
             }
             throw new Error(`Unexpected table ${table}`);
           },

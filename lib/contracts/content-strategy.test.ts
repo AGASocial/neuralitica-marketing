@@ -6,7 +6,7 @@ import {
   contentStrategyBriefSchema,
   validateBriefAgainstAllowlists,
   type ContentStrategyBrief,
-} from "./content-strategy.ts";
+} from "./content-strategy";
 
 const VALID_BRIEF: ContentStrategyBrief = {
   pillars: ["Confianza local", "Educación práctica"],

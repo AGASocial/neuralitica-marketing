@@ -57,10 +57,10 @@ function withServerOnlyStub<T>(run: () => Promise<T>): Promise<T> {
 
 async function loadStrategyModule() {
   return withServerOnlyStub(async () => {
-    const strategy = await import("./generate-weekly-strategy.ts");
-    const stub = await import("@/lib/providers/llm/stub-llm-adapter.ts");
+    const strategy = await import("./generate-weekly-strategy");
+    const stub = await import("@/lib/providers/llm/stub-llm-adapter");
     const allowlists = await import(
-      "@/lib/content-strategy/validate-brief-against-allowlists.ts"
+      "@/lib/content-strategy/validate-brief-against-allowlists"
     );
     return { ...strategy, ...stub, ...allowlists };
   });
@@ -432,10 +432,10 @@ describe("generate-weekly-strategy agent module", () => {
       generateWeeklyContentStrategy,
     } = await loadStrategyModule();
     const { contentStrategyBriefSchema } = await import(
-      "@/lib/contracts/content-strategy.ts"
+      "@/lib/contracts/content-strategy"
     );
     const { validateBriefAgainstAllowlists } = await import(
-      "@/lib/contracts/content-strategy.ts"
+      "@/lib/contracts/content-strategy"
     );
     const stub = createStubLlmAdapter(PROVIDER.key);
     const rawBrief = await generateWeeklyContentStrategy({

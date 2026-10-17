@@ -462,7 +462,6 @@ export function OperatorAssemblyPanel({
 
     const jobId = job.jobId;
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
 
     async function pollOnce() {
       if (cancelled) {
@@ -499,15 +498,13 @@ export function OperatorAssemblyPanel({
     }
 
     void pollOnce();
-    timer = setInterval(() => {
+    const timer = setInterval(() => {
       void pollOnce();
     }, ASSEMBLY_JOB_POLL_INTERVAL_MS_DEFAULT);
 
     return () => {
       cancelled = true;
-      if (timer) {
-        clearInterval(timer);
-      }
+      clearInterval(timer);
     };
   }, [job?.jobId, job?.status, job?.brandingStatus, shouldPoll]);
 

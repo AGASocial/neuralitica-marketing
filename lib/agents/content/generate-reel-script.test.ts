@@ -58,14 +58,16 @@ function withServerOnlyStub<T>(run: () => Promise<T>): Promise<T> {
 
 async function loadReelScriptModule() {
   return withServerOnlyStub(async () => {
-    const agent = await import("./generate-reel-script.ts");
-    const stub = await import("@/lib/providers/llm/stub-reel-script-llm-adapter.ts");
+    const agent = await import("./generate-reel-script");
+    const stub = await import("@/lib/providers/llm/stub-reel-script-llm-adapter");
     return { ...agent, ...stub };
   });
 }
 
 const CLIENT_ID = "11111111-1111-4111-8111-111111111111";
 const WEEK_START = "2026-01-05";
+
+const preferredLocaleField = { preferredLocale: "es" as const };
 
 const PROFILE: BusinessProfileForAgentsView = {
   exists: true,
@@ -75,7 +77,11 @@ const PROFILE: BusinessProfileForAgentsView = {
     services: { items: ["Plomería residencial"] },
     zone: { description: "Austin TX" },
     tone: { description: "Experto cercano" },
-    preferredLocale: "es",
+    offers: { items: ["Estimado gratis"] },
+    objections: { items: ["Precio"] },
+    style: { description: "Antes/después limpio" },
+    restrictions: { items: [] },
+    ...preferredLocaleField,
   },
   visualModeSummary: {
     allowedModes: ["faceless", "generic_avatar"],
@@ -152,7 +158,7 @@ const QWEN_PROVIDER: ProviderCatalogRow = {
 describe("reelScriptPackageSchema", () => {
   it("accepts full package with optional beats and notes", async () => {
     const { reelScriptPackageSchema } = await import(
-      "@/lib/contracts/reel-script.ts"
+      "@/lib/contracts/reel-script"
     );
     const result = reelScriptPackageSchema.safeParse({
       hook: "¿Tu calefacción falla?",
@@ -170,7 +176,7 @@ describe("reelScriptPackageSchema", () => {
 
   it("rejects targetDurationSec outside 15-45", async () => {
     const { reelScriptPackageSchema } = await import(
-      "@/lib/contracts/reel-script.ts"
+      "@/lib/contracts/reel-script"
     );
     assert.equal(
       reelScriptPackageSchema.safeParse({
@@ -198,7 +204,7 @@ describe("reelScriptPackageSchema", () => {
 
   it("rejects empty hook, body, or cta", async () => {
     const { reelScriptPackageSchema } = await import(
-      "@/lib/contracts/reel-script.ts"
+      "@/lib/contracts/reel-script"
     );
     const base = {
       hook: "Hook",
@@ -224,7 +230,7 @@ describe("reelScriptPackageSchema", () => {
 
   it("rejects unknown keys via strict()", async () => {
     const { reelScriptPackageSchema } = await import(
-      "@/lib/contracts/reel-script.ts"
+      "@/lib/contracts/reel-script"
     );
     assert.equal(
       reelScriptPackageSchema.safeParse({
@@ -242,7 +248,7 @@ describe("reelScriptPackageSchema", () => {
 
   it("rejects more than 8 brollBeats", async () => {
     const { reelScriptPackageSchema } = await import(
-      "@/lib/contracts/reel-script.ts"
+      "@/lib/contracts/reel-script"
     );
     assert.equal(
       reelScriptPackageSchema.safeParse({
@@ -278,7 +284,7 @@ describe("generate-reel-script agent module", () => {
   it("resolveProvider fallback selects siliconflow_qwen", async () => {
     await withServerOnlyStub(async () => {
       const { resolveProvider } = await import(
-        "@/lib/providers/provider-adapters.ts"
+        "@/lib/providers/provider-adapters"
       );
       const catalog: ProviderCatalogRow[] = [
         {
@@ -349,7 +355,7 @@ describe("generate-reel-script agent module", () => {
       resolveReelScriptSlotContext,
     } = await loadReelScriptModule();
     const { buildRevisionContext } = await withServerOnlyStub(async () =>
-      import("@/lib/approvals/build-revision-context.ts"),
+      import("@/lib/approvals/build-revision-context"),
     );
 
     const slotContext = resolveReelScriptSlotContext({
@@ -523,7 +529,7 @@ describe("generate-reel-script agent module", () => {
       resolveReelScriptSlotContext,
     } = await loadReelScriptModule();
     const { reelScriptPackageSchema } = await import(
-      "@/lib/contracts/reel-script.ts"
+      "@/lib/contracts/reel-script"
     );
 
     const slotContext = resolveReelScriptSlotContext({

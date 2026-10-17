@@ -23,14 +23,14 @@ import {
   profileNotFoundError,
   profileUnauthenticatedError,
   profileValidationError,
-} from "./errors.ts";
+} from "./errors";
 import {
   buildBusinessProfileUpdatePayload,
   findForbiddenUpdateBusinessProfileKeys,
   isProfileFieldsPayloadTooLarge,
   mapUpdateBusinessProfileResult,
   profileFieldsUtf8ByteLength,
-} from "./update-helpers.ts";
+} from "./update-helpers";
 
 const COMPLETE_FIELDS = {
   services: { items: ["Web design", "Brand kits"] },
@@ -307,7 +307,7 @@ describe("updateBusinessProfile signature (IDOR / auth arity)", () => {
     try {
       clearUpdateModuleCache();
       const { updateBusinessProfile } = await import(
-        "./update-business-profile.ts"
+        "./update-business-profile"
       );
       assert.equal(updateBusinessProfile.length, 1);
     } finally {

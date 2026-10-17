@@ -6,7 +6,7 @@ import {
   WEEKLY_CYCLE_STEP_KEYS,
   weeklyCycleCronHttpResponseSchema,
   weeklyCycleStepPlanSchema,
-} from "./weekly-cycle.ts";
+} from "./weekly-cycle";
 
 const clientId = "11111111-1111-4111-8111-111111111111";
 const runId = "22222222-2222-4222-8222-222222222222";

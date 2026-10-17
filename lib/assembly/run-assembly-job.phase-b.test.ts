@@ -63,6 +63,8 @@ function loadAssemblyModule<T = Record<string, unknown>>(
   return require(relativePath) as T;
 }
 
+type RunAssemblyJobModule = typeof import("./run-assembly-job");
+
 describe("runAssemblyJob Phase B", () => {
   afterEach(() => {
     delete process.env.NEURAMARK_ASSEMBLY_DURATION_TOLERANCE_SEC;
@@ -124,14 +126,14 @@ describe("runAssemblyJob Phase B", () => {
         coldOpenNotes: "2",
       },
       async ({ updates }) => {
-        let spawnArgs: string[] | null = null;
-        const { runAssemblyJob } = loadAssemblyModule<{
-          runAssemblyJob: Function;
-        }>("./run-assembly-job.ts");
+        const spawnCapture: { args: string[] | null } = { args: null };
+        const { runAssemblyJob } = loadAssemblyModule<RunAssemblyJobModule>(
+          "./run-assembly-job.ts",
+        );
 
         await runAssemblyJob(JOB_ID, {
           runFfmpeg: async (args: string[]) => {
-            spawnArgs = args;
+            spawnCapture.args = args;
             const outputPath = args.at(-1);
             if (typeof outputPath === "string") {
               await writeFile(outputPath, Buffer.from("fake-output-mp4"));
@@ -146,13 +148,14 @@ describe("runAssemblyJob Phase B", () => {
           },
         });
 
-        assert.ok(Array.isArray(spawnArgs));
-        assert.equal(spawnArgs?.[0], "-y");
-        assert.ok(spawnArgs?.includes("concat"));
-        assert.ok(spawnArgs?.includes("-ss"));
-        assert.ok(spawnArgs?.includes("2"));
-        assert.ok(spawnArgs?.includes("1:a:0"));
-        assert.ok(!spawnArgs?.some((a) => a.includes("http")));
+        const spawnArgs = spawnCapture.args;
+        assert.ok(spawnArgs);
+        assert.equal(spawnArgs[0], "-y");
+        assert.ok(spawnArgs.includes("concat"));
+        assert.ok(spawnArgs.includes("-ss"));
+        assert.ok(spawnArgs.includes("2"));
+        assert.ok(spawnArgs.includes("1:a:0"));
+        assert.ok(!spawnArgs.some((a) => a.includes("http")));
 
         const completed = updates.find((u) => u.status === "completed");
         assert.ok(completed);
@@ -198,10 +201,7 @@ describe("runAssemblyJob Phase B", () => {
       async ({ updates }) => {
         let ffmpegCalled = false;
         const { runAssemblyJob, ASSEMBLY_FAILURE_TENANCY_MISMATCH } =
-          loadAssemblyModule<{
-            runAssemblyJob: Function;
-            ASSEMBLY_FAILURE_TENANCY_MISMATCH: string;
-          }>("./run-assembly-job.ts");
+          loadAssemblyModule<RunAssemblyJobModule>("./run-assembly-job.ts");
 
         await runAssemblyJob(JOB_ID, {
           runFfmpeg: async () => {
@@ -258,14 +258,14 @@ describe("runAssemblyJob Phase B", () => {
         storage,
       },
       async () => {
-        let spawnArgs: string[] | null = null;
-        const { runAssemblyJob } = loadAssemblyModule<{
-          runAssemblyJob: Function;
-        }>("./run-assembly-job.ts");
+        const spawnCapture: { args: string[] | null } = { args: null };
+        const { runAssemblyJob } = loadAssemblyModule<RunAssemblyJobModule>(
+          "./run-assembly-job.ts",
+        );
 
         await runAssemblyJob(JOB_ID, {
           runFfmpeg: async (args: string[]) => {
-            spawnArgs = args;
+            spawnCapture.args = args;
             const outputPath = args.at(-1);
             if (typeof outputPath === "string") {
               await writeFile(outputPath, Buffer.from("out"));
@@ -278,9 +278,10 @@ describe("runAssemblyJob Phase B", () => {
           }),
         });
 
+        const spawnArgs = spawnCapture.args;
         assert.ok(spawnArgs);
-        assert.ok(!spawnArgs?.includes("concat"));
-        assert.ok(spawnArgs?.includes("0:a:0?"));
+        assert.ok(!spawnArgs.includes("concat"));
+        assert.ok(spawnArgs.includes("0:a:0?"));
       },
     );
   });
@@ -312,6 +313,27 @@ function baseJobRow(overrides: Record<string, unknown> = {}) {
     updated_at: "2026-08-30T12:00:00.000Z",
     ...overrides,
   };
+}
+
+/**
+ * These fixtures never link a weekly-cycle step run. The post-failure resume
+ * lookup must observe that and return, the same as production with no row.
+ */
+type UnlinkedStepRunQuery = {
+  select: () => UnlinkedStepRunQuery;
+  eq: () => UnlinkedStepRunQuery;
+  in: () => UnlinkedStepRunQuery;
+  maybeSingle: () => Promise<{ data: null; error: null }>;
+};
+
+function unlinkedWeeklyCycleStepRunQuery(): UnlinkedStepRunQuery {
+  const query: UnlinkedStepRunQuery = {
+    select: () => query,
+    eq: () => query,
+    in: () => query,
+    maybeSingle: async () => ({ data: null, error: null }),
+  };
+  return query;
 }
 
 async function withAssemblyMocks(
@@ -362,6 +384,9 @@ async function withAssemblyMocks(
                   }),
                 }),
               };
+            }
+            if (table === "neuramark_weekly_cycle_step_runs") {
+              return unlinkedWeeklyCycleStepRunQuery();
             }
             throw new Error(`Unexpected table ${table}`);
           },

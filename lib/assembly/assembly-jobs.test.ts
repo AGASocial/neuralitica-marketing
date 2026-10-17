@@ -2,8 +2,11 @@
  * US-9.1 assembly orchestrator, security, and FFmpeg args tests.
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { ChildProcess } from "node:child_process";
+import { createHash } from "node:crypto";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import Module from "node:module";
+import { PassThrough } from "node:stream";
 import path from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -67,6 +70,16 @@ function loadAssemblyModule<T = Record<string, unknown>>(
   clearAssemblyModuleCache();
   return require(relativePath) as T;
 }
+
+type AssemblyJobConfigReadersModule =
+  typeof import("@/lib/assembly/assembly-job-config-readers");
+type FindForbiddenAssemblyKeysModule =
+  typeof import("@/lib/assembly/find-forbidden-assembly-keys");
+type CreateAssemblyJobForReelScriptModule =
+  typeof import("@/lib/assembly/create-assembly-job-for-reel-script");
+type ApplyAssemblyJobUpdateModule =
+  typeof import("@/lib/assembly/apply-assembly-job-update");
+type RunFfmpegModule = typeof import("@/lib/assembly/run-ffmpeg");
 
 function chainableQuery(terminal: Record<string, unknown>) {
   const builder: Record<string, unknown> = {};
@@ -158,7 +171,9 @@ describe("assembly-job-config-readers", () => {
       readAssemblyStaleTimeoutMin,
       readAssemblyDurationToleranceSec,
       readAssemblyJobPollIntervalMs,
-    } = loadAssemblyModule("@/lib/assembly/assembly-job-config-readers");
+    } = loadAssemblyModule<AssemblyJobConfigReadersModule>(
+      "@/lib/assembly/assembly-job-config-readers",
+    );
 
     delete process.env.NEURAMARK_ASSEMBLY_STALE_TIMEOUT_MIN;
     delete process.env.NEURAMARK_ASSEMBLY_DURATION_TOLERANCE_SEC;
@@ -181,9 +196,10 @@ describe("assembly-job-config-readers", () => {
 
 describe("findForbiddenAssemblyKeys", () => {
   it("rejects primaryVideoAssetId on assemble input", async () => {
-    const { findForbiddenAssemblyKeys } = loadAssemblyModule(
-      "@/lib/assembly/find-forbidden-assembly-keys",
-    );
+    const { findForbiddenAssemblyKeys } =
+      loadAssemblyModule<FindForbiddenAssemblyKeysModule>(
+        "@/lib/assembly/find-forbidden-assembly-keys",
+      );
     const keys = findForbiddenAssemblyKeys({
       reelScriptId: REEL_SCRIPT_ID,
       primaryVideoAssetId: PRIMARY_ASSET_ID,
@@ -192,9 +208,10 @@ describe("findForbiddenAssemblyKeys", () => {
   });
 
   it("rejects Phase B broll/path authority keys", async () => {
-    const { findForbiddenAssemblyKeys } = loadAssemblyModule(
-      "@/lib/assembly/find-forbidden-assembly-keys",
-    );
+    const { findForbiddenAssemblyKeys } =
+      loadAssemblyModule<FindForbiddenAssemblyKeysModule>(
+        "@/lib/assembly/find-forbidden-assembly-keys",
+      );
     for (const key of [
       "brollAssetIds",
       "clipPaths",
@@ -223,7 +240,6 @@ describe("computeAssemblyInputFingerprint", () => {
   });
 
   it("five-part formula includes ordered broll ids and path_tag", () => {
-    const { createHash } = require("node:crypto");
     const { computeAssemblyInputFingerprint } = require("@/lib/assembly/compute-input-fingerprint");
     const brollA = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
     const brollB = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -277,9 +293,10 @@ describe("createAssemblyJobForReelScript security", () => {
       };
 
       try {
-        const { createAssemblyJobForReelScript } = loadAssemblyModule(
-          "@/lib/assembly/create-assembly-job-for-reel-script",
-        );
+        const { createAssemblyJobForReelScript } =
+          loadAssemblyModule<CreateAssemblyJobForReelScriptModule>(
+            "@/lib/assembly/create-assembly-job-for-reel-script",
+          );
 
         const result = await createAssemblyJobForReelScript({
           reelScriptId: REEL_SCRIPT_ID,
@@ -318,9 +335,10 @@ describe("createAssemblyJobForReelScript security", () => {
       };
 
       try {
-        const { createAssemblyJobForReelScript } = loadAssemblyModule(
-          "@/lib/assembly/create-assembly-job-for-reel-script",
-        );
+        const { createAssemblyJobForReelScript } =
+          loadAssemblyModule<CreateAssemblyJobForReelScriptModule>(
+            "@/lib/assembly/create-assembly-job-for-reel-script",
+          );
 
         const result = await createAssemblyJobForReelScript({
           reelScriptId: REEL_SCRIPT_ID,
@@ -386,9 +404,10 @@ describe("applyAssemblyJobUpdate transitions", () => {
       };
 
       try {
-        const { applyAssemblyJobUpdate } = loadAssemblyModule(
-          "@/lib/assembly/apply-assembly-job-update",
-        );
+        const { applyAssemblyJobUpdate } =
+          loadAssemblyModule<ApplyAssemblyJobUpdateModule>(
+            "@/lib/assembly/apply-assembly-job-update",
+          );
 
         const result = await applyAssemblyJobUpdate({
           assemblyJobId: JOB_ID,
@@ -405,26 +424,34 @@ describe("applyAssemblyJobUpdate transitions", () => {
   });
 });
 
+function ffmpegChildThatCloses(code: number): ChildProcess {
+  const child = new ChildProcess();
+  child.stderr = new PassThrough();
+  queueMicrotask(() => {
+    child.emit("close", code);
+  });
+  return child;
+}
+
 describe("runFfmpeg spawn contract", () => {
   it("passes args array with shell false", async () => {
     await withServerOnlyStub(async () => {
-      const { runFfmpeg } = loadAssemblyModule("@/lib/assembly/run-ffmpeg");
-      let receivedArgs: string[] | null = null;
-      let receivedShell: boolean | undefined;
+      const { runFfmpeg } = loadAssemblyModule<RunFfmpegModule>(
+        "@/lib/assembly/run-ffmpeg",
+      );
+      let receivedArgs: readonly string[] | undefined;
+      let receivedShell: boolean | string | undefined;
 
       await runFfmpeg(["-y", "-i", "primary.mp4", "out.mp4"], {
-        spawnImpl: ((cmd, args, opts) => {
+        spawnImpl: ((
+          cmd: string,
+          args: readonly string[] | undefined,
+          opts: { shell?: boolean | string } | undefined,
+        ) => {
           assert.equal(cmd, "ffmpeg");
           receivedArgs = args;
           receivedShell = opts?.shell;
-          return {
-            stderr: { on: () => undefined },
-            on: (event: string, cb: (code: number) => void) => {
-              if (event === "close") {
-                cb(0);
-              }
-            },
-          };
+          return ffmpegChildThatCloses(0);
         }) as typeof import("node:child_process").spawn,
       });
 
@@ -441,7 +468,6 @@ describe("assembly security grep guards", () => {
     const appDir = path.join(repoRoot, "app");
 
     function scanDir(dir: string) {
-      const { readdirSync, statSync } = require("node:fs");
       for (const entry of readdirSync(dir)) {
         const full = path.join(dir, entry);
         if (statSync(full).isDirectory()) {
@@ -475,7 +501,6 @@ describe("assembly security grep guards", () => {
 
   it("has no fetch( for asset download in lib/assembly", () => {
     const assemblyDir = path.join(repoRoot, "lib/assembly");
-    const { readdirSync, statSync } = require("node:fs");
 
     function scanDir(dir: string) {
       for (const entry of readdirSync(dir)) {

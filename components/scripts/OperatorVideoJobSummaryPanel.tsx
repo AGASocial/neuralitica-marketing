@@ -218,7 +218,6 @@ export function OperatorVideoJobSummaryPanel({
     }
 
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
 
     async function pollOnce() {
       if (cancelled || !job) {
@@ -257,15 +256,13 @@ export function OperatorVideoJobSummaryPanel({
     }
 
     void pollOnce();
-    timer = setInterval(() => {
+    const timer = setInterval(() => {
       void pollOnce();
     }, VIDEO_JOB_POLL_INTERVAL_MS_DEFAULT);
 
     return () => {
       cancelled = true;
-      if (timer) {
-        clearInterval(timer);
-      }
+      clearInterval(timer);
     };
   }, [job?.jobId, job?.status]);
 

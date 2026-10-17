@@ -40,6 +40,11 @@ function mp4MagicBuffer(size = 512): Buffer {
   return buf;
 }
 
+/** Copy into a DOM BlobPart. Node's generic Buffer is not a BlobPart. */
+function bufferBlobPart(buf: Buffer): Uint8Array<ArrayBuffer> {
+  return Uint8Array.from(buf);
+}
+
 function clearManualUploadModuleCache() {
   for (const key of Object.keys(require.cache)) {
     const normalized = key.replace(/\\/g, "/");
@@ -61,10 +66,16 @@ function loadModule<T = Record<string, unknown>>(relativePath: string): T {
   return require(relativePath) as T;
 }
 
+type UploadValidationModule = typeof import("../media/upload-validation");
+type GetMediaStorageModule = typeof import("../media/storage/get-media-storage");
+type UploadManualVideoJobModule = typeof import("./upload-manual-video-job");
+type UploadManualVideoJobActionModule =
+  typeof import("./actions/upload-manual-video-job");
+
 function chainableQuery(terminal: {
   maybeSingle?: () => Promise<{ data: unknown; error: unknown }>;
   single?: () => Promise<{ data: unknown; error: unknown }>;
-  insert?: (payload: unknown) => unknown;
+  insert?: (payload: Record<string, unknown>) => unknown;
   update?: (payload: unknown) => unknown;
   delete?: () => unknown;
   eq?: (...args: unknown[]) => unknown;
@@ -291,9 +302,7 @@ describe("validateAndPrepareMediaUpload generated_video", () => {
   it("accepts mp4 with duration; rejects jpeg and over-duration", async () => {
     const restoreOk = installMocks({ mediaRoot: tmp, probeDurationSec: 10 });
     try {
-      const { validateAndPrepareMediaUpload } = loadModule(
-        "../media/upload-validation.ts",
-      );
+      const { validateAndPrepareMediaUpload } = loadModule<UploadValidationModule>("../media/upload-validation.ts");
       const ok = await validateAndPrepareMediaUpload({
         userId: CLIENT_ID,
         assetType: "generated_video",
@@ -312,9 +321,7 @@ describe("validateAndPrepareMediaUpload generated_video", () => {
 
     const restoreLong = installMocks({ mediaRoot: tmp, probeDurationSec: 45 });
     try {
-      const { validateAndPrepareMediaUpload } = loadModule(
-        "../media/upload-validation.ts",
-      );
+      const { validateAndPrepareMediaUpload } = loadModule<UploadValidationModule>("../media/upload-validation.ts");
       const long = await validateAndPrepareMediaUpload({
         userId: CLIENT_ID,
         assetType: "generated_video",
@@ -330,9 +337,7 @@ describe("validateAndPrepareMediaUpload generated_video", () => {
 
     const restoreJpeg = installMocks({ mediaRoot: tmp });
     try {
-      const { validateAndPrepareMediaUpload } = loadModule(
-        "../media/upload-validation.ts",
-      );
+      const { validateAndPrepareMediaUpload } = loadModule<UploadValidationModule>("../media/upload-validation.ts");
       const jpeg = Buffer.alloc(256, 0);
       jpeg[0] = 0xff;
       jpeg[1] = 0xd8;
@@ -409,12 +414,10 @@ describe("uploadManualVideoJob orchestrator", () => {
     });
 
     try {
-      const { resetMediaStorageCacheForTests } = loadModule(
-        "../media/storage/get-media-storage.ts",
-      );
+      const { resetMediaStorageCacheForTests } = loadModule<GetMediaStorageModule>("../media/storage/get-media-storage.ts");
       resetMediaStorageCacheForTests();
 
-      const { uploadManualVideoJob } = loadModule("./upload-manual-video-job.ts");
+      const { uploadManualVideoJob } = loadModule<UploadManualVideoJobModule>("./upload-manual-video-job.ts");
       const result = await uploadManualVideoJob({
         reelScriptId: REEL_SCRIPT_ID,
         clientId: CLIENT_ID,
@@ -460,7 +463,7 @@ describe("uploadManualVideoJob orchestrator", () => {
       loadReelScript: async () => null,
     });
     try {
-      const { uploadManualVideoJob } = loadModule("./upload-manual-video-job.ts");
+      const { uploadManualVideoJob } = loadModule<UploadManualVideoJobModule>("./upload-manual-video-job.ts");
       const result = await uploadManualVideoJob({
         reelScriptId: REEL_SCRIPT_ID,
         clientId: FOREIGN_CLIENT_ID,
@@ -502,7 +505,7 @@ describe("uploadManualVideoJob orchestrator", () => {
         },
       });
       try {
-        const { uploadManualVideoJob } = loadModule("./upload-manual-video-job.ts");
+        const { uploadManualVideoJob } = loadModule<UploadManualVideoJobModule>("./upload-manual-video-job.ts");
         const result = await uploadManualVideoJob({
           reelScriptId: REEL_SCRIPT_ID,
           clientId: CLIENT_ID,
@@ -536,11 +539,9 @@ describe("uploadManualVideoJob orchestrator", () => {
       },
     });
     try {
-      const { resetMediaStorageCacheForTests } = loadModule(
-        "../media/storage/get-media-storage.ts",
-      );
+      const { resetMediaStorageCacheForTests } = loadModule<GetMediaStorageModule>("../media/storage/get-media-storage.ts");
       resetMediaStorageCacheForTests();
-      const { uploadManualVideoJob } = loadModule("./upload-manual-video-job.ts");
+      const { uploadManualVideoJob } = loadModule<UploadManualVideoJobModule>("./upload-manual-video-job.ts");
       const result = await uploadManualVideoJob({
         reelScriptId: REEL_SCRIPT_ID,
         clientId: CLIENT_ID,
@@ -566,13 +567,13 @@ describe("uploadManualVideoJob Server Action", () => {
       },
     });
     try {
-      const { uploadManualVideoJob } = loadModule(
+      const { uploadManualVideoJob } = loadModule<UploadManualVideoJobActionModule>(
         "./actions/upload-manual-video-job.ts",
       );
       const fd = new FormData();
       fd.append("reelScriptId", REEL_SCRIPT_ID);
       fd.append("clientId", CLIENT_ID);
-      fd.append("file", new Blob([mp4MagicBuffer(200)]), "x.mp4");
+      fd.append("file", new Blob([bufferBlobPart(mp4MagicBuffer(200))]), "x.mp4");
       const result = await uploadManualVideoJob(fd);
       assert.equal(result.ok, false);
       if (!result.ok) assert.equal(result.error.code, "FORBIDDEN");
@@ -582,14 +583,14 @@ describe("uploadManualVideoJob Server Action", () => {
 
     const mocksFields = installMocks({});
     try {
-      const { uploadManualVideoJob } = loadModule(
+      const { uploadManualVideoJob } = loadModule<UploadManualVideoJobActionModule>(
         "./actions/upload-manual-video-job.ts",
       );
       const fd = new FormData();
       fd.append("reelScriptId", REEL_SCRIPT_ID);
       fd.append("clientId", CLIENT_ID);
       fd.append("status", "completed");
-      fd.append("file", new Blob([mp4MagicBuffer(200)]), "x.mp4");
+      fd.append("file", new Blob([bufferBlobPart(mp4MagicBuffer(200))]), "x.mp4");
       const result = await uploadManualVideoJob(fd);
       assert.equal(result.ok, false);
       if (!result.ok) assert.equal(result.error.code, "FORBIDDEN_FIELDS");

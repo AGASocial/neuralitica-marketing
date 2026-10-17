@@ -276,8 +276,16 @@ describe("closed write surface + migration", () => {
       path.join(__dirname, "on-branding-completed.ts"),
       "utf8",
     );
-    assert.match(source, /invokedBy: "system"/);
+    assert.match(source, /steps\.includes\("qa_rerun"\)/);
+    assert.match(source, /pathKind === "media"/);
+    assert.match(source, /\? "revision"/);
+    assert.match(source, /: "system"/);
+    assert.match(source, /runQaForAssembledReelForClient\(/);
+    assert.match(source, /invokedBy,/);
+    assert.match(source, /operatorClientId: input\.clientId/);
+    assert.match(source, /if \(!result\.ok\)/);
     assert.doesNotMatch(source, /branding_status\s*=/);
+    assert.doesNotMatch(source, /brandingStatus/);
     assert.doesNotMatch(source, /UPDATE.*branding/);
   });
 

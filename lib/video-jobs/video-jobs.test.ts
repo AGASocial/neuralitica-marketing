@@ -71,16 +71,27 @@ function loadVideoJobModule<T = Record<string, unknown>>(
   return require(relativePath) as T;
 }
 
+type RetryVideoJobModule = typeof import("./actions/retry-video-job");
+type CreateTalkingHeadVideoJobModule =
+  typeof import("./create-talking-head-video-job");
+type MarkStaleVideoJobsFailedModule =
+  typeof import("./mark-stale-video-jobs-failed");
+type PollVideoJobUntilTerminalModule =
+  typeof import("./poll-video-job-until-terminal");
+type VideoJobRouteModule =
+  typeof import("../../app/api/video-jobs/[jobId]/route");
+type RetryEligibilityModule = typeof import("./retry-eligibility");
+
 function chainableQuery(terminal: {
   maybeSingle?: () => Promise<{ data: unknown; error: unknown }>;
   single?: () => Promise<{ data: unknown; error: unknown }>;
-  in?: (column: string, values: unknown[]) => unknown;
+  in?: (column: string, values: string[]) => unknown;
   lt?: (column: string, value: string) => unknown;
   select?: (...args: unknown[]) => unknown;
   eq?: (...args: unknown[]) => unknown;
   order?: (...args: unknown[]) => unknown;
   limit?: (...args: unknown[]) => unknown;
-  insert?: (payload: unknown) => unknown;
+  insert?: (payload: Record<string, unknown>) => unknown;
   update?: (payload: unknown) => unknown;
   then?: (
     onFulfilled: (v: unknown) => unknown,
@@ -150,8 +161,14 @@ describe("video-job-config-readers", () => {
       readVideoMaxRetriesPerReel,
     } = await import("./video-job-config-readers");
 
-    assert.equal(readVideoJobStaleTimeoutMs({}), VIDEO_JOB_STALE_TIMEOUT_MS_DEFAULT);
-    assert.equal(readVideoMaxRetriesPerReel({}), VIDEO_MAX_RETRIES_PER_REEL_DEFAULT);
+    assert.equal(
+      readVideoJobStaleTimeoutMs({ NODE_ENV: "test" }),
+      VIDEO_JOB_STALE_TIMEOUT_MS_DEFAULT,
+    );
+    assert.equal(
+      readVideoMaxRetriesPerReel({ NODE_ENV: "test" }),
+      VIDEO_MAX_RETRIES_PER_REEL_DEFAULT,
+    );
   });
 
   it("reads env overrides for stale timeout and max retries", async () => {
@@ -161,11 +178,17 @@ describe("video-job-config-readers", () => {
     } = await import("./video-job-config-readers");
 
     assert.equal(
-      readVideoJobStaleTimeoutMs({ VIDEO_JOB_STALE_TIMEOUT_MS: "3600000" }),
+      readVideoJobStaleTimeoutMs({
+        NODE_ENV: "test",
+        VIDEO_JOB_STALE_TIMEOUT_MS: "3600000",
+      }),
       3_600_000,
     );
     assert.equal(
-      readVideoMaxRetriesPerReel({ VIDEO_MAX_RETRIES_PER_REEL: "5" }),
+      readVideoMaxRetriesPerReel({
+        NODE_ENV: "test",
+        VIDEO_MAX_RETRIES_PER_REEL: "5",
+      }),
       5,
     );
   });
@@ -247,12 +270,12 @@ describe("provider asset URL secret", () => {
 
   it("requires NEURAMARK_PROVIDER_ASSET_URL_SECRET in production", async () => {
     await withServerOnlyStub(async () => {
-      process.env.NODE_ENV = "production";
+      process.env = { ...process.env, NODE_ENV: "production" };
       delete process.env.NEURAMARK_PROVIDER_ASSET_URL_SECRET;
       process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-key";
 
       const { getProviderAssetUrlSecret } = await import(
-        "../media/provider-asset-url-secret.ts"
+        "../media/provider-asset-url-secret"
       );
       assert.equal(getProviderAssetUrlSecret(), null);
     });
@@ -260,12 +283,12 @@ describe("provider asset URL secret", () => {
 
   it("prefers dedicated secret over service-role fallback", async () => {
     await withServerOnlyStub(async () => {
-      process.env.NODE_ENV = "development";
+      process.env = { ...process.env, NODE_ENV: "development" };
       process.env.NEURAMARK_PROVIDER_ASSET_URL_SECRET = "dedicated-secret";
       process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-key";
 
       const { getProviderAssetUrlSecret } = await import(
-        "../media/provider-asset-url-secret.ts"
+        "../media/provider-asset-url-secret"
       );
       assert.equal(getProviderAssetUrlSecret(), "dedicated-secret");
     });
@@ -273,12 +296,12 @@ describe("provider asset URL secret", () => {
 
   it("allows service-role fallback only in non-production", async () => {
     await withServerOnlyStub(async () => {
-      process.env.NODE_ENV = "test";
+      process.env = { ...process.env, NODE_ENV: "test" };
       delete process.env.NEURAMARK_PROVIDER_ASSET_URL_SECRET;
       process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-key";
 
       const { getProviderAssetUrlSecret } = await import(
-        "../media/provider-asset-url-secret.ts"
+        "../media/provider-asset-url-secret"
       );
       assert.equal(getProviderAssetUrlSecret(), "service-role-key");
     });
@@ -431,7 +454,7 @@ describe("retry override consumption", () => {
 
       try {
         clearVideoJobModuleCache();
-        const { retryVideoJob } = loadVideoJobModule(
+        const { retryVideoJob } = loadVideoJobModule<RetryVideoJobModule>(
           "./actions/retry-video-job.ts",
         );
 
@@ -469,7 +492,7 @@ describe("retry override consumption", () => {
 
       try {
         clearVideoJobModuleCache();
-        const { retryVideoJob } = loadVideoJobModule(
+        const { retryVideoJob } = loadVideoJobModule<RetryVideoJobModule>(
           "./actions/retry-video-job.ts",
         );
 
@@ -509,7 +532,7 @@ describe("retry override consumption", () => {
 
       try {
         clearVideoJobModuleCache();
-        const { retryVideoJob } = loadVideoJobModule(
+        const { retryVideoJob } = loadVideoJobModule<RetryVideoJobModule>(
           "./actions/retry-video-job.ts",
         );
 
@@ -533,7 +556,9 @@ describe("orchestrator gate order", () => {
   it("calls budget before consent before adapter.createJob", async () => {
     await withServerOnlyStub(async () => {
       const callOrder: string[] = [];
-      let insertedPayload: Record<string, unknown> | null = null;
+      const payloadCapture: { row: Record<string, unknown> | null } = {
+        row: null,
+      };
 
       const mockAdapter = {
         estimateCost: async () => ({ estimatedCostCents: 10 }),
@@ -637,7 +662,7 @@ describe("orchestrator gate order", () => {
                         select: () =>
                           chainableQuery({
                             single: async () => {
-                              insertedPayload = payload;
+                              payloadCapture.row = payload;
                               return {
                                 data: baseVideoJobRow({
                                   ...payload,
@@ -661,7 +686,7 @@ describe("orchestrator gate order", () => {
 
       try {
         clearVideoJobModuleCache();
-        const { createTalkingHeadVideoJob } = loadVideoJobModule(
+        const { createTalkingHeadVideoJob } = loadVideoJobModule<CreateTalkingHeadVideoJobModule>(
           "./create-talking-head-video-job.ts",
         );
 
@@ -675,6 +700,7 @@ describe("orchestrator gate order", () => {
 
         assert.equal(result.ok, true);
         assert.deepEqual(callOrder, ["budget", "consent", "createJob"]);
+        const insertedPayload = payloadCapture.row;
         assert.equal(insertedPayload?.parent_job_id, null);
         assert.equal(insertedPayload?.attempt, 1);
       } finally {
@@ -688,7 +714,9 @@ describe("orchestrator gate order", () => {
 describe("retry lineage", () => {
   it("inserts child job with parent_job_id and incremented attempt", async () => {
     await withServerOnlyStub(async () => {
-      let insertedPayload: Record<string, unknown> | null = null;
+      const payloadCapture: { row: Record<string, unknown> | null } = {
+        row: null,
+      };
 
       const mockAdapter = {
         estimateCost: async () => ({ estimatedCostCents: 10 }),
@@ -779,7 +807,7 @@ describe("retry lineage", () => {
                         select: () =>
                           chainableQuery({
                             single: async () => {
-                              insertedPayload = payload;
+                              payloadCapture.row = payload;
                               return {
                                 data: baseVideoJobRow({
                                   ...payload,
@@ -803,7 +831,7 @@ describe("retry lineage", () => {
 
       try {
         clearVideoJobModuleCache();
-        const { createTalkingHeadVideoJob } = loadVideoJobModule(
+        const { createTalkingHeadVideoJob } = loadVideoJobModule<CreateTalkingHeadVideoJobModule>(
           "./create-talking-head-video-job.ts",
         );
 
@@ -829,6 +857,7 @@ describe("retry lineage", () => {
         if (result.ok) {
           assert.equal(result.attempt, 2);
         }
+        const insertedPayload = payloadCapture.row;
         assert.equal(insertedPayload?.parent_job_id, PARENT_JOB_ID);
         assert.equal(insertedPayload?.attempt, 2);
       } finally {
@@ -842,7 +871,9 @@ describe("retry lineage", () => {
 describe("stale sweeper", () => {
   it("selects queued/processing jobs older than stale timeout cutoff", async () => {
     await withServerOnlyStub(async () => {
-      let capturedLt: { column: string; value: string } | null = null;
+      const ltCapture: {
+        value: { column: string; value: string } | null;
+      } = { value: null };
       let capturedStatuses: string[] | null = null;
 
       const nodeModule = Module as unknown as NodeModuleLoad;
@@ -873,7 +904,7 @@ describe("stale sweeper", () => {
                         capturedStatuses = values;
                         return chainableQuery({
                           lt: (column: string, value: string) => {
-                            capturedLt = { column, value };
+                            ltCapture.value = { column, value };
                             return Promise.resolve({
                               data: [{ id: JOB_ID }],
                               error: null,
@@ -891,20 +922,21 @@ describe("stale sweeper", () => {
 
       try {
         clearVideoJobModuleCache();
-        const { markStaleVideoJobsFailed } = loadVideoJobModule(
+        const { markStaleVideoJobsFailed } = loadVideoJobModule<MarkStaleVideoJobsFailedModule>(
           "./mark-stale-video-jobs-failed.ts",
         );
         const { readVideoJobStaleTimeoutMs } = await import(
           "./video-job-config-readers"
         );
 
-        const staleMs = readVideoJobStaleTimeoutMs({});
+        const staleMs = readVideoJobStaleTimeoutMs({ NODE_ENV: "test" });
         const before = Date.now();
         const result = await markStaleVideoJobsFailed();
         const after = Date.now();
 
         assert.equal(result.markedCount, 1);
         assert.deepEqual(capturedStatuses, ["queued", "processing"]);
+        const capturedLt = ltCapture.value;
         assert.equal(capturedLt?.column, "updated_at");
         assert.ok(capturedLt?.value);
 
@@ -923,7 +955,9 @@ describe("stale sweeper", () => {
 describe("poller terminal path", () => {
   it("delegates completed vendor status to applyVideoJobStatusUpdate", async () => {
     await withServerOnlyStub(async () => {
-      let statusUpdateInput: Record<string, unknown> | null = null;
+      const statusCapture: { input: Record<string, unknown> | null } = {
+        input: null,
+      };
       let pollCount = 0;
 
       const processingJob = baseVideoJobRow({ status: "processing" });
@@ -966,7 +1000,7 @@ describe("poller terminal path", () => {
         if (req.includes("apply-video-job-status-update")) {
           return {
             applyVideoJobStatusUpdate: async (input: Record<string, unknown>) => {
-              statusUpdateInput = input;
+              statusCapture.input = input;
               return {
                 ok: true,
                 jobId: JOB_ID,
@@ -987,13 +1021,14 @@ describe("poller terminal path", () => {
       try {
         clearVideoJobModuleCache();
         process.env.VIDEO_JOB_POLL_INTERVAL_MS = "1";
-        const { pollVideoJobUntilTerminal } = loadVideoJobModule(
+        const { pollVideoJobUntilTerminal } = loadVideoJobModule<PollVideoJobUntilTerminalModule>(
           "./poll-video-job-until-terminal.ts",
         );
 
         await pollVideoJobUntilTerminal(JOB_ID);
 
         assert.equal(pollCount, 1);
+        const statusUpdateInput = statusCapture.input;
         assert.equal(statusUpdateInput?.jobId, JOB_ID);
         assert.equal(statusUpdateInput?.source, "poller");
         assert.equal(
@@ -1072,7 +1107,7 @@ describe("GET /api/video-jobs/[jobId] IDOR", () => {
 
       try {
         clearVideoJobModuleCache();
-        const { GET } = loadVideoJobModule(
+        const { GET } = loadVideoJobModule<VideoJobRouteModule>(
           "../../app/api/video-jobs/[jobId]/route.ts",
         );
 
@@ -1149,7 +1184,7 @@ describe("GET /api/video-jobs/[jobId] Cliente 403 (US-7.3-B)", () => {
 
       try {
         clearVideoJobModuleCache();
-        const { GET } = loadVideoJobModule(
+        const { GET } = loadVideoJobModule<VideoJobRouteModule>(
           "../../app/api/video-jobs/[jobId]/route.ts",
         );
 
@@ -1221,9 +1256,7 @@ describe("retry budget soft UX", () => {
 
       try {
         clearVideoJobModuleCache();
-        const { evaluateRetryEligibility } = loadVideoJobModule(
-          "./retry-eligibility.ts",
-        );
+        const { evaluateRetryEligibility } = loadVideoJobModule<RetryEligibilityModule>("./retry-eligibility.ts");
 
         const result = await evaluateRetryEligibility({
           clientId: CLIENT_ID,

@@ -17,12 +17,12 @@ import {
 } from "../contracts/avatar-consent";
 import {
   findForbiddenGrantAvatarConsentKeys,
-} from "./avatar-consent-helpers.ts";
+} from "./avatar-consent-helpers";
 import {
   grantConsentAffirmationRequiredError,
   grantConsentVersionMismatchError,
   revokeConsentNotActiveError,
-} from "./avatar-consent-errors.ts";
+} from "./avatar-consent-errors";
 
 const CLIENT_ID = "11111111-1111-4111-8111-111111111111";
 const VICTIM_ID = "00000000-0000-4000-8000-000000000099";
@@ -648,22 +648,47 @@ describe("revokeAvatarConsent action", () => {
 describe("Preferencias upsert never writes consent ledger", () => {
   it("happy Preferencias path only touches neuramark_visual_preferences", async () => {
     const fromTables: string[] = [];
+    const upsertPayloads: Array<Record<string, unknown>> = [];
     const restore = installConsentMocks({
       hasActiveAvatarConsent: async () => false,
       from: (table: string) => {
         fromTables.push(table);
         return {
-          upsert() {
+          select(columns: string) {
+            assert.equal(columns, "voice_id");
             return {
-              select() {
+              eq(column: string, value: string) {
+                assert.equal(column, "client_id");
+                assert.equal(value, CLIENT_ID);
+                return {
+                  async maybeSingle() {
+                    return { data: null, error: null };
+                  },
+                };
+              },
+            };
+          },
+          upsert(
+            payload: Record<string, unknown>,
+            options: { onConflict: string },
+          ) {
+            upsertPayloads.push(payload);
+            assert.equal(options.onConflict, "client_id");
+            return {
+              select(columns: string) {
+                assert.equal(
+                  columns,
+                  "allowed_modes, faceless_style, generic_avatar_id, voice_id, rules, updated_at",
+                );
                 return {
                   async single() {
                     return {
                       data: {
-                        allowed_modes: ["generic_avatar"],
-                        faceless_style: null,
-                        generic_avatar_id: null,
-                        rules: { must_disclose_not_owner: true },
+                        allowed_modes: payload.allowed_modes,
+                        faceless_style: payload.faceless_style,
+                        generic_avatar_id: payload.generic_avatar_id,
+                        voice_id: payload.voice_id,
+                        rules: payload.rules,
                         updated_at: "2026-08-29T21:40:00.000Z",
                       },
                       error: null,
@@ -688,8 +713,26 @@ describe("Preferencias upsert never writes consent ledger", () => {
         genericAvatarId: null,
       });
       assert.equal(result.ok, true);
-      assert.deepEqual(fromTables, ["neuramark_visual_preferences"]);
+      if (result.ok) {
+        assert.deepEqual(result.allowedModes, ["generic_avatar"]);
+        assert.equal(result.voiceId, null);
+        assert.deepEqual(result.rules, { must_disclose_not_owner: true });
+      }
+      assert.deepEqual(fromTables, [
+        "neuramark_visual_preferences",
+        "neuramark_visual_preferences",
+      ]);
       assert.equal(fromTables.includes("neuramark_avatar_consents"), false);
+      assert.equal(upsertPayloads.length, 1);
+      assert.equal(upsertPayloads[0]?.client_id, CLIENT_ID);
+      assert.equal(upsertPayloads[0]?.voice_id, null);
+      assert.equal(upsertPayloads[0]?.generic_avatar_id, null);
+      assert.equal(
+        Object.keys(upsertPayloads[0] ?? {}).some((key) =>
+          key.toLowerCase().includes("consent"),
+        ),
+        false,
+      );
     } finally {
       restore();
     }

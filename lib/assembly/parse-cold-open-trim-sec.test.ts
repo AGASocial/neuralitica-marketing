@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { parseColdOpenTrimSec } from "./parse-cold-open-trim-sec.ts";
+import { parseColdOpenTrimSec } from "./parse-cold-open-trim-sec";
 
 describe("parseColdOpenTrimSec", () => {
   it("accepts 1–2 digit integers within bounds", () => {

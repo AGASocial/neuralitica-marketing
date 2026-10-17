@@ -545,4 +545,33 @@ describe("US-8.1 estimateVideoJobCost integration", () => {
     assert.equal(estimate.currency, "USD");
     assert.equal(estimate.estimatedCostCents, 10);
   });
+
+  it("15 — omitted registry falls back to lazy getProviderRegistry", async () => {
+    const catalog = buildStubCatalog();
+    const estimate = await withServerOnlyStub(() => {
+      const { estimateVideoJobCost } = require("./provider-adapters.ts") as {
+        estimateVideoJobCost: typeof import("./provider-adapters").estimateVideoJobCost;
+      };
+      const { resetProviderRegistryForTests } =
+        require("./create-provider-registry.ts") as {
+          resetProviderRegistryForTests: () => void;
+        };
+      resetProviderRegistryForTests();
+      return estimateVideoJobCost(
+        catalog,
+        undefined,
+        { assetRole: "talking_head", tier: "low" },
+        {
+          reelScriptId: "00000000-0000-4000-8000-000000000003",
+          clientId: "00000000-0000-4000-8000-000000000004",
+          targetDurationSec: 30,
+          assetRole: "primary",
+        },
+      );
+    });
+
+    assert.equal(estimate.providerKey, "sadtalker_low");
+    assert.equal(estimate.currency, "USD");
+    assert.equal(estimate.estimatedCostCents, 10);
+  });
 });

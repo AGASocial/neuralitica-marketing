@@ -2,7 +2,8 @@
  * US-9.2 branding worker — mocked ffmpeg spawn and runBrandingJob.
  */
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { ChildProcess, spawn } from "node:child_process";
+import { PassThrough } from "node:stream";
 import { writeFile } from "node:fs/promises";
 import Module from "node:module";
 import { afterEach, describe, it } from "node:test";
@@ -68,15 +69,28 @@ function loadBrandingModule<T = Record<string, unknown>>(
   return require(relativePath) as T;
 }
 
+type BrandingJobConfigReadersModule =
+  typeof import("./branding-job-config-readers");
+type EnqueueBrandingJobModule = typeof import("./enqueue-branding-job");
+type RunBrandingJobModule = typeof import("./run-branding-job");
+type RunFfmpegModule = typeof import("../assembly/run-ffmpeg");
+
 describe("readBrandingJobPollMode", () => {
   it("inherits assembly poll mode when unset", () => {
-    const { readBrandingJobPollMode } = loadBrandingModule<{
-      readBrandingJobPollMode: Function;
-    }>("./branding-job-config-readers.ts");
+    const { readBrandingJobPollMode } =
+      loadBrandingModule<BrandingJobConfigReadersModule>(
+        "./branding-job-config-readers.ts",
+      );
 
-    assert.equal(readBrandingJobPollMode({}, "development"), "in_process");
     assert.equal(
-      readBrandingJobPollMode({ BRANDING_JOB_POLL_MODE: "fly" }),
+      readBrandingJobPollMode({ NODE_ENV: "test" }, "development"),
+      "in_process",
+    );
+    assert.equal(
+      readBrandingJobPollMode({
+        NODE_ENV: "test",
+        BRANDING_JOB_POLL_MODE: "fly",
+      }),
       "fly",
     );
   });
@@ -91,9 +105,9 @@ describe("enqueueBrandingJob dev seam", () => {
   it("no-ops when fly mode", () => {
     withServerOnlyStub(() => {
       process.env.BRANDING_JOB_POLL_MODE = "fly";
-      const { enqueueBrandingJob } = loadBrandingModule<{
-        enqueueBrandingJob: (id: string) => void;
-      }>("./enqueue-branding-job.ts");
+      const { enqueueBrandingJob } = loadBrandingModule<EnqueueBrandingJobModule>(
+        "./enqueue-branding-job.ts",
+      );
 
       assert.doesNotThrow(() => enqueueBrandingJob(JOB_ID));
     });
@@ -117,10 +131,7 @@ describe("runBrandingJob mocked pipeline", () => {
       async ({ updates }) => {
         let ffmpegCalled = false;
         const { runBrandingJob, BRANDING_FAILURE_TENANCY_MISMATCH } =
-          loadBrandingModule<{
-            runBrandingJob: Function;
-            BRANDING_FAILURE_TENANCY_MISMATCH: string;
-          }>("./run-branding-job.ts");
+          loadBrandingModule<RunBrandingJobModule>("./run-branding-job.ts");
 
         await runBrandingJob(JOB_ID, {
           runFfmpeg: async () => {
@@ -169,7 +180,7 @@ describe("runBrandingJob mocked pipeline", () => {
         storage,
       },
       async ({ updates, spawnCalls }) => {
-        const { runBrandingJob } = loadBrandingModule<{ runBrandingJob: Function }>(
+        const { runBrandingJob } = loadBrandingModule<RunBrandingJobModule>(
           "./run-branding-job.ts",
         );
 
@@ -235,10 +246,7 @@ describe("runBrandingJob mocked pipeline", () => {
       async ({ updates }) => {
         let ffmpegCalled = false;
         const { runBrandingJob, BRANDING_FAILURE_VOICEOVER_TIMING_HASH } =
-          loadBrandingModule<{
-            runBrandingJob: Function;
-            BRANDING_FAILURE_VOICEOVER_TIMING_HASH: string;
-          }>("./run-branding-job.ts");
+          loadBrandingModule<RunBrandingJobModule>("./run-branding-job.ts");
 
         await runBrandingJob(JOB_ID, {
           runFfmpeg: async () => {
@@ -298,9 +306,9 @@ describe("runBrandingJob mocked pipeline", () => {
       },
       async ({ updates }) => {
         let ffmpegCalled = false;
-        const { runBrandingJob } = loadBrandingModule<{
-          runBrandingJob: Function;
-        }>("./run-branding-job.ts");
+        const { runBrandingJob } = loadBrandingModule<RunBrandingJobModule>(
+          "./run-branding-job.ts",
+        );
 
         await runBrandingJob(JOB_ID, {
           runFfmpeg: async (args: string[]) => {
@@ -367,9 +375,9 @@ describe("runBrandingJob mocked pipeline", () => {
       },
       async ({ updates }) => {
         let ffmpegCalled = false;
-        const { runBrandingJob } = loadBrandingModule<{
-          runBrandingJob: Function;
-        }>("./run-branding-job.ts");
+        const { runBrandingJob } = loadBrandingModule<RunBrandingJobModule>(
+          "./run-branding-job.ts",
+        );
 
         await runBrandingJob(JOB_ID, {
           runFfmpeg: async (args: string[]) => {
@@ -411,7 +419,7 @@ describe("runBrandingJob mocked pipeline", () => {
       },
       async ({ updates }) => {
         let ffmpegCalled = false;
-        const { runBrandingJob } = loadBrandingModule<{ runBrandingJob: Function }>(
+        const { runBrandingJob } = loadBrandingModule<RunBrandingJobModule>(
           "./run-branding-job.ts",
         );
 
@@ -447,7 +455,7 @@ describe("runBrandingJob mocked pipeline", () => {
       },
       async ({ updates }) => {
         let ffmpegCalled = false;
-        const { runBrandingJob } = loadBrandingModule<{ runBrandingJob: Function }>(
+        const { runBrandingJob } = loadBrandingModule<RunBrandingJobModule>(
           "./run-branding-job.ts",
         );
 
@@ -496,10 +504,8 @@ describe("runBrandingJob mocked pipeline", () => {
       },
       async ({ updates }) => {
         let ffmpegCalled = false;
-        const { runBrandingJob, BRANDING_FAILURE_CONFIG } = loadBrandingModule<{
-          runBrandingJob: Function;
-          BRANDING_FAILURE_CONFIG: string;
-        }>("./run-branding-job.ts");
+        const { runBrandingJob, BRANDING_FAILURE_CONFIG } =
+          loadBrandingModule<RunBrandingJobModule>("./run-branding-job.ts");
 
         await runBrandingJob(JOB_ID, {
           runFfmpeg: async () => {
@@ -517,6 +523,15 @@ describe("runBrandingJob mocked pipeline", () => {
   });
 });
 
+function ffmpegChildThatCloses(code: number): ChildProcess {
+  const child = new ChildProcess();
+  child.stderr = new PassThrough();
+  queueMicrotask(() => {
+    child.emit("close", code);
+  });
+  return child;
+}
+
 describe("runFfmpeg spawn contract (branding reuses assembly runner)", () => {
   it("invokes spawn with args array and shell false", async () => {
     await withServerOnlyStub(async () => {
@@ -525,21 +540,14 @@ describe("runFfmpeg spawn contract (branding reuses assembly runner)", () => {
 
       const fakeSpawn = (
         cmd: string,
-        args: readonly string[],
-        options: { shell?: boolean },
+        args: readonly string[] | undefined,
+        options: { shell?: boolean | string } | undefined,
       ) => {
-        calls.push({ cmd, args: [...args], options });
-        return {
-          stderr: { on: () => undefined },
-          on: (event: string, cb: (code: number) => void) => {
-            if (event === "close") {
-              cb(0);
-            }
-          },
-        } as ReturnType<typeof spawn>;
+        calls.push({ cmd, args: [...(args ?? [])], options });
+        return ffmpegChildThatCloses(0);
       };
 
-      const { runFfmpeg } = loadBrandingModule<{ runFfmpeg: Function }>(
+      const { runFfmpeg } = loadBrandingModule<RunFfmpegModule>(
         "../assembly/run-ffmpeg.ts",
       );
 
@@ -577,6 +585,27 @@ function baseBrandingJobRow(overrides: Record<string, unknown> = {}) {
     updated_at: "2026-08-30T12:00:00.000Z",
     ...overrides,
   };
+}
+
+/**
+ * These fixtures never link a weekly-cycle step run. The post-failure resume
+ * lookup must observe that and return, the same as production with no row.
+ */
+type UnlinkedStepRunQuery = {
+  select: () => UnlinkedStepRunQuery;
+  eq: () => UnlinkedStepRunQuery;
+  in: () => UnlinkedStepRunQuery;
+  maybeSingle: () => Promise<{ data: null; error: null }>;
+};
+
+function unlinkedWeeklyCycleStepRunQuery(): UnlinkedStepRunQuery {
+  const query: UnlinkedStepRunQuery = {
+    select: () => query,
+    eq: () => query,
+    in: () => query,
+    maybeSingle: async () => ({ data: null, error: null }),
+  };
+  return query;
 }
 
 async function withBrandingMocks(
@@ -634,6 +663,9 @@ async function withBrandingMocks(
                 options.scriptOnScreenText ?? "Beat one\nBeat two",
                 options.scriptVoiceoverText ?? "one two three four",
               );
+            }
+            if (table === "neuramark_weekly_cycle_step_runs") {
+              return unlinkedWeeklyCycleStepRunQuery();
             }
             throw new Error(`Unexpected table ${table}`);
           },

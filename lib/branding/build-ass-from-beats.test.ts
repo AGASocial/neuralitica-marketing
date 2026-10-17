@@ -4,12 +4,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { computeVoProportionalBeatTimings } from "../assembly/compute-vo-proportional-beat-timings.ts";
+import { computeVoProportionalBeatTimings } from "../assembly/compute-vo-proportional-beat-timings";
 import {
   BRANDING_ASS_FONT_NAME,
   BRANDING_ASS_MARGIN_V,
-} from "./constants.ts";
-import { buildAssFromBeats } from "./build-ass-from-beats.ts";
+} from "./constants";
+import { buildAssFromBeats } from "./build-ass-from-beats";
 
 describe("buildAssFromBeats", () => {
   it("equal-split beat timings for 30s / 3 beats", () => {

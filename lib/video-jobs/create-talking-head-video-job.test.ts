@@ -264,7 +264,7 @@ describe("US-8.6 Phase B — createTalkingHeadVideoJob MuseTalk unlock", () => {
       const mocks = installOrchestratorMocks({ providerKey: "musetalk_low" });
 
       try {
-        const { createTalkingHeadVideoJob } = loadVideoJobModule(
+        const { createTalkingHeadVideoJob } = loadVideoJobModule<typeof import("./create-talking-head-video-job")>(
           "./create-talking-head-video-job.ts",
         );
 
@@ -297,7 +297,7 @@ describe("US-8.6 Phase B — createTalkingHeadVideoJob MuseTalk unlock", () => {
       const mocks = installOrchestratorMocks({ providerKey: "musetalk_low" });
 
       try {
-        const { createTalkingHeadVideoJob } = loadVideoJobModule(
+        const { createTalkingHeadVideoJob } = loadVideoJobModule<typeof import("./create-talking-head-video-job")>(
           "./create-talking-head-video-job.ts",
         );
 
@@ -333,7 +333,7 @@ describe("US-8.6 Phase B — createTalkingHeadVideoJob MuseTalk unlock", () => {
       });
 
       try {
-        const { createTalkingHeadVideoJob } = loadVideoJobModule(
+        const { createTalkingHeadVideoJob } = loadVideoJobModule<typeof import("./create-talking-head-video-job")>(
           "./create-talking-head-video-job.ts",
         );
 
@@ -362,7 +362,7 @@ describe("US-8.6 Phase B — createTalkingHeadVideoJob MuseTalk unlock", () => {
       });
 
       try {
-        const { createTalkingHeadVideoJob } = loadVideoJobModule(
+        const { createTalkingHeadVideoJob } = loadVideoJobModule<typeof import("./create-talking-head-video-job")>(
           "./create-talking-head-video-job.ts",
         );
 
@@ -388,7 +388,7 @@ describe("US-8.6 Phase B — createTalkingHeadVideoJob MuseTalk unlock", () => {
       const mocks = installOrchestratorMocks({ providerKey: "musetalk_low" });
 
       try {
-        const { createTalkingHeadVideoJob } = loadVideoJobModule(
+        const { createTalkingHeadVideoJob } = loadVideoJobModule<typeof import("./create-talking-head-video-job")>(
           "./create-talking-head-video-job.ts",
         );
 
@@ -436,7 +436,7 @@ describe("US-8.6 Phase B — createTalkingHeadVideoJob MuseTalk unlock", () => {
       });
 
       try {
-        const { createTalkingHeadVideoJob } = loadVideoJobModule(
+        const { createTalkingHeadVideoJob } = loadVideoJobModule<typeof import("./create-talking-head-video-job")>(
           "./create-talking-head-video-job.ts",
         );
 
@@ -514,7 +514,7 @@ describe("resolveMediaAssetUrlForProvider kind seam", () => {
         }
 
         const { resolveMediaAssetUrlForProvider } = await import(
-          "../media/resolve-media-asset-url-for-provider.ts"
+          "../media/resolve-media-asset-url-for-provider"
         );
 
         await assert.rejects(

@@ -13,7 +13,7 @@ import {
 import { visualModeSummarySchema } from "../contracts/visual-preferences";
 import { interviewAnswersCompleteSchema } from "../contracts/interview";
 import { isPublicPath } from "../auth/public-routes";
-import { mapBusinessProfileRowForAgents } from "./map-business-profile-row.ts";
+import { mapBusinessProfileRowForAgents } from "./map-business-profile-row";
 
 const CLIENT_ID = "11111111-1111-4111-8111-111111111111";
 
@@ -92,7 +92,7 @@ describe("getBusinessProfileForAgents module (server-only)", () => {
   it("export arity is 1 (clientId)", async () => {
     await withServerOnlyStub(async () => {
       const { getBusinessProfileForAgents } = await import(
-        "./get-business-profile-for-agents.ts"
+        "./get-business-profile-for-agents"
       );
       assert.equal(getBusinessProfileForAgents.length, 1);
     });
@@ -101,7 +101,7 @@ describe("getBusinessProfileForAgents module (server-only)", () => {
   it("Cliente helper remains arity 0 and separate", async () => {
     await withServerOnlyStub(async () => {
       const { getBusinessProfileForClient } = await import(
-        "./get-business-profile-for-client.ts"
+        "./get-business-profile-for-client"
       );
       assert.equal(getBusinessProfileForClient.length, 0);
       const agentsSource = readFileSync(
@@ -274,7 +274,7 @@ describe("getBusinessProfileForAgents soft outcomes", () => {
   it("invalid UUID returns soft missing (no throw, no FORBIDDEN)", async () => {
     await withServerOnlyStub(async () => {
       const { getBusinessProfileForAgents } = await import(
-        "./get-business-profile-for-agents.ts"
+        "./get-business-profile-for-agents"
       );
       const result = await getBusinessProfileForAgents("not-a-uuid");
       assert.deepEqual(result, { exists: false });

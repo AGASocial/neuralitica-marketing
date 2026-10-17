@@ -19,6 +19,10 @@ import type { ReelScriptPackage } from "@/lib/contracts/reel-script";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+function checkKeyString(check: { checkKey: string }): string {
+  return check.checkKey;
+}
+
 type NodeModuleLoad = {
   _load: (
     request: string,
@@ -63,13 +67,13 @@ function withServerOnlyStub<T>(run: () => Promise<T>): Promise<T> {
 
 async function loadQaAgentModule() {
   return withServerOnlyStub(async () => {
-    const agent = await import("./run-reel-qa.ts");
+    const agent = await import("./run-reel-qa");
     const stub = await import(
-      "@/lib/providers/llm/stub-reel-qa-llm-adapter.ts"
+      "@/lib/providers/llm/stub-reel-qa-llm-adapter"
     );
-    const merge = await import("@/lib/qa/merge-qa-checks.ts");
+    const merge = await import("@/lib/qa/merge-qa-checks");
     const deterministic = await import(
-      "@/lib/qa/run-deterministic-qa-checks.ts"
+      "@/lib/qa/run-deterministic-qa-checks"
     );
     return { ...agent, ...stub, ...merge, ...deterministic };
   });
@@ -390,14 +394,13 @@ describe("run-reel-qa agent (US-10.1)", () => {
 
     const parsed = parseAndValidateReelQaOutput(completion.content);
     assert.equal(
-      parsed.checks.some((c) => c.checkKey === "invented_legal_bypass"),
+      parsed.checks.some((c) => checkKeyString(c) === "invented_legal_bypass"),
       false,
     );
 
     const normalized = applyCatalogSeverityToLlmCheck({
       checkKey: "tone",
       status: "fail",
-      // @ts-expect-error intentional smuggle
       severity: "blocking",
     });
     assert.equal(normalized?.severity, "overridable");

@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import Module from "node:module";
+import path from "node:path";
 import { describe, it } from "node:test";
 
 function withServerOnlyStub<T>(run: () => Promise<T>): Promise<T> {
@@ -148,8 +150,6 @@ describe("weekly cycle live env — kill switch, allowlist, cap (server-only rol
   }));
 
   it("no request/query/cookie/UI surface exists — only process.env is read (structural check)", () => {
-    const { readFileSync } = require("node:fs") as typeof import("node:fs");
-    const path = require("node:path") as typeof import("node:path");
     const source = readFileSync(path.join(process.cwd(), "lib/orchestration/weekly-cycle-live-env.ts"), "utf8");
     assert.match(source, /^import "server-only";/);
     assert.equal(source.includes("request."), false);

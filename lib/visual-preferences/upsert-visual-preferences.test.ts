@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import Module from "node:module";
 import { describe, it } from "node:test";
 
-import { preferencesUnauthenticatedError } from "./errors.ts";
+import { preferencesUnauthenticatedError } from "./errors";
 
 const CLIENT_ID = "11111111-1111-4111-8111-111111111111";
 
@@ -151,6 +151,7 @@ describe("upsertVisualPreferences action (isolated)", () => {
   it("happy path upserts Preferencias only — no job/strategy tables", async () => {
     const fromTables: string[] = [];
     const revalidatePaths: string[] = [];
+    const upsertPayloads: Array<Record<string, unknown>> = [];
     const restore = installUpsertMocks({
       hasActiveAvatarConsent: async () => false,
       revalidatePath: (p) => {
@@ -159,17 +160,41 @@ describe("upsertVisualPreferences action (isolated)", () => {
       from: (table: string) => {
         fromTables.push(table);
         return {
-          upsert() {
+          select(columns: string) {
+            assert.equal(columns, "voice_id");
             return {
-              select() {
+              eq(column: string, value: string) {
+                assert.equal(column, "client_id");
+                assert.equal(value, CLIENT_ID);
+                return {
+                  async maybeSingle() {
+                    return { data: null, error: null };
+                  },
+                };
+              },
+            };
+          },
+          upsert(
+            payload: Record<string, unknown>,
+            options: { onConflict: string },
+          ) {
+            upsertPayloads.push(payload);
+            assert.equal(options.onConflict, "client_id");
+            return {
+              select(columns: string) {
+                assert.equal(
+                  columns,
+                  "allowed_modes, faceless_style, generic_avatar_id, voice_id, rules, updated_at",
+                );
                 return {
                   async single() {
                     return {
                       data: {
-                        allowed_modes: ["generic_avatar", "faceless"],
-                        faceless_style: FACELESS_STYLE,
-                        generic_avatar_id: null,
-                        rules: { must_disclose_not_owner: true },
+                        allowed_modes: payload.allowed_modes,
+                        faceless_style: payload.faceless_style,
+                        generic_avatar_id: payload.generic_avatar_id,
+                        voice_id: payload.voice_id,
+                        rules: payload.rules,
                         updated_at: "2026-08-29T21:40:00.000Z",
                       },
                       error: null,
@@ -196,12 +221,31 @@ describe("upsertVisualPreferences action (isolated)", () => {
       assert.equal(result.ok, true);
       if (result.ok) {
         assert.deepEqual(result.allowedModes, ["generic_avatar", "faceless"]);
+        assert.equal(result.voiceId, null);
         assert.deepEqual(result.rules, { must_disclose_not_owner: true });
+        assert.deepEqual(result.facelessStyle, FACELESS_STYLE);
       }
-      assert.deepEqual(fromTables, ["neuramark_visual_preferences"]);
+      assert.deepEqual(fromTables, [
+        "neuramark_visual_preferences",
+        "neuramark_visual_preferences",
+      ]);
       assert.deepEqual(revalidatePaths, ["/settings/preferences"]);
       assert.equal(
         fromTables.some((t) => /job|strategy|script|media|tts|video/i.test(t)),
+        false,
+      );
+      assert.equal(upsertPayloads.length, 1);
+      assert.equal(upsertPayloads[0]?.client_id, CLIENT_ID);
+      assert.equal(upsertPayloads[0]?.voice_id, null);
+      assert.deepEqual(upsertPayloads[0]?.allowed_modes, [
+        "generic_avatar",
+        "faceless",
+      ]);
+      assert.deepEqual(upsertPayloads[0]?.faceless_style, FACELESS_STYLE);
+      assert.equal(
+        Object.keys(upsertPayloads[0] ?? {}).some((key) =>
+          key.toLowerCase().includes("consent"),
+        ),
         false,
       );
     } finally {
