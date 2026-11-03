@@ -34,6 +34,7 @@ import {
 } from "@/lib/reel-scripts/errors";
 import { loadApprovedStrategyForScriptJob } from "@/lib/reel-scripts/load-approved-strategy-for-script-job";
 import { persistReelScript } from "@/lib/reel-scripts/persist-reel-script";
+import { getAvatarForClientId } from "@/lib/avatars/get-avatar-for-client";
 import { getBusinessProfileForAgents } from "@/lib/profile/get-business-profile-for-agents";
 import { getPlaybookForAgents } from "@/lib/playbook/get-playbook-for-agents";
 import { getTrendSnapshotForWeek } from "@/lib/trend/get-trend-snapshot-for-week";
@@ -263,7 +264,12 @@ export async function generateReelScriptsForClient(
       slots = [slot];
     }
 
-    const locale = resolveLocale(profile);
+    const avatarResult = await getAvatarForClientId(clientId);
+    const avatarLanguage =
+      avatarResult.exists === true ? avatarResult.avatar.language : undefined;
+    const presenterGender =
+      avatarResult.exists === true ? avatarResult.avatar.gender : undefined;
+    const locale = avatarLanguage ?? resolveLocale(profile);
     const spendJobKind =
       params.mode === "batch" ? ("script_generate" as const) : ("script_regenerate" as const);
     const operatorClientId = params.operatorClientId ?? clientId;
@@ -396,6 +402,8 @@ export async function generateReelScriptsForClient(
           provider,
           llmAdapter,
           locale,
+          avatarLanguage,
+          presenterGender,
           revisionContext,
         });
       } catch (error) {

@@ -31,7 +31,7 @@ import {
 } from "@/lib/tts/errors";
 import { loadReelScriptForVoiceover } from "@/lib/tts/load-reel-script-for-voiceover";
 import { resolveTtsProviderForSynthesis } from "@/lib/tts/resolve-tts-provider-for-synthesis";
-import { resolveSynthesisVoiceId } from "@/lib/tts/voice-catalog";
+import { resolveVoiceForSynthesis } from "@/lib/tts/resolve-voice-for-synthesis";
 
 function authGuardEnvelope(error: {
   status: 401 | 403;
@@ -83,11 +83,13 @@ export async function synthesizeVoiceoverForReelScript(
       return ttsVoiceoverEmptyTextError();
     }
 
-    const voiceId = resolveSynthesisVoiceId({
+    const voice = await resolveVoiceForSynthesis({
+      clientId,
       preferredVoiceId: script.preferredVoiceId,
       contentLocale: script.preferredLocale,
       profileTone: script.profileTone,
     });
+    const voiceId = voice.catalogVoiceId;
 
     const providerResult = await resolveProviderForJob({
       clientId,
@@ -125,7 +127,10 @@ export async function synthesizeVoiceoverForReelScript(
       providerKey,
       text: script.voiceoverText,
       voiceId,
-      locale: script.preferredLocale,
+      locale: voice.locale,
+      ...(voice.elevenLabsVoiceId
+        ? { elevenLabsVoiceId: voice.elevenLabsVoiceId }
+        : {}),
     });
 
     const adapter = registry.getTtsAdapter(providerKey);

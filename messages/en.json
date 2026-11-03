@@ -609,6 +609,35 @@
         "internal": "Something went wrong. Please try again later."
       }
     },
+    "avatarSetup": {
+      "title": "Avatar voice & language",
+      "subtitle": "Set the presenter’s gender and language so scripts and TTS stay coherent. Optionally attach a cloned ElevenLabs voice.",
+      "genderLabel": "Gender",
+      "languageLabel": "Language",
+      "voiceIdLabel": "Custom ElevenLabs voice ID (optional)",
+      "voiceIdHint": "Leave blank to use the default male/female voice for the selected language.",
+      "genderMale": "Male",
+      "genderFemale": "Female",
+      "languageEn": "English",
+      "languageEs": "Spanish",
+      "save": "Save avatar setup",
+      "saving": "Saving…",
+      "prefillGender": "Suggest gender from photo",
+      "prefilling": "Analyzing…",
+      "toastSaveSuccess": "Avatar setup saved.",
+      "toastPrefillSuccess": "Gender suggestion applied — review and save.",
+      "emptyHint": "No avatar setup yet. Choose gender and language after uploading a reference photo.",
+      "loadFailed": "We could not load avatar setup. Refresh the page to try again.",
+      "errors": {
+        "validation": "Choose gender and language, then try again.",
+        "forbiddenFields": "Something went wrong. Please try again.",
+        "unauthenticated": "Sign in to manage avatar setup.",
+        "forbidden": "You do not have permission to manage avatar setup.",
+        "internal": "Something went wrong. Please try again later.",
+        "notFound": "Upload an avatar photo first, then try suggesting gender.",
+        "providerUnavailable": "Gender suggestion is temporarily unavailable. Choose gender manually."
+      }
+    },
     "references": {
       "title": "Reference assets",
       "subtitle": "Upload portrait photos or short clips used for authorized own-avatar production. File picker only — we never ask you to record.",

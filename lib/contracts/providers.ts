@@ -235,6 +235,8 @@ export const resolvedSynthesizeSpeechInputSchema = z.object({
   text: z.string().min(1).max(50_000),
   voiceId: z.string().min(1),
   locale: supportedLocaleSchema,
+  /** Avatar custom/cloned ElevenLabs voice; omit to use catalog map. */
+  elevenLabsVoiceId: z.string().min(10).max(64).optional(),
 });
 
 /** @deprecated Use synthesizeSpeechRequestSchema at boundaries; resolvedSynthesizeSpeechInputSchema internally. */
@@ -248,6 +250,7 @@ export const resolvedLlmCompletionInputSchema = z.object({
   systemPrompt: z.string().min(1),
   userPrompt: z.string().min(1),
   structuredOutputSchema: z.string().optional(),
+  maxTokens: z.number().int().positive().max(32_768).optional(),
 });
 
 /** @deprecated Use resolvedLlmCompletionInputSchema; providerKey is server-assigned. */

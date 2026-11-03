@@ -160,6 +160,7 @@ function clearReelScriptModuleCache() {
       normalized.includes("/lib/profile/get-business-profile-for-agents") ||
       normalized.includes("/lib/playbook/get-playbook-for-agents") ||
       normalized.includes("/lib/trend/get-trend-snapshot-for-week") ||
+      normalized.includes("/lib/avatars/") ||
       normalized.includes("/lib/providers/") ||
       normalized.includes("/lib/supabase/server") ||
       normalized.includes("/lib/auth/require-user")
@@ -339,6 +340,15 @@ function installReelScriptMocks(options: MockOptions) {
       return {
         getBusinessProfileForAgents:
           options.getBusinessProfileForAgents ?? (async () => PROFILE_OK),
+      };
+    }
+    if (
+      request === "@/lib/avatars/get-avatar-for-client" ||
+      String(request).includes("get-avatar-for-client")
+    ) {
+      return {
+        getAvatarForClient: async () => ({ exists: false }),
+        getAvatarForClientId: async () => ({ exists: false }),
       };
     }
     if (

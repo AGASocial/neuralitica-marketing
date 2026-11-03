@@ -131,6 +131,16 @@ function installMocks(options: MockOptions = {}) {
       };
     }
 
+    if (req.includes("resolve-voice-for-synthesis")) {
+      return {
+        resolveVoiceForSynthesis: async () => ({
+          catalogVoiceId: "en_warm_female",
+          locale: "en",
+          source: "preferences_tone",
+        }),
+      };
+    }
+
     if (req.includes("resolve-provider-for-job")) {
       return {
         resolveProviderForJob: async () => ({

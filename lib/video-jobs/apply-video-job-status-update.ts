@@ -96,10 +96,10 @@ export async function applyVideoJobStatusUpdate(
       };
     }
 
-    const rawOutputUrl = input.normalizedStatus.rawOutputUrl;
-    if (!rawOutputUrl) {
-      throw new Error("Completed video job missing rawOutputUrl");
-    }
+    // AI Gateway adapters materialize bytes in getJobStatus and omit rawOutputUrl;
+    // fetchAsset then reads the in-memory buffer (rawOutputUrl unused). URL-based
+    // providers still supply rawOutputUrl for download.
+    const rawOutputUrl = input.normalizedStatus.rawOutputUrl ?? "";
 
     const persisted = await persistVideoJobOutputAsset({
       job,
