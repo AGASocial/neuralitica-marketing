@@ -23,7 +23,7 @@ import {
   resolveProvider,
 } from "@/lib/providers/provider-adapters";
 import { resolveProviderDisplayLabel } from "@/lib/providers/resolve-provider-display-label";
-import { createSiliconFlowLlmAdapter } from "@/lib/providers/siliconflow-llm-adapter";
+import { createLlmAdapter } from "@/lib/providers/llm/create-llm-adapter";
 
 const DEFAULT_TTS_PROJECTION_CHAR_COUNT = 500;
 
@@ -183,10 +183,7 @@ export async function resolveProviderForJob(
   let estimatedCostCents: number;
 
   if (input.assetRole === "llm") {
-    const adapter = createSiliconFlowLlmAdapter(
-      provider.key,
-      provider.envKeyName,
-    );
+    const adapter = createLlmAdapter(provider);
     if (!adapter) {
       return { ok: false, code: "PROVIDER_UNAVAILABLE" };
     }

@@ -45,7 +45,7 @@ import {
   resolveCatalogRowForDecision,
   resolveProviderForJob,
 } from "@/lib/providers/resolve-provider-for-job";
-import { createSiliconFlowLlmAdapter } from "@/lib/providers/siliconflow-llm-adapter";
+import { createLlmAdapter } from "@/lib/providers/llm/create-llm-adapter";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
 import type { BusinessProfileForAgentsView } from "@/lib/contracts/profile";
 import type { RevisionContext } from "@/lib/contracts/approval-revision";
@@ -196,10 +196,7 @@ export async function generateReelCaptionsForClient(
       return reelCaptionProviderUnavailableError();
     }
 
-    const llmAdapter = createSiliconFlowLlmAdapter(
-      provider.key,
-      provider.envKeyName,
-    );
+    const llmAdapter = createLlmAdapter(provider);
     if (!llmAdapter) {
       return reelCaptionProviderUnavailableError();
     }

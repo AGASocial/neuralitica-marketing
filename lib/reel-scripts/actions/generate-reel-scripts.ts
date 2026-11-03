@@ -93,7 +93,11 @@ export async function generateReelScripts(
       overrideReason: parsed.data.overrideReason,
     });
 
-    if (result.ok) {
+    const partiallySaved =
+      !result.ok &&
+      result.error.code === "SCRIPT_OUTPUT_INVALID" &&
+      (result.error.fields?.savedSlotIndexes?.length ?? 0) > 0;
+    if (result.ok || partiallySaved) {
       revalidatePath("/operator/scripts");
       revalidatePath("/operator/strategy");
     }

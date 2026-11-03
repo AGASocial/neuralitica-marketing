@@ -1,0 +1,28 @@
+# Neuramark media worker on Fly.io (ADR-0003). Deploy: `fly deploy` (see docs/governance/OPERATIONS.md).
+# No [http_service]: the workers only poll Supabase, they serve no public HTTP.
+app = "neuralitica-marketing-worker"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  VIDEO_JOB_POLL_MODE = "fly"
+  ASSEMBLY_JOB_POLL_MODE = "fly"
+  BRANDING_JOB_POLL_MODE = "fly"
+
+[processes]
+  video = "node worker/video-jobs.ts"
+  assembly = "node worker/assembly-jobs.ts"
+  branding = "node worker/branding-jobs.ts"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  processes = ["video"]
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
+  processes = ["assembly", "branding"]

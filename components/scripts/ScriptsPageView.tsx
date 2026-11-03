@@ -192,6 +192,7 @@ type ScriptsPageCopy = {
     inFlight: string;
     profileIncomplete: string;
     scriptOutputInvalid: string;
+    scriptSlotsFailed: string;
     providerUnavailable: string;
     strategyNotApproved: string;
     slotNotFound: string;
@@ -750,6 +751,15 @@ export function ScriptsPageView({
           life: 4000,
         });
         router.refresh();
+        return;
+      }
+
+      const failedSlots = result.error.fields?.failedSlotIndexes ?? [];
+      if (result.error.code === "SCRIPT_OUTPUT_INVALID" && failedSlots.length > 0) {
+        setBanner(copy.errors.scriptSlotsFailed.replace("{slots}", failedSlots.join(", ")));
+        if ((result.error.fields?.savedSlotIndexes?.length ?? 0) > 0) {
+          router.refresh();
+        }
         return;
       }
 

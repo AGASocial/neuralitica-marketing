@@ -46,7 +46,7 @@ import {
   resolveCatalogRowForDecision,
   resolveProviderForJob,
 } from "@/lib/providers/resolve-provider-for-job";
-import { createSiliconFlowLlmAdapter } from "@/lib/providers/siliconflow-llm-adapter";
+import { createLlmAdapter } from "@/lib/providers/llm/create-llm-adapter";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
 import type { BusinessProfileForAgentsView } from "@/lib/contracts/profile";
 import type { RevisionContext } from "@/lib/contracts/approval-revision";
@@ -231,10 +231,7 @@ export async function generateReelScriptsForClient(
       return reelScriptProviderUnavailableError();
     }
 
-    const llmAdapter = createSiliconFlowLlmAdapter(
-      provider.key,
-      provider.envKeyName,
-    );
+    const llmAdapter = createLlmAdapter(provider);
     if (!llmAdapter) {
       return reelScriptProviderUnavailableError();
     }
@@ -340,6 +337,8 @@ export async function generateReelScriptsForClient(
       };
     }> = [];
 
+    const failedSlotIndexes: number[] = [];
+
     for (const slot of slots) {
       let gate: SlotGateOk;
       if (params.mode === "batch") {
@@ -407,6 +406,11 @@ export async function generateReelScriptsForClient(
           providerKey: provider.key,
           code: error instanceof Error ? error.message : "unknown",
         });
+        if (params.mode === "batch") {
+          // Keep going: one bad slot must not discard the other slots' work.
+          failedSlotIndexes.push(slot.slotIndex);
+          continue;
+        }
         return reelScriptOutputInvalidError({
           slotIndex: [String(slot.slotIndex)],
           brief: ["LLM_FAILED"],
@@ -415,6 +419,10 @@ export async function generateReelScriptsForClient(
 
       const packageParsed = reelScriptPackageSchema.safeParse(agentResult.output);
       if (!packageParsed.success) {
+        if (params.mode === "batch") {
+          failedSlotIndexes.push(slot.slotIndex);
+          continue;
+        }
         return reelScriptOutputInvalidError({
           slotIndex: [String(slot.slotIndex)],
           ...zodInterviewErrorToFieldErrors(packageParsed.error),
@@ -468,6 +476,21 @@ export async function generateReelScriptsForClient(
         estimatedCostCents: item.gate.estimatedCostCents,
         rationaleKey: item.gate.rationaleKey,
         operatorClientId,
+      });
+    }
+
+    if (failedSlotIndexes.length > 0) {
+      console.error("[reel-scripts] batch finished with failed slots", {
+        clientId,
+        strategyId,
+        failedSlotIndexes,
+        savedSlotCount: scriptIds.length,
+        providerKey: provider.key,
+      });
+      return reelScriptOutputInvalidError({
+        failedSlotIndexes: failedSlotIndexes.map(String),
+        savedSlotIndexes: generatedPackages.map((item) => String(item.slot.slotIndex)),
+        brief: ["LLM_FAILED"],
       });
     }
 

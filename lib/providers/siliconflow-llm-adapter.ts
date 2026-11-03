@@ -121,6 +121,8 @@ export class SiliconFlowLlmAdapter implements LlmProviderAdapter {
           ? { type: "json_object" }
           : undefined,
       }),
+      // Bound each call so a slow vendor cannot pin the generation lock.
+      signal: AbortSignal.timeout(60_000),
     });
 
     if (!response.ok) {

@@ -1184,6 +1184,7 @@
       "inFlight": "Ya hay un guion generándose. Espera a que termine.",
       "profileIncomplete": "Completa la ficha viva y las preferencias visuales antes de generar guiones.",
       "scriptOutputInvalid": "El agente de guion devolvió un paquete inválido. Inténtalo de nuevo o contacta soporte.",
+      "scriptSlotsFailed": "Falló la generación del guion para el/los slot(s) {slots}. Los demás slots se guardaron. Pulsa Generar guiones de nuevo para reintentar.",
       "providerUnavailable": "El servicio de guiones no está disponible temporalmente. Inténtalo más tarde.",
       "strategyNotApproved": "Aprueba la estrategia semanal de esta semana antes de generar guiones.",
       "slotNotFound": "Ese slot de Reel no está en la estrategia aprobada.",

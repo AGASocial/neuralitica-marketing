@@ -6,6 +6,7 @@ import { readBrandingJobPollMode } from "@/lib/branding/branding-job-config-read
 
 const mode = readBrandingJobPollMode(process.env);
 if (mode === "fly") {
+  console.info("[worker] branding job poll loop started", { mode, region: process.env.FLY_REGION ?? null });
   runBrandingWorkerLoop().catch((error) => {
     console.error("[worker] branding job loop crashed", {
       message: error instanceof Error ? error.message : "unknown",

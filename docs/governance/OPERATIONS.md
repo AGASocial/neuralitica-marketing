@@ -14,11 +14,28 @@
 
 ## Fly.io / FFmpeg worker (ADR-0003)
 
-**Decision:** ACCEPTED architecture; **IMPLEMENTATION INCOMPLETE in this repo**.
+**Status (2026-11-03):** deployed. App `neuralitica-marketing-worker`, org `personal` (byagasocial@gmail.com), region `iad`.
 
-- No `fly.toml` or `Dockerfile` found under `neuralitica-marketing` as of 2026-09-10.
-- Before redesigning: inventory whether Docker/Fly config lives in another AGA Social repo or private ops.
-- Do not treat F7 as OPERATIONALLY VALIDATED for worker SC until a real deploy path is documented here.
+- Config: `Dockerfile` (Node 24 bookworm-slim + FFmpeg; runs `worker/*.ts` with `tsx` and `--conditions=react-server`) and `fly.toml` at repo root.
+- Process groups (one machine each, no public HTTP service):
+  - `video` → `node worker/video-jobs.ts` (HeyGen/talking-head job polling)
+  - `assembly` → `node worker/assembly-jobs.ts` (FFmpeg assembly)
+  - `branding` → `node worker/branding-jobs.ts` (FFmpeg branding/cover)
+- Poll modes are set in `fly.toml` `[env]` (`*_JOB_POLL_MODE=fly`); intervals use code defaults unless `*_JOB_POLL_INTERVAL_MS` is set.
+- Secrets (set with `fly secrets`, never committed): `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `AI_GATEWAY_API_KEY`, `SILICONFLOW_API_KEY`, `SITE_URL`, `NEURAMARK_PROVIDER_ASSET_URL_SECRET`, `NEURAMARK_MEDIA_BACKEND`. Add `HEYGEN_API_KEY`, `FAL_API_KEY`, `REPLICATE_API_TOKEN` when those providers are enabled.
+
+Deploy / operate:
+
+```bash
+fly auth whoami                     # byagasocial@gmail.com
+fly deploy -a neuralitica-marketing-worker --remote-only --ha=false
+fly status -a neuralitica-marketing-worker
+fly logs -a neuralitica-marketing-worker   # expect "[worker] <group> job poll loop started"
+# update secrets without echoing values:
+grep -E '^(KEY1|KEY2)=' .env | fly secrets import -a neuralitica-marketing-worker
+```
+
+The worker deploys independently of Vercel: redeploy Fly after merging changes under `lib/` or `worker/` that the loops use.
 
 ## Instagram Graph Publish (ADR-0002)
 

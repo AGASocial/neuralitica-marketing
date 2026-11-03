@@ -224,17 +224,16 @@ describe("resolveProviderForJob routing (US-7.2)", () => {
           }),
         };
       }
-      if (String(request).includes("siliconflow-llm-adapter")) {
-        return {
-          createSiliconFlowLlmAdapter: () => ({
+      if (String(request).includes("siliconflow-llm-adapter") || String(request).includes("create-llm-adapter")) {
+        const adapter = () => ({
             providerKey: "siliconflow_qwen",
             estimateCost: async () => ({
               estimatedCostCents: 2,
               currency: "USD" as const,
               providerKey: "siliconflow_qwen",
             }),
-          }),
-        };
+          });
+        return { createSiliconFlowLlmAdapter: adapter, createLlmAdapter: adapter };
       }
       return originalLoad(request, parent, isMain);
     };
