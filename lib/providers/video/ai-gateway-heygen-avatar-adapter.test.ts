@@ -104,11 +104,17 @@ describe("AI Gateway HeyGen avatar adapter", () => {
       const operation = { type: "gateway-async-job", jobId: "job_heygen_1" };
       const videoBytes = Buffer.from("fake-mp4-bytes-heygen");
 
-      const startVideo = async () => ({
-        operation,
-        warnings: [],
-        response: { timestamp: new Date(), modelId: "heygen/heygen-video-1" },
-      });
+      const startCapture: { args: Record<string, unknown> | undefined } = {
+        args: undefined,
+      };
+      const startVideo = async (args: Record<string, unknown>) => {
+        startCapture.args = args;
+        return {
+          operation,
+          warnings: [],
+          response: { timestamp: new Date(), modelId: "heygen/heygen-video-1" },
+        };
+      };
 
       const getVideoStatus = async () => ({
         status: "completed" as const,
@@ -153,6 +159,27 @@ describe("AI Gateway HeyGen avatar adapter", () => {
       assert.equal(created.status, "queued");
       assert.ok(created.externalJobId.length > 0);
       assert.equal(created.estimatedCostCents, 8);
+
+      assert.ok(startCapture.args);
+      const startArgs = startCapture.args;
+      assert.equal(startArgs.generateAudio, true);
+      const prompt = startArgs.prompt as { image?: string; text?: string };
+      assert.equal(prompt.image, `https://example.com/portrait/${PORTRAIT_ASSET_ID}`);
+      const refs = startArgs.inputReferences as Array<{
+        data: string;
+        mediaType: string;
+      }>;
+      assert.equal(refs?.[0]?.data, `https://example.com/audio/${VOICEOVER_ASSET_ID}`);
+      assert.equal(refs?.[0]?.mediaType, "audio/mpeg");
+      const heygenOpts = (
+        startArgs.providerOptions as {
+          heygen: { referenceAudio: Array<{ url: string }> };
+        }
+      ).heygen;
+      assert.equal(
+        heygenOpts.referenceAudio[0]?.url,
+        `https://example.com/audio/${VOICEOVER_ASSET_ID}`,
+      );
 
       const status = await adapter.getJobStatus(created.externalJobId);
       assert.equal(status.status, "completed");

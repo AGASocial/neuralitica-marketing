@@ -183,13 +183,26 @@ export function createAiGatewayHeygenAvatarAdapter(
       const model = createGatewayVideoModel({ apiKey, modelId: gatewayModel });
       let startResult;
       try {
+        // heygen/heygen-video-1 supports audio input (gateway model input_limits.audio).
+        // Pass signed TTS URL via providerOptions + inputReferences so lip-sync
+        // drives from OUR ElevenLabs track (not HeyGen-generated speech).
         startResult = await startVideo({
           model,
-          prompt:
-            input.prompt?.trim() ||
-            "A talking presenter speaking to camera. Natural head movement, clear lip sync to the reference audio. Vertical framing.",
+          prompt: {
+            image: imageUrl,
+            text:
+              input.prompt?.trim() ||
+              "A talking presenter speaking to camera. Natural head movement, clear lip sync to the reference audio. Vertical framing.",
+          },
           duration,
           aspectRatio: AI_GATEWAY_VIDEO_DEFAULT_ASPECT_RATIO,
+          generateAudio: true,
+          inputReferences: [
+            {
+              data: audioUrl,
+              mediaType: "audio/mpeg",
+            },
+          ],
           providerOptions: {
             heygen: {
               resolution: AI_GATEWAY_VIDEO_DEFAULT_RESOLUTION_CLASS,

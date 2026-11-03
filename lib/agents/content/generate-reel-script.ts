@@ -23,8 +23,10 @@ import type { VisualModality } from "@/lib/contracts/visual-preferences";
 import type { RevisionContext } from "@/lib/contracts/approval-revision";
 import { buildRevisionPromptSectionsForScript } from "@/lib/agents/content/revision-prompt-sections";
 import { extractJsonFromLlmContent } from "@/lib/agents/content/generate-weekly-strategy";
+import { fitVoiceoverToWordBudget } from "@/lib/agents/content/fit-voiceover-to-word-budget";
 import { looksLikeTruncatedVoiceoverTail } from "@/lib/agents/content/voiceover-completeness";
 import { buildGenericDisclosurePromptHint } from "@/lib/qa/build-generic-disclosure-prompt-hint";
+import { REEL_SCRIPT_WORDS_PER_SECOND_TARGET } from "@/lib/contracts/reel-script-readability";
 import type { LlmProviderAdapter } from "@/lib/providers/provider-adapters";
 
 /** Enough headroom for full package JSON (hook/body/cta/voiceover/broll). */
@@ -278,8 +280,9 @@ export function buildReelScriptPrompts(
     "Hard rules:",
     `- Production modality for this slot (trusted): ${modalidad}`,
     durationHint,
+    `- voiceoverText word budget: aim for ~${REEL_SCRIPT_WORDS_PER_SECOND_TARGET} words per second of targetDurationSec (e.g. 30s → ~${Math.round(30 * REEL_SCRIPT_WORDS_PER_SECOND_TARGET)} words). Do not exceed that budget.`,
     "- voiceoverText MUST be a complete spoken script that ends in a finished sentence with terminal punctuation (. ! ? …). Never stop mid-clause (forbidden tails like \"Recuerda, yo soy\" / \"Remember, I am\").",
-    "- Prefer trimming an earlier beat over cutting the closing CTA mid-sentence.",
+    "- Prefer dropping an earlier full sentence over cutting the closing CTA mid-sentence.",
     "- Include brollBeats, coldOpenNotes, and/or editingNotes when formato or táctica editing hints reference cold open, rewind, or B-roll structure.",
     mustDiscloseForSlot
       ? "- MUST include disclosure that the AI presenter is not the business owner when generic_avatar modality applies."
@@ -423,7 +426,25 @@ export async function generateReelScriptForSlot(
       );
       continue;
     }
-    return { output: parsed, llmUsage: usage };
+
+    // Post-LLM: fit VO to word budget at sentence boundaries (never mid-clause).
+    const fitted = fitVoiceoverToWordBudget({
+      voiceoverText: schema.data.voiceoverText,
+      targetDurationSec: schema.data.targetDurationSec,
+    });
+    if (looksLikeTruncatedVoiceoverTail(fitted.voiceoverText)) {
+      lastError = new ReelScriptAgentError(
+        "AGENT_OUTPUT_INVALID",
+        "LLM output has incomplete voiceover (mid-sentence truncation)",
+      );
+      continue;
+    }
+
+    const packageOut: ReelScriptPackage = {
+      ...schema.data,
+      voiceoverText: fitted.voiceoverText,
+    };
+    return { output: packageOut, llmUsage: usage };
   }
 
   throw (

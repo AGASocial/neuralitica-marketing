@@ -262,6 +262,82 @@ describe("runAssemblyJob mocked pipeline", () => {
     );
   });
 
+  it("always remaps TTS over primary clip audio when voiceover asset present", async () => {
+    process.env.NEURAMARK_ASSEMBLY_DURATION_TOLERANCE_SEC = String(
+      NEURAMARK_ASSEMBLY_DURATION_TOLERANCE_SEC_DEFAULT,
+    );
+
+    const voKey = `neuramark/${CLIENT_ID}/${REEL_SCRIPT_ID}/${VOICEOVER_ASSET_ID}.mp3`;
+    const fp = createHash("sha256")
+      .update(`${PRIMARY_ASSET_ID}|${VOICEOVER_ASSET_ID}|reel_v1_basic||primary`)
+      .digest("hex");
+
+    const storage = new Map<string, Buffer>();
+    storage.set(`${PRIMARY_ASSET_ID}.mp4`, Buffer.from("fake-primary-bytes"));
+    storage.set(voKey, Buffer.from("fake-tts-bytes"));
+
+    await withAssemblyMocks(
+      {
+        assemblyJobs: [
+          baseJobRow({
+            status: "queued",
+            voiceover_asset_id: VOICEOVER_ASSET_ID,
+            input_fingerprint: fp,
+          }),
+        ],
+        mediaAssets: [
+          {
+            id: PRIMARY_ASSET_ID,
+            client_id: CLIENT_ID,
+            asset_type: "generated_video",
+            storage_key: `${PRIMARY_ASSET_ID}.mp4`,
+          },
+          {
+            id: VOICEOVER_ASSET_ID,
+            client_id: CLIENT_ID,
+            asset_type: "voiceover",
+            storage_key: voKey,
+          },
+        ],
+        insertedMediaAssetId: OUTPUT_ASSET_ID,
+        storage,
+      },
+      async ({ updates }) => {
+        const spawnCapture: { args: string[] | null } = { args: null };
+        const { runAssemblyJob } = loadAssemblyModule<RunAssemblyJobModule>(
+          "./run-assembly-job.ts",
+        );
+
+        await runAssemblyJob(JOB_ID, {
+          runFfmpeg: async (args: string[]) => {
+            spawnCapture.args = args;
+            const outputPath = args.at(-1);
+            if (typeof outputPath === "string") {
+              await writeFile(outputPath, Buffer.from("fake-output-mp4"));
+            }
+            return { exitCode: 0, stderr: "" };
+          },
+          probeLocalMediaFile: async (filePath: string) => {
+            if (filePath.endsWith("output.mp4")) {
+              return { durationSec: 29.9, hasAudioStream: true };
+            }
+            // Primary HAS vendor audio (HeyGen) — must still remux TTS.
+            return { durationSec: 29.9, hasAudioStream: true };
+          },
+        });
+
+        const spawnArgs = spawnCapture.args;
+        assert.ok(spawnArgs);
+        assert.ok(spawnArgs.includes("0:v:0"));
+        assert.ok(spawnArgs.includes("1:a:0"));
+        assert.ok(!spawnArgs.includes("0:a:0?"));
+
+        const completed = updates.find((u) => u.status === "completed");
+        assert.ok(completed);
+      },
+    );
+  });
+
   it("Phase B-M2: entry with processing status → no spawn (peer owns row)", async () => {
     await withAssemblyMocks(
       {

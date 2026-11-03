@@ -1,7 +1,6 @@
 import "server-only";
 
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 import type { AuthErrorEnvelope } from "@/lib/contracts/auth";
 import { forbiddenError, unauthenticatedError } from "@/lib/auth/errors";
@@ -13,6 +12,17 @@ import {
 import { resolveActiveGuard, resolveOperatorGuard } from "@/lib/auth/guard-decision";
 import { buildLoginLocation } from "@/lib/auth/login-redirect";
 import { LOCALE_HEADER, PATHNAME_HEADER } from "@/lib/auth/public-routes";
+
+/**
+ * Lazy-load next/navigation — its module init calls React.createContext, which
+ * is undefined under Fly worker NODE_OPTIONS `--conditions=react-server`.
+ * Handler/worker paths must never top-level-import navigation.
+ */
+async function redirectPage(url: string): Promise<never> {
+  const { redirect } = await import("next/navigation");
+  redirect(url);
+  throw new Error("redirect_unreachable");
+}
 
 export type GuardMode = "page" | "handler";
 
@@ -53,17 +63,20 @@ async function readGuardLocation(): Promise<{
   return { pathname, locale };
 }
 
-function failUnauthenticated(mode: GuardMode, loginLocation: string): never {
+async function failUnauthenticated(
+  mode: GuardMode,
+  loginLocation: string,
+): Promise<never> {
   if (mode === "page") {
-    redirect(loginLocation);
+    await redirectPage(loginLocation);
   }
 
   throw new AuthGuardError(401, unauthenticatedError());
 }
 
-function failForbidden(mode: GuardMode): never {
+async function failForbidden(mode: GuardMode): Promise<never> {
   if (mode === "page") {
-    redirect("/pending");
+    await redirectPage("/pending");
   }
 
   throw new AuthGuardError(403, forbiddenError());
@@ -95,10 +108,13 @@ export async function requireActive(mode: GuardMode): Promise<CurrentUser> {
 
   if (decision.kind === "unauthenticated") {
     const { pathname, locale } = await readGuardLocation();
-    failUnauthenticated(mode, buildLoginLocation({ next: pathname, locale }));
+    return await failUnauthenticated(
+      mode,
+      buildLoginLocation({ next: pathname, locale }),
+    );
   }
 
-  failForbidden(mode);
+  return await failForbidden(mode);
 }
 
 /**
@@ -127,12 +143,12 @@ export async function loadPendingIdentity(): Promise<{
   const authUser = await getSessionAuthUser();
   if (!authUser) {
     const { locale } = await readGuardLocation();
-    redirect(buildLoginLocation({ next: null, locale }));
+    return await redirectPage(buildLoginLocation({ next: null, locale }));
   }
 
   const user = await getCurrentUser();
   if (user?.active === true) {
-    redirect("/dashboard");
+    return await redirectPage("/dashboard");
   }
 
   if (user) {
