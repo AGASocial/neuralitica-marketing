@@ -375,7 +375,8 @@ describe("synthesizeVoiceoverForClientTrusted duration (US-7.3-B)", () => {
 
   it("persists durationSec on spend INSERT when adapter knows duration", async () => {
     await withServerOnlyStub(async () => {
-      const mocks = installMocks({ durationSec: 12.5 });
+      // Within 30±2 so the new TTS duration gate accepts the asset.
+      const mocks = installMocks({ durationSec: 29.5 });
       const { synthesizeVoiceoverForClientTrusted } = loadTtsModule<
         typeof import("../tts/synthesize-voiceover-for-client-trusted")
       >(
@@ -389,7 +390,31 @@ describe("synthesizeVoiceoverForClientTrusted duration (US-7.3-B)", () => {
       mocks.restore();
       assert.equal(result.ok, true);
       assert.equal(mocks.wasSpendCalled(), true);
-      assert.equal(mocks.lastSpend()?.durationSec, 12.5);
+      assert.equal(mocks.lastSpend()?.durationSec, 29.5);
+    });
+  });
+
+  it("rejects TTS duration far below script target (9.4s vs 30±2)", async () => {
+    await withServerOnlyStub(async () => {
+      const mocks = installMocks({ durationSec: 9.4 });
+      const { synthesizeVoiceoverForClientTrusted } = loadTtsModule<
+        typeof import("../tts/synthesize-voiceover-for-client-trusted")
+      >("../tts/synthesize-voiceover-for-client-trusted");
+      const result = await synthesizeVoiceoverForClientTrusted({
+        clientId: CLIENT_ID,
+        reelScriptId: REEL_SCRIPT_ID,
+        invokedBy: "revision",
+      });
+      mocks.restore();
+      assert.equal(result.ok, false);
+      if (!result.ok) {
+        assert.equal(result.error.code, "VALIDATION_ERROR");
+        assert.equal(
+          result.error.messageKey,
+          "scripts.voiceover.error.durationMismatch",
+        );
+      }
+      assert.equal(mocks.wasSpendCalled(), false);
     });
   });
 });

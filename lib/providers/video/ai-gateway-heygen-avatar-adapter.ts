@@ -183,21 +183,23 @@ export function createAiGatewayHeygenAvatarAdapter(
       const model = createGatewayVideoModel({ apiKey, modelId: gatewayModel });
       let startResult;
       try {
-        // heygen/heygen-video-1 supports audio input (gateway model input_limits.audio).
-        // Pass signed TTS URL via providerOptions + inputReferences so lip-sync
-        // drives from OUR ElevenLabs track (not HeyGen-generated speech).
+        // heygen/heygen-video-1: audio refs only work in reference_to_video, which
+        // requires ≥1 image/video reference. Do NOT pass prompt.image (i2v) together
+        // with references — Gateway rejects that combo. Put portrait + TTS audio in
+        // inputReferences so lip-sync drives from OUR ElevenLabs track.
         startResult = await startVideo({
           model,
-          prompt: {
-            image: imageUrl,
-            text:
-              input.prompt?.trim() ||
-              "A talking presenter speaking to camera. Natural head movement, clear lip sync to the reference audio. Vertical framing.",
-          },
+          prompt:
+            input.prompt?.trim() ||
+            "The person in <Picture 1> speaks to camera using the voice in <Audio 1>. Natural head movement, clear lip sync. Vertical framing.",
           duration,
           aspectRatio: AI_GATEWAY_VIDEO_DEFAULT_ASPECT_RATIO,
           generateAudio: true,
           inputReferences: [
+            {
+              data: imageUrl,
+              mediaType: "image/jpeg",
+            },
             {
               data: audioUrl,
               mediaType: "audio/mpeg",
@@ -205,6 +207,7 @@ export function createAiGatewayHeygenAvatarAdapter(
           ],
           providerOptions: {
             heygen: {
+              mode: "reference_to_video",
               resolution: AI_GATEWAY_VIDEO_DEFAULT_RESOLUTION_CLASS,
               promptEnhancement: "disabled",
               referenceImages: [{ type: "url", url: imageUrl }],

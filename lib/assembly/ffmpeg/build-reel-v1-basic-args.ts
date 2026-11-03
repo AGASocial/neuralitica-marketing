@@ -11,10 +11,35 @@ export type BuildReelV1BasicArgsInput = {
   primaryDurationSec: number;
   targetDurationSec: number;
   toleranceSec: number;
+  /**
+   * When remuxing TTS, limit/pad video to the voiceover length so a longer
+   * avatar clip cannot leave a silent mouth-moving tail past our audio.
+   */
+  voiceoverDurationSec?: number;
 };
 
 function formatDurationSec(value: number): string {
   return Number(value.toFixed(2)).toString();
+}
+
+/**
+ * Effective assembly output duration: prefer TTS length when remuxing.
+ */
+export function resolveReelV1OutputDurationSec(
+  input: Pick<
+    BuildReelV1BasicArgsInput,
+    "remuxVoiceover" | "targetDurationSec" | "voiceoverDurationSec"
+  >,
+): number {
+  if (
+    input.remuxVoiceover &&
+    typeof input.voiceoverDurationSec === "number" &&
+    Number.isFinite(input.voiceoverDurationSec) &&
+    input.voiceoverDurationSec > 0
+  ) {
+    return input.voiceoverDurationSec;
+  }
+  return input.targetDurationSec;
 }
 
 /**
@@ -28,14 +53,17 @@ export function buildReelV1BasicArgs(
     throw new Error("localVoiceoverPath required when remuxVoiceover is true");
   }
 
+  const outputDurationSec = resolveReelV1OutputDurationSec(input);
+
   const needsTrim =
-    input.primaryDurationSec >
-    input.targetDurationSec + input.toleranceSec;
+    input.primaryDurationSec > outputDurationSec + input.toleranceSec ||
+    (input.remuxVoiceover &&
+      typeof input.voiceoverDurationSec === "number" &&
+      input.primaryDurationSec > outputDurationSec);
   const needsPad =
-    input.primaryDurationSec <
-    input.targetDurationSec - input.toleranceSec;
+    input.primaryDurationSec < outputDurationSec - input.toleranceSec;
   const padSec = needsPad
-    ? input.targetDurationSec - input.primaryDurationSec
+    ? outputDurationSec - input.primaryDurationSec
     : 0;
 
   let videoFilter = BASE_VIDEO_FILTER;
@@ -84,7 +112,7 @@ export function buildReelV1BasicArgs(
   );
 
   if (needsTrim) {
-    args.push("-t", formatDurationSec(input.targetDurationSec));
+    args.push("-t", formatDurationSec(outputDurationSec));
   }
 
   args.push(input.localOutputPath);

@@ -18,10 +18,28 @@ export type BuildBrollConcatArgsInput = {
   targetDurationSec: number;
   toleranceSec: number;
   coldOpenTrimSec: number | null;
+  /** Prefer TTS length so concat output matches our voiceover, not script target alone. */
+  voiceoverDurationSec?: number;
 };
 
 function formatDurationSec(value: number): string {
   return Number(value.toFixed(2)).toString();
+}
+
+export function resolveBrollOutputDurationSec(
+  input: Pick<
+    BuildBrollConcatArgsInput,
+    "targetDurationSec" | "voiceoverDurationSec"
+  >,
+): number {
+  if (
+    typeof input.voiceoverDurationSec === "number" &&
+    Number.isFinite(input.voiceoverDurationSec) &&
+    input.voiceoverDurationSec > 0
+  ) {
+    return input.voiceoverDurationSec;
+  }
+  return input.targetDurationSec;
 }
 
 /**
@@ -51,12 +69,16 @@ export function buildBrollConcatArgs(
     input.sourceDurationSec - (coldOpen ?? 0),
   );
 
+  const outputDurationSec = resolveBrollOutputDurationSec(input);
+
   const needsTrim =
-    effectiveSourceSec > input.targetDurationSec + input.toleranceSec;
+    effectiveSourceSec > outputDurationSec + input.toleranceSec ||
+    (typeof input.voiceoverDurationSec === "number" &&
+      effectiveSourceSec > outputDurationSec);
   const needsPad =
-    effectiveSourceSec < input.targetDurationSec - input.toleranceSec;
+    effectiveSourceSec < outputDurationSec - input.toleranceSec;
   const padSec = needsPad
-    ? input.targetDurationSec - effectiveSourceSec
+    ? outputDurationSec - effectiveSourceSec
     : 0;
 
   let videoFilter = BASE_VIDEO_FILTER;
@@ -107,7 +129,7 @@ export function buildBrollConcatArgs(
   );
 
   if (needsTrim) {
-    args.push("-t", formatDurationSec(input.targetDurationSec));
+    args.push("-t", formatDurationSec(outputDurationSec));
   }
 
   args.push(input.localOutputPath);

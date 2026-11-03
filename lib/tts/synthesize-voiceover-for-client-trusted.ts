@@ -10,10 +10,12 @@ import { initializeProviderRegistryFromCatalog } from "@/lib/providers/create-pr
 import { ProviderAdapterError } from "@/lib/providers/normalize-provider-response";
 import { resolveProviderForJob } from "@/lib/providers/resolve-provider-for-job";
 import { findLatestVoiceoverAssetId } from "@/lib/tts/get-voiceover-summaries-for-reel-scripts";
+import { assertVoiceoverDurationMatchesTarget } from "@/lib/tts/assert-voiceover-duration-matches-target";
 import {
   ttsVoiceoverBudgetExceededError,
   ttsVoiceoverCostPolicyUnavailableError,
   ttsVoiceoverEmptyTextError,
+  ttsVoiceoverError,
   ttsVoiceoverInternalError,
   ttsVoiceoverNotFoundError,
   ttsVoiceoverProviderUnavailableError,
@@ -145,6 +147,28 @@ export async function synthesizeVoiceoverForClientTrusted(
         invokedBy: params.invokedBy,
       });
       return ttsVoiceoverInternalError();
+    }
+
+    const durationCheck = assertVoiceoverDurationMatchesTarget({
+      actualDurationSec: storedAsset.durationSec,
+      targetDurationSec: script.targetDurationSec,
+    });
+    if (!durationCheck.ok) {
+      console.error("[tts] trusted voiceover duration outside target tolerance", {
+        clientId: params.clientId,
+        reelScriptId: params.reelScriptId,
+        actualDurationSec: durationCheck.actualDurationSec,
+        targetDurationSec: durationCheck.targetDurationSec,
+      });
+      return ttsVoiceoverError(
+        "VALIDATION_ERROR",
+        "scripts.voiceover.error.durationMismatch",
+        {
+          fields: {
+            durationSec: ["OUT_OF_RANGE"],
+          },
+        },
+      );
     }
 
     const inserted = await insertVoiceoverMediaAsset({

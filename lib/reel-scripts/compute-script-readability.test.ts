@@ -196,14 +196,15 @@ describe("computeScriptReadabilityMetrics (US-5.2)", () => {
     assert.equal(metrics.voiceover.status, "over");
   });
 
-  it("9 — VO under −30% threshold", () => {
+  it("9 — VO under −10% threshold (calibrated floor)", () => {
+    // targetWordCount for 15s @ 2.5 wps = 38; under if < 0.9*38 ≈ 34.2
     const metrics = computeScriptReadabilityMetrics(
       basePackage({
         targetDurationSec: 15,
-        voiceoverText: words(25),
+        voiceoverText: words(30),
       }),
     );
-    assert.equal(metrics.voiceover.wordCount, 25);
+    assert.equal(metrics.voiceover.wordCount, 30);
     assert.equal(metrics.voiceover.status, "under");
   });
 

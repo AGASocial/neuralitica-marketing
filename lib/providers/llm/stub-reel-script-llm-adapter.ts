@@ -73,12 +73,42 @@ export function defaultStubReelScriptJson(input: LlmCompletionInput): string {
     editingCombined.includes("b-roll") ||
     editingCombined.includes("broll");
 
+  // Meet calibrated ~2.5 wps word budget (±10%) so generateReelScriptForSlot accepts stub output.
+  const targetWordCount = Math.round(targetDurationSec * 2.5);
+  const minWordCount = Math.ceil(targetWordCount * 0.9);
+  const maxWordCount = Math.floor(targetWordCount * 1.15);
+  const countWords = (text: string) =>
+    text.trim().split(/\s+/).filter(Boolean).length;
+  const filler =
+    "Revisa cada detalle, compara el antes y el después, y guarda este tip.";
+  const closingRaw =
+    typeof ctaHint === "string" && ctaHint.trim().length > 0
+      ? ctaHint.trim()
+      : "Guarda este video y comparte hoy.";
+  const closing = /[.!?…]$/u.test(closingRaw) ? closingRaw : `${closingRaw}.`;
+  const parts: string[] = [
+    `En este Reel explicamos ${tema.toLowerCase()} con claridad y ejemplos concretos.`,
+  ];
+  // Add fillers until seed+fillers+closing would clear the under floor, without exceeding over.
+  while (
+    countWords([...parts, filler, closing].join(" ")) <= maxWordCount &&
+    countWords([...parts, closing].join(" ")) < minWordCount
+  ) {
+    parts.push(filler);
+  }
+  parts.push(closing);
+  // If still under (very short tema / short duration), pad with short complete sentences.
+  while (countWords(parts.join(" ")) < minWordCount) {
+    parts.splice(parts.length - 1, 0, "Este tip ahorra tiempo y evita errores.");
+  }
+  const voiceoverText = parts.join(" ").trim();
+
   const pkg: Record<string, unknown> = {
     hook: `¿${tema}?`,
     body: `Desarrollo del guion para: ${tema}.`,
     cta: ctaHint ?? "Guarda este video y comparte.",
     onScreenText: `Puntos clave\n• ${tema}`,
-    voiceoverText: `En este Reel explicamos ${tema.toLowerCase()}.`,
+    voiceoverText,
     targetDurationSec,
   };
 

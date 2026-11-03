@@ -28,6 +28,8 @@ import {
   loadMediaAssetForAssembly,
   voiceoverExtensionFromStorageKey,
 } from "./load-media-asset-for-assembly";
+import { resolveBrollOutputDurationSec } from "./ffmpeg/build-broll-concat-args";
+import { resolveReelV1OutputDurationSec } from "./ffmpeg/build-reel-v1-basic-args";
 import { parseColdOpenTrimSec } from "./parse-cold-open-trim-sec";
 import { probeLocalMediaFile } from "./probe-media-streams";
 import { runFfmpeg, type RunFfmpegOptions } from "./run-ffmpeg";
@@ -221,6 +223,22 @@ async function runPrimaryPath(
     }
 
     const toleranceSec = getAssemblyDurationToleranceSec();
+    let voiceoverDurationSec: number | undefined;
+    if (remuxVoiceover && voiceoverPath) {
+      const voiceoverProbe = await probeFn(voiceoverPath);
+      if (!voiceoverProbe) {
+        await failAssemblyJob(activeJob.id, ASSEMBLY_FAILURE_PROBE);
+        return;
+      }
+      voiceoverDurationSec = voiceoverProbe.durationSec;
+    }
+
+    const expectedDurationSec = resolveReelV1OutputDurationSec({
+      remuxVoiceover,
+      targetDurationSec: activeJob.targetDurationSec,
+      voiceoverDurationSec,
+    });
+
     const ffmpegArgs = buildReelV1BasicArgs({
       localPrimaryPath: primaryPath,
       localOutputPath: outputPath,
@@ -229,6 +247,7 @@ async function runPrimaryPath(
       primaryDurationSec: primaryProbe.durationSec,
       targetDurationSec: activeJob.targetDurationSec,
       toleranceSec,
+      voiceoverDurationSec,
     });
 
     await finishFfmpegUpload({
@@ -239,6 +258,7 @@ async function runPrimaryPath(
       ffmpegRunner,
       probeFn,
       toleranceSec,
+      expectedDurationSec,
     });
   } catch (error) {
     console.error("[assembly] runAssemblyJob primary failed", {
@@ -325,6 +345,13 @@ async function runBrollStitchPath(
     );
     await writeFile(voiceoverPath, await streamToBuffer(voiceoverStream));
 
+    const voiceoverProbe = await probeFn(voiceoverPath);
+    if (!voiceoverProbe) {
+      await failAssemblyJob(activeJob.id, ASSEMBLY_FAILURE_PROBE);
+      return;
+    }
+    const voiceoverDurationSec = voiceoverProbe.durationSec;
+
     const coldOpenNotes = await loadColdOpenNotesForScript({
       reelScriptId: activeJob.reelScriptId,
       clientId: activeJob.clientId,
@@ -335,6 +362,10 @@ async function runBrollStitchPath(
     });
 
     const toleranceSec = getAssemblyDurationToleranceSec();
+    const expectedDurationSec = resolveBrollOutputDurationSec({
+      targetDurationSec: activeJob.targetDurationSec,
+      voiceoverDurationSec,
+    });
     const ffmpegArgs = buildBrollConcatArgs({
       localConcatListPath: concatListPath,
       localClipPaths: clipPaths,
@@ -344,6 +375,7 @@ async function runBrollStitchPath(
       targetDurationSec: activeJob.targetDurationSec,
       toleranceSec,
       coldOpenTrimSec,
+      voiceoverDurationSec,
     });
 
     await finishFfmpegUpload({
@@ -354,6 +386,7 @@ async function runBrollStitchPath(
       ffmpegRunner,
       probeFn,
       toleranceSec,
+      expectedDurationSec,
     });
   } catch (error) {
     console.error("[assembly] runAssemblyJob broll_stitch failed", {
@@ -378,6 +411,8 @@ async function finishFfmpegUpload(params: {
     filePath: string,
   ) => Promise<{ durationSec: number; hasAudioStream: boolean } | null>;
   toleranceSec: number;
+  /** Duration to validate against (TTS length when remuxing; else script target). */
+  expectedDurationSec?: number;
 }): Promise<void> {
   const {
     activeJob,
@@ -386,6 +421,7 @@ async function finishFfmpegUpload(params: {
     ffmpegRunner,
     probeFn,
     toleranceSec,
+    expectedDurationSec = activeJob.targetDurationSec,
   } = params;
 
   const ffmpegResult = await ffmpegRunner(ffmpegArgs);
@@ -401,9 +437,7 @@ async function finishFfmpegUpload(params: {
   }
 
   const actualDurationSec = roundDurationSecDown(outputProbe.durationSec);
-  if (
-    Math.abs(actualDurationSec - activeJob.targetDurationSec) > toleranceSec
-  ) {
+  if (Math.abs(actualDurationSec - expectedDurationSec) > toleranceSec) {
     await failAssemblyJob(activeJob.id, ASSEMBLY_FAILURE_DURATION);
     return;
   }

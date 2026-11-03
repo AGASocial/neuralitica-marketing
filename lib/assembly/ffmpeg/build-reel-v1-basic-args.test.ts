@@ -146,4 +146,22 @@ describe("buildReelV1BasicArgs", () => {
       /localVoiceoverPath required/,
     );
   });
+
+  it("remux trims primary to voiceover duration (no silent mouth tail)", () => {
+    const args = buildReelV1BasicArgs({
+      localPrimaryPath: PRIMARY,
+      localOutputPath: OUTPUT,
+      localVoiceoverPath: VOICEOVER,
+      remuxVoiceover: true,
+      primaryDurationSec: 15.2,
+      targetDurationSec: 15,
+      toleranceSec: 2,
+      voiceoverDurationSec: 9.43,
+    });
+
+    assert.ok(args.includes("-t"));
+    assert.ok(args.includes("9.43"));
+    assert.equal(args.at(-1), OUTPUT);
+    assertNoShellMetacharacters(args);
+  });
 });

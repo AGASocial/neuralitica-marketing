@@ -21,6 +21,7 @@ import {
   ttsVoiceoverBudgetExceededError,
   ttsVoiceoverCostPolicyUnavailableError,
   ttsVoiceoverEmptyTextError,
+  ttsVoiceoverError,
   ttsVoiceoverForbiddenError,
   ttsVoiceoverForbiddenFieldsError,
   ttsVoiceoverInternalError,
@@ -29,6 +30,7 @@ import {
   ttsVoiceoverUnauthenticatedError,
   ttsVoiceoverValidationError,
 } from "@/lib/tts/errors";
+import { assertVoiceoverDurationMatchesTarget } from "@/lib/tts/assert-voiceover-duration-matches-target";
 import { loadReelScriptForVoiceover } from "@/lib/tts/load-reel-script-for-voiceover";
 import { resolveTtsProviderForSynthesis } from "@/lib/tts/resolve-tts-provider-for-synthesis";
 import { resolveVoiceForSynthesis } from "@/lib/tts/resolve-voice-for-synthesis";
@@ -185,6 +187,30 @@ export async function synthesizeVoiceoverForReelScript(
         code,
       });
       return ttsVoiceoverInternalError();
+    }
+
+    const durationCheck = assertVoiceoverDurationMatchesTarget({
+      actualDurationSec: storedAsset.durationSec,
+      targetDurationSec: script.targetDurationSec,
+    });
+    if (!durationCheck.ok) {
+      console.error("[tts] voiceover duration outside target tolerance", {
+        clientId,
+        reelScriptId,
+        actualDurationSec: durationCheck.actualDurationSec,
+        targetDurationSec: durationCheck.targetDurationSec,
+        minAllowedSec: durationCheck.minAllowedSec,
+        maxAllowedSec: durationCheck.maxAllowedSec,
+      });
+      return ttsVoiceoverError(
+        "VALIDATION_ERROR",
+        "scripts.voiceover.error.durationMismatch",
+        {
+          fields: {
+            durationSec: ["OUT_OF_RANGE"],
+          },
+        },
+      );
     }
 
     const inserted = await insertVoiceoverMediaAsset({

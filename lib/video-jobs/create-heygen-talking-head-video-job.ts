@@ -4,6 +4,7 @@ import {
   AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY,
   AI_GATEWAY_HEYGEN_UNIT_COST_CENTS_PER_SECOND,
 } from "@/lib/contracts/ai-gateway-video";
+import { resolveAvatarRequestDurationSec } from "@/lib/video-jobs/resolve-avatar-request-duration-sec";
 import {
   HEYGEN_FALLBACK_RATIONALE_KEY,
   HEYGEN_HIGH_TIER_RATIONALE_KEY,
@@ -86,6 +87,41 @@ async function verifyMediaAssetOwned(params: {
     .maybeSingle();
 
   return !error && !!data;
+}
+
+async function loadOwnedVoiceoverDurationSec(params: {
+  assetId: string;
+  clientId: string;
+}): Promise<number | null> {
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("neuramark_media_assets")
+    .select("metadata")
+    .eq("id", params.assetId)
+    .eq("client_id", params.clientId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  const metadata = (data as { metadata?: unknown }).metadata;
+  if (
+    metadata &&
+    typeof metadata === "object" &&
+    metadata !== null &&
+    "durationSec" in metadata
+  ) {
+    const durationSec = (metadata as { durationSec?: unknown }).durationSec;
+    if (typeof durationSec === "number" && Number.isFinite(durationSec) && durationSec > 0) {
+      return durationSec;
+    }
+  }
+  return null;
 }
 
 async function isHeygenCatalogActive(): Promise<boolean> {
@@ -297,9 +333,10 @@ export async function createHeygenTalkingHeadVideoJob(
       return videoJobMutationError("VALIDATION_ERROR");
     }
 
-    // Server-authoritative duration from reel package — never trust client
-    // targetDurationSec for estimateCost / budget (SECURITY anti–gate-bypass).
-    const targetDurationSec = script.package.targetDurationSec;
+    // Prefer TTS duration for Gateway/HeyGen request length so lip-sync
+    // matches our ElevenLabs track. Fall back to script target when unknown.
+    // Never trust client targetDurationSec for estimateCost / budget.
+    const scriptTargetDurationSec = script.package.targetDurationSec;
 
     const eligibility = await resolveEligibility({
       clientId: input.clientId,
@@ -331,6 +368,15 @@ export async function createHeygenTalkingHeadVideoJob(
         fields: { voiceoverAssetId: ["REQUIRED"] },
       });
     }
+
+    const voiceoverDurationSec = await loadOwnedVoiceoverDurationSec({
+      assetId: voiceoverAssetId,
+      clientId: input.clientId,
+    });
+    const targetDurationSec = resolveAvatarRequestDurationSec({
+      voiceoverDurationSec,
+      scriptTargetDurationSec,
+    });
 
     const isOwnAvatar =
       script.visualMode === "own_avatar" || script.modalidad === "own_avatar";
