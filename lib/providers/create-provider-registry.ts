@@ -6,6 +6,15 @@ import {
   ELEVENLABS_UNIT_COST_CENTS_PER_1M_CHARS,
 } from "@/lib/contracts/elevenlabs-tts";
 import {
+  AI_GATEWAY_ENV_KEY_NAME,
+  AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY,
+  AI_GATEWAY_HEYGEN_CATALOG_COST_MODEL,
+  AI_GATEWAY_HEYGEN_UNIT_COST_CENTS_PER_SECOND,
+  AI_GATEWAY_SEEDANCE_BROLL_PROVIDER_KEY,
+  AI_GATEWAY_SEEDANCE_CATALOG_COST_MODEL,
+  AI_GATEWAY_SEEDANCE_UNIT_COST_CENTS_PER_CLIP,
+} from "@/lib/contracts/ai-gateway-video";
+import {
   HEYGEN_APPROX_PER_MINUTE_CENTS,
   HEYGEN_DEFAULT_AVATAR_ID_ENV,
   HEYGEN_UNIT_COST_CENTS_PER_SECOND,
@@ -28,6 +37,7 @@ import { createElevenlabsTtsAdapter } from "@/lib/providers/tts/elevenlabs-tts-a
 import { createSiliconflowCosyvoice2Adapter } from "@/lib/providers/tts/siliconflow-cosyvoice2-adapter";
 import { createLtxBrollHighAdapter } from "@/lib/providers/video/ltx-broll-high-adapter";
 import { createSiliconflowWan21TurboAdapter } from "@/lib/providers/video/siliconflow-wan21-turbo-adapter";
+import { createAiGatewayVideoAdapter } from "@/lib/providers/video/create-video-adapter";
 
 const STUB_VIDEO_KEYS = [
   DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead,
@@ -164,10 +174,26 @@ function buildBootstrapCatalog(): ProviderCatalogRow[] {
       envKeyName: "SILICONFLOW_API_KEY",
     },
     {
-      key: "heygen_high",
+      key: AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY,
       assetRole: "talking_head",
       tier: "high",
       active: true,
+      costModel: { ...AI_GATEWAY_HEYGEN_CATALOG_COST_MODEL },
+      envKeyName: AI_GATEWAY_ENV_KEY_NAME,
+    },
+    {
+      key: AI_GATEWAY_SEEDANCE_BROLL_PROVIDER_KEY,
+      assetRole: "broll",
+      tier: "low",
+      active: true,
+      costModel: { ...AI_GATEWAY_SEEDANCE_CATALOG_COST_MODEL },
+      envKeyName: AI_GATEWAY_ENV_KEY_NAME,
+    },
+    {
+      key: "heygen_high",
+      assetRole: "talking_head",
+      tier: "high",
+      active: false,
       costModel: {
         billingUnit: "per_second",
         unitCostCents: HEYGEN_UNIT_COST_CENTS_PER_SECOND,
@@ -275,6 +301,48 @@ export function createProviderRegistry(
           126,
         ),
       }),
+    );
+  }
+
+  const gatewayHeygenRow = catalog.find(
+    (row) => row.key === AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY,
+  );
+  if (gatewayHeygenRow) {
+    const adapter = createAiGatewayVideoAdapter(gatewayHeygenRow);
+    if (adapter) {
+      registry.registerVideo(adapter);
+    }
+  } else if (catalogKeys.has(AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY)) {
+    registry.registerVideo(
+      createAiGatewayVideoAdapter({
+        key: AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY,
+        envKeyName: AI_GATEWAY_ENV_KEY_NAME,
+        costModel: {
+          billingUnit: "per_second",
+          unitCostCents: AI_GATEWAY_HEYGEN_UNIT_COST_CENTS_PER_SECOND,
+        },
+      })!,
+    );
+  }
+
+  const gatewaySeedanceRow = catalog.find(
+    (row) => row.key === AI_GATEWAY_SEEDANCE_BROLL_PROVIDER_KEY,
+  );
+  if (gatewaySeedanceRow) {
+    const adapter = createAiGatewayVideoAdapter(gatewaySeedanceRow);
+    if (adapter) {
+      registry.registerVideo(adapter);
+    }
+  } else if (catalogKeys.has(AI_GATEWAY_SEEDANCE_BROLL_PROVIDER_KEY)) {
+    registry.registerVideo(
+      createAiGatewayVideoAdapter({
+        key: AI_GATEWAY_SEEDANCE_BROLL_PROVIDER_KEY,
+        envKeyName: AI_GATEWAY_ENV_KEY_NAME,
+        costModel: {
+          billingUnit: "per_clip",
+          unitCostCents: AI_GATEWAY_SEEDANCE_UNIT_COST_CENTS_PER_CLIP,
+        },
+      })!,
     );
   }
 

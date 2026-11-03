@@ -22,6 +22,7 @@ export type BrollGenerateConfirmCopy = {
   clipCount: string;
   providerLabel: string;
   providerWan: string;
+  providerSeedance: string;
   providerLtx: string;
   ineligible: string;
   toastSuccess: string;
@@ -50,7 +51,10 @@ export type BrollGenerateOutcome =
       skipMessages: string[];
     };
 
-type BrollProviderKey = "siliconflow_wan21_turbo" | "ltx_broll_high";
+type BrollProviderKey =
+  | "ai_gateway_seedance_broll"
+  | "siliconflow_wan21_turbo"
+  | "ltx_broll_high";
 
 function formatTemplate(
   template: string,
@@ -150,6 +154,9 @@ function providerLabel(
   providerKey: BrollProviderKey | undefined,
   copy: BrollGenerateConfirmCopy,
 ): string | null {
+  if (providerKey === "ai_gateway_seedance_broll") {
+    return copy.providerSeedance;
+  }
   if (providerKey === "siliconflow_wan21_turbo") {
     return copy.providerWan;
   }

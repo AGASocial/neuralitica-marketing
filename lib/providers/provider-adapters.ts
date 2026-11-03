@@ -208,6 +208,24 @@ export function resolveProvider(
     return matched;
   }
 
+  if (context.assetRole === "talking_head" && context.tier === "high") {
+    const gatewayAvatar = resolvedCandidates.find(
+      (row) => row.key === DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHeadGateway,
+    );
+    if (gatewayAvatar) {
+      return gatewayAvatar;
+    }
+  }
+
+  if (context.assetRole === "broll" && context.tier === "low") {
+    const gatewayBroll = resolvedCandidates.find(
+      (row) => row.key === DEFAULT_LOW_TIER_PROVIDER_KEYS.brollGateway,
+    );
+    if (gatewayBroll) {
+      return gatewayBroll;
+    }
+  }
+
   return rankCatalogCandidatesByCost(resolvedCandidates)[0]!;
 }
 

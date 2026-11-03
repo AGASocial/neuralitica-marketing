@@ -522,7 +522,11 @@ export const previewBrollVideoJobsEstimateSuccessSchema = z
     clipCount: z.number().int().nonnegative(),
     needsBroll: z.boolean(),
     providerKey: z
-      .enum(["siliconflow_wan21_turbo", "ltx_broll_high"])
+      .enum([
+        "ai_gateway_seedance_broll",
+        "siliconflow_wan21_turbo",
+        "ltx_broll_high",
+      ])
       .optional(),
     blockedReasonKey: z.string().optional(),
   })

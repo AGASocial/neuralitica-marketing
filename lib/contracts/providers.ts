@@ -297,8 +297,13 @@ export const DEFAULT_LOW_TIER_PROVIDER_KEYS = {
   tts: "siliconflow_cosyvoice2",
   talkingHead: "sadtalker_low",
   talkingHeadLoop: "musetalk_low",
+  /** Preferred low-tier B-roll: AI Gateway Seedance (replaces Wan as default). */
+  brollGateway: "ai_gateway_seedance_broll",
+  /** Legacy Wan key — still selectable when the gateway B-roll row is inactive. */
   broll: "siliconflow_wan21_turbo",
   manual: "manual",
+  /** Preferred high-tier talking presenter via AI Gateway HeyGen Video. */
+  talkingHeadGateway: "ai_gateway_heygen_avatar",
 } as const;
 
 /** All 10 V1 catalog seed keys (7 low active + 3 high inactive). */

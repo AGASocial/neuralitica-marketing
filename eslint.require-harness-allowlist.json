@@ -43,6 +43,8 @@
     "lib/providers/siliconflow-base-url.test.ts",
     "lib/providers/tts/elevenlabs-tts-adapter.test.ts",
     "lib/providers/tts/siliconflow-cosyvoice2-adapter.test.ts",
+    "lib/providers/video/ai-gateway-heygen-avatar-adapter.test.ts",
+    "lib/providers/video/ai-gateway-seedance-broll-adapter.test.ts",
     "lib/providers/video/heygen-high-adapter.test.ts",
     "lib/providers/video/ltx-broll-high-adapter.test.ts",
     "lib/providers/video/manual-upload-adapter.test.ts",

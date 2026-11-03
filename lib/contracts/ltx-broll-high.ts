@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 
+import { AI_GATEWAY_SEEDANCE_BROLL_PROVIDER_KEY } from "@/lib/contracts/ai-gateway-video";
 import { WAN_PROVIDER_KEY } from "@/lib/contracts/siliconflow-wan21-turbo";
 
 /** Error code when FAL_API_KEY is missing before vendor I/O. */
@@ -212,6 +213,8 @@ export function isAllowedBrollProviderPair(
 ): boolean {
   return (
     (providerKey === WAN_PROVIDER_KEY && providerTier === "low") ||
+    (providerKey === AI_GATEWAY_SEEDANCE_BROLL_PROVIDER_KEY &&
+      providerTier === "low") ||
     (providerKey === LTX_PROVIDER_KEY && providerTier === "high")
   );
 }

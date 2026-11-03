@@ -1,6 +1,10 @@
 import "server-only";
 
 import {
+  AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY,
+  AI_GATEWAY_HEYGEN_UNIT_COST_CENTS_PER_SECOND,
+} from "@/lib/contracts/ai-gateway-video";
+import {
   HEYGEN_FALLBACK_RATIONALE_KEY,
   HEYGEN_HIGH_TIER_RATIONALE_KEY,
   HEYGEN_UNIT_COST_CENTS_PER_SECOND,
@@ -42,6 +46,29 @@ import {
 
 type EligibilityPath = "high_tier" | "operator_fallback" | "ineligible";
 
+const LEGACY_HEYGEN_PROVIDER_KEY = "heygen_high" as const;
+
+type HeygenAvatarProviderKey =
+  | typeof AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY
+  | typeof LEGACY_HEYGEN_PROVIDER_KEY;
+
+async function resolveHeygenAvatarProviderKey(): Promise<HeygenAvatarProviderKey | null> {
+  const catalogResult = await getProviderCatalog();
+  if ("loadFailed" in catalogResult && catalogResult.loadFailed) {
+    return null;
+  }
+  const gateway = catalogResult.providers.find(
+    (entry) => entry.key === AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY && entry.active,
+  );
+  if (gateway) {
+    return AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY;
+  }
+  const legacy = catalogResult.providers.find(
+    (entry) => entry.key === LEGACY_HEYGEN_PROVIDER_KEY && entry.active,
+  );
+  return legacy ? LEGACY_HEYGEN_PROVIDER_KEY : null;
+}
+
 async function verifyMediaAssetOwned(params: {
   assetId: string;
   clientId: string;
@@ -62,12 +89,7 @@ async function verifyMediaAssetOwned(params: {
 }
 
 async function isHeygenCatalogActive(): Promise<boolean> {
-  const catalogResult = await getProviderCatalog();
-  if ("loadFailed" in catalogResult && catalogResult.loadFailed) {
-    return false;
-  }
-  const row = catalogResult.providers.find((entry) => entry.key === "heygen_high");
-  return !!row?.active;
+  return (await resolveHeygenAvatarProviderKey()) != null;
 }
 
 async function loadLatestPrimaryTalkingHeadJob(params: {
@@ -193,10 +215,15 @@ export async function previewHeygenTalkingHeadEstimate(
     reelScriptId: parsed.data.reelScriptId,
   });
 
+  const providerKey = await resolveHeygenAvatarProviderKey();
+  if (!providerKey) {
+    return videoJobMutationError("PROVIDER_UNAVAILABLE");
+  }
+
   const registry = await initializeProviderRegistryFromCatalog();
   let adapter;
   try {
-    adapter = registry.getVideoAdapter("heygen_high");
+    adapter = registry.getVideoAdapter(providerKey);
   } catch {
     return videoJobMutationError("PROVIDER_UNAVAILABLE");
   }
@@ -204,16 +231,21 @@ export async function previewHeygenTalkingHeadEstimate(
   const estimate = await adapter.estimateCost({
     reelScriptId: parsed.data.reelScriptId,
     clientId: parsed.data.clientId,
-    providerKey: "heygen_high",
+    providerKey,
     providerTier: "high",
     assetRole: "primary",
     targetDurationSec: durationSec,
   });
 
+  const unitCostCentsPerSecond =
+    providerKey === AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY
+      ? AI_GATEWAY_HEYGEN_UNIT_COST_CENTS_PER_SECOND
+      : HEYGEN_UNIT_COST_CENTS_PER_SECOND;
+
   return previewHeygenTalkingHeadEstimateSuccessSchema.parse({
     ok: true,
     estimatedCostCents: estimate.estimatedCostCents,
-    unitCostCentsPerSecond: HEYGEN_UNIT_COST_CENTS_PER_SECOND,
+    unitCostCentsPerSecond,
     durationSec,
     eligible: eligibility.path !== "ineligible",
     eligibilityPath: eligibility.path,
@@ -280,15 +312,15 @@ export async function createHeygenTalkingHeadVideoJob(
       });
     }
 
-    const catalogActive = await isHeygenCatalogActive();
-    if (!catalogActive) {
+    const providerKey = await resolveHeygenAvatarProviderKey();
+    if (!providerKey) {
       return videoJobMutationError("PROVIDER_UNAVAILABLE");
     }
 
     const registry = await initializeProviderRegistryFromCatalog();
     let adapter;
     try {
-      adapter = registry.getVideoAdapter("heygen_high");
+      adapter = registry.getVideoAdapter(providerKey);
     } catch {
       return videoJobMutationError("PROVIDER_UNAVAILABLE");
     }
@@ -302,11 +334,13 @@ export async function createHeygenTalkingHeadVideoJob(
 
     const isOwnAvatar =
       script.visualMode === "own_avatar" || script.modalidad === "own_avatar";
+    const usesGatewayAvatar =
+      providerKey === AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY;
 
     let portraitAssetIdForInsert: string | null = null;
     let resolvedInput: Parameters<typeof adapter.createJob>[0];
 
-    if (isOwnAvatar) {
+    if (isOwnAvatar || usesGatewayAvatar) {
       const portraitAssetId = input.portraitAssetId ?? null;
       if (!portraitAssetId) {
         return videoJobMutationError("VALIDATION_ERROR", {
@@ -332,7 +366,7 @@ export async function createHeygenTalkingHeadVideoJob(
       resolvedInput = {
         reelScriptId: input.reelScriptId,
         clientId: input.clientId,
-        providerKey: "heygen_high",
+        providerKey,
         providerTier: "high",
         assetRole: "primary",
         targetDurationSec,
@@ -359,7 +393,7 @@ export async function createHeygenTalkingHeadVideoJob(
       resolvedInput = {
         reelScriptId: input.reelScriptId,
         clientId: input.clientId,
-        providerKey: "heygen_high",
+        providerKey,
         providerTier: "high",
         assetRole: "primary",
         targetDurationSec,
@@ -410,7 +444,7 @@ export async function createHeygenTalkingHeadVideoJob(
       .insert({
         client_id: input.clientId,
         reel_script_id: input.reelScriptId,
-        provider_key: "heygen_high",
+        provider_key: providerKey,
         provider_tier: "high",
         asset_role: "primary",
         external_job_id: createResult.externalJobId,
@@ -483,7 +517,7 @@ export async function createHeygenTalkingHeadVideoJob(
       jobKind: "talking_head_generate",
       assetRole: "talking_head",
       providerTier: "high",
-      providerKey: "heygen_high",
+      providerKey,
       estimatedCostCents: estimate.estimatedCostCents,
       rationaleKey,
       operatorClientId: operator.id,
@@ -497,7 +531,7 @@ export async function createHeygenTalkingHeadVideoJob(
       estimatedCostCents: estimate.estimatedCostCents,
       actualCostCents: null,
       operatorClientId: operator.id,
-      providerKey: "heygen_high",
+      providerKey,
     });
 
     await supabase

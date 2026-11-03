@@ -1,6 +1,10 @@
 import "server-only";
 
 import {
+  AI_GATEWAY_SEEDANCE_BROLL_PROVIDER_KEY,
+  AI_GATEWAY_SEEDANCE_UNIT_COST_CENTS_PER_CLIP,
+} from "@/lib/contracts/ai-gateway-video";
+import {
   buildLtxBrollPrompt,
   clampLtxClipDurationSec,
   isAllowedBrollProviderPair,
@@ -11,7 +15,6 @@ import {
   WAN_PROMPT_BEAT_CLOSE,
   WAN_PROMPT_BEAT_OPEN,
   WAN_PROMPT_MAX_CHARS,
-  WAN_PROVIDER_KEY,
   WAN_REFERENCE_STILL_MISSING_MESSAGE_KEY,
   WAN_UNIT_COST_CENTS_PER_CLIP,
   clampWanClipDurationSec,
@@ -225,7 +228,9 @@ export async function createBrollVideoJobs(
     const defaultEstimateCentsPerClip: number =
       providerKey === LTX_PROVIDER_KEY
         ? LTX_UNIT_COST_CENTS_PER_CLIP
-        : WAN_UNIT_COST_CENTS_PER_CLIP;
+        : providerKey === AI_GATEWAY_SEEDANCE_BROLL_PROVIDER_KEY
+          ? AI_GATEWAY_SEEDANCE_UNIT_COST_CENTS_PER_CLIP
+          : WAN_UNIT_COST_CENTS_PER_CLIP;
 
     for (let i = 0; i < clipCount; i += 1) {
       const beatText = beatTexts[i] ?? beatTexts[0] ?? script.package.hook;
