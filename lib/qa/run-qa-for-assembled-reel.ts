@@ -53,7 +53,7 @@ import {
   resolveCatalogRowForDecision,
   resolveProviderForJob,
 } from "@/lib/providers/resolve-provider-for-job";
-import { createSiliconFlowLlmAdapter } from "@/lib/providers/siliconflow-llm-adapter";
+import { createLlmAdapter } from "@/lib/providers/llm/create-llm-adapter";
 import {
   isAiDisclosureRequired,
   runReelQaAgent,
@@ -215,10 +215,7 @@ export async function runQaForAssembledReelForClient(
     return qaProviderUnavailableError();
   }
 
-  const llmAdapter = createSiliconFlowLlmAdapter(
-    provider.key,
-    provider.envKeyName,
-  );
+  const llmAdapter = createLlmAdapter(provider);
   if (!llmAdapter) {
     await persistNonPass(deterministic);
     return qaProviderUnavailableError();

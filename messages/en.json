@@ -1184,6 +1184,7 @@
       "inFlight": "A script is already generating. Wait for it to finish.",
       "profileIncomplete": "Complete the living profile and visual preferences before generating scripts.",
       "scriptOutputInvalid": "The script agent returned an invalid package. Try again or contact support.",
+      "scriptSlotsFailed": "Script generation failed for slot(s) {slots}. Any other slots were saved. Click Generate scripts again to retry.",
       "providerUnavailable": "The script service is temporarily unavailable. Try again later.",
       "strategyNotApproved": "Approve the weekly strategy for this week before generating scripts.",
       "slotNotFound": "That Reel slot was not found on the approved strategy.",

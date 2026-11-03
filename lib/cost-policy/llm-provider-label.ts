@@ -1,6 +1,7 @@
 import type { ProviderTier } from "@/lib/contracts/providers";
 
 const LLM_PROVIDER_LABELS: Record<string, string> = {
+  ai_gateway_gemini_flash_lite: "Gemini 2.5 Flash Lite (AI Gateway)",
   siliconflow_deepseek_flash: "DeepSeek Flash",
   siliconflow_qwen: "Qwen 2.5",
 };

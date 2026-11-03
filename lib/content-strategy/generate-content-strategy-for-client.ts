@@ -35,7 +35,7 @@ import { getTrendSnapshotForWeek } from "@/lib/trend/get-trend-snapshot-for-week
 import { getDefaultCostPolicy } from "@/lib/providers/get-default-cost-policy";
 import { getProviderCatalog } from "@/lib/providers/get-provider-catalog";
 import { resolveProvider } from "@/lib/providers/provider-adapters";
-import { createSiliconFlowLlmAdapter } from "@/lib/providers/siliconflow-llm-adapter";
+import { createLlmAdapter } from "@/lib/providers/llm/create-llm-adapter";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
 
 export async function generateContentStrategyForClient(params: {
@@ -102,10 +102,7 @@ export async function generateContentStrategyForClient(params: {
       return contentStrategyProviderUnavailableError();
     }
 
-    const llmAdapter = createSiliconFlowLlmAdapter(
-      provider.key,
-      provider.envKeyName,
-    );
+    const llmAdapter = createLlmAdapter(provider);
     if (!llmAdapter) {
       return contentStrategyProviderUnavailableError();
     }

@@ -189,11 +189,15 @@ export function resolveProvider(
   }
 
   if (context.assetRole === "llm" && resolvedCandidates.length > 1) {
-    const targetKey =
+    const variantKey =
       context.llmVariant === "fallback"
         ? DEFAULT_LOW_TIER_PROVIDER_KEYS.llmFallback
         : DEFAULT_LOW_TIER_PROVIDER_KEYS.llm;
-    const matched = resolvedCandidates.find((row) => row.key === targetKey);
+    // AI Gateway row wins when active; SiliconFlow rows remain an option.
+    const matched =
+      resolvedCandidates.find(
+        (row) => row.key === DEFAULT_LOW_TIER_PROVIDER_KEYS.llmGateway,
+      ) ?? resolvedCandidates.find((row) => row.key === variantKey);
     if (!matched) {
       throw new ProviderResolveError(
         context.assetRole,

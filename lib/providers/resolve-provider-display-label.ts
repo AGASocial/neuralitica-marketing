@@ -1,6 +1,7 @@
 import "server-only";
 
 const PROVIDER_DISPLAY_LABELS: Record<string, string> = {
+  ai_gateway_gemini_flash_lite: "Gemini 2.5 Flash Lite (AI Gateway)",
   siliconflow_deepseek_flash: "DeepSeek Flash",
   siliconflow_qwen: "Qwen (SiliconFlow)",
   siliconflow_cosyvoice2: "CosyVoice 2",

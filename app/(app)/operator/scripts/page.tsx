@@ -13,6 +13,8 @@ import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
 import { normalizeToIsoMonday } from "@/lib/trend/normalize-week-start";
 
 export const dynamic = "force-dynamic";
+/** Batch script generation runs as a Server Action on this route (several LLM calls). */
+export const maxDuration = 300;
 
 type ScriptsPageProps = {
   searchParams: Promise<{ weekStart?: string; highlightSlot?: string }>;
@@ -153,6 +155,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
           inFlight: t.scripts.errors.inFlight,
           profileIncomplete: t.scripts.errors.profileIncomplete,
           scriptOutputInvalid: t.scripts.errors.scriptOutputInvalid,
+          scriptSlotsFailed: t.scripts.errors.scriptSlotsFailed,
           providerUnavailable: t.scripts.errors.providerUnavailable,
           strategyNotApproved: t.scripts.errors.strategyNotApproved,
           slotNotFound: t.scripts.errors.slotNotFound,

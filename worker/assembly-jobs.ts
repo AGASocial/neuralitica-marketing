@@ -5,6 +5,7 @@ import {
 
 const mode = process.env.ASSEMBLY_JOB_POLL_MODE ?? "fly";
 if (mode === "fly") {
+  console.info("[worker] assembly job poll loop started", { mode, region: process.env.FLY_REGION ?? null });
   runAssemblyWorkerLoop().catch((error) => {
     console.error("[worker] assembly job loop crashed", {
       message: error instanceof Error ? error.message : "unknown",

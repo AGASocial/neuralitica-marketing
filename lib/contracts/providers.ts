@@ -289,6 +289,9 @@ export type StoredMediaAsset = z.infer<typeof storedMediaAssetSchema>;
 
 /** Default V1 low-tier catalog seed keys (US-X.4). */
 export const DEFAULT_LOW_TIER_PROVIDER_KEYS = {
+  /** Preferred LLM for every variant when active: Vercel AI Gateway (Gemini 2.5 Flash Lite). */
+  llmGateway: "ai_gateway_gemini_flash_lite",
+  /** Legacy SiliconFlow keys — still selectable when the gateway row is inactive. */
   llm: "siliconflow_deepseek_flash",
   llmFallback: "siliconflow_qwen",
   tts: "siliconflow_cosyvoice2",

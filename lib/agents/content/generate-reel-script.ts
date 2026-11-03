@@ -326,29 +326,125 @@ export async function generateReelScriptForSlot(
     revisionContext: params.revisionContext,
   });
 
-  const completion = await params.llmAdapter.complete({
+  const baseInput = {
     clientId: params.profile.clientId,
     providerKey: params.provider.key,
     locale,
     systemPrompt,
     userPrompt,
     structuredOutputSchema: "reelScriptPackage",
-  });
+  } as const;
 
-  const jsonText = extractJsonFromLlmContent(completion.content);
-  try {
-    return {
-      output: JSON.parse(jsonText) as unknown,
-      llmUsage: {
-        inputTokens: completion.inputTokens,
-        outputTokens: completion.outputTokens,
-        adapterReportedCents: completion.actualCostCents,
-      },
-    };
-  } catch {
-    throw new ReelScriptAgentError(
-      "AGENT_OUTPUT_INVALID",
-      "LLM output is not valid JSON",
+  const usage: ReelScriptLlmUsage = {
+    inputTokens: 0,
+    outputTokens: 0,
+    adapterReportedCents: 0,
+  };
+
+  // One corrective retry when the model returns non-JSON or a schema-invalid package.
+  let lastError: ReelScriptAgentError | null = null;
+  for (let attempt = 0; attempt < REEL_SCRIPT_MAX_LLM_ATTEMPTS; attempt += 1) {
+    const completion = await params.llmAdapter.complete(
+      attempt === 0
+        ? baseInput
+        : {
+            ...baseInput,
+            userPrompt: `${userPrompt}\n\n${REEL_SCRIPT_RETRY_NUDGE}`,
+          },
     );
+    usage.inputTokens += completion.inputTokens;
+    usage.outputTokens += completion.outputTokens;
+    usage.adapterReportedCents += completion.actualCostCents;
+
+    const parsed = tryParseLlmJson(completion.content);
+    if (parsed === undefined) {
+      lastError = new ReelScriptAgentError(
+        "AGENT_OUTPUT_INVALID",
+        "LLM output is not valid JSON",
+      );
+      continue;
+    }
+    if (!reelScriptPackageSchema.safeParse(parsed).success) {
+      lastError = new ReelScriptAgentError(
+        "AGENT_OUTPUT_INVALID",
+        "LLM output failed reel script package schema validation",
+      );
+      continue;
+    }
+    return { output: parsed, llmUsage: usage };
   }
+
+  throw (
+    lastError ??
+    new ReelScriptAgentError("AGENT_OUTPUT_INVALID", "LLM output is not valid JSON")
+  );
+}
+
+export const REEL_SCRIPT_MAX_LLM_ATTEMPTS = 2;
+
+const REEL_SCRIPT_RETRY_NUDGE =
+  "Your previous answer was not a valid JSON object matching the Script JSON shape. " +
+  "Reply again with ONLY the JSON object (double-quoted keys and strings, escaped newlines as \\n, no trailing commas, no markdown).";
+
+/**
+ * Tolerant JSON extraction: fences / surrounding prose, raw control chars inside
+ * strings, and trailing commas. Returns undefined when unparseable.
+ */
+export function tryParseLlmJson(rawContent: string): unknown {
+  const jsonText = extractJsonFromLlmContent(rawContent);
+  try {
+    return JSON.parse(jsonText) as unknown;
+  } catch {
+    // fall through to repair
+  }
+  const repaired = repairLlmJson(jsonText);
+  try {
+    return JSON.parse(repaired) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
+function repairLlmJson(text: string): string {
+  let out = "";
+  let inString = false;
+  let escaped = false;
+  for (const ch of text) {
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        out += ch;
+        continue;
+      }
+      if (ch === "\\") {
+        escaped = true;
+        out += ch;
+        continue;
+      }
+      if (ch === '"') {
+        inString = false;
+        out += ch;
+        continue;
+      }
+      if (ch === "\n") {
+        out += "\\n";
+        continue;
+      }
+      if (ch === "\r") {
+        out += "\\r";
+        continue;
+      }
+      if (ch === "\t") {
+        out += "\\t";
+        continue;
+      }
+      out += ch;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+    }
+    out += ch;
+  }
+  return out.replace(/,\s*([}\]])/g, "$1");
 }

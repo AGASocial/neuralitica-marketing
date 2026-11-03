@@ -829,8 +829,8 @@ describe("reel script mutations (US-5.1)", () => {
     }
   });
 
-  it("slot 2 invalid LLM output returns SCRIPT_OUTPUT_INVALID without UPSERT", async () => {
-    let upsertCalled = false;
+  it("slot 2 invalid LLM output keeps other slots and reports failed slot", async () => {
+    const upserted: number[] = [];
     let callCount = 0;
     const restore = installReelScriptMocks({
       generateReelScriptForSlot: async () => {
@@ -849,10 +849,20 @@ describe("reel script mutations (US-5.1)", () => {
         }
         if (table === "neuramark_reel_scripts") {
           return {
-            upsert: () => {
-              upsertCalled = true;
-              return chainableQuery({});
+            upsert: (row: { slot_index: number }) => {
+              upserted.push(row.slot_index);
+              return chainableQuery({
+                single: async () => ({
+                  data: {
+                    id: `11111111-1111-4111-8111-11111111111${row.slot_index}`,
+                  },
+                  error: null,
+                }),
+              });
             },
+            select: () => chainableQuery({}),
+            eq: () => chainableQuery({}),
+            order: () => chainableQuery({}),
           };
         }
         throw new Error(`unexpected ${table}`);
@@ -865,9 +875,10 @@ describe("reel script mutations (US-5.1)", () => {
       assert.equal(result.ok, false);
       if (!result.ok) {
         assert.equal(result.error.code, "SCRIPT_OUTPUT_INVALID");
-        assert.ok(result.error.fields?.slotIndex);
+        assert.deepEqual(result.error.fields?.failedSlotIndexes, ["1"]);
+        assert.deepEqual(result.error.fields?.savedSlotIndexes, ["0", "2"]);
       }
-      assert.equal(upsertCalled, false);
+      assert.deepEqual(upserted.sort(), [0, 2]);
     } finally {
       restore();
     }
