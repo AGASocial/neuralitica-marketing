@@ -6,7 +6,8 @@ import type { VideoJobRow } from "./video-job-row";
 
 export async function persistVideoJobOutputAsset(params: {
   job: VideoJobRow;
-  rawOutputUrl: string;
+  /** Optional for Gateway adapters that buffer bytes in getJobStatus. */
+  rawOutputUrl?: string;
 }): Promise<{
   outputMediaAssetId: string;
   actualCostCents: number | null;

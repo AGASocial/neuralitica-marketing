@@ -20,7 +20,7 @@ import {
 } from "@/lib/tts/errors";
 import { loadReelScriptForVoiceover } from "@/lib/tts/load-reel-script-for-voiceover";
 import { resolveTtsProviderForSynthesis } from "@/lib/tts/resolve-tts-provider-for-synthesis";
-import { resolveSynthesisVoiceId } from "@/lib/tts/voice-catalog";
+import { resolveVoiceForSynthesis } from "@/lib/tts/resolve-voice-for-synthesis";
 
 export type SynthesizeVoiceoverTrustedParams = {
   clientId: string;
@@ -57,11 +57,13 @@ export async function synthesizeVoiceoverForClientTrusted(
       return ttsVoiceoverEmptyTextError();
     }
 
-    const voiceId = resolveSynthesisVoiceId({
+    const voice = await resolveVoiceForSynthesis({
+      clientId: params.clientId,
       preferredVoiceId: script.preferredVoiceId,
       contentLocale: script.preferredLocale,
       profileTone: script.profileTone,
     });
+    const voiceId = voice.catalogVoiceId;
 
     const providerResult = await resolveProviderForJob({
       clientId: params.clientId,
@@ -99,7 +101,10 @@ export async function synthesizeVoiceoverForClientTrusted(
       providerKey,
       text: script.voiceoverText,
       voiceId,
-      locale: script.preferredLocale,
+      locale: voice.locale,
+      ...(voice.elevenLabsVoiceId
+        ? { elevenLabsVoiceId: voice.elevenLabsVoiceId }
+        : {}),
     });
 
     const adapter = registry.getTtsAdapter(providerKey);

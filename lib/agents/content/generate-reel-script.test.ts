@@ -554,4 +554,87 @@ describe("generate-reel-script agent module", () => {
     assert.ok(pkg.coldOpenNotes);
     assert.ok(pkg.editingNotes);
   });
+
+  it("retries when voiceoverText is truncated mid-sentence then accepts complete VO", async () => {
+    const {
+      generateReelScriptForSlot,
+      resolveReelScriptSlotContext,
+      REEL_SCRIPT_MAX_OUTPUT_TOKENS,
+    } = await loadReelScriptModule();
+    const { reelScriptPackageSchema } = await import(
+      "@/lib/contracts/reel-script"
+    );
+
+    const slotContext = resolveReelScriptSlotContext({
+      slot: SLOT,
+      playbook: PLAYBOOK,
+      trend: TREND,
+      mustDiscloseNotOwner: false,
+    });
+
+    let attempts = 0;
+    const llmAdapter = {
+      providerKey: QWEN_PROVIDER.key,
+      estimateCost: async () => ({
+        estimatedCostCents: 1,
+        currency: "USD" as const,
+        providerKey: QWEN_PROVIDER.key,
+      }),
+      complete: async (input: { maxTokens?: number }) => {
+        attempts += 1;
+        assert.equal(input.maxTokens, REEL_SCRIPT_MAX_OUTPUT_TOKENS);
+        const incomplete = {
+          hook: "Hook",
+          body: "Body",
+          cta: "CTA",
+          onScreenText: "Text",
+          voiceoverText: "Recuerda, yo soy",
+          targetDurationSec: 30,
+        };
+        const complete = {
+          ...incomplete,
+          voiceoverText: "Recuerda, yo soy tu aliado en cada proyecto.",
+        };
+        return {
+          content: JSON.stringify(attempts === 1 ? incomplete : complete),
+          inputTokens: 10,
+          outputTokens: 20,
+          actualCostCents: 1,
+        };
+      },
+    };
+
+    const agentResult = await generateReelScriptForSlot({
+      profile: PROFILE,
+      slotContext,
+      provider: QWEN_PROVIDER,
+      llmAdapter,
+      avatarLanguage: "es",
+      presenterGender: "male",
+    });
+
+    assert.equal(attempts, 2);
+    const pkg = reelScriptPackageSchema.parse(agentResult.output);
+    assert.match(pkg.voiceoverText, /proyecto\.$/);
+  });
+
+  it("buildReelScriptPrompts forces avatar language and masculine Spanish grammar", async () => {
+    const { buildReelScriptPrompts, resolveReelScriptSlotContext } =
+      await loadReelScriptModule();
+    const slotContext = resolveReelScriptSlotContext({
+      slot: SLOT,
+      playbook: PLAYBOOK,
+      trend: TREND,
+      mustDiscloseNotOwner: false,
+    });
+    const { systemPrompt } = buildReelScriptPrompts({
+      profile: PROFILE,
+      slotContext,
+      locale: "es",
+      presenterGender: "male",
+    });
+    assert.match(systemPrompt, /español solamente/i);
+    assert.match(systemPrompt, /concordancia gramatical masculina/i);
+    assert.match(systemPrompt, /finished sentence/i);
+  });
 });

@@ -514,6 +514,102 @@ describe("applyVideoJobStatusUpdate Phase B spend backfill", () => {
       },
     );
   });
+
+  it("AI Gateway complete without rawOutputUrl still persists (in-memory bytes path)", async () => {
+    const persistCalls: Array<{ rawOutputUrl?: string }> = [];
+    const nodeModule = Module as unknown as NodeModuleLoad;
+    const originalLoad = nodeModule._load.bind(nodeModule);
+    const finalizeCalls: unknown[] = [];
+    const spendInserts: unknown[] = [];
+    const updatePayloads: unknown[] = [];
+
+    nodeModule._load = function (request, parent, isMain) {
+      if (request === "server-only") return {};
+      const req = String(request);
+      if (req.includes("load-video-job")) {
+        return {
+          loadVideoJobByIdUnscoped: async () =>
+            mapRow(
+              baseJobRow({
+                provider_key: "ai_gateway_heygen_avatar",
+                provider_tier: "high",
+              }),
+            ),
+        };
+      }
+      if (req.includes("persist-video-job-output")) {
+        return {
+          persistVideoJobOutputAsset: async (params: {
+            rawOutputUrl?: string;
+          }) => {
+            persistCalls.push(params);
+            return {
+              outputMediaAssetId: OUTPUT_ASSET_ID,
+              actualCostCents: 42,
+              durationSec: 12,
+            };
+          },
+        };
+      }
+      if (req.includes("finalize-generation-cost")) {
+        return {
+          finalizeGenerationCost: async (input: unknown) => {
+            finalizeCalls.push(input);
+            return { ok: true, spendEventId: SPEND_EVENT_ID };
+          },
+        };
+      }
+      if (req.includes("record-reel-spend-event")) {
+        return {
+          recordReelSpendEvent: async (payload: unknown) => {
+            spendInserts.push(payload);
+            return { spendEventId: "late" };
+          },
+        };
+      }
+      if (req.includes("on-video-job-completed-revision")) {
+        return { onVideoJobCompletedRevision: async () => undefined };
+      }
+      if (req.includes("supabase/server")) {
+        return {
+          isSupabaseConfigured: () => true,
+          createServerSupabaseClient: () => ({
+            from: chainableFrom({ updatePayloads, spendInserts }),
+          }),
+        };
+      }
+      return originalLoad(request, parent, isMain);
+    };
+
+    try {
+      clearCache();
+      const { applyVideoJobStatusUpdate } = require("./apply-video-job-status-update.ts") as {
+        applyVideoJobStatusUpdate: (input: unknown) => Promise<{
+          ok: true;
+          idempotent: boolean;
+        }>;
+      };
+
+      const result = await applyVideoJobStatusUpdate({
+        jobId: JOB_ID,
+        source: "poller",
+        normalizedStatus: {
+          status: "completed",
+          progressPercent: 100,
+          // Gateway adapters omit rawOutputUrl and materialize bytes in getJobStatus.
+        },
+      });
+
+      assert.equal(result.ok, true);
+      assert.equal(result.idempotent, false);
+      assert.equal(persistCalls.length, 1);
+      assert.equal(persistCalls[0]?.rawOutputUrl, "");
+      assert.equal(finalizeCalls.length, 1);
+    } finally {
+      nodeModule._load = originalLoad;
+      clearCache();
+    }
+  });
 });
 
 describe("applyVideoJobStatusUpdate — weekly-cycle resume wiring", () => {
@@ -566,7 +662,7 @@ describe("persistVideoJobOutputAsset adapter actualCostCents", () => {
       const { persistVideoJobOutputAsset } = require("./persist-video-job-output.ts") as {
         persistVideoJobOutputAsset: (params: {
           job: unknown;
-          rawOutputUrl: string;
+          rawOutputUrl?: string;
         }) => Promise<{
           outputMediaAssetId: string;
           actualCostCents: number | null;

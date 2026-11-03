@@ -61,6 +61,9 @@ export class AiGatewayLlmAdapter implements LlmProviderAdapter {
             { role: "user", content: input.userPrompt },
           ],
           temperature: 0.3,
+          ...(typeof input.maxTokens === "number"
+            ? { max_tokens: input.maxTokens }
+            : {}),
           response_format: input.structuredOutputSchema
             ? { type: "json_object" }
             : undefined,

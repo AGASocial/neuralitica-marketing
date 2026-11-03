@@ -16,10 +16,15 @@ import {
   type AvatarReferencesCopy,
 } from "@/components/preferences/AvatarReferencesSection";
 import {
+  AvatarSetupSection,
+  type AvatarSetupCopy,
+} from "@/components/preferences/AvatarSetupSection";
+import {
   VoicePickerSection,
   type VoicePickerCopy,
 } from "@/components/preferences/VoicePickerSection";
 import { GenericAvatarDisclosurePreview } from "@/components/preferences/GenericAvatarDisclosurePreview";
+import type { AvatarForClientResult } from "@/lib/contracts/avatar";
 import type { AvatarConsentForClientResult } from "@/lib/contracts/avatar-consent";
 import type { AvatarReferenceAssetsPageResult } from "@/lib/contracts/media-assets";
 import {
@@ -106,12 +111,14 @@ type PreferencesEditorProps = {
   initial: PreferencesFormInitial;
   consent: AvatarConsentForClientResult;
   references: AvatarReferenceAssetsPageResult;
+  avatar: AvatarForClientResult;
   locale: string;
   title: string;
   subtitle: string;
   copy: PreferencesEditorCopy;
   consentCopy: AvatarConsentCopy;
   referencesCopy: AvatarReferencesCopy;
+  avatarSetupCopy: AvatarSetupCopy;
 };
 
 function cloneModes(modes: VisualModality[]): VisualModality[] {
@@ -155,12 +162,14 @@ export function PreferencesEditor({
   initial,
   consent,
   references,
+  avatar,
   locale,
   title,
   subtitle,
   copy,
   consentCopy,
   referencesCopy,
+  avatarSetupCopy,
 }: PreferencesEditorProps) {
   const toastRef = useRef<Toast>(null);
   const [server, setServer] = useState(() => snapshotFromInitial(initial));
@@ -401,6 +410,12 @@ export function PreferencesEditor({
         initial={references}
         locale={locale}
         copy={referencesCopy}
+        preferencesPending={pending}
+      />
+
+      <AvatarSetupSection
+        initial={avatar}
+        copy={avatarSetupCopy}
         preferencesPending={pending}
       />
 

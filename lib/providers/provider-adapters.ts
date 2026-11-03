@@ -277,6 +277,8 @@ export interface SynthesizeSpeechInput {
   text: string;
   voiceId: string;
   locale: SupportedLocale;
+  /** When set, ElevenLabs uses this vendor voice id (avatar clone) instead of catalog map. */
+  elevenLabsVoiceId?: string;
 }
 
 export interface TtsProviderAdapter {
@@ -299,6 +301,11 @@ export interface LlmCompletionInput {
   userPrompt: string;
   /** When set, adapter must return JSON matching the named contract schema. */
   structuredOutputSchema?: string;
+  /**
+   * Max completion tokens. Omit only for short jobs; reel scripts should set
+   * this high enough to avoid mid-JSON / mid-voiceover truncation.
+   */
+  maxTokens?: number;
 }
 
 export interface LlmCompletionResult {

@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 
 import {
   ELEVENLABS_ENV_KEY_NAME,
+  ELEVENLABS_LANGUAGE_CODE_MODELS,
   ELEVENLABS_MODEL_ID,
   ELEVENLABS_OUTPUT_FORMAT,
   ELEVENLABS_TTS_PROVIDER_KEY,
@@ -101,14 +102,30 @@ export function createElevenlabsTtsAdapter(
       }
 
       const catalogVoice = resolveVoice(input.voiceId);
-      if (!catalogVoice?.elevenLabsVoiceId) {
+      const vendorVoiceId =
+        input.elevenLabsVoiceId?.trim() || catalogVoice?.elevenLabsVoiceId;
+      if (!vendorVoiceId) {
         throw new ProviderAdapterError(
           PROVIDER_RESPONSE_INVALID,
           "Unknown catalog voice for ElevenLabs",
         );
       }
 
-      const url = `${ELEVENLABS_TTS_URL_PREFIX}/${catalogVoice.elevenLabsVoiceId}?output_format=${ELEVENLABS_OUTPUT_FORMAT}`;
+      const modelId = ELEVENLABS_MODEL_ID;
+      const body: Record<string, unknown> = {
+        text: input.text.trim(),
+        model_id: modelId,
+      };
+      // language_code is supported on flash/turbo v2.5 — not multilingual_v2.
+      if (
+        (ELEVENLABS_LANGUAGE_CODE_MODELS as readonly string[]).includes(
+          modelId,
+        )
+      ) {
+        body.language_code = input.locale;
+      }
+
+      const url = `${ELEVENLABS_TTS_URL_PREFIX}/${vendorVoiceId}?output_format=${ELEVENLABS_OUTPUT_FORMAT}`;
       const response = await fetchImpl(url, {
         method: "POST",
         headers: {
@@ -116,10 +133,7 @@ export function createElevenlabsTtsAdapter(
           "Content-Type": "application/json",
           Accept: "audio/mpeg",
         },
-        body: JSON.stringify({
-          text: input.text.trim(),
-          model_id: ELEVENLABS_MODEL_ID,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {

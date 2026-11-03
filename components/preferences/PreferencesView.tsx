@@ -7,11 +7,13 @@ import { Message } from "primereact/message";
 
 import type { AvatarConsentCopy } from "@/components/preferences/AvatarConsentSection";
 import type { AvatarReferencesCopy } from "@/components/preferences/AvatarReferencesSection";
+import type { AvatarSetupCopy } from "@/components/preferences/AvatarSetupSection";
 import type { VoicePickerCopy } from "@/components/preferences/VoicePickerSection";
 import {
   PreferencesEditor,
   type PreferencesFormInitial,
 } from "@/components/preferences/PreferencesEditor";
+import type { AvatarForClientResult } from "@/lib/contracts/avatar";
 import type { AvatarConsentForClientResult } from "@/lib/contracts/avatar-consent";
 import type { AvatarReferenceAssetsPageResult } from "@/lib/contracts/media-assets";
 import type {
@@ -74,10 +76,12 @@ type PreferencesViewProps = {
   result: VisualPreferencesForClientResult;
   consent: AvatarConsentForClientResult;
   references: AvatarReferenceAssetsPageResult;
+  avatar: AvatarForClientResult;
   locale: string;
   copy: PreferencesCopy;
   consentCopy: AvatarConsentCopy;
   referencesCopy: AvatarReferencesCopy;
+  avatarSetupCopy: AvatarSetupCopy;
 };
 
 /**
@@ -88,10 +92,12 @@ export function PreferencesView({
   result,
   consent,
   references,
+  avatar,
   locale,
   copy,
   consentCopy,
   referencesCopy,
+  avatarSetupCopy,
 }: PreferencesViewProps) {
   if (result.exists === false && "loadFailed" in result && result.loadFailed) {
     return (
@@ -140,11 +146,13 @@ export function PreferencesView({
       initial={initial}
       consent={consent}
       references={references}
+      avatar={avatar}
       locale={locale}
       title={copy.title}
       subtitle={copy.subtitle}
       consentCopy={consentCopy}
       referencesCopy={referencesCopy}
+      avatarSetupCopy={avatarSetupCopy}
       copy={{
         updatedAt: copy.updatedAt,
         save: copy.save,

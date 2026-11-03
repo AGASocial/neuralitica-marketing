@@ -18,12 +18,17 @@ import type { PlaybookForAgentsResult } from "@/lib/contracts/playbook";
 import type { TrendSnapshotForWeekResult } from "@/lib/contracts/trend";
 import type { SupportedLocale } from "@/lib/contracts/providers";
 import type { ProviderCatalogRow } from "@/lib/contracts/providers";
+import type { AvatarGender } from "@/lib/contracts/avatar";
 import type { VisualModality } from "@/lib/contracts/visual-preferences";
 import type { RevisionContext } from "@/lib/contracts/approval-revision";
 import { buildRevisionPromptSectionsForScript } from "@/lib/agents/content/revision-prompt-sections";
 import { extractJsonFromLlmContent } from "@/lib/agents/content/generate-weekly-strategy";
+import { looksLikeTruncatedVoiceoverTail } from "@/lib/agents/content/voiceover-completeness";
 import { buildGenericDisclosurePromptHint } from "@/lib/qa/build-generic-disclosure-prompt-hint";
 import type { LlmProviderAdapter } from "@/lib/providers/provider-adapters";
+
+/** Enough headroom for full package JSON (hook/body/cta/voiceover/broll). */
+export const REEL_SCRIPT_MAX_OUTPUT_TOKENS = 4096 as const;
 
 export type ReelScriptLlmUsage = {
   inputTokens: number;
@@ -63,6 +68,8 @@ export type ReelScriptPromptInput = {
   profile: BusinessProfileForAgentsView;
   slotContext: ReelScriptSlotContext;
   locale: SupportedLocale;
+  /** Presenter gender for grammar (Spanish masculine/feminine agreement). */
+  presenterGender?: AvatarGender;
   revisionContext?: RevisionContext;
 };
 
@@ -77,6 +84,9 @@ export type GenerateReelScriptForSlotParams = {
   provider: ProviderCatalogRow;
   llmAdapter: LlmProviderAdapter;
   locale?: SupportedLocale;
+  /** Forces script language + grammar; overrides profile preferredLocale when set. */
+  avatarLanguage?: SupportedLocale;
+  presenterGender?: AvatarGender;
   revisionContext?: RevisionContext;
 };
 
@@ -171,6 +181,23 @@ export function resolveReelScriptLocale(
   return "es";
 }
 
+function genderGrammarInstruction(
+  locale: SupportedLocale,
+  gender: AvatarGender | undefined,
+): string {
+  if (!gender) {
+    return "";
+  }
+  if (locale === "es") {
+    return gender === "male"
+      ? "El presentador es masculino: usa concordancia gramatical masculina en primera persona (soy, estoy, listo, seguro, obligado) y evita formas femeninas (lista, segura, obligada) para el yo del presentador."
+      : "La presentadora es femenina: usa concordancia gramatical femenina en primera persona (soy, estoy, lista, segura, obligada) cuando el adjetivo concuerde con el yo.";
+  }
+  return gender === "male"
+    ? "The presenter is male: use first-person voice consistent with a male speaker."
+    : "The presenter is female: use first-person voice consistent with a female speaker.";
+}
+
 function wrapUntrusted(tag: string, payload: string): string {
   return `<${tag}>\n${payload}\n</${tag}>`;
 }
@@ -206,14 +233,17 @@ function serializeTacticaHints(
 export function buildReelScriptPrompts(
   input: ReelScriptPromptInput,
 ): ReelScriptPrompts {
-  const { profile, slotContext, locale, revisionContext } = input;
+  const { profile, slotContext, locale, presenterGender, revisionContext } =
+    input;
   const { slot, formatoHints, tacticaHints, mustDiscloseForSlot, modalidad } =
     slotContext;
 
   const localeInstruction =
     locale === "en"
-      ? "Write all script copy in English."
-      : "Escribe todo el copy del guion en español.";
+      ? "Write ALL script copy (hook, body, cta, onScreenText, voiceoverText) in English only."
+      : "Escribe TODO el copy del guion (hook, body, cta, onScreenText, voiceoverText) en español solamente.";
+
+  const grammarInstruction = genderGrammarInstruction(locale, presenterGender);
 
   const disclosureHint = buildGenericDisclosurePromptHint(
     mustDiscloseForSlot,
@@ -230,6 +260,7 @@ export function buildReelScriptPrompts(
     "Channel: Instagram Reels only. Do not add multichannel fields.",
     "Respond with a single JSON object only — no markdown fences, no commentary.",
     localeInstruction,
+    grammarInstruction,
     "",
     "Script JSON shape (camelCase keys):",
     "{",
@@ -247,6 +278,8 @@ export function buildReelScriptPrompts(
     "Hard rules:",
     `- Production modality for this slot (trusted): ${modalidad}`,
     durationHint,
+    "- voiceoverText MUST be a complete spoken script that ends in a finished sentence with terminal punctuation (. ! ? …). Never stop mid-clause (forbidden tails like \"Recuerda, yo soy\" / \"Remember, I am\").",
+    "- Prefer trimming an earlier beat over cutting the closing CTA mid-sentence.",
     "- Include brollBeats, coldOpenNotes, and/or editingNotes when formato or táctica editing hints reference cold open, rewind, or B-roll structure.",
     mustDiscloseForSlot
       ? "- MUST include disclosure that the AI presenter is not the business owner when generic_avatar modality applies."
@@ -318,11 +351,15 @@ export function parseAndValidateReelScriptPackage(
 export async function generateReelScriptForSlot(
   params: GenerateReelScriptForSlotParams,
 ): Promise<ReelScriptForSlotResult> {
-  const locale = resolveReelScriptLocale(params.profile, params.locale);
+  const locale = resolveReelScriptLocale(
+    params.profile,
+    params.avatarLanguage ?? params.locale,
+  );
   const { systemPrompt, userPrompt } = buildReelScriptPrompts({
     profile: params.profile,
     slotContext: params.slotContext,
     locale,
+    presenterGender: params.presenterGender,
     revisionContext: params.revisionContext,
   });
 
@@ -333,6 +370,7 @@ export async function generateReelScriptForSlot(
     systemPrompt,
     userPrompt,
     structuredOutputSchema: "reelScriptPackage",
+    maxTokens: REEL_SCRIPT_MAX_OUTPUT_TOKENS,
   } as const;
 
   const usage: ReelScriptLlmUsage = {
@@ -341,15 +379,21 @@ export async function generateReelScriptForSlot(
     adapterReportedCents: 0,
   };
 
-  // One corrective retry when the model returns non-JSON or a schema-invalid package.
+  // Corrective retries: invalid JSON/schema, or incomplete mid-sentence voiceover.
   let lastError: ReelScriptAgentError | null = null;
   for (let attempt = 0; attempt < REEL_SCRIPT_MAX_LLM_ATTEMPTS; attempt += 1) {
+    const nudge =
+      attempt === 0
+        ? ""
+        : lastError?.message.includes("incomplete voiceover")
+          ? REEL_SCRIPT_INCOMPLETE_VO_NUDGE
+          : REEL_SCRIPT_RETRY_NUDGE;
     const completion = await params.llmAdapter.complete(
       attempt === 0
         ? baseInput
         : {
             ...baseInput,
-            userPrompt: `${userPrompt}\n\n${REEL_SCRIPT_RETRY_NUDGE}`,
+            userPrompt: `${userPrompt}\n\n${nudge}`,
           },
     );
     usage.inputTokens += completion.inputTokens;
@@ -364,10 +408,18 @@ export async function generateReelScriptForSlot(
       );
       continue;
     }
-    if (!reelScriptPackageSchema.safeParse(parsed).success) {
+    const schema = reelScriptPackageSchema.safeParse(parsed);
+    if (!schema.success) {
       lastError = new ReelScriptAgentError(
         "AGENT_OUTPUT_INVALID",
         "LLM output failed reel script package schema validation",
+      );
+      continue;
+    }
+    if (looksLikeTruncatedVoiceoverTail(schema.data.voiceoverText)) {
+      lastError = new ReelScriptAgentError(
+        "AGENT_OUTPUT_INVALID",
+        "LLM output has incomplete voiceover (mid-sentence truncation)",
       );
       continue;
     }
@@ -380,11 +432,15 @@ export async function generateReelScriptForSlot(
   );
 }
 
-export const REEL_SCRIPT_MAX_LLM_ATTEMPTS = 2;
+export const REEL_SCRIPT_MAX_LLM_ATTEMPTS = 3;
 
 const REEL_SCRIPT_RETRY_NUDGE =
   "Your previous answer was not a valid JSON object matching the Script JSON shape. " +
   "Reply again with ONLY the JSON object (double-quoted keys and strings, escaped newlines as \\n, no trailing commas, no markdown).";
+
+const REEL_SCRIPT_INCOMPLETE_VO_NUDGE =
+  "Your previous voiceoverText ended mid-sentence (incomplete CTA). " +
+  "Reply again with ONLY the JSON object; voiceoverText MUST end with terminal punctuation and a finished closing line.";
 
 /**
  * Tolerant JSON extraction: fences / surrounding prose, raw control chars inside

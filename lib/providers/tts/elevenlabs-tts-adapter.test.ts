@@ -218,10 +218,63 @@ describe("US-9.3 Phase B ElevenLabs TTS adapter", () => {
       assert.equal(capturedApiKey, "el_test_key");
       const capturedBody = captured.requestBody;
       assert.equal(capturedBody?.model_id, ELEVENLABS_MODEL_ID);
+      assert.equal(capturedBody?.language_code, "es");
       assert.equal(
         capturedBody?.text,
         "Hola, este es un voiceover en español.",
       );
+    } finally {
+      if (previousKey === undefined) {
+        delete process.env[ELEVENLABS_ENV_KEY_NAME];
+      } else {
+        process.env[ELEVENLABS_ENV_KEY_NAME] = previousKey;
+      }
+    }
+  });
+
+  it("3b — custom elevenLabsVoiceId override + language_code from locale", async () => {
+    const previousKey = process.env[ELEVENLABS_ENV_KEY_NAME];
+    process.env[ELEVENLABS_ENV_KEY_NAME] = "el_test_key";
+    const GABRIEL_CLONE = "ulhSmqhbTnrunZUQjKqA";
+
+    try {
+      const { createElevenlabsTtsAdapter } = loadAdapterModule();
+      let capturedUrl = "";
+      let capturedBody: Record<string, unknown> | null = null;
+
+      const adapter = createElevenlabsTtsAdapter({
+        defaultUnitCostCents: 300,
+        uploadAudioBuffer: async ({ buffer }) => ({
+          storageKey: `neuramark/${CLIENT_ID}/${REEL_SCRIPT_ID}/voice.mp3`,
+          sizeBytes: buffer.length,
+        }),
+        fetchImpl: mockFetch((url, init) => {
+          capturedUrl = url;
+          capturedBody = JSON.parse(String(init?.body ?? "{}")) as Record<
+            string,
+            unknown
+          >;
+          return new Response(FAKE_MP3, {
+            status: 200,
+            headers: { "content-type": "audio/mpeg" },
+          });
+        }),
+      });
+
+      await adapter.synthesize({
+        ...baseSynthesizeInput(),
+        voiceId: "es_professional_male",
+        elevenLabsVoiceId: GABRIEL_CLONE,
+        locale: "es",
+      });
+
+      assert.ok(
+        capturedUrl.startsWith(`${ELEVENLABS_TTS_URL_PREFIX}/${GABRIEL_CLONE}`),
+      );
+      assert.notEqual(capturedBody, null);
+      const body = capturedBody as unknown as Record<string, unknown>;
+      assert.equal(body.model_id, ELEVENLABS_MODEL_ID);
+      assert.equal(body.language_code, "es");
     } finally {
       if (previousKey === undefined) {
         delete process.env[ELEVENLABS_ENV_KEY_NAME];

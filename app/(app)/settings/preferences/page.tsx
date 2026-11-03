@@ -1,10 +1,12 @@
 import { PreferencesView } from "@/components/preferences/PreferencesView";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import type { AvatarForClientResult } from "@/lib/contracts/avatar";
 import type { AvatarConsentForClientResult } from "@/lib/contracts/avatar-consent";
 import { AVATAR_CONSENT_DISCLOSURE_V1 } from "@/lib/contracts/avatar-consent";
 import type { AvatarReferenceAssetsPageResult } from "@/lib/contracts/media-assets";
 import { AVATAR_REFERENCE_MAX_ASSETS } from "@/lib/contracts/media-assets";
 import type { VisualPreferencesForClientResult } from "@/lib/contracts/visual-preferences";
+import { getAvatarForClient } from "@/lib/avatars/get-avatar-for-client";
 import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
 import { getAvatarReferenceAssetsForClient } from "@/lib/media/get-avatar-reference-assets-for-client";
 import { getAvatarConsentForClient } from "@/lib/visual-preferences/get-avatar-consent-for-client";
@@ -56,6 +58,8 @@ export default async function PreferencesPage() {
     loadFailed: true,
   };
 
+  let avatar: AvatarForClientResult = { exists: false, loadFailed: true };
+
   try {
     const [prefsResult, consentResult] = await Promise.all([
       getVisualPreferencesForClient(),
@@ -85,11 +89,21 @@ export default async function PreferencesPage() {
     };
   }
 
+  try {
+    avatar = await getAvatarForClient();
+  } catch (error) {
+    if (isNextNavigationError(error)) {
+      throw error;
+    }
+    avatar = { exists: false, loadFailed: true };
+  }
+
   return (
     <PreferencesView
       result={result}
       consent={consent}
       references={references}
+      avatar={avatar}
       locale={locale}
       copy={{
         title: t.preferences.title,
@@ -117,6 +131,7 @@ export default async function PreferencesPage() {
       }}
       consentCopy={t.preferences.consent}
       referencesCopy={t.preferences.references}
+      avatarSetupCopy={t.preferences.avatarSetup}
     />
   );
 }

@@ -609,6 +609,35 @@
         "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
       }
     },
+    "avatarSetup": {
+      "title": "Voz e idioma del avatar",
+      "subtitle": "Define el género y el idioma del presentador para que guiones y TTS sean coherentes. Opcionalmente vincula una voz clonada de ElevenLabs.",
+      "genderLabel": "Género",
+      "languageLabel": "Idioma",
+      "voiceIdLabel": "ID de voz ElevenLabs personalizada (opcional)",
+      "voiceIdHint": "Déjalo vacío para usar la voz masculina/femenina predeterminada del idioma elegido.",
+      "genderMale": "Masculino",
+      "genderFemale": "Femenino",
+      "languageEn": "Inglés",
+      "languageEs": "Español",
+      "save": "Guardar configuración del avatar",
+      "saving": "Guardando…",
+      "prefillGender": "Sugerir género desde la foto",
+      "prefilling": "Analizando…",
+      "toastSaveSuccess": "Configuración del avatar guardada.",
+      "toastPrefillSuccess": "Sugerencia de género aplicada — revísala y guarda.",
+      "emptyHint": "Aún no hay configuración de avatar. Elige género e idioma después de subir una foto de referencia.",
+      "loadFailed": "No pudimos cargar la configuración del avatar. Actualiza la página e inténtalo de nuevo.",
+      "errors": {
+        "validation": "Elige género e idioma e inténtalo de nuevo.",
+        "forbiddenFields": "Algo salió mal. Inténtalo de nuevo.",
+        "unauthenticated": "Inicia sesión para gestionar la configuración del avatar.",
+        "forbidden": "No tienes permiso para gestionar la configuración del avatar.",
+        "internal": "Algo salió mal. Inténtalo más tarde.",
+        "notFound": "Sube primero una foto de avatar y luego sugiere el género.",
+        "providerUnavailable": "La sugerencia de género no está disponible por ahora. Elige el género manualmente."
+      }
+    },
     "references": {
       "title": "Referencias",
       "subtitle": "Sube fotos de retrato o clips cortos para la producción con avatar propio autorizado. Solo selector de archivos — nunca te pedimos grabar.",
