@@ -347,7 +347,12 @@ export async function retryVideoJob(
             forcedProviderKey: "heygen_high",
             forcedProviderTier: "high" as const,
           }
-        : {}),
+        : failedJob.providerKey === "ai_gateway_heygen_avatar"
+          ? {
+              forcedProviderKey: "ai_gateway_heygen_avatar",
+              forcedProviderTier: "high" as const,
+            }
+          : {}),
     },
   );
 

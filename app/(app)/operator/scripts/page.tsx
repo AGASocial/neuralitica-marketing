@@ -189,6 +189,7 @@ export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
           failureReasonLabel: t.scripts.broll.statusPanel.failureReasonLabel,
           status: t.scripts.videoJob.status,
           providerWan: t.scripts.broll.generate.providerWan,
+          providerSeedance: t.scripts.broll.generate.providerSeedance,
           providerLtx: t.scripts.broll.generate.providerLtx,
           providerOther: t.scripts.broll.statusPanel.providerOther,
         },

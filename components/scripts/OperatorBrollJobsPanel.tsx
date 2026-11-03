@@ -18,6 +18,7 @@ export type OperatorBrollJobsCopy = {
   failureReasonLabel: string;
   status: Record<VideoJobStatus, string>;
   providerWan: string;
+  providerSeedance: string;
   providerLtx: string;
   providerOther: string;
 };
@@ -54,6 +55,9 @@ function providerLabel(
   providerKey: string,
   copy: OperatorBrollJobsCopy,
 ): string {
+  if (providerKey === "ai_gateway_seedance_broll") {
+    return copy.providerSeedance;
+  }
   if (providerKey === "siliconflow_wan21_turbo") {
     return copy.providerWan;
   }
