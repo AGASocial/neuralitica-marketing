@@ -163,22 +163,41 @@ describe("AI Gateway HeyGen avatar adapter", () => {
       assert.ok(startCapture.args);
       const startArgs = startCapture.args;
       assert.equal(startArgs.generateAudio, true);
-      const prompt = startArgs.prompt as { image?: string; text?: string };
-      assert.equal(prompt.image, `https://example.com/portrait/${PORTRAIT_ASSET_ID}`);
+      assert.equal(typeof startArgs.prompt, "string");
+      assert.match(String(startArgs.prompt), /<Picture 1>/);
+      assert.match(String(startArgs.prompt), /<Audio 1>/);
       const refs = startArgs.inputReferences as Array<{
         data: string;
         mediaType: string;
       }>;
-      assert.equal(refs?.[0]?.data, `https://example.com/audio/${VOICEOVER_ASSET_ID}`);
-      assert.equal(refs?.[0]?.mediaType, "audio/mpeg");
+      assert.equal(refs?.length, 2);
+      assert.equal(
+        refs?.[0]?.data,
+        `https://example.com/portrait/${PORTRAIT_ASSET_ID}`,
+      );
+      assert.equal(refs?.[0]?.mediaType, "image/jpeg");
+      assert.equal(
+        refs?.[1]?.data,
+        `https://example.com/audio/${VOICEOVER_ASSET_ID}`,
+      );
+      assert.equal(refs?.[1]?.mediaType, "audio/mpeg");
       const heygenOpts = (
         startArgs.providerOptions as {
-          heygen: { referenceAudio: Array<{ url: string }> };
+          heygen: {
+            mode: string;
+            referenceAudio: Array<{ url: string }>;
+            referenceImages: Array<{ url: string }>;
+          };
         }
       ).heygen;
+      assert.equal(heygenOpts.mode, "reference_to_video");
       assert.equal(
         heygenOpts.referenceAudio[0]?.url,
         `https://example.com/audio/${VOICEOVER_ASSET_ID}`,
+      );
+      assert.equal(
+        heygenOpts.referenceImages[0]?.url,
+        `https://example.com/portrait/${PORTRAIT_ASSET_ID}`,
       );
 
       const status = await adapter.getJobStatus(created.externalJobId);

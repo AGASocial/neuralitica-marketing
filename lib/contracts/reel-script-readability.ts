@@ -14,11 +14,17 @@ export const REEL_SCRIPT_MAX_LINES_PER_BEAT = 2 as const;
 /** Aligns with reelScriptBrollBeatSchema max (US-5.1). */
 export const REEL_SCRIPT_MAX_BEAT_LINES_TOTAL = 8 as const;
 
+/**
+ * Spoken word-rate target for VO budgeting.
+ * Calibrated against Spanish ElevenLabs clone (~2.5–2.6 wps on short reels);
+ * under-generation (not over) was the live failure mode for 15s targets.
+ */
 export const REEL_SCRIPT_WORDS_PER_SECOND_TARGET = 2.5 as const;
 
 export const REEL_SCRIPT_VO_WARN_OVER_RATIO = 1.15 as const;
 
-export const REEL_SCRIPT_VO_WARN_UNDER_RATIO = 0.7 as const;
+/** Reject / retry scripts that land below 90% of the word budget. */
+export const REEL_SCRIPT_VO_WARN_UNDER_RATIO = 0.9 as const;
 
 export const REEL_SCRIPT_READABILITY_THRESHOLDS = {
   maxCharsPerBeatLine: REEL_SCRIPT_MAX_CHARS_PER_BEAT_LINE,

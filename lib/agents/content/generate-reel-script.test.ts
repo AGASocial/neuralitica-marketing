@@ -593,7 +593,14 @@ describe("generate-reel-script agent module", () => {
         };
         const complete = {
           ...incomplete,
-          voiceoverText: "Recuerda, yo soy tu aliado en cada proyecto.",
+          // ~75 words for 30s @ 2.5 wps so calibrated floor/ceiling accept it
+          voiceoverText:
+            "Recuerda, yo soy tu aliado en cada proyecto de pintura y acabados. " +
+            "Revisa la pared, elige el color correcto y prepara la superficie con cuidado. " +
+            "Compara el antes y el después, guarda este tip y escribe para cotizar hoy. " +
+            "En pocos pasos transformas tu espacio con un acabado profesional y duradero. " +
+            "Sigue estos consejos, evita errores comunes y disfruta un resultado limpio. " +
+            "Comparte este Reel con quien esté renovando su casa esta temporada.",
         };
         return {
           content: JSON.stringify(attempts === 1 ? incomplete : complete),
@@ -615,7 +622,8 @@ describe("generate-reel-script agent module", () => {
 
     assert.equal(attempts, 2);
     const pkg = reelScriptPackageSchema.parse(agentResult.output);
-    assert.match(pkg.voiceoverText, /proyecto\.$/);
+    assert.match(pkg.voiceoverText, /temporada\.$/);
+    assert.ok(pkg.voiceoverText.length > 80);
   });
 
   it("buildReelScriptPrompts forces avatar language and masculine Spanish grammar", async () => {

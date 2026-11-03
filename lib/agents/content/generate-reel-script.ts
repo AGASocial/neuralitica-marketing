@@ -27,6 +27,7 @@ import { fitVoiceoverToWordBudget } from "@/lib/agents/content/fit-voiceover-to-
 import { looksLikeTruncatedVoiceoverTail } from "@/lib/agents/content/voiceover-completeness";
 import { buildGenericDisclosurePromptHint } from "@/lib/qa/build-generic-disclosure-prompt-hint";
 import { REEL_SCRIPT_WORDS_PER_SECOND_TARGET } from "@/lib/contracts/reel-script-readability";
+import { computeScriptReadabilityMetrics } from "@/lib/reel-scripts/compute-script-readability";
 import type { LlmProviderAdapter } from "@/lib/providers/provider-adapters";
 
 /** Enough headroom for full package JSON (hook/body/cta/voiceover/broll). */
@@ -280,7 +281,7 @@ export function buildReelScriptPrompts(
     "Hard rules:",
     `- Production modality for this slot (trusted): ${modalidad}`,
     durationHint,
-    `- voiceoverText word budget: aim for ~${REEL_SCRIPT_WORDS_PER_SECOND_TARGET} words per second of targetDurationSec (e.g. 30s → ~${Math.round(30 * REEL_SCRIPT_WORDS_PER_SECOND_TARGET)} words). Do not exceed that budget.`,
+    `- voiceoverText word budget: hit ~${REEL_SCRIPT_WORDS_PER_SECOND_TARGET} words per second of targetDurationSec (e.g. 15s → ~${Math.round(15 * REEL_SCRIPT_WORDS_PER_SECOND_TARGET)} words; 30s → ~${Math.round(30 * REEL_SCRIPT_WORDS_PER_SECOND_TARGET)} words). Stay within 90–100% of that budget — too few words makes TTS finish early.`,
     "- voiceoverText MUST be a complete spoken script that ends in a finished sentence with terminal punctuation (. ! ? …). Never stop mid-clause (forbidden tails like \"Recuerda, yo soy\" / \"Remember, I am\").",
     "- Prefer dropping an earlier full sentence over cutting the closing CTA mid-sentence.",
     "- Include brollBeats, coldOpenNotes, and/or editingNotes when formato or táctica editing hints reference cold open, rewind, or B-roll structure.",
@@ -390,7 +391,11 @@ export async function generateReelScriptForSlot(
         ? ""
         : lastError?.message.includes("incomplete voiceover")
           ? REEL_SCRIPT_INCOMPLETE_VO_NUDGE
-          : REEL_SCRIPT_RETRY_NUDGE;
+          : lastError?.message.includes("under the calibrated word budget")
+            ? REEL_SCRIPT_UNDER_VO_NUDGE
+            : lastError?.message.includes("exceeds the calibrated word budget")
+              ? REEL_SCRIPT_OVER_VO_NUDGE
+              : REEL_SCRIPT_RETRY_NUDGE;
     const completion = await params.llmAdapter.complete(
       attempt === 0
         ? baseInput
@@ -444,6 +449,22 @@ export async function generateReelScriptForSlot(
       ...schema.data,
       voiceoverText: fitted.voiceoverText,
     };
+    const readability = computeScriptReadabilityMetrics(packageOut);
+    if (readability.voiceover.status === "under") {
+      lastError = new ReelScriptAgentError(
+        "AGENT_OUTPUT_INVALID",
+        "LLM voiceover is under the calibrated word budget for targetDurationSec",
+      );
+      continue;
+    }
+    if (readability.voiceover.status === "over") {
+      lastError = new ReelScriptAgentError(
+        "AGENT_OUTPUT_INVALID",
+        "LLM voiceover exceeds the calibrated word budget for targetDurationSec",
+      );
+      continue;
+    }
+
     return { output: packageOut, llmUsage: usage };
   }
 
@@ -462,6 +483,14 @@ const REEL_SCRIPT_RETRY_NUDGE =
 const REEL_SCRIPT_INCOMPLETE_VO_NUDGE =
   "Your previous voiceoverText ended mid-sentence (incomplete CTA). " +
   "Reply again with ONLY the JSON object; voiceoverText MUST end with terminal punctuation and a finished closing line.";
+
+const REEL_SCRIPT_UNDER_VO_NUDGE =
+  "Your previous voiceoverText was too short for targetDurationSec (under the ~2.5 words/sec budget). " +
+  "Reply again with ONLY the JSON object; expand voiceoverText with complete sentences until you hit at least 90% of the word budget.";
+
+const REEL_SCRIPT_OVER_VO_NUDGE =
+  "Your previous voiceoverText exceeded the ~2.5 words/sec budget for targetDurationSec. " +
+  "Reply again with ONLY the JSON object; shorten voiceoverText at sentence boundaries without cutting mid-clause.";
 
 /**
  * Tolerant JSON extraction: fences / surrounding prose, raw control chars inside
