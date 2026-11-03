@@ -144,6 +144,11 @@ describe("runAssemblyJob Phase B", () => {
             if (filePath.endsWith("output.mp4")) {
               return { durationSec: 29.9, hasAudioStream: true };
             }
+            // VO length is the duration target after trim-to-voiceover; clips stay
+            // longer so concat still exercises -t trim.
+            if (filePath.includes("voiceover.")) {
+              return { durationSec: 30, hasAudioStream: true };
+            }
             return { durationSec: 20, hasAudioStream: false };
           },
         });
