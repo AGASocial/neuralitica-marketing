@@ -200,7 +200,11 @@ async function runPrimaryPath(
       return;
     }
 
-    const remuxVoiceover = !primaryProbe.hasAudioStream;
+    // Always replace primary clip audio with our TTS when a voiceover asset is
+    // present (HeyGen/gateway clips ship vendor-generated audio). Fall back to
+    // remux-on-missing-audio for legacy primaries without a voiceover row.
+    const remuxVoiceover =
+      voiceoverAsset != null || !primaryProbe.hasAudioStream;
     if (remuxVoiceover) {
       if (!voiceoverAsset) {
         await failAssemblyJob(activeJob.id, ASSEMBLY_FAILURE_MISSING_AUDIO);

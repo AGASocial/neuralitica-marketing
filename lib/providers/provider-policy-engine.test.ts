@@ -302,3 +302,24 @@ describe("neuramark_provider_decisions migration (US-7.2)", () => {
     assert.doesNotMatch(migration, /env_key_name/);
   });
 });
+
+describe("neuramark_provider_decisions job_kind expand migration", () => {
+  const expandMigration = readFileSync(
+    path.join(
+      repoRoot,
+      "supabase/migrations/20261103180000_neuramark_provider_decisions_job_kind_expand.sql",
+    ),
+    "utf8",
+  );
+
+  it("allows talking_head_generate and other reel spend job kinds", () => {
+    assert.match(expandMigration, /talking_head_generate/);
+    assert.match(expandMigration, /tts_generate/);
+    assert.match(expandMigration, /broll_generate/);
+    assert.match(expandMigration, /qa_run/);
+    assert.match(
+      expandMigration,
+      /DROP CONSTRAINT IF EXISTS neuramark_provider_decisions_job_kind_check/,
+    );
+  });
+});

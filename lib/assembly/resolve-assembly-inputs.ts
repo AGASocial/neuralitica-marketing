@@ -181,7 +181,8 @@ export async function resolveAssemblyInputs(input: {
       primaryVideoAssetId,
       brollAssetIds: [],
       voiceoverAssetId,
-      remuxVoiceover: false,
+      // Talking-head: remux our TTS over provider-generated clip audio when VO exists.
+      remuxVoiceover: voiceoverAssetId != null,
       coldOpenTrimSec: null,
     };
   }
@@ -245,7 +246,7 @@ export async function resolveAssemblyInputs(input: {
     primaryVideoAssetId,
     brollAssetIds: [],
     voiceoverAssetId,
-    remuxVoiceover: false,
+    remuxVoiceover: voiceoverAssetId != null,
     coldOpenTrimSec: null,
   };
 }

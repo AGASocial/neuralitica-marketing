@@ -636,5 +636,7 @@ describe("generate-reel-script agent module", () => {
     assert.match(systemPrompt, /español solamente/i);
     assert.match(systemPrompt, /concordancia gramatical masculina/i);
     assert.match(systemPrompt, /finished sentence/i);
+    assert.match(systemPrompt, /words per second/i);
+    assert.match(systemPrompt, /~2\.5/);
   });
 });
