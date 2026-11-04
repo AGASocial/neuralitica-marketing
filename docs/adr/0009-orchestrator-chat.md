@@ -23,11 +23,12 @@ MCP-UI (`@mcp-ui/*`) is optional later — same proposal/confirm semantics.
 
 - **Transport:** `POST /api/chat` → `streamText` via AI Gateway; default model
   `google/gemini-2.5-flash` (`ORCHESTRATOR_CHAT_MODEL` override).
-- **Model choice (prod smoke 2026-11):** `google/gemini-2.5-flash-lite` leaked
-  English chain-of-thought and tool names into owner-visible replies. Default is
-  therefore **flash** (not flash-lite). KAN-97 may re-evaluate with a harness.
-  Always stream with `sendReasoning: false`; sanitize visible text; never name
-  tools in the system prompt’s required owner output.
+- **Model choice (prod smoke 2026-11 + KAN-97):** `google/gemini-2.5-flash-lite`
+  leaked English chain-of-thought and tool names into owner-visible replies.
+  Default is therefore **`google/gemini-2.5-flash`**. Harness:
+  `docs/development/KAN-97-orchestrator-model-eval.md` +
+  `scripts/orchestrator-model-eval.mjs`. Always stream with `sendReasoning: false`;
+  sanitize visible text; never name tools in owner-visible output.
 - **Domain:** tools call existing services; **action tools never mutate** — they
   return proposals; mutation only on user Approve via existing Server Actions.
 - **Safety:** never auto-spend; never publish to Instagram from chat;
