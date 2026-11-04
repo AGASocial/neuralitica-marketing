@@ -14,8 +14,9 @@ type SuggestedPromptChipsProps = {
 };
 
 /**
- * Suggested prompt chips: single horizontally scrollable row (KAN-104 mobile),
- * ≥44px taps. Do not wrap into a tall vertical stack over the feed.
+ * Suggested prompt chips, ≥44px taps.
+ * Mobile: single row, swipeable, scrollbar hidden, right-edge fade.
+ * Desktop (md+): wraps onto at most 2 lines (overflow clipped), no scrollbar.
  */
 export function SuggestedPromptChips({
   chips,
@@ -29,11 +30,11 @@ export function SuggestedPromptChips({
 
   return (
     <div
-      className="-mx-1 overflow-x-auto overscroll-x-contain px-1"
+      className="-mx-1 overflow-x-auto overscroll-x-contain px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_85%,transparent)] md:overflow-visible md:[mask-image:none]"
       role="group"
       aria-label={copy.listAriaLabel}
     >
-      <ul className="flex min-w-0 flex-nowrap gap-2 pb-1">
+      <ul className="flex min-w-0 flex-nowrap gap-2 pb-1 md:max-h-[6.25rem] md:flex-wrap md:overflow-hidden">
         {chips.map((chip) => (
           <li key={chip.id} className="max-w-[min(100%,18rem)] shrink-0">
             <button

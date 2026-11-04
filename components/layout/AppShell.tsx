@@ -49,10 +49,10 @@ export async function AppShell({ locale, user, children }: AppShellProps) {
           Mobile clearance ≈ tab bar (3.5rem + safe-area) + single-row composer
           (chips row + input). Keeps Hoy feed cards tappable above sticky chrome.
         */}
-        <main className="flex-1 overflow-x-hidden px-4 py-6 pb-[calc(11.5rem+env(safe-area-inset-bottom))] sm:px-6 md:pb-28 lg:px-8">
+        <main className="flex-1 overflow-x-hidden px-4 py-6 pb-[calc(11.5rem+env(safe-area-inset-bottom))] sm:px-6 md:pb-48 lg:px-8">
           {children}
         </main>
-        <div className="sticky bottom-0 z-30 md:static">
+        <div className="fixed inset-x-0 bottom-0 z-30">
           <OwnerComposer
             locale={locale}
             suggestedChips={suggestedChips}
