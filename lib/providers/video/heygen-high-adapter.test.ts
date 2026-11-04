@@ -457,6 +457,13 @@ describe("HeyGen DIRECT v3 adapter", () => {
     }
   });
 
+  it("7b — validateProviderOutputUrl accepts v3 files2.heygen.ai CDN", () => {
+    const { validateProviderOutputUrl } = loadNormalizeModule();
+    const { HEYGEN_ALLOWED_OUTPUT_HOSTS } = loadContractsModule();
+    const url = "https://files2.heygen.ai/aws_pacific/avatar_tmp/u/v.mp4?Expires=1";
+    assert.equal(validateProviderOutputUrl(url, HEYGEN_ALLOWED_OUTPUT_HOSTS), url);
+  });
+
   it("7 — validateProviderOutputUrl rejects non-allowlisted hosts", () => {
     const {
       validateProviderOutputUrl,
