@@ -10,7 +10,8 @@ import { getLatestContentStrategy } from "@/lib/content-strategy/actions/get-lat
 import { loadOperatorClientsForStrategy } from "@/lib/content-strategy/load-operator-clients-for-strategy";
 import type { OperatorClientOption } from "@/lib/content-strategy/load-operator-clients-for-strategy";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
-import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getTranslations } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 import { aggregateReelMetricsByTema } from "@/lib/metrics/aggregate-reel-metrics-by-tema";
 import { normalizeToIsoMonday } from "@/lib/trend/normalize-week-start";
 
@@ -67,7 +68,7 @@ function resolveSelectedClientId(
  */
 export default async function StrategyPage({ searchParams }: StrategyPageProps) {
   const user = await getCurrentUser();
-  const locale = resolveLocale(user?.preferredLocale);
+  const locale = await resolveRequestLocale(user?.preferredLocale);
   const t = getTranslations(locale);
   const { weekStart: rawWeekStart, clientId: rawClientId } = await searchParams;
   const weekStart = resolveWeekStart(rawWeekStart);

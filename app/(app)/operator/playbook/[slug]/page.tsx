@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { StatusAlert } from "@/components/ui/status-alert";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import type { PlaybookFormatoForOperatorResult } from "@/lib/contracts/playbook";
-import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getTranslations } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 import { loadPlaybookFormatoForOperator } from "@/lib/playbook/load-playbook-formato-for-operator";
 
 export const dynamic = "force-dynamic";
@@ -65,7 +66,7 @@ type PlaybookEditPageProps = {
 export default async function PlaybookEditPage({ params }: PlaybookEditPageProps) {
   const { slug } = await params;
   const user = await getCurrentUser();
-  const locale = resolveLocale(user?.preferredLocale);
+  const locale = await resolveRequestLocale(user?.preferredLocale);
   const t = getTranslations(locale);
 
   let result: PlaybookFormatoForOperatorResult;

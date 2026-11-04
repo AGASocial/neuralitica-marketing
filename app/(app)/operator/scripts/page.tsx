@@ -9,7 +9,8 @@ import { emptyWeekCostSummary } from "@/lib/cost-policy/empty-week-cost-summary"
 import {
   getReelScriptsForWeek,
 } from "@/lib/reel-scripts/actions/get-reel-scripts-for-week";
-import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getTranslations } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 import { normalizeToIsoMonday } from "@/lib/trend/normalize-week-start";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ function resolveWeekStart(query?: string): string {
  */
 export default async function ScriptsPage({ searchParams }: ScriptsPageProps) {
   const user = await getCurrentUser();
-  const locale = resolveLocale(user?.preferredLocale);
+  const locale = await resolveRequestLocale(user?.preferredLocale);
   const t = getTranslations(locale);
   const { weekStart: rawWeekStart, highlightSlot: rawHighlightSlot } = await searchParams;
   const weekStart = resolveWeekStart(rawWeekStart);

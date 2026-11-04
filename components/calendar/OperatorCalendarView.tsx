@@ -16,6 +16,7 @@ import {
 
 import { WeekPicker } from "@/components/campana/WeekPicker";
 import { CalendarStatusTag } from "@/components/calendar/CalendarStatusTag";
+import { MediaThumbnail } from "@/components/media/MediaThumbnail";
 import {
   MarkPublishedDialog,
   type MarkPublishedDialogCopy,
@@ -176,11 +177,10 @@ function SlotCard({ slot, copy, onSelect }: SlotCardProps) {
         className="block w-full p-2.5 text-left focus-visible:outline-none"
       >
         {slot.thumbnailPreviewUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <MediaThumbnail
             src={slot.thumbnailPreviewUrl}
-            alt=""
-            className="mb-2 aspect-[9/16] w-full rounded-lg bg-deep object-cover"
+            kind="video"
+            className="mb-2 aspect-[9/16] w-full rounded-lg bg-deep"
           />
         ) : null}
         <div className="mb-1 text-xs text-dim">{slot.clientDisplayName}</div>
