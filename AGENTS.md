@@ -79,6 +79,7 @@ Neutral protocol (this AGENTS.md + docs/governance/)
 
 - Single Next.js App Router app; Supabase only from server; `neuramark_` DB prefix; EN/ES i18n; Tailwind CSS v4 + shadcn/ui (Campaña); Vercel deploy; `getCurrentUser()` identity seam; operator/client role flag only.
 - Orchestrator chat (ADR-0009): company interview runs in-chat via existing `neuramark_interview_sessions` + `persistInterviewDraft` / `submitInterview` (no new tables); assistant text is Markdown-rendered; `proposeEnableOwnAvatar` only upserts Preferencias modalities (never HeyGen/avatar generation); TTS voice spend uses a separate `confirm_tts_generation` card from b-roll/HeyGen.
+- Owner-facing pages (dashboard, interview, profile, preferences, approvals, ready-to-publish) resolve locale with `resolveRequestLocale` so `?locale=` and `preferredLocale` both apply; dashboard card copy lives in `messages/{en,es}.json`.
 
 ## Supabase migrations (prod)
 

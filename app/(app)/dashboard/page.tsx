@@ -4,7 +4,8 @@ import type {
   InterviewDashboardSummary,
   InterviewStepKey,
 } from "@/lib/contracts/interview";
-import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getTranslations } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 import { getInterviewDashboardSummary } from "@/lib/interview/get-interview-dashboard-summary";
 import { getBusinessProfileForClient } from "@/lib/profile/get-business-profile-for-client";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
@@ -72,7 +73,7 @@ function buildInterviewCard(
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
-  const locale = resolveLocale(user?.preferredLocale);
+  const locale = await resolveRequestLocale(user?.preferredLocale);
   const t = getTranslations(locale);
   const supabaseReady = isSupabaseConfigured();
 

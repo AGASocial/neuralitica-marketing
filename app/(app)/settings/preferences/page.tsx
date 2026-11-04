@@ -7,7 +7,8 @@ import type { AvatarReferenceAssetsPageResult } from "@/lib/contracts/media-asse
 import { AVATAR_REFERENCE_MAX_ASSETS } from "@/lib/contracts/media-assets";
 import type { VisualPreferencesForClientResult } from "@/lib/contracts/visual-preferences";
 import { getAvatarForClient } from "@/lib/avatars/get-avatar-for-client";
-import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getTranslations } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 import { getAvatarReferenceAssetsForClient } from "@/lib/media/get-avatar-reference-assets-for-client";
 import { getAvatarConsentForClient } from "@/lib/visual-preferences/get-avatar-consent-for-client";
 import { getVisualPreferencesForClient } from "@/lib/visual-preferences/get-visual-preferences-for-client";
@@ -34,7 +35,7 @@ function isNextNavigationError(error: unknown): boolean {
  */
 export default async function PreferencesPage() {
   const user = await getCurrentUser();
-  const locale = resolveLocale(user?.preferredLocale);
+  const locale = await resolveRequestLocale(user?.preferredLocale);
   const t = getTranslations(locale);
 
   let result: VisualPreferencesForClientResult = {

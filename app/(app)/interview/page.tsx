@@ -1,7 +1,8 @@
 import { InterviewErrorState } from "@/components/interview/InterviewLoading";
 import { InterviewWizard } from "@/components/interview/InterviewWizard";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
-import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getTranslations } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 import { getOrCreateInterviewDraft } from "@/lib/interview/get-or-create-interview-draft";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,7 @@ function isNextNavigationError(error: unknown): boolean {
 
 export default async function InterviewPage() {
   const user = await getCurrentUser();
-  const locale = resolveLocale(user?.preferredLocale);
+  const locale = await resolveRequestLocale(user?.preferredLocale);
   const t = getTranslations(locale);
 
   try {

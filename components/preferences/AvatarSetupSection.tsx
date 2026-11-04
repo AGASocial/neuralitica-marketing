@@ -25,6 +25,7 @@ export type AvatarSetupCopy = {
   genderLabel: string;
   languageLabel: string;
   voiceIdLabel: string;
+  voiceIdPlaceholder: string;
   voiceIdHint: string;
   genderMale: string;
   genderFemale: string;
@@ -215,7 +216,7 @@ export function AvatarSetupSection({
           value={voiceId}
           onChange={(e) => setVoiceId(e.target.value)}
           disabled={disabled}
-          placeholder="ElevenLabs voice_id"
+          placeholder={copy.voiceIdPlaceholder}
         />
         <small className="text-dim">{copy.voiceIdHint}</small>
       </div>
