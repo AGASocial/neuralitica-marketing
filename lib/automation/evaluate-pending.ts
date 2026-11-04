@@ -1,5 +1,10 @@
 import "server-only";
 
+import {
+  runAutoApproveEngine,
+  type AutoApproveEngineDeps,
+  type AutoApproveOutcome,
+} from "@/lib/automation/auto-approve-engine";
 import { shouldAutoApproveCandidate } from "@/lib/automation/auto-approve-rules";
 import {
   insertHoyNotification,
@@ -12,27 +17,29 @@ import { sendOwnerNotificationEmail } from "@/lib/notifications/email/send-owner
 export { shouldAutoApproveCandidate };
 
 /**
- * F0: live auto-approve writes are OFF. Even when rules match, we only log
- * `would_auto_approve`. Flip only via explicit future env — never set here.
+ * KAN-108 F1: Piloto automático is live. `AUTOMATION_AUTO_APPROVE_DRY_RUN=true`
+ * forces log-only (`would_auto_approve`) everywhere — used for verification.
+ * Auto-approve NEVER publishes and NEVER starts paid generation.
  */
-export function isAutomationAutoApproveLiveEnabled(): boolean {
-  return process.env.AUTOMATION_AUTO_APPROVE_LIVE?.trim() === "true";
+export function isAutomationAutoApproveDryRunForced(): boolean {
+  return process.env.AUTOMATION_AUTO_APPROVE_DRY_RUN?.trim() === "true";
 }
 
 export type EvaluatePendingInput = {
   clientId: string;
   approvalId: string;
-  /** Estimated item cost in cents when known; null = unknown. */
-  itemCostCents?: number | null;
-  /** Weekly spend so far in cents when known. */
-  weeklySpendCents?: number | null;
   locale?: "en" | "es";
   ownerEmail?: string | null;
+  /** Log-only evaluation (no approval write, no notification). */
+  dryRun?: boolean;
+  /** Test seam. */
+  deps?: AutoApproveEngineDeps;
 };
 
 export type EvaluatePendingResult = {
-  decision: "would_auto_approve" | "notify";
-  dryRun: true;
+  decision: AutoApproveOutcome["decision"];
+  reason?: string;
+  dryRun: boolean;
   settingsPreset: AutomationSettings["preset"];
 };
 
@@ -41,34 +48,31 @@ export async function evaluatePendingApprovalAutomation(
 ): Promise<EvaluatePendingResult> {
   const settings = await loadAutomationSettingsForClient(input.clientId);
   const locale = input.locale === "en" ? "en" : "es";
-  const eligible = shouldAutoApproveCandidate({
-    settings,
-    itemCostCents: input.itemCostCents,
-    weeklySpendCents: input.weeklySpendCents,
+  const dryRun = input.dryRun === true || isAutomationAutoApproveDryRunForced();
+  const deps =
+    input.deps ??
+    (await import("@/lib/automation/auto-approve-deps")).serverAutoApproveDeps;
+
+  const outcome = await runAutoApproveEngine({
+    approvalId: input.approvalId,
+    clientId: input.clientId,
+    dryRun,
+    deps: { ...deps, loadSettings: async () => settings },
   });
 
-  // F0 hard constraint: never execute real auto-approve / publish.
-  void isAutomationAutoApproveLiveEnabled;
-
-  if (eligible) {
-    await recordAutomationEvent({
-      clientId: input.clientId,
-      approvalId: input.approvalId,
-      kind: "would_auto_approve",
-      channel: "dry_run",
-      payload: {
-        dryRun: true,
-        liveEnabled: false,
-        itemCostCents: input.itemCostCents ?? null,
-        weeklySpendCents: input.weeklySpendCents ?? null,
-        maxAutoApproveCostCents: settings.maxAutoApproveCostCents,
-        weeklySpendCapCents: settings.weeklySpendCapCents,
-      },
-      idempotencyKey: `would_auto_approve:${input.approvalId}`,
-    });
+  if (outcome.decision !== "notify" || dryRun) {
     return {
-      decision: "would_auto_approve",
-      dryRun: true,
+      decision: outcome.decision,
+      reason: outcome.decision === "notify" ? outcome.reason : undefined,
+      dryRun,
+      settingsPreset: settings.preset,
+    };
+  }
+  if (outcome.reason === "not_pending") {
+    return {
+      decision: "notify",
+      reason: outcome.reason,
+      dryRun,
       settingsPreset: settings.preset,
     };
   }
@@ -93,16 +97,19 @@ export async function evaluatePendingApprovalAutomation(
     approvalId: input.approvalId,
     kind: "notify_pending",
     channel: "hoy_feed",
-    payload: { title, body },
+    payload: { title, body, autoApproveReason: outcome.reason },
     idempotencyKey: `notify_pending:${input.approvalId}`,
   });
 
   if (input.ownerEmail) {
+    const siteUrl = (process.env.SITE_URL ?? "https://marketing.neuraliti.ca")
+      .trim()
+      .replace(/\/$/, "");
     const emailResult = await sendOwnerNotificationEmail({
       to: input.ownerEmail,
       subject: title,
       text: body,
-      html: `<p>${body}</p><p><a href="/approvals/${input.approvalId}">Review</a></p>`,
+      html: `<p>${body}</p><p><a href="${siteUrl}/approvals/${input.approvalId}">Review</a></p>`,
       idempotencyKey: `email_pending:${input.approvalId}`,
       clientId: input.clientId,
       approvalId: input.approvalId,
@@ -112,7 +119,8 @@ export async function evaluatePendingApprovalAutomation(
 
   return {
     decision: "notify",
-    dryRun: true,
+    reason: outcome.reason,
+    dryRun,
     settingsPreset: settings.preset,
   };
 }

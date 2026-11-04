@@ -96,6 +96,29 @@ export async function getQaGateStatusForAssembledReel(
   if (!user) {
     return notReady();
   }
+  return getQaGateStatusForAssembledReelScoped({
+    assembledReelId,
+    clientId: user.id,
+  });
+}
+
+/**
+ * Same gate, scoped to an explicit client (server-side automation, no session).
+ * KAN-108: used by Piloto automático so auto-approve honors the exact gate a
+ * human approval does.
+ */
+export async function getQaGateStatusForAssembledReelScoped(params: {
+  assembledReelId: string;
+  clientId: string;
+}): Promise<QaGateStatus> {
+  const { assembledReelId } = params;
+  const user = { id: params.clientId };
+  if (
+    typeof assembledReelId !== "string" ||
+    assembledReelId.trim().length === 0
+  ) {
+    return notReady();
+  }
 
   const assembly = await loadAssemblyJobScoped({
     jobId: assembledReelId,

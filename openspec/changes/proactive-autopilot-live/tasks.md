@@ -1,0 +1,6 @@
+- [x] Rules: custom per-type + caps with reasons
+- [x] Engine + server deps (scoped QA gate, render-complete guard, spend)
+- [x] evaluate-pending uses engine; dry run + kill switch
+- [x] Hoy "Lo que hice" entries for automatic decisions
+- [x] Settings UI for per-type rules
+- [x] Unit tests

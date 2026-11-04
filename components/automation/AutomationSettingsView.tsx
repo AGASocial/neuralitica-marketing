@@ -3,9 +3,13 @@
 import { useState, useTransition } from "react";
 
 import { upsertAutomationSettings } from "@/lib/automation/actions/upsert-automation-settings";
-import type {
-  AutomationPreset,
-  AutomationSettings,
+import {
+  AUTOMATION_CONTENT_TYPES,
+  parseContentTypeRules,
+  type AutomationContentType,
+  type AutomationPreset,
+  type AutomationSettings,
+  type ContentTypeRule,
 } from "@/lib/contracts/automation-settings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +36,12 @@ export type AutomationSettingsCopy = {
   success: string;
   error: string;
   centsHint: string;
+  rulesTitle: string;
+  ruleAuto: string;
+  ruleReview: string;
+  typeOwnAvatar: string;
+  typeGenericAvatar: string;
+  typeFaceless: string;
 };
 
 type AutomationSettingsViewProps = {
@@ -50,6 +60,19 @@ export function AutomationSettingsView({
   const [maxItem, setMaxItem] = useState(
     initial.maxAutoApproveCostCents?.toString() ?? "",
   );
+  const initialRules = parseContentTypeRules(initial.contentTypeRules);
+  const [rules, setRules] = useState<
+    Record<AutomationContentType, ContentTypeRule>
+  >({
+    own_avatar: initialRules.own_avatar ?? "review",
+    generic_avatar: initialRules.generic_avatar ?? "review",
+    faceless: initialRules.faceless ?? "review",
+  });
+  const typeLabel: Record<AutomationContentType, string> = {
+    own_avatar: copy.typeOwnAvatar,
+    generic_avatar: copy.typeGenericAvatar,
+    faceless: copy.typeFaceless,
+  };
   const [remind24, setRemind24] = useState(initial.remindAfter24h);
   const [remind48, setRemind48] = useState(initial.remindAfter48hChannelChange);
   const [remind72, setRemind72] = useState(initial.remindAfter72hFallback);
@@ -70,6 +93,7 @@ export function AutomationSettingsView({
         preset,
         weeklySpendCapCents: parseCents(weeklyCap),
         maxAutoApproveCostCents: parseCents(maxItem),
+        contentTypeRules: rules,
         remindAfter24h: remind24,
         remindAfter48hChannelChange: remind48,
         remindAfter72hFallback: remind72,
@@ -118,6 +142,37 @@ export function AutomationSettingsView({
           ))}
         </CardContent>
       </Card>
+
+      {preset === "custom" ? (
+        <Card className="border-edge bg-panel/40" data-testid="automation-custom-rules">
+          <CardHeader>
+            <CardTitle className="text-base text-fog">{copy.rulesTitle}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            {AUTOMATION_CONTENT_TYPES.map((type) => (
+              <label
+                key={type}
+                className="flex items-center justify-between gap-3"
+              >
+                <span className="text-fog">{typeLabel[type]}</span>
+                <select
+                  value={rules[type]}
+                  onChange={(e) =>
+                    setRules((prev) => ({
+                      ...prev,
+                      [type]: e.target.value as ContentTypeRule,
+                    }))
+                  }
+                  className="rounded-md border border-edge bg-deep px-3 py-2 text-fog"
+                >
+                  <option value="review">{copy.ruleReview}</option>
+                  <option value="auto">{copy.ruleAuto}</option>
+                </select>
+              </label>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card className="border-edge bg-panel/40">
         <CardContent className="space-y-3 py-4">

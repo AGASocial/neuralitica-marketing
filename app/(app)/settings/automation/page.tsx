@@ -41,6 +41,12 @@ export default async function AutomationSettingsPage() {
         success: copy.success,
         error: copy.error,
         centsHint: copy.centsHint,
+        rulesTitle: copy.rulesTitle,
+        ruleAuto: copy.ruleAuto,
+        ruleReview: copy.ruleReview,
+        typeOwnAvatar: copy.typeOwnAvatar,
+        typeGenericAvatar: copy.typeGenericAvatar,
+        typeFaceless: copy.typeFaceless,
       }}
     />
   );

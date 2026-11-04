@@ -1,11 +1,42 @@
 import { z } from "zod";
 
+import { visualModalitySchema } from "@/lib/contracts/visual-preferences";
+
 export const automationPresetSchema = z.enum([
   "auto_pilot",
   "review_all",
   "custom",
 ]);
 export type AutomationPreset = z.infer<typeof automationPresetSchema>;
+
+/** Per content type (visual modality) rule for the `custom` preset. */
+export const contentTypeRuleSchema = z.enum(["auto", "review"]);
+export type ContentTypeRule = z.infer<typeof contentTypeRuleSchema>;
+export const automationContentTypeSchema = visualModalitySchema;
+export type AutomationContentType = z.infer<typeof automationContentTypeSchema>;
+export const AUTOMATION_CONTENT_TYPES = automationContentTypeSchema.options;
+
+export const contentTypeRulesInputSchema = z
+  .object({
+    own_avatar: contentTypeRuleSchema.optional(),
+    generic_avatar: contentTypeRuleSchema.optional(),
+    faceless: contentTypeRuleSchema.optional(),
+  })
+  .strict();
+
+/** Lenient read: unknown keys / values are dropped (treated as `review`). */
+export function parseContentTypeRules(
+  raw: unknown,
+): Partial<Record<AutomationContentType, ContentTypeRule>> {
+  const out: Partial<Record<AutomationContentType, ContentTypeRule>> = {};
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return out;
+  for (const type of AUTOMATION_CONTENT_TYPES) {
+    const value = (raw as Record<string, unknown>)[type];
+    const parsed = contentTypeRuleSchema.safeParse(value);
+    if (parsed.success) out[type] = parsed.data;
+  }
+  return out;
+}
 
 export const automationSettingsSchema = z
   .object({
@@ -32,7 +63,7 @@ export const upsertAutomationSettingsInputSchema = z
       .nonnegative()
       .nullable()
       .optional(),
-    contentTypeRules: z.record(z.string(), z.unknown()).optional(),
+    contentTypeRules: contentTypeRulesInputSchema.optional(),
     remindAfter24h: z.boolean().optional(),
     remindAfter48hChannelChange: z.boolean().optional(),
     remindAfter72hFallback: z.boolean().optional(),
@@ -61,6 +92,8 @@ export function defaultAutomationSettings(
 
 export const automationEventKindSchema = z.enum([
   "would_auto_approve",
+  "auto_approved",
+  "auto_approve_skipped",
   "notify_pending",
   "reminder_24h",
   "reminder_48h",

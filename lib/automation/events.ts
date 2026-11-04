@@ -135,3 +135,54 @@ export async function listUnreadHoyNotifications(params: {
     ];
   });
 }
+
+/** KAN-108: automatic decisions for Hoy "Lo que hice". */
+export async function listRecentAutomationDecisions(params: {
+  clientId: string;
+  limit?: number;
+}): Promise<
+  Array<{
+    id: string;
+    approvalId: string | null;
+    kind: "auto_approved" | "auto_approve_skipped";
+    at: string;
+    title: string | null;
+    reason: string | null;
+  }>
+> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from(AUTOMATION_EVENTS_TABLE)
+    .select("id, approval_id, kind, payload, created_at")
+    .eq("client_id", params.clientId)
+    .in("kind", ["auto_approved", "auto_approve_skipped"])
+    .order("created_at", { ascending: false })
+    .limit(params.limit ?? 5);
+  if (error || !Array.isArray(data)) return [];
+  return data.flatMap((row) => {
+    const r = row as Record<string, unknown>;
+    if (
+      typeof r.id !== "string" ||
+      typeof r.created_at !== "string" ||
+      (r.kind !== "auto_approved" && r.kind !== "auto_approve_skipped")
+    ) {
+      return [];
+    }
+    const payload =
+      r.payload && typeof r.payload === "object"
+        ? (r.payload as Record<string, unknown>)
+        : {};
+    if (payload.dryRun === true) return [];
+    return [
+      {
+        id: r.id,
+        approvalId: typeof r.approval_id === "string" ? r.approval_id : null,
+        kind: r.kind,
+        at: r.created_at,
+        title: typeof payload.title === "string" ? payload.title : null,
+        reason: typeof payload.reason === "string" ? payload.reason : null,
+      },
+    ];
+  });
+}
