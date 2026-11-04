@@ -421,6 +421,77 @@ export type ProposeGenerateVideosOutput = z.infer<
   typeof proposeGenerateVideosOutputSchema
 >;
 
+export const guidedProgressStepKeySchema = z.enum([
+  "interview",
+  "plan",
+  "scripts",
+  "videos",
+  "approve",
+  "ready",
+]);
+
+export type GuidedProgressStepKey = z.infer<typeof guidedProgressStepKeySchema>;
+
+export const guidedProgressStepSchema = z
+  .object({
+    key: guidedProgressStepKeySchema,
+    status: z.enum(["todo", "current", "done"]),
+  })
+  .strict();
+
+export const getGuidedProgressInputSchema = z.object({}).strict();
+
+export type GetGuidedProgressInput = z.infer<
+  typeof getGuidedProgressInputSchema
+>;
+
+export const getGuidedProgressOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    interviewStatus: z.enum(["not_started", "in_progress", "completed"]),
+    interviewHref: z.literal("/interview"),
+    weekStart: trendWeekStartSchema,
+    strategyStatus: z.enum(["none", "draft", "approved", "unknown"]),
+    scriptsReadyCount: z.number().int().nonnegative(),
+    scriptsPendingCount: z.number().int().nonnegative(),
+    pendingApprovalsCount: z.number().int().nonnegative(),
+    readyVideosCount: z.number().int().nonnegative(),
+    steps: z.array(guidedProgressStepSchema).min(1).max(8),
+    nextStepKey: guidedProgressStepKeySchema,
+    nextStepHint: z.string().min(1).max(300),
+  })
+  .strict();
+
+export type GetGuidedProgressOutput = z.infer<
+  typeof getGuidedProgressOutputSchema
+>;
+
+export const getReadyVideoDownloadInputSchema = z
+  .object({
+    approvalId: z.string().uuid().optional(),
+  })
+  .strict();
+
+export type GetReadyVideoDownloadInput = z.infer<
+  typeof getReadyVideoDownloadInputSchema
+>;
+
+export const getReadyVideoDownloadOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    approvalId: z.string().uuid(),
+    videoPreviewUrl: orchestratorPreviewUrlSchema,
+    downloadUrl: orchestratorPreviewUrlSchema,
+    coverPreviewUrl: orchestratorPreviewUrlSchema.optional(),
+    captionBody: z.string().max(2000).optional(),
+    readyToPublishHref: z.literal("/ready-to-publish"),
+  })
+  .strict();
+
+export type GetReadyVideoDownloadOutput = z.infer<
+  typeof getReadyVideoDownloadOutputSchema
+>;
+
 export const proposeConfirmPaidGenerationInputSchema = z
   .object({
     weekStart: trendWeekStartSchema.optional(),

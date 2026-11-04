@@ -43,6 +43,9 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(source, /proposeConfirmPaidGeneration/);
     assert.match(source, /getVideoPreview/);
     assert.match(source, /getScriptPreview/);
+    assert.match(source, /getGuidedProgress/);
+    assert.match(source, /getReadyVideoDownload/);
+    assert.doesNotMatch(source, /publishToInstagram|graph\.facebook|instagram\.com\/p\//i);
   });
 
   it("ProposalActionCard is the mutation boundary for Approve", () => {

@@ -125,6 +125,28 @@
       "playHint": "Dale play para verlo. Luego aprueba o dime qué cambiar.",
       "pendingScript": "Este texto todavía no está listo."
     },
+    "progress": {
+      "title": "Tu camino hasta los videos listos",
+      "nextLabel": "Siguiente",
+      "openInterview": "Seguir mi entrevista de negocio",
+      "openReady": "Abrir mis videos listos",
+      "stepInterview": "Entrevista de negocio",
+      "stepPlan": "Plan de esta semana",
+      "stepScripts": "Textos de los videos",
+      "stepVideos": "Crear videos",
+      "stepApprove": "Aprobar videos",
+      "stepReady": "Descargar / listos",
+      "statusTodo": "pendiente",
+      "statusCurrent": "ahora",
+      "statusDone": "listo"
+    },
+    "download": {
+      "title": "Descarga tu video",
+      "hint": "Míralo y descárgalo. Publicar en Instagram se hace fuera de este chat.",
+      "download": "Descargar",
+      "openReady": "Página de mis videos",
+      "noIg": "Este chat nunca publica en Instagram."
+    },
     "errors": {
       "internal": "Algo salió mal. Inténtalo más tarde."
     }

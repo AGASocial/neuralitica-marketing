@@ -12,10 +12,18 @@ import {
   type ProposalCardCopy,
 } from "@/components/orchestrator-chat/ProposalActionCard";
 import {
+  DownloadReadyCard,
+  type DownloadReadyCardCopy,
+} from "@/components/orchestrator-chat/DownloadReadyCard";
+import {
   ScriptPreviewCard,
   VideoPreviewCard,
   type PreviewCardCopy,
 } from "@/components/orchestrator-chat/PreviewCards";
+import {
+  ProgressCard,
+  type ProgressCardCopy,
+} from "@/components/orchestrator-chat/ProgressCard";
 import {
   CampaignStatusCard,
   ScriptsStatusCard,
@@ -46,6 +54,8 @@ export type OrchestratorChatCopy = {
   proposal: ProposalCardCopy;
   status: StatusCardCopy;
   preview: PreviewCardCopy;
+  progress: ProgressCardCopy;
+  download: DownloadReadyCardCopy;
 };
 
 type OrchestratorChatPanelProps = {
@@ -368,6 +378,72 @@ export function OrchestratorChatPanel({
                           cta={output.cta}
                           copy={copy.preview}
                           onChangeSomething={focusChangeSomething}
+                        />
+                      );
+                    }
+                  }
+
+                  if (
+                    part.type === "tool-getGuidedProgress" &&
+                    part.state === "output-available"
+                  ) {
+                    const output = part.output as {
+                      ok?: boolean;
+                      steps?: Array<{
+                        key: string;
+                        status: "todo" | "current" | "done";
+                      }>;
+                      nextStepHint?: string;
+                      interviewHref?: string;
+                      nextStepKey?: string;
+                    };
+                    if (
+                      output?.ok &&
+                      output.steps &&
+                      output.nextStepHint &&
+                      output.interviewHref &&
+                      output.nextStepKey
+                    ) {
+                      return (
+                        <ProgressCard
+                          key={`${message.id}-gp-${index}`}
+                          steps={output.steps}
+                          nextStepHint={output.nextStepHint}
+                          interviewHref={output.interviewHref}
+                          nextStepKey={output.nextStepKey}
+                          copy={copy.progress}
+                        />
+                      );
+                    }
+                  }
+
+                  if (
+                    part.type === "tool-getReadyVideoDownload" &&
+                    part.state === "output-available"
+                  ) {
+                    const output = part.output as {
+                      ok?: boolean;
+                      videoPreviewUrl?: string;
+                      downloadUrl?: string;
+                      coverPreviewUrl?: string;
+                      captionBody?: string;
+                      readyToPublishHref?: string;
+                    };
+                    if (
+                      output?.ok &&
+                      output.videoPreviewUrl &&
+                      output.downloadUrl &&
+                      output.readyToPublishHref
+                    ) {
+                      return (
+                        <DownloadReadyCard
+                          key={`${message.id}-dl-${index}`}
+                          videoPreviewUrl={output.videoPreviewUrl}
+                          downloadUrl={output.downloadUrl}
+                          coverPreviewUrl={output.coverPreviewUrl}
+                          captionBody={output.captionBody}
+                          readyToPublishHref={output.readyToPublishHref}
+                          copy={copy.download}
                         />
                       );
                     }
