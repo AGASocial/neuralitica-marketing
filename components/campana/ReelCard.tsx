@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Loader2, Plus } from "lucide-react";
 
+import { MediaThumbnail } from "@/components/media/MediaThumbnail";
 import { cn } from "@/lib/utils";
 
 export type CampanaReelBadge =
@@ -53,11 +54,10 @@ export function ReelCard({ reel, onSelect }: ReelCardProps) {
   const content = (
     <>
       {reel.thumbnailUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <MediaThumbnail
           src={reel.thumbnailUrl}
-          alt=""
-          className="absolute inset-0 size-full object-cover"
+          kind="video"
+          className="absolute inset-0 size-full"
         />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-panel to-deep" />

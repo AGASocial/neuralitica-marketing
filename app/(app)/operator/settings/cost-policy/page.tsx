@@ -1,6 +1,7 @@
 import { CostPolicySettingsForm } from "@/components/cost-policy/CostPolicySettingsForm";
 import { getCostPolicyForSettings } from "@/lib/cost-policy/actions/get-cost-policy-for-settings";
-import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getTranslations } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ function isNextNavigationError(error: unknown): boolean {
  */
 export default async function CostPolicySettingsPage() {
   const user = await getCurrentUser();
-  const locale = resolveLocale(user?.preferredLocale);
+  const locale = await resolveRequestLocale(user?.preferredLocale);
   const t = getTranslations(locale);
 
   let result: Awaited<ReturnType<typeof getCostPolicyForSettings>>;

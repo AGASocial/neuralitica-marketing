@@ -54,4 +54,33 @@ describe("dashboard owner locale copy (KAN-84.16 / KAN-98)", () => {
       );
     }
   });
+
+  it("operator Advanced pages honor resolveRequestLocale (calendar + siblings)", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const operators = [
+      "../../app/(app)/operator/calendar/page.tsx",
+      "../../app/(app)/operator/calendar/loading.tsx",
+      "../../app/(app)/operator/strategy/page.tsx",
+      "../../app/(app)/operator/scripts/page.tsx",
+      "../../app/(app)/operator/trends/page.tsx",
+      "../../app/(app)/operator/playbook/page.tsx",
+      "../../app/(app)/operator/cycle/page.tsx",
+      "../../app/(app)/operator/settings/cost-policy/page.tsx",
+    ];
+    for (const rel of operators) {
+      const source = readFileSync(join(here, rel), "utf8");
+      assert.match(
+        source,
+        /resolveRequestLocale/,
+        `${rel} should use resolveRequestLocale`,
+      );
+      assert.doesNotMatch(
+        source,
+        /resolveLocale\(user/,
+        `${rel} should not use resolveLocale(user…) alone`,
+      );
+    }
+    assert.equal(typeof es.calendar.page.title, "string");
+    assert.notEqual(es.calendar.page.title, en.calendar.page.title);
+  });
 });
