@@ -1,6 +1,6 @@
 "use client";
 
-import { ProgressSpinner } from "primereact/progressspinner";
+import { Spinner } from "@/components/ui/spinner";
 
 type PlaybookLoadingProps = {
   label: string;
@@ -9,19 +9,11 @@ type PlaybookLoadingProps = {
 export function PlaybookLoading({ label }: PlaybookLoadingProps) {
   return (
     <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "1rem",
-        minHeight: "240px",
-        color: "#4b5563",
-      }}
+      className="flex min-h-60 flex-col items-center justify-center gap-4 text-dim"
       aria-busy="true"
       aria-live="polite"
     >
-      <ProgressSpinner style={{ width: "48px", height: "48px" }} strokeWidth="4" />
+      <Spinner className="size-12" />
       <span>{label}</span>
     </div>
   );

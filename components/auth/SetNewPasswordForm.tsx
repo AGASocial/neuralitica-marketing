@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
-import { Message } from "primereact/message";
-import { Password } from "primereact/password";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
 import { setNewPassword } from "@/lib/auth/actions/set-new-password";
 import type { AuthErrorEnvelope, SetNewPasswordInput } from "@/lib/contracts/auth";
 import type { Locale } from "@/lib/i18n/locales";
@@ -23,6 +25,8 @@ type SetNewPasswordCopy = {
   requiredField: string;
   invalidToken: string;
   retry: string;
+  showPassword: string;
+  hidePassword: string;
   fieldErrors: {
     password: {
       too_small: string;
@@ -95,13 +99,16 @@ function InvalidResetLink({
   retryLabel: string;
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+    <div className="flex flex-col gap-5">
       <div>
-        <h1 style={{ margin: "0 0 0.35rem", fontSize: "1.5rem" }}>{title}</h1>
+        <h1 className="mb-1.5 font-display text-3xl text-fog">{title}</h1>
       </div>
-      <Message severity="error" text={message} style={{ width: "100%" }} />
-      <p style={{ margin: 0, fontSize: "0.875rem", textAlign: "center" }}>
-        <Link href={`/reset-password?locale=${locale}`} style={{ color: "#4338ca" }}>
+      <StatusAlert severity="error" text={message} className="w-full" />
+      <p className="text-center text-sm">
+        <Link
+          href={`/reset-password?locale=${locale}`}
+          className="text-butter underline-offset-4 hover:underline"
+        >
           {retryLabel}
         </Link>
       </p>
@@ -226,61 +233,59 @@ export function SetNewPasswordForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+      <div className="flex flex-col gap-5">
         <div>
-          <h1 style={{ margin: "0 0 0.35rem", fontSize: "1.5rem" }}>{copy.setTitle}</h1>
-          <p style={{ margin: 0, color: "#4b5563" }}>{copy.setSubtitle}</p>
+          <h1 className="mb-1.5 font-display text-3xl text-fog">{copy.setTitle}</h1>
+          <p className="text-sm text-dim">{copy.setSubtitle}</p>
         </div>
 
         {formError ? (
-          <Message severity="error" text={formError} style={{ width: "100%" }} />
+          <StatusAlert severity="error" text={formError} className="w-full" />
         ) : null}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-          <label htmlFor="reset-new-password">{copy.password}</label>
-          <Password
-            inputId="reset-new-password"
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="reset-new-password" className="text-fog">
+            {copy.password}
+          </Label>
+          <PasswordInput
+            id="reset-new-password"
             value={fields.password}
             onChange={(event) => updateField("password", event.target.value)}
-            invalid={Boolean(fieldErrors.password)}
+            aria-invalid={Boolean(fieldErrors.password)}
             disabled={pending}
-            toggleMask
-            feedback={false}
-            inputStyle={{ width: "100%" }}
-            style={{ width: "100%" }}
+            showLabel={copy.showPassword}
+            hideLabel={copy.hidePassword}
             autoComplete="new-password"
           />
-          <small style={{ color: "#6b7280" }}>{copy.passwordHint}</small>
+          <small className="text-dim">{copy.passwordHint}</small>
           {fieldErrors.password ? (
-            <small style={{ color: "#dc2626" }}>{fieldErrors.password}</small>
+            <small className="text-rose">{fieldErrors.password}</small>
           ) : null}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-          <label htmlFor="reset-confirm-password">{copy.confirmPassword}</label>
-          <Password
-            inputId="reset-confirm-password"
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="reset-confirm-password" className="text-fog">
+            {copy.confirmPassword}
+          </Label>
+          <PasswordInput
+            id="reset-confirm-password"
             value={fields.confirmPassword}
             onChange={(event) => updateField("confirmPassword", event.target.value)}
-            invalid={Boolean(fieldErrors.confirmPassword)}
+            aria-invalid={Boolean(fieldErrors.confirmPassword)}
             disabled={pending}
-            toggleMask
-            feedback={false}
-            inputStyle={{ width: "100%" }}
-            style={{ width: "100%" }}
+            showLabel={copy.showPassword}
+            hideLabel={copy.hidePassword}
             autoComplete="new-password"
           />
           {fieldErrors.confirmPassword ? (
-            <small style={{ color: "#dc2626" }}>{fieldErrors.confirmPassword}</small>
+            <small className="text-rose">{fieldErrors.confirmPassword}</small>
           ) : null}
         </div>
 
-        <Button
-          type="submit"
-          label={pending ? copy.setSubmitPending : copy.setSubmit}
-          loading={pending}
-          disabled={pending}
-        />
+        <Button type="submit" disabled={pending} className="w-full">
+          {pending ? <Spinner className="size-4 text-current" /> : null}
+          {pending ? copy.setSubmitPending : copy.setSubmit}
+        </Button>
       </div>
     </form>
   );

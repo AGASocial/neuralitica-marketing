@@ -1,11 +1,18 @@
 "use client";
 
-import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
-import { InputTextarea } from "primereact/inputtextarea";
-import { Message } from "primereact/message";
-import { ProgressSpinner } from "primereact/progressspinner";
-
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import type {
   LlmRecommendation,
   ProjectionHintKey,
@@ -68,6 +75,15 @@ function isBatchPreview(
   return "items" in preview;
 }
 
+function MetricRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <dt className="inline text-dim">{label}: </dt>
+      <dd className="m-0 inline text-fog">{children}</dd>
+    </div>
+  );
+}
+
 function PreviewRow({
   item,
   locale,
@@ -81,15 +97,12 @@ function PreviewRow({
 }) {
   return (
     <div
-      style={{
-        border: "1px solid #e5e7eb",
-        borderRadius: "6px",
-        padding: "0.75rem",
-        marginBottom: "0.75rem",
-        background: item.wouldExceed ? "#fef2f2" : "#ffffff",
-      }}
+      className={cn(
+        "mb-3 rounded-md border p-3",
+        item.wouldExceed ? "border-rose/50 bg-rose/10" : "border-edge bg-deep/60",
+      )}
     >
-      <p style={{ margin: "0 0 0.5rem", fontWeight: 600 }}>
+      <p className="mb-2 font-semibold text-fog">
         {copy.slotLabel.replace("{index}", String(item.slotIndex + 1))}
       </p>
       <BudgetMetrics
@@ -112,42 +125,18 @@ function LlmRecommendationBlock({
   recommendationCopy: ProviderRecommendationCopy;
 }) {
   return (
-    <div
-      style={{
-        marginBottom: "0.75rem",
-        padding: "0.65rem 0.75rem",
-        border: "1px solid #dbeafe",
-        borderRadius: "6px",
-        background: "#eff6ff",
-        fontSize: "0.875rem",
-      }}
-    >
-      <p style={{ margin: "0 0 0.35rem", fontWeight: 600 }}>
-        {recommendationCopy.title}
-      </p>
-      <dl style={{ margin: 0, display: "grid", gap: "0.25rem" }}>
-        <div>
-          <dt style={{ display: "inline", color: "#6b7280" }}>
-            {recommendationCopy.providerLabel}:{" "}
-          </dt>
-          <dd style={{ display: "inline", margin: 0 }}>{recommendation.displayLabel}</dd>
-        </div>
-        <div>
-          <dt style={{ display: "inline", color: "#6b7280" }}>
-            {recommendationCopy.costLabel}:{" "}
-          </dt>
-          <dd style={{ display: "inline", margin: 0 }}>
-            {formatCentsForDisplay(recommendation.estimatedCostCents, locale)}
-          </dd>
-        </div>
-        <div>
-          <dt style={{ display: "inline", color: "#6b7280" }}>
-            {recommendationCopy.rationaleLabel}:{" "}
-          </dt>
-          <dd style={{ display: "inline", margin: 0 }}>
-            {recommendationCopy.rationale[recommendation.rationaleKey]}
-          </dd>
-        </div>
+    <div className="mb-3 rounded-md border border-info/40 bg-info/10 px-3 py-2.5 text-sm">
+      <p className="mb-1.5 font-semibold text-fog">{recommendationCopy.title}</p>
+      <dl className="m-0 grid gap-1">
+        <MetricRow label={recommendationCopy.providerLabel}>
+          {recommendation.displayLabel}
+        </MetricRow>
+        <MetricRow label={recommendationCopy.costLabel}>
+          {formatCentsForDisplay(recommendation.estimatedCostCents, locale)}
+        </MetricRow>
+        <MetricRow label={recommendationCopy.rationaleLabel}>
+          {recommendationCopy.rationale[recommendation.rationaleKey]}
+        </MetricRow>
       </dl>
     </div>
   );
@@ -173,47 +162,29 @@ function BudgetMetrics({
           recommendationCopy={recommendationCopy}
         />
       ) : null}
-      <dl style={{ margin: 0, display: "grid", gap: "0.35rem", fontSize: "0.9rem" }}>
-      <div>
-        <dt style={{ display: "inline", color: "#6b7280" }}>{copy.estimated}: </dt>
-        <dd style={{ display: "inline", margin: 0 }}>
+      <dl className="m-0 grid gap-1.5 text-[0.9rem]">
+        <MetricRow label={copy.estimated}>
           {formatCentsForDisplay(item.estimatedCostCents, locale)}
-        </dd>
-      </div>
-      <div>
-        <dt style={{ display: "inline", color: "#6b7280" }}>{copy.cumulative}: </dt>
-        <dd style={{ display: "inline", margin: 0 }}>
+        </MetricRow>
+        <MetricRow label={copy.cumulative}>
           {formatCentsForDisplay(item.cumulativeCostCents, locale)}
-        </dd>
-      </div>
-      <div>
-        <dt style={{ display: "inline", color: "#6b7280" }}>{copy.cap}: </dt>
-        <dd style={{ display: "inline", margin: 0 }}>
+        </MetricRow>
+        <MetricRow label={copy.cap}>
           {formatCentsForDisplay(item.maxCostCents, locale)}
-        </dd>
-      </div>
-      <div>
-        <dt style={{ display: "inline", color: "#6b7280" }}>{copy.remaining}: </dt>
-        <dd style={{ display: "inline", margin: 0 }}>
+        </MetricRow>
+        <MetricRow label={copy.remaining}>
           {formatCentsForDisplay(item.remainingCents, locale)}
-        </dd>
-      </div>
-      <div>
-        <dt style={{ display: "inline", color: "#6b7280" }}>{copy.providerTier}: </dt>
-        <dd style={{ display: "inline", margin: 0 }}>
+        </MetricRow>
+        <MetricRow label={copy.providerTier}>
           {copy.providerTierOptions[item.providerTier]}
-        </dd>
-      </div>
-      <div>
-        <dt style={{ display: "inline", color: "#6b7280" }}>{copy.providerLabel}: </dt>
-        <dd style={{ display: "inline", margin: 0 }}>{item.resolvedLlmProviderLabel}</dd>
-      </div>
-      {item.projectionHintKey ? (
-        <div style={{ color: "#6b7280", marginTop: "0.25rem" }}>
-          {copy.projectionHints[item.projectionHintKey]}
-        </div>
-      ) : null}
-    </dl>
+        </MetricRow>
+        <MetricRow label={copy.providerLabel}>{item.resolvedLlmProviderLabel}</MetricRow>
+        {item.projectionHintKey ? (
+          <div className="mt-1 text-dim">
+            {copy.projectionHints[item.projectionHintKey]}
+          </div>
+        ) : null}
+      </dl>
     </>
   );
 }
@@ -242,135 +213,142 @@ export function ReelBudgetConfirmDialog({
     overrideReason.trim().length >= 1 &&
     overrideReason.trim().length <= OVERRIDE_REASON_MAX_LENGTH;
 
-  const footer = (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "flex-end" }}>
-      <Button
-        type="button"
-        label={copy.cancel}
-        className="p-button-text"
-        disabled={pending}
-        onClick={onHide}
-      />
-      {wouldExceedAny ? (
-        <Button
-          type="button"
-          label={copy.proceedAnyway}
-          severity="danger"
-          disabled={pending || loading || !overrideReasonValid || preview === null}
-          loading={pending}
-          onClick={onProceedAnyway}
-        />
-      ) : (
-        <Button
-          type="button"
-          label={copy.confirm}
-          disabled={pending || loading || preview === null || loadError !== null}
-          loading={pending}
-          onClick={onConfirm}
-        />
-      )}
-    </div>
-  );
-
   return (
     <Dialog
-      header={copy.title}
-      visible={visible}
-      style={{ width: "min(560px, 95vw)" }}
-      onHide={onHide}
-      footer={footer}
-      closable={!pending}
-      dismissableMask={!pending}
+      open={visible}
+      onOpenChange={(open) => {
+        if (!open && !pending) {
+          onHide();
+        }
+      }}
     >
-      {loading ? (
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 0" }}>
-          <ProgressSpinner style={{ width: "28px", height: "28px" }} />
-          <span>{copy.loading}</span>
-        </div>
-      ) : null}
+      <DialogContent
+        className="max-h-[90vh] w-[min(560px,95vw)] overflow-y-auto border-edge bg-panel text-fog sm:max-w-[560px]"
+        showCloseButton={!pending}
+        aria-describedby={undefined}
+        onInteractOutside={(event) => {
+          if (pending) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle className="font-display text-2xl">{copy.title}</DialogTitle>
+        </DialogHeader>
 
-      {!loading && loadError ? (
-        <Message severity="error" text={loadError} style={{ width: "100%" }} />
-      ) : null}
+        {loading ? (
+          <div className="flex items-center gap-3 py-4">
+            <Spinner className="size-7" />
+            <span>{copy.loading}</span>
+          </div>
+        ) : null}
 
-      {!loading && preview && !isBatch && !isBatchPreview(preview) ? (
-        <>
-          {preview.wouldExceed ? (
-            <Message
-              severity="warn"
-              text={copy.wouldExceedWarning}
-              style={{ width: "100%", marginBottom: "1rem" }}
-            />
-          ) : null}
-          <BudgetMetrics
-            item={preview}
-            locale={locale}
-            copy={copy}
-            recommendationCopy={recommendationCopy}
-          />
-        </>
-      ) : null}
+        {!loading && loadError ? (
+          <StatusAlert severity="error" text={loadError} className="w-full" />
+        ) : null}
 
-      {!loading && preview && isBatch && isBatchPreview(preview) ? (
-        <>
-          {preview.wouldExceedAny ? (
-            <Message
-              severity="warn"
-              text={copy.wouldExceedWarning}
-              style={{ width: "100%", marginBottom: "1rem" }}
-            />
-          ) : null}
-          <p style={{ margin: "0 0 0.75rem", color: "#374151" }}>
-            {copy.aggregateEstimate.replace(
-              "{amount}",
-              formatCentsForDisplay(preview.aggregateEstimatedCostCents, locale),
-            )}
-          </p>
-          {preview.blockedSlotIndexes.length > 0 ? (
-            <p style={{ margin: "0 0 0.75rem", color: "#b45309", fontSize: "0.9rem" }}>
-              {copy.blockedSlots.replace(
-                "{slots}",
-                preview.blockedSlotIndexes.map((i) => String(i + 1)).join(", "),
-              )}
-            </p>
-          ) : null}
-          {preview.items.map((item) => (
-            <PreviewRow
-              key={item.slotIndex}
-              item={item}
+        {!loading && preview && !isBatch && !isBatchPreview(preview) ? (
+          <>
+            {preview.wouldExceed ? (
+              <StatusAlert
+                severity="warn"
+                text={copy.wouldExceedWarning}
+                className="mb-4 w-full"
+              />
+            ) : null}
+            <BudgetMetrics
+              item={preview}
               locale={locale}
               copy={copy}
               recommendationCopy={recommendationCopy}
             />
-          ))}
-        </>
-      ) : null}
+          </>
+        ) : null}
 
-      {!loading && wouldExceedAny ? (
-        <div style={{ marginTop: "1rem" }}>
-          <label
-            htmlFor="budget-override-reason"
-            style={{ display: "block", fontWeight: 600, marginBottom: "0.35rem" }}
-          >
-            {copy.overrideReasonLabel}
-          </label>
-          <InputTextarea
-            id="budget-override-reason"
-            value={overrideReason}
-            onChange={(event) => onOverrideReasonChange(event.target.value)}
-            rows={3}
-            maxLength={OVERRIDE_REASON_MAX_LENGTH}
-            disabled={pending}
-            style={{ width: "100%" }}
-            autoResize
-          />
-          {!overrideReasonValid ? (
-            <p style={{ margin: "0.35rem 0 0", color: "#6b7280", fontSize: "0.875rem" }}>
-              {copy.overrideReasonRequired}
+        {!loading && preview && isBatch && isBatchPreview(preview) ? (
+          <>
+            {preview.wouldExceedAny ? (
+              <StatusAlert
+                severity="warn"
+                text={copy.wouldExceedWarning}
+                className="mb-4 w-full"
+              />
+            ) : null}
+            <p className="mb-3 text-fog">
+              {copy.aggregateEstimate.replace(
+                "{amount}",
+                formatCentsForDisplay(preview.aggregateEstimatedCostCents, locale),
+              )}
             </p>
-          ) : null}
-        </div>
-      ) : null}
+            {preview.blockedSlotIndexes.length > 0 ? (
+              <p className="mb-3 text-[0.9rem] text-butter">
+                {copy.blockedSlots.replace(
+                  "{slots}",
+                  preview.blockedSlotIndexes.map((i) => String(i + 1)).join(", "),
+                )}
+              </p>
+            ) : null}
+            {preview.items.map((item) => (
+              <PreviewRow
+                key={item.slotIndex}
+                item={item}
+                locale={locale}
+                copy={copy}
+                recommendationCopy={recommendationCopy}
+              />
+            ))}
+          </>
+        ) : null}
+
+        {!loading && wouldExceedAny ? (
+          <div className="mt-4">
+            <Label
+              htmlFor="budget-override-reason"
+              className="mb-1.5 block font-semibold"
+            >
+              {copy.overrideReasonLabel}
+            </Label>
+            <Textarea
+              id="budget-override-reason"
+              value={overrideReason}
+              onChange={(event) => onOverrideReasonChange(event.target.value)}
+              rows={3}
+              maxLength={OVERRIDE_REASON_MAX_LENGTH}
+              disabled={pending}
+              className="w-full"
+            />
+            {!overrideReasonValid ? (
+              <p className="mt-1.5 text-sm text-dim">{copy.overrideReasonRequired}</p>
+            ) : null}
+          </div>
+        ) : null}
+
+        <DialogFooter className="flex-wrap gap-2">
+          <Button type="button" variant="ghost" disabled={pending} onClick={onHide}>
+            {copy.cancel}
+          </Button>
+          {wouldExceedAny ? (
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={pending || loading || !overrideReasonValid || preview === null}
+              onClick={onProceedAnyway}
+            >
+              {pending ? <Spinner className="size-4 text-current" /> : null}
+              {copy.proceedAnyway}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              disabled={pending || loading || preview === null || loadError !== null}
+              onClick={onConfirm}
+            >
+              {pending ? <Spinner className="size-4 text-current" /> : null}
+              {copy.confirm}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }

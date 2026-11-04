@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "primereact/button";
-import { InputText } from "primereact/inputtext";
-import { Message } from "primereact/message";
 import { useState } from "react";
 
 import { CheckEmailView } from "@/components/auth/CheckEmailView";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
 import { requestPasswordReset } from "@/lib/auth/actions/request-password-reset";
 import type {
   AuthErrorEnvelope,
@@ -173,7 +175,7 @@ export function ResetPasswordForm({
 
   if (submittedEmail) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+      <div className="flex flex-col gap-5">
         <CheckEmailView
           title={copy.checkEmailTitle}
           body={copy.checkEmail}
@@ -185,8 +187,11 @@ export function ResetPasswordForm({
           resendError={resendError}
           resendSuccess={resendSuccess}
         />
-        <p style={{ margin: 0, fontSize: "0.875rem", textAlign: "center" }}>
-          <Link href={`/login?locale=${locale}`} style={{ color: "#4338ca" }}>
+        <p className="text-center text-sm">
+          <Link
+            href={`/login?locale=${locale}`}
+            className="text-butter underline-offset-4 hover:underline"
+          >
             {copy.loginLink}
           </Link>
         </p>
@@ -196,42 +201,45 @@ export function ResetPasswordForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+      <div className="flex flex-col gap-5">
         <div>
-          <h1 style={{ margin: "0 0 0.35rem", fontSize: "1.5rem" }}>{copy.title}</h1>
-          <p style={{ margin: 0, color: "#4b5563" }}>{copy.subtitle}</p>
+          <h1 className="mb-1.5 font-display text-3xl text-fog">{copy.title}</h1>
+          <p className="text-sm text-dim">{copy.subtitle}</p>
         </div>
 
         {formError ? (
-          <Message severity="error" text={formError} style={{ width: "100%" }} />
+          <StatusAlert severity="error" text={formError} className="w-full" />
         ) : null}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-          <label htmlFor="reset-email">{copy.email}</label>
-          <InputText
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="reset-email" className="text-fog">
+            {copy.email}
+          </Label>
+          <Input
             id="reset-email"
             type="email"
             value={email}
             onChange={(event) => updateEmail(event.target.value)}
-            invalid={Boolean(fieldErrors.email)}
+            aria-invalid={Boolean(fieldErrors.email)}
             disabled={pending}
             autoComplete="email"
             autoFocus
           />
           {fieldErrors.email ? (
-            <small style={{ color: "#dc2626" }}>{fieldErrors.email}</small>
+            <small className="text-rose">{fieldErrors.email}</small>
           ) : null}
         </div>
 
-        <Button
-          type="submit"
-          label={pending ? copy.submitPending : copy.submit}
-          loading={pending}
-          disabled={pending}
-        />
+        <Button type="submit" disabled={pending} className="w-full">
+          {pending ? <Spinner className="size-4 text-current" /> : null}
+          {pending ? copy.submitPending : copy.submit}
+        </Button>
 
-        <p style={{ margin: 0, fontSize: "0.875rem", textAlign: "center" }}>
-          <Link href={`/login?locale=${locale}`} style={{ color: "#4338ca" }}>
+        <p className="text-center text-sm">
+          <Link
+            href={`/login?locale=${locale}`}
+            className="text-butter underline-offset-4 hover:underline"
+          >
             {copy.loginLink}
           </Link>
         </p>

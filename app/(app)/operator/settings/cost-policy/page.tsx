@@ -37,11 +37,11 @@ export default async function CostPolicySettingsPage() {
 
   if (!result.ok) {
     return (
-      <div style={{ maxWidth: "720px", margin: "0 auto" }}>
-        <h1 style={{ margin: "0 0 0.35rem", fontSize: "1.5rem" }}>
+      <div className="mx-auto max-w-[720px]">
+        <h1 className="mb-1.5 font-display text-4xl text-fog">
           {t.settings.costPolicy.title}
         </h1>
-        <p style={{ color: "#b91c1c" }}>{t.settings.costPolicy.loadError}</p>
+        <p className="text-rose">{t.settings.costPolicy.loadError}</p>
       </div>
     );
   }

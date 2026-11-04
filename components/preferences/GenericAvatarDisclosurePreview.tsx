@@ -28,34 +28,11 @@ export function GenericAvatarDisclosurePreview({
   return (
     <section
       aria-label={variant === "approval" ? undefined : "Disclosure preview"}
-      style={{
-        background: "#f9fafb",
-        border: "1px solid #e5e7eb",
-        borderRadius: "8px",
-        padding: "1rem 1.25rem",
-      }}
+      className="rounded-xl border border-edge bg-deep/60 px-5 py-4"
     >
-      <p
-        style={{
-          margin: 0,
-          fontWeight: 600,
-          color: "#111827",
-          lineHeight: 1.5,
-        }}
-      >
-        {line}
-      </p>
+      <p className="font-semibold leading-normal text-fog">{line}</p>
       {previewNote ? (
-        <p
-          style={{
-            margin: "0.5rem 0 0",
-            color: "#6b7280",
-            fontSize: "0.875rem",
-            lineHeight: 1.45,
-          }}
-        >
-          {previewNote}
-        </p>
+        <p className="mt-2 text-sm leading-[1.45] text-dim">{previewNote}</p>
       ) : null}
     </section>
   );

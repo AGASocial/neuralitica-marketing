@@ -4,9 +4,6 @@ import { Instrument_Serif, Manrope } from "next/font/google";
 import "@/lib/auth/assert-dev-fallback";
 import { AppProviders } from "@/components/providers/AppProviders";
 
-import "primeicons/primeicons.css";
-import "primereact/resources/themes/lara-light-blue/theme.css";
-import "primereact/resources/primereact.min.css";
 import "./globals.css";
 
 const manrope = Manrope({

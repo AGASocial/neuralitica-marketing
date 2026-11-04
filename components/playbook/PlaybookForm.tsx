@@ -1,19 +1,22 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { Dropdown } from "primereact/dropdown";
-import { InputNumber } from "primereact/inputnumber";
-import { InputText } from "primereact/inputtext";
-import { InputTextarea } from "primereact/inputtextarea";
-import { Message } from "primereact/message";
-import { MultiSelect } from "primereact/multiselect";
-import { Tag } from "primereact/tag";
-import { Toast } from "primereact/toast";
+import { toast } from "sonner";
 
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { NumberInput } from "@/components/ui/number-input";
+import { SimpleSelect } from "@/components/ui/simple-select";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Textarea } from "@/components/ui/textarea";
 import { StringListEditor } from "@/components/playbook/StringListEditor";
 import {
   PLAYBOOK_CTA_TIPOS,
@@ -156,7 +159,6 @@ function slugValid(slug: string): boolean {
 
 export function PlaybookForm(props: PlaybookFormProps) {
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
   const { copy } = props;
 
   const isEdit = props.mode === "edit";
@@ -174,6 +176,7 @@ export function PlaybookForm(props: PlaybookFormProps) {
   const [archivePending, setArchivePending] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [versionConflict, setVersionConflict] = useState(false);
+  const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false);
 
   const hookOptions = PLAYBOOK_HOOK_TYPES.map((value) => ({
     label: copy.hookTypes[value],
@@ -285,11 +288,7 @@ export function PlaybookForm(props: PlaybookFormProps) {
         });
 
         if (result.ok) {
-          toastRef.current?.show({
-            severity: "success",
-            summary: copy.toastCreateSuccess,
-            life: 4000,
-          });
+          toast.success(copy.toastCreateSuccess, { duration: 4000 });
           router.push(`/operator/playbook/${result.slug}`);
           router.refresh();
           return;
@@ -307,11 +306,7 @@ export function PlaybookForm(props: PlaybookFormProps) {
       if (result.ok) {
         setVersion(result.version);
         setPayload(structuredClone(normalized));
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastSaveSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastSaveSuccess, { duration: 4000 });
         router.refresh();
         return;
       }
@@ -333,17 +328,7 @@ export function PlaybookForm(props: PlaybookFormProps) {
       return;
     }
 
-    confirmDialog({
-      header: copy.confirmArchive.header,
-      message: copy.confirmArchive.message,
-      icon: "pi pi-exclamation-triangle",
-      acceptLabel: copy.confirmArchive.accept,
-      rejectLabel: copy.confirmArchive.reject,
-      acceptClassName: "p-button-danger",
-      accept: () => {
-        void handleArchive();
-      },
-    });
+    setConfirmArchiveOpen(true);
   }
 
   async function handleArchive() {
@@ -361,11 +346,7 @@ export function PlaybookForm(props: PlaybookFormProps) {
       });
 
       if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastArchiveSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastArchiveSuccess, { duration: 4000 });
         router.push("/operator/playbook");
         router.refresh();
         return;
@@ -392,41 +373,38 @@ export function PlaybookForm(props: PlaybookFormProps) {
   const title = isEdit ? copy.editTitle : copy.createTitle;
 
   return (
-    <div style={{ maxWidth: "820px", margin: "0 auto" }}>
-      <ConfirmDialog />
-      <Toast ref={toastRef} />
+    <div className="mx-auto max-w-[820px]">
+      <ConfirmDialog
+        open={confirmArchiveOpen}
+        onOpenChange={setConfirmArchiveOpen}
+        header={copy.confirmArchive.header}
+        message={copy.confirmArchive.message}
+        acceptLabel={copy.confirmArchive.accept}
+        rejectLabel={copy.confirmArchive.reject}
+        destructive
+        onAccept={() => {
+          void handleArchive();
+        }}
+      />
 
-      <div style={{ marginBottom: "1.5rem" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: "1rem",
-            flexWrap: "wrap",
-          }}
-        >
+      <div className="mb-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem" }}>{title}</h1>
-            <p style={{ margin: 0, color: "#4b5563" }}>{copy.subtitle}</p>
+            <h1 className="mb-2 font-display text-4xl text-fog">{title}</h1>
+            <p className="text-dim">{copy.subtitle}</p>
           </div>
-          <Link href="/operator/playbook" style={{ textDecoration: "none" }}>
-            <Button type="button" label={copy.backList} severity="secondary" outlined />
-          </Link>
+          <Button asChild variant="outline">
+            <Link href="/operator/playbook">{copy.backList}</Link>
+          </Button>
         </div>
 
         {isEdit ? (
-          <div
-            style={{
-              display: "flex",
-              gap: "0.75rem",
-              alignItems: "center",
-              marginTop: "1rem",
-              flexWrap: "wrap",
-            }}
-          >
-            <Tag severity={archived ? "secondary" : "success"} value={props.initial.slug} />
-            <span style={{ color: "#6b7280", fontSize: "0.95rem" }}>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <StatusBadge
+              severity={archived ? "secondary" : "success"}
+              value={props.initial.slug}
+            />
+            <span className="text-[0.95rem] text-dim">
               {copy.versionLabel.replace("{version}", String(version))}
             </span>
           </div>
@@ -434,45 +412,26 @@ export function PlaybookForm(props: PlaybookFormProps) {
       </div>
 
       {archived ? (
-        <Message
+        <StatusAlert
           severity="warn"
           text={copy.archivedBanner}
-          style={{ width: "100%", marginBottom: "1rem" }}
+          className="mb-4 w-full"
         />
       ) : null}
 
       {versionConflict ? (
-        <Message
-          severity="warn"
-          style={{ width: "100%", marginBottom: "1rem" }}
-          content={
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "1rem",
-                flexWrap: "wrap",
-              }}
-            >
-              <span>{copy.versionConflict}</span>
-              <Button
-                type="button"
-                label={copy.reload}
-                size="small"
-                onClick={handleReload}
-              />
-            </div>
-          }
-        />
+        <StatusAlert severity="warn" className="mb-4 w-full">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <span>{copy.versionConflict}</span>
+            <Button type="button" size="sm" onClick={handleReload}>
+              {copy.reload}
+            </Button>
+          </div>
+        </StatusAlert>
       ) : null}
 
       {banner ? (
-        <Message
-          severity="error"
-          text={banner}
-          style={{ width: "100%", marginBottom: "1rem" }}
-        />
+        <StatusAlert severity="error" text={banner} className="mb-4 w-full" />
       ) : null}
 
       <form
@@ -480,49 +439,44 @@ export function PlaybookForm(props: PlaybookFormProps) {
           event.preventDefault();
           void handleSubmit();
         }}
-        style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}
+        className="flex flex-col gap-5"
       >
         {!isEdit ? (
           <div>
-            <label htmlFor="playbook-slug" style={{ display: "block", fontWeight: 600 }}>
-              {copy.fields.slug}
-            </label>
-            <p style={{ margin: "0.25rem 0 0.5rem", color: "#6b7280", fontSize: "0.9rem" }}>
-              {copy.fields.slugHint}
-            </p>
-            <InputText
+          <Label htmlFor="playbook-slug" className="block font-semibold text-fog">
+            {copy.fields.slug}
+          </Label>
+          <p className="mt-1 mb-2 text-[0.9rem] text-dim">{copy.fields.slugHint}</p>
+            <Input
               id="playbook-slug"
               value={slug}
               onChange={(event) => setSlug(event.target.value.toLowerCase())}
               disabled={pending}
-              style={{ width: "100%" }}
+              className="w-full"
             />
           </div>
         ) : null}
 
-        <div>
-          <label htmlFor="playbook-titulo" style={{ display: "block", fontWeight: 600 }}>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="playbook-titulo" className="block font-semibold text-fog">
             {copy.fields.titulo}
-          </label>
-          <InputText
+          </Label>
+          <Input
             id="playbook-titulo"
             value={payload.titulo}
             onChange={(event) =>
               setPayload((current) => ({ ...current, titulo: event.target.value }))
             }
             disabled={pending || archived}
-            style={{ width: "100%" }}
+            className="w-full"
           />
         </div>
 
-        <div>
-          <label
-            htmlFor="playbook-explicacion"
-            style={{ display: "block", fontWeight: 600 }}
-          >
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="playbook-explicacion" className="block font-semibold text-fog">
             {copy.fields.explicacion}
-          </label>
-          <InputTextarea
+          </Label>
+          <Textarea
             id="playbook-explicacion"
             value={payload.explicacion}
             onChange={(event) =>
@@ -533,7 +487,7 @@ export function PlaybookForm(props: PlaybookFormProps) {
             }
             disabled={pending || archived}
             rows={4}
-            style={{ width: "100%" }}
+            className="w-full"
           />
         </div>
 
@@ -553,94 +507,71 @@ export function PlaybookForm(props: PlaybookFormProps) {
           maxItems={12}
         />
 
-        <div>
-          <label htmlFor="playbook-hook-type" style={{ display: "block", fontWeight: 600 }}>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="playbook-hook-type" className="block font-semibold text-fog">
             {copy.fields.hookType}
-          </label>
-          <Dropdown
-            inputId="playbook-hook-type"
+          </Label>
+          <SimpleSelect
+            id="playbook-hook-type"
             value={payload.hook_type}
             options={hookOptions}
-            onChange={(event) =>
-              setPayload((current) => ({
-                ...current,
-                hook_type: event.value as PlaybookHookType,
-              }))
+            onChange={(value) =>
+              setPayload((current) => ({ ...current, hook_type: value }))
             }
             disabled={pending || archived}
-            style={{ width: "100%" }}
           />
         </div>
 
-        <div>
-          <label
-            htmlFor="playbook-duracion"
-            style={{ display: "block", fontWeight: 600 }}
-          >
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="playbook-duracion" className="block font-semibold text-fog">
             {copy.fields.duracionIdealSeg}
-          </label>
-          <InputNumber
-            inputId="playbook-duracion"
+          </Label>
+          <NumberInput
+            id="playbook-duracion"
             value={payload.duracion_ideal_seg}
-            onValueChange={(event) =>
-              setPayload((current) => ({
-                ...current,
-                duracion_ideal_seg: event.value ?? 30,
-              }))
+            onValueChange={(duracion_ideal_seg) =>
+              setPayload((current) => ({ ...current, duracion_ideal_seg }))
             }
             min={5}
             max={90}
-            suffix=" s"
+            fallback={30}
+            suffix="s"
             disabled={pending || archived}
           />
         </div>
 
-        <div>
-          <label
-            htmlFor="playbook-modalidades"
-            style={{ display: "block", fontWeight: 600 }}
-          >
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="playbook-modalidades" className="block font-semibold text-fog">
             {copy.fields.modalidades}
-          </label>
-          <p style={{ margin: "0.25rem 0 0.5rem", color: "#6b7280", fontSize: "0.9rem" }}>
-            {copy.fields.modalidadesHint}
-          </p>
+          </Label>
+          <p className="mt-1 mb-2 text-[0.9rem] text-dim">{copy.fields.modalidadesHint}</p>
           <MultiSelect
-            inputId="playbook-modalidades"
+            id="playbook-modalidades"
             value={payload.modalidades_recomendadas}
             options={modalityOptions}
-            onChange={(event) =>
+            onChange={(value) =>
               setPayload((current) => ({
                 ...current,
-                modalidades_recomendadas: event.value as VisualModality[],
+                modalidades_recomendadas: value,
               }))
             }
             disabled={pending || archived}
-            display="chip"
-            style={{ width: "100%" }}
           />
         </div>
 
-        <div>
-          <label htmlFor="playbook-rubros" style={{ display: "block", fontWeight: 600 }}>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="playbook-rubros" className="block font-semibold text-fog">
             {copy.fields.rubros}
-          </label>
-          <p style={{ margin: "0.25rem 0 0.5rem", color: "#6b7280", fontSize: "0.9rem" }}>
-            {copy.fields.rubrosHint}
-          </p>
+          </Label>
+          <p className="mt-1 mb-2 text-[0.9rem] text-dim">{copy.fields.rubrosHint}</p>
           <MultiSelect
-            inputId="playbook-rubros"
+            id="playbook-rubros"
             value={payload.rubros}
             options={rubroOptions}
-            onChange={(event) =>
-              setPayload((current) => ({
-                ...current,
-                rubros: event.value as PlaybookRubro[],
-              }))
+            onChange={(value) =>
+              setPayload((current) => ({ ...current, rubros: value }))
             }
             disabled={pending || archived}
-            display="chip"
-            style={{ width: "100%" }}
           />
         </div>
 
@@ -661,12 +592,12 @@ export function PlaybookForm(props: PlaybookFormProps) {
         />
 
         <div>
-          <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="playbook-editing-hints-enabled"
               checked={editingHintsEnabled}
-              onChange={(event) => {
-                const enabled = event.target.checked;
+              onCheckedChange={(checked) => {
+                const enabled = checked === true;
                 setEditingHintsEnabled(enabled);
                 if (enabled && !payload.editing_hints?.length) {
                   setPayload((current) => ({
@@ -677,10 +608,15 @@ export function PlaybookForm(props: PlaybookFormProps) {
               }}
               disabled={pending || archived}
             />
-            <span style={{ fontWeight: 600 }}>{copy.fields.editingHints}</span>
-          </label>
+            <Label
+              htmlFor="playbook-editing-hints-enabled"
+              className="font-semibold text-fog"
+            >
+              {copy.fields.editingHints}
+            </Label>
+          </div>
           {editingHintsEnabled ? (
-            <div style={{ marginTop: "0.75rem" }}>
+            <div className="mt-3">
               <StringListEditor
                 idPrefix="editing-hints"
                 label={copy.fields.editingHints}
@@ -700,36 +636,27 @@ export function PlaybookForm(props: PlaybookFormProps) {
           ) : null}
         </div>
 
-        <div>
-          <label htmlFor="playbook-cta" style={{ display: "block", fontWeight: 600 }}>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="playbook-cta" className="block font-semibold text-fog">
             {copy.fields.ctaTipo}
-          </label>
-          <Dropdown
-            inputId="playbook-cta"
+          </Label>
+          <SimpleSelect
+            id="playbook-cta"
             value={payload.cta_tipo}
             options={ctaOptions}
-            onChange={(event) =>
-              setPayload((current) => ({
-                ...current,
-                cta_tipo: event.value as PlaybookCtaTipo,
-              }))
+            onChange={(value) =>
+              setPayload((current) => ({ ...current, cta_tipo: value }))
             }
             disabled={pending || archived}
-            style={{ width: "100%" }}
           />
         </div>
 
-        <div>
-          <label
-            htmlFor="playbook-ejemplo"
-            style={{ display: "block", fontWeight: 600 }}
-          >
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="playbook-ejemplo" className="block font-semibold text-fog">
             {copy.fields.ejemploReferencia}
-          </label>
-          <p style={{ margin: "0.25rem 0 0.5rem", color: "#6b7280", fontSize: "0.9rem" }}>
-            {copy.fields.ejemploReferenciaHint}
-          </p>
-          <InputTextarea
+          </Label>
+          <p className="mt-1 mb-2 text-[0.9rem] text-dim">{copy.fields.ejemploReferenciaHint}</p>
+          <Textarea
             id="playbook-ejemplo"
             value={payload.ejemplo_referencia ?? ""}
             onChange={(event) =>
@@ -740,46 +667,40 @@ export function PlaybookForm(props: PlaybookFormProps) {
             }
             disabled={pending || archived}
             rows={3}
-            style={{ width: "100%" }}
+            className="w-full"
           />
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "0.75rem",
-            flexWrap: "wrap",
-            marginTop: "0.5rem",
-          }}
-        >
+        <div className="mt-2 flex flex-wrap gap-3">
           {!archived ? (
-            <Button
-              type="submit"
-              label={isEdit ? copy.save : copy.create}
-              loading={pending}
-              disabled={archivePending}
-            />
+            <Button type="submit" disabled={pending || archivePending}>
+              {pending ? <Spinner className="size-4 text-current" /> : null}
+              {isEdit ? copy.save : copy.create}
+            </Button>
           ) : null}
-          <Link href="/operator/playbook" style={{ textDecoration: "none" }}>
-            <Button
-              type="button"
-              label={copy.cancel}
-              severity="secondary"
-              outlined
-              disabled={pending || archivePending}
-            />
-          </Link>
+          <Button asChild variant="outline">
+            <Link
+              href="/operator/playbook"
+              aria-disabled={pending || archivePending}
+              tabIndex={pending || archivePending ? -1 : undefined}
+              className={
+                pending || archivePending ? "pointer-events-none opacity-50" : undefined
+              }
+            >
+              {copy.cancel}
+            </Link>
+          </Button>
           {isEdit && !archived ? (
             <Button
               type="button"
-              label={copy.archive}
-              severity="danger"
-              outlined
-              loading={archivePending}
-              disabled={pending}
+              variant="outline"
+              className="ml-auto border-rose/60 text-rose hover:bg-rose/10 hover:text-rose"
+              disabled={pending || archivePending}
               onClick={openArchiveConfirm}
-              style={{ marginLeft: "auto" }}
-            />
+            >
+              {archivePending ? <Spinner className="size-4 text-current" /> : null}
+              {copy.archive}
+            </Button>
           ) : null}
         </div>
       </form>

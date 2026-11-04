@@ -11,5 +11,5 @@ V1 UI was built PrimeReact-first. The product owner selected the dark **Campaña
 
 ## Consecuencias
 - `AGENTS.md` / README architecture defaults say Tailwind + shadcn instead of PrimeReact-first.
-- PrimeReact/primeicons are removed once remaining screens are migrated (tracked in the UI redesign branch).
+- PrimeReact and primeicons are removed from runtime dependencies; UI uses shadcn/ui + Lucide.
 - Focus states, keyboard access, and `prefers-reduced-motion` are required in new UI work.

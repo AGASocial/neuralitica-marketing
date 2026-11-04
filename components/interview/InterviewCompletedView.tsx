@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "primereact/button";
-import { Message } from "primereact/message";
 
+import { Button } from "@/components/ui/button";
+import { StatusAlert } from "@/components/ui/status-alert";
 import type { InterviewAnswers, InterviewStepKey } from "@/lib/contracts/interview";
 
 import {
@@ -40,65 +40,37 @@ export function InterviewCompletedView({
   banner,
 }: InterviewCompletedViewProps) {
   return (
-    <div
-      style={{
-        maxWidth: 760,
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.25rem",
-      }}
-    >
+    <div className="mx-auto flex max-w-[760px] flex-col gap-5">
       <div>
-        <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem" }}>{copy.title}</h1>
-        <p style={{ margin: 0, color: "#4b5563" }}>{copy.completedTitle}</p>
+        <h1 className="mb-2 font-display text-4xl text-fog">{copy.title}</h1>
+        <p className="text-dim">{copy.completedTitle}</p>
       </div>
 
       {banner ? (
-        <Message severity="warn" text={banner} style={{ width: "100%" }} />
+        <StatusAlert severity="warn" text={banner} className="w-full" />
       ) : null}
 
-      <Message
-        severity="info"
-        text={copy.completedBody}
-        style={{ width: "100%" }}
-      />
+      <StatusAlert severity="info" text={copy.completedBody} className="w-full" />
 
-      <div
-        style={{
-          display: "flex",
-          gap: "0.75rem",
-          flexWrap: "wrap",
-        }}
-      >
-        <Link href="/profile" style={{ textDecoration: "none" }}>
-          <Button type="button" label={copy.viewProfile} />
-        </Link>
-        <Link href="/dashboard" style={{ textDecoration: "none" }}>
-          <Button
-            type="button"
-            label={copy.backToDashboard}
-            severity="secondary"
-            outlined
-          />
-        </Link>
+      <div className="flex flex-wrap gap-3">
+        <Button asChild>
+          <Link href="/profile">{copy.viewProfile}</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/dashboard">{copy.backToDashboard}</Link>
+        </Button>
       </div>
 
       {INTERVIEW_STEP_ORDER.map((step) => (
         <section
           key={step}
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e5e7eb",
-            borderRadius: "8px",
-            padding: "1rem 1.25rem",
-          }}
+          className="rounded-xl border border-edge bg-panel px-5 py-4"
         >
-          <h2 style={{ margin: "0 0 0.75rem", fontSize: "1.1rem" }}>
+          <h2 className="mb-3 font-display text-xl text-fog">
             {copy.steps[step].label}
           </h2>
           {isTextStep(step) ? (
-            <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+            <p className="whitespace-pre-wrap text-fog">
               {getDescription(answers, step) || copy.none}
             </p>
           ) : (
@@ -121,11 +93,11 @@ function CompletedList({
   noneLabel: string;
 }) {
   if (items.length === 0) {
-    return <p style={{ margin: 0 }}>{noneLabel}</p>;
+    return <p className="text-fog">{noneLabel}</p>;
   }
 
   return (
-    <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+    <ul className="list-disc pl-5 text-fog">
       {items.map((item, index) => (
         <li key={`${index}-${item}`}>{item}</li>
       ))}

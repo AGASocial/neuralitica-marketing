@@ -1,12 +1,16 @@
 "use client";
 
 import { useRef, useState, type ChangeEvent } from "react";
-import { Button } from "primereact/button";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { InputSwitch } from "primereact/inputswitch";
-import { Message } from "primereact/message";
-import { ProgressBar } from "primereact/progressbar";
-import { Toast } from "primereact/toast";
+import { toast } from "sonner";
+import { TrashIcon, UploadIcon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { IndeterminateProgress } from "@/components/ui/indeterminate-progress";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { Switch } from "@/components/ui/switch";
 
 import type { AssemblyConfig } from "@/lib/contracts/branding-job";
 import { CLIENT_LOGO_HINT_MAX_MIB } from "@/lib/contracts/branding-job";
@@ -87,7 +91,6 @@ export function ProfileBrandingSection({
   initial,
   copy,
 }: ProfileBrandingSectionProps) {
-  const toastRef = useRef<Toast>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [logoAssetId, setLogoAssetId] = useState<string | null>(
@@ -103,6 +106,7 @@ export function ProfileBrandingSection({
   const [pendingRemove, setPendingRemove] = useState(false);
   const [pendingToggle, setPendingToggle] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
 
   const busy = pendingUpload || pendingRemove || pendingToggle;
   const hintsText = copy.hints.replace(
@@ -123,11 +127,7 @@ export function ProfileBrandingSection({
 
       if (result.ok) {
         setAssemblyConfig(result.assemblyConfig);
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastDefaultsSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastDefaultsSuccess, { duration: 4000 });
         return;
       }
 
@@ -184,11 +184,7 @@ export function ProfileBrandingSection({
       if (result.ok) {
         setLogoAssetId(result.logoAssetId);
         setLogoPreviewUrl(result.logoPreviewUrl);
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastUploadSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastUploadSuccess, { duration: 4000 });
         return;
       }
 
@@ -205,14 +201,7 @@ export function ProfileBrandingSection({
       return;
     }
 
-    confirmDialog({
-      header: copy.confirmRemove.header,
-      message: copy.confirmRemove.message,
-      acceptLabel: copy.confirmRemove.accept,
-      rejectLabel: copy.confirmRemove.reject,
-      acceptClassName: "p-button-danger",
-      accept: () => void handleRemove(),
-    });
+    setConfirmRemoveOpen(true);
   }
 
   async function handleRemove() {
@@ -229,11 +218,7 @@ export function ProfileBrandingSection({
       if (result.ok) {
         setLogoAssetId(null);
         setLogoPreviewUrl(null);
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastRemoveSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastRemoveSuccess, { duration: 4000 });
         return;
       }
 
@@ -247,134 +232,94 @@ export function ProfileBrandingSection({
 
   return (
     <section
-      style={{
-        background: "#ffffff",
-        border: "1px solid #e5e7eb",
-        borderRadius: "8px",
-        padding: "1rem 1.25rem",
-      }}
+      className="rounded-xl border border-edge bg-panel px-5 py-4"
       aria-label={copy.title}
     >
-      <Toast ref={toastRef} position="top-right" />
-      <ConfirmDialog />
+      <ConfirmDialog
+        open={confirmRemoveOpen}
+        onOpenChange={setConfirmRemoveOpen}
+        header={copy.confirmRemove.header}
+        message={copy.confirmRemove.message}
+        acceptLabel={copy.confirmRemove.accept}
+        rejectLabel={copy.confirmRemove.reject}
+        destructive
+        onAccept={() => void handleRemove()}
+      />
 
-      <h2 style={{ margin: "0 0 0.35rem", fontSize: "1.1rem" }}>{copy.title}</h2>
-      <p style={{ margin: "0 0 1rem", fontSize: "0.875rem", color: "#6b7280" }}>
-        {copy.subtitle}
-      </p>
+      <h2 className="mb-1.5 font-display text-xl text-fog">{copy.title}</h2>
+      <p className="mb-4 text-sm text-dim">{copy.subtitle}</p>
 
       {banner ? (
-        <Message severity="error" text={banner} style={{ width: "100%", marginBottom: "1rem" }} />
+        <StatusAlert severity="error" text={banner} className="mb-4 w-full" />
       ) : null}
 
-      <div style={{ marginBottom: "1.25rem" }}>
-        <p style={{ margin: "0 0 0.5rem", fontWeight: 600, fontSize: "0.9rem" }}>
-          {copy.logoLabel}
-        </p>
-        <p style={{ margin: "0 0 0.75rem", fontSize: "0.8125rem", color: "#6b7280" }}>
-          {hintsText}
-        </p>
+      <div className="mb-5">
+        <p className="mb-2 text-[0.9rem] font-semibold text-fog">{copy.logoLabel}</p>
+        <p className="mb-3 text-[0.8125rem] text-dim">{hintsText}</p>
 
         {logoPreviewUrl ? (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "1rem",
-              flexWrap: "wrap",
-              marginBottom: "0.75rem",
-            }}
-          >
+          <div className="mb-3 flex flex-wrap items-start gap-4">
             {/* eslint-disable-next-line @next/next/no-img-element -- authenticated media serve URL */}
             <img
               src={logoPreviewUrl}
               alt={copy.previewAlt}
-              style={{
-                maxWidth: "120px",
-                maxHeight: "120px",
-                objectFit: "contain",
-                border: "1px solid #e5e7eb",
-                borderRadius: "6px",
-                padding: "0.35rem",
-                background: "#f9fafb",
-              }}
+              className="max-h-[120px] max-w-[120px] rounded-md border border-edge bg-deep p-1.5 object-contain"
             />
             <Button
               type="button"
-              label={pendingRemove ? copy.removing : copy.remove}
-              icon="pi pi-trash"
-              severity="danger"
-              outlined
-              size="small"
+              variant="outline"
+              size="sm"
+              className="border-rose/60 text-rose hover:bg-rose/10 hover:text-rose"
               disabled={busy}
-              loading={pendingRemove}
               onClick={requestRemove}
-            />
+            >
+              {pendingRemove ? <Spinner className="size-4 text-current" /> : <TrashIcon />}
+              {pendingRemove ? copy.removing : copy.remove}
+            </Button>
           </div>
         ) : (
-          <p style={{ margin: "0 0 0.75rem", fontSize: "0.875rem", color: "#6b7280" }}>
-            {copy.emptyLogo}
-          </p>
+          <p className="mb-3 text-sm text-dim">{copy.emptyLogo}</p>
         )}
 
         <input
           ref={fileInputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          style={{ display: "none" }}
+          className="hidden"
           onChange={(event) => void handleFileChange(event)}
         />
 
         {pendingUpload ? (
-          <ProgressBar mode="indeterminate" style={{ height: "4px", marginBottom: "0.5rem" }} />
+          <IndeterminateProgress label={copy.uploading} className="mb-2 h-1" />
         ) : null}
 
-        <Button
-          type="button"
-          label={pendingUpload ? copy.uploading : copy.upload}
-          icon="pi pi-upload"
-          size="small"
-          disabled={busy}
-          loading={pendingUpload}
-          onClick={openFilePicker}
-        />
+        <Button type="button" size="sm" disabled={busy} onClick={openFilePicker}>
+          {pendingUpload ? <Spinner className="size-4 text-current" /> : <UploadIcon />}
+          {pendingUpload ? copy.uploading : copy.upload}
+        </Button>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "1rem",
-          }}
-        >
-          <label htmlFor="branding-subtitles-toggle" style={{ fontSize: "0.9rem" }}>
+      <div className="flex flex-col gap-3.5">
+        <div className="flex items-center justify-between gap-4">
+          <Label htmlFor="branding-subtitles-toggle" className="text-[0.9rem] text-fog">
             {copy.toggleSubtitles}
-          </label>
-          <InputSwitch
-            inputId="branding-subtitles-toggle"
+          </Label>
+          <Switch
+            id="branding-subtitles-toggle"
             checked={assemblyConfig.subtitlesEnabled}
             disabled={busy}
-            onChange={(event) => handleSubtitlesChange(event.value)}
+            onCheckedChange={handleSubtitlesChange}
           />
         </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "1rem",
-          }}
-        >
-          <label htmlFor="branding-logo-toggle" style={{ fontSize: "0.9rem" }}>
+        <div className="flex items-center justify-between gap-4">
+          <Label htmlFor="branding-logo-toggle" className="text-[0.9rem] text-fog">
             {copy.toggleLogo}
-          </label>
-          <InputSwitch
-            inputId="branding-logo-toggle"
+          </Label>
+          <Switch
+            id="branding-logo-toggle"
             checked={assemblyConfig.logoEnabled}
             disabled={busy}
-            onChange={(event) => handleLogoToggleChange(event.value)}
+            onCheckedChange={handleLogoToggleChange}
           />
         </div>
       </div>
