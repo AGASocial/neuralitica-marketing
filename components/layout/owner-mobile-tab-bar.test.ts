@@ -25,5 +25,10 @@ describe("OwnerMobileTabBar", () => {
     assert.match(shell, /OwnerComposer/);
     assert.doesNotMatch(header, /OrchestratorChatFab/);
     assert.doesNotMatch(shell, /OrchestratorChatFab/);
+    assert.doesNotMatch(header, /fixed[\s\S]*bottom-[\s\S]*Abrir chat|OrchestratorChatToggle/);
+    assert.match(
+      shell,
+      /pb-\[calc\(11\.5rem\+env\(safe-area-inset-bottom\)\)\]/,
+    );
   });
 });

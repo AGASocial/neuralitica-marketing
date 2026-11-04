@@ -141,7 +141,11 @@ function PendingHoyCard({
       onAction={(event) => {
         if (event.id === "change") {
           trackUxEvent("hoy_action", { action: "change", approval_id: item.approvalId });
-          openChangeForCard({ cardId: item.approvalId, title });
+          openChangeForCard({
+            cardId: item.approvalId,
+            title,
+            locale,
+          });
           return;
         }
         if (event.id !== "approve") {

@@ -14,7 +14,8 @@ type SuggestedPromptChipsProps = {
 };
 
 /**
- * Mobile-friendly suggested prompt chips: wrap, ≥44px taps, horizontal scroll.
+ * Suggested prompt chips: single horizontally scrollable row (KAN-104 mobile),
+ * ≥44px taps. Do not wrap into a tall vertical stack over the feed.
  */
 export function SuggestedPromptChips({
   chips,
@@ -32,9 +33,9 @@ export function SuggestedPromptChips({
       role="group"
       aria-label={copy.listAriaLabel}
     >
-      <ul className="flex min-w-0 flex-wrap gap-2 pb-1">
+      <ul className="flex min-w-0 flex-nowrap gap-2 pb-1">
         {chips.map((chip) => (
-          <li key={chip.id} className="max-w-full shrink-0">
+          <li key={chip.id} className="max-w-[min(100%,18rem)] shrink-0">
             <button
               type="button"
               disabled={disabled}

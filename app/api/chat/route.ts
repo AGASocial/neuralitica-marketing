@@ -23,6 +23,7 @@ import { createOrchestratorTools } from "@/lib/orchestrator-chat/create-tools";
 import { getOrchestratorChatModel } from "@/lib/orchestrator-chat/model";
 import { toPersistedMessages } from "@/lib/orchestrator-chat/message-mapper";
 import { persistConversationMessages } from "@/lib/orchestrator-chat/persistence";
+import { extractLatestCardAnchorId } from "@/lib/orchestrator-chat/format-change-prefill";
 import { buildOrchestratorSystemPrompt } from "@/lib/orchestrator-chat/system-prompt";
 
 export const dynamic = "force-dynamic";
@@ -52,9 +53,18 @@ export async function POST(request: Request) {
 
     const onboardingMode = body.onboardingMode === true;
     const tools = createOrchestratorTools(user, locale);
+    const cardAnchorId = extractLatestCardAnchorId(
+      messages as Array<{ role?: string; metadata?: unknown }>,
+    );
+    const baseSystem = buildOrchestratorSystemPrompt(user, locale, {
+      onboardingMode,
+    });
+    const system = cardAnchorId
+      ? `${baseSystem}\n\nCARD ANCHOR: The owner's Change request refers to card id ${cardAnchorId}. Use this id when calling tools that need the approval/card identity. Do not repeat the raw id to the owner unless they ask.`
+      : baseSystem;
     const result = streamText({
       model: getOrchestratorChatModel(),
-      system: buildOrchestratorSystemPrompt(user, locale, { onboardingMode }),
+      system,
       messages: await convertToModelMessages(messages),
       tools,
       stopWhen: isStepCount(6),
