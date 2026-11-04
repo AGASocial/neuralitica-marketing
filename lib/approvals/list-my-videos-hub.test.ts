@@ -22,7 +22,8 @@ describe("listMyVideosHubForClientUser", () => {
     assert.match(src, /VIDEO_JOBS_TABLE/);
     assert.match(page, /MyVideosHubView/);
     assert.match(page, /listMyVideosHubForClientUser/);
-    assert.match(view, /<video/);
+    assert.match(view, /AgentCard/);
+    assert.match(view, /mapMyVideosPendingToCard/);
     assert.match(view, /approveCta/);
     assert.match(view, /changeCta/);
     assert.match(view, /sectionInProduction/);

@@ -2,12 +2,9 @@
 
 import Link from "next/link";
 
-import { ClientLocalDateTime } from "@/components/i18n/ClientLocalDateTime";
-import { MediaThumbnail } from "@/components/media/MediaThumbnail";
-import { Button } from "@/components/ui/button";
+import { AgentCard } from "@/components/agent-cards/AgentCard";
 import { StatusAlert } from "@/components/ui/status-alert";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { mediaPreviewUrl } from "@/lib/approvals/caption-preview";
+import { mapApprovalListItemToCard } from "@/lib/agent-cards";
 import type { ApprovalListItemDto } from "@/lib/contracts/approval";
 
 export type ApprovalsListCopy = {
@@ -78,71 +75,37 @@ export function ApprovalsListView({
       {!loadFailed && items.length > 0 ? (
         <ul className="list-none m-0 p-0 flex flex-col gap-3">
           {items.map((item) => {
-            const previewSrc = item.videoAssetId
-              ? mediaPreviewUrl(item.videoAssetId)
-              : null;
+            const badges = [copy.pendingStatus];
+            if (item.hasDisclosure) {
+              badges.push(copy.disclosureChip);
+            }
+            if (item.overrideCount != null && item.overrideCount > 0) {
+              badges.push(
+                copy.overridesChip.replace("{count}", String(item.overrideCount)),
+              );
+            }
+            const card = mapApprovalListItemToCard({
+              item,
+              title: cardTitle(item, copy.untitled),
+              summary: copy.cardSummary,
+              reviewLabel: copy.reviewCta,
+              reviewHref: `/approvals/${item.approvalId}`,
+              badges,
+              thumbnailAlt: copy.thumbnailAlt,
+              createdAtTemplate: copy.createdAt,
+              locale,
+            });
             return (
-              <li
-                key={item.approvalId}
-                className="border border-edge rounded-lg py-4 px-[1.1rem] bg-panel"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="flex flex-[1_1_220px] min-w-0 gap-3">
-                    {previewSrc ? (
-                      <MediaThumbnail
-                        src={previewSrc}
-                        kind="video"
-                        alt={copy.thumbnailAlt}
-                        className="size-16 shrink-0 rounded-md"
-                      />
-                    ) : null}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap gap-[0.4rem] mb-2">
-                        <StatusBadge
-                          value={copy.pendingStatus}
-                          severity="warning"
-                        />
-                        {item.hasDisclosure ? (
-                          <StatusBadge
-                            value={copy.disclosureChip}
-                            severity="info"
-                            title={copy.disclosureTooltip}
-                          />
-                        ) : null}
-                        {item.overrideCount != null && item.overrideCount > 0 ? (
-                          <StatusBadge
-                            value={copy.overridesChip.replace(
-                              "{count}",
-                              String(item.overrideCount),
-                            )}
-                            severity="secondary"
-                          />
-                        ) : null}
-                      </div>
-                      <p className="mt-0 mx-0 mb-[0.35rem] text-fog font-medium leading-[1.45] break-words">
-                        {cardTitle(item, copy.untitled)}
-                      </p>
-                      <p className="mt-0 mx-0 mb-[0.35rem] text-dim text-sm leading-[1.45]">
-                        {copy.cardSummary}
-                      </p>
-                      <p className="m-0 text-dim text-sm">
-                        <ClientLocalDateTime
-                          iso={item.createdAt}
-                          locale={locale}
-                          template={copy.createdAt}
-                        />
-                      </p>
-                    </div>
-                  </div>
-                  <Link
-                    href={`/approvals/${item.approvalId}`}
-                    className="no-underline shrink-0"
-                  >
-                    <Button type="button" size="sm">
-                      {copy.reviewCta}
-                    </Button>
-                  </Link>
-                </div>
+              <li key={item.approvalId}>
+                <AgentCard
+                  card={card}
+                  // disclosure tooltip kept via title on badge text; StatusBadge
+                  // inside AgentCard uses value only — tooltip string remains in copy
+                  // for i18n wiring tests / future title prop.
+                />
+                {item.hasDisclosure ? (
+                  <span className="sr-only">{copy.disclosureTooltip}</span>
+                ) : null}
               </li>
             );
           })}

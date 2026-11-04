@@ -1,12 +1,7 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { AgentCard } from "@/components/agent-cards/AgentCard";
+import { parseAgentCard } from "@/lib/agent-cards";
 
 export type StatusCardCopy = {
   campaignTitle: string;
@@ -64,31 +59,24 @@ export function CampaignStatusCard({
           ? copy.planNone
           : copy.planUnknown;
 
-  return (
-    <Card className="border-edge bg-panel text-fog shadow-none">
-      <CardHeader className="px-4 pb-0 pt-4">
-        <CardTitle className="font-display text-lg">{copy.campaignTitle}</CardTitle>
-        {output.weekStart ? (
-          <CardDescription className="text-dim">{output.weekStart}</CardDescription>
-        ) : null}
-      </CardHeader>
-      <CardContent className="space-y-1 px-4 py-3 text-sm text-dim">
-        <p>
-          {copy.pendingVideos.replace(
-            "{count}",
-            String(output.pendingApprovalsCount),
-          )}
-        </p>
-        <p>
-          {copy.readyVideos.replace(
-            "{count}",
-            String(output.approvedReadyCount),
-          )}
-        </p>
-        <p>{planLabel}</p>
-      </CardContent>
-    </Card>
-  );
+  const card = parseAgentCard({
+    type: "status_summary",
+    title: copy.campaignTitle,
+    summary: output.weekStart,
+    props: {
+      lines: [
+        copy.pendingVideos.replace(
+          "{count}",
+          String(output.pendingApprovalsCount),
+        ),
+        copy.readyVideos.replace("{count}", String(output.approvedReadyCount)),
+        planLabel,
+      ],
+    },
+    actions: [],
+  });
+
+  return <AgentCard card={card} />;
 }
 
 export function WeeklyPlanCard({
@@ -99,38 +87,35 @@ export function WeeklyPlanCard({
   copy: StatusCardCopy;
 }) {
   if (!output.strategy) {
-    return (
-      <Card className="border-edge bg-panel text-fog shadow-none">
-        <CardHeader className="px-4 pt-4">
-          <CardTitle className="font-display text-lg">{copy.planTitle}</CardTitle>
-          <CardDescription className="text-dim">{copy.noPlan}</CardDescription>
-        </CardHeader>
-      </Card>
-    );
+    const card = parseAgentCard({
+      type: "status_summary",
+      title: copy.planTitle,
+      summary: copy.noPlan,
+      props: { lines: [] },
+      actions: [],
+    });
+    return <AgentCard card={card} />;
   }
 
-  return (
-    <Card className="border-edge bg-panel text-fog shadow-none">
-      <CardHeader className="px-4 pb-0 pt-4">
-        <CardTitle className="font-display text-lg">{copy.planTitle}</CardTitle>
-        <CardDescription className="text-dim">
-          {output.strategy.status === "draft" ? copy.planDraft : copy.planApproved}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-2 px-4 py-3 text-sm text-dim">
-        {output.strategy.themes.length > 0 ? (
-          <p>{output.strategy.themes.join(" · ")}</p>
-        ) : null}
-        <ul className="list-disc space-y-1 pl-4">
-          {output.strategy.slots.map((slot, index) => (
-            <li key={`${index}-${slot.tema}`}>
-              {copy.videosLabel.replace("{n}", String(index + 1))}: {slot.tema}
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
-  );
+  const card = parseAgentCard({
+    type: "status_summary",
+    title: copy.planTitle,
+    summary:
+      output.strategy.status === "draft" ? copy.planDraft : copy.planApproved,
+    props: {
+      lines:
+        output.strategy.themes.length > 0
+          ? [output.strategy.themes.join(" · ")]
+          : [],
+      listItems: output.strategy.slots.map(
+        (slot, index) =>
+          `${copy.videosLabel.replace("{n}", String(index + 1))}: ${slot.tema}`,
+      ),
+    },
+    actions: [],
+  });
+
+  return <AgentCard card={card} />;
 }
 
 export function ScriptsStatusCard({
@@ -143,21 +128,20 @@ export function ScriptsStatusCard({
   const ready = output.items.filter((i) => i.status === "generated").length;
   const waiting = output.items.filter((i) => i.status === "pending").length;
 
-  return (
-    <Card className="border-edge bg-panel text-fog shadow-none">
-      <CardHeader className="px-4 pb-0 pt-4">
-        <CardTitle className="font-display text-lg">{copy.scriptsTitle}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-1 px-4 py-3 text-sm text-dim">
-        {output.items.length === 0 ? (
-          <p>{copy.emptyScripts}</p>
-        ) : (
-          <>
-            <p>{copy.scriptsReady.replace("{count}", String(ready))}</p>
-            <p>{copy.scriptsWaiting.replace("{count}", String(waiting))}</p>
-          </>
-        )}
-      </CardContent>
-    </Card>
-  );
+  const card = parseAgentCard({
+    type: "status_summary",
+    title: copy.scriptsTitle,
+    props: {
+      lines:
+        output.items.length === 0
+          ? [copy.emptyScripts]
+          : [
+              copy.scriptsReady.replace("{count}", String(ready)),
+              copy.scriptsWaiting.replace("{count}", String(waiting)),
+            ],
+    },
+    actions: [],
+  });
+
+  return <AgentCard card={card} />;
 }

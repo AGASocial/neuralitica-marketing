@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { AgentCard } from "@/components/agent-cards/AgentCard";
 import { ClientLocalDateTime } from "@/components/i18n/ClientLocalDateTime";
 import { Button } from "@/components/ui/button";
 import { StatusAlert } from "@/components/ui/status-alert";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { mapMyVideosPendingToCard } from "@/lib/agent-cards";
 import { decideApproval } from "@/lib/approvals/actions/decide-approval";
 import type { ApprovedListItemDto } from "@/lib/contracts/approval";
 import type {
@@ -78,54 +80,48 @@ function PendingCard({
     ? copy.formatLabels[item.formatKey]
     : null;
   const whenIso = item.assembledAt ?? item.createdAt;
-
-  function onApprove() {
-    setError(null);
-    startTransition(async () => {
-      const result = await decideApproval({
-        approvalId: item.approvalId,
-        decision: "approved",
-      });
-      if (!result.ok) {
-        setError(copy.loadError);
-        return;
-      }
-      router.refresh();
-    });
+  const badges = [copy.pendingStatus];
+  if (formatLabel) {
+    badges.push(formatLabel);
   }
 
+  const card = mapMyVideosPendingToCard({
+    item,
+    title: pendingTitle(item, copy.untitled),
+    approveLabel: copy.approveCta,
+    changeLabel: copy.changeCta,
+    changeHref: `/approvals/${item.approvalId}`,
+    badges,
+    locale,
+    createdAtIso: whenIso,
+  });
+
   return (
-    <li className="border border-edge rounded-lg py-4 px-[1.1rem] bg-panel space-y-3">
-      <div className="flex flex-wrap gap-[0.4rem]">
-        <StatusBadge value={copy.pendingStatus} severity="warning" />
-        {formatLabel ? (
-          <StatusBadge value={formatLabel} severity="info" />
-        ) : null}
-      </div>
-      {item.videoPreviewUrl ? (
-        <video
-          className="w-full max-h-72 rounded-md bg-black"
-          controls
-          playsInline
-          preload="metadata"
-          src={item.videoPreviewUrl}
-        />
-      ) : null}
-      <p className="m-0 text-fog font-medium leading-[1.45] break-words">
-        {pendingTitle(item, copy.untitled)}
-      </p>
-      <p className="m-0 text-dim text-sm">
-        <ClientLocalDateTime iso={whenIso} locale={locale} />
-      </p>
-      {error ? <StatusAlert severity="error" text={error} /> : null}
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" size="sm" disabled={pending} onClick={onApprove}>
-          {copy.approveCta}
-        </Button>
-        <Button asChild type="button" size="sm" variant="outline">
-          <Link href={`/approvals/${item.approvalId}`}>{copy.changeCta}</Link>
-        </Button>
-      </div>
+    <li>
+      <AgentCard
+        card={card}
+        disabled={pending}
+        statusNote={
+          error ? <StatusAlert severity="error" text={error} /> : null
+        }
+        onAction={(event) => {
+          if (event.id !== "approve") {
+            return;
+          }
+          setError(null);
+          startTransition(async () => {
+            const result = await decideApproval({
+              approvalId: item.approvalId,
+              decision: "approved",
+            });
+            if (!result.ok) {
+              setError(copy.loadError);
+              return;
+            }
+            router.refresh();
+          });
+        }}
+      />
     </li>
   );
 }
