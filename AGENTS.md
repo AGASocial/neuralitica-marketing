@@ -8,6 +8,7 @@ Binding for humans and agents working in this repository. Parent architecture de
 SPEC.md + CONTEXT.md          → product / domain truth
 docs/adr/  (and .specfounder/adr when referenced)
                           → architecture decisions
+openspec/specs/               → current implemented capability behavior (OpenSpec)
 plan/USER_STORIES.md          → requirements / backlog
 plan/stories/US-x.y/CONTRACT.md
                           → implementation contract
@@ -23,6 +24,17 @@ Derived (not competing trackers):
 ```
 
 When documents conflict, higher rows win. Do not invent scope that contradicts SPEC/CONTEXT/ADRs.
+
+## OpenSpec change workflow (required)
+
+Every code or behavior change in this repo **MUST** start with an OpenSpec change proposal:
+
+1. Create `openspec/changes/<id>/` with `proposal.md`, `tasks.md`, and spec deltas under `specs/` (ADDED/MODIFIED/REMOVED/RENAMED Requirements) that update the relevant `openspec/specs/<capability>/spec.md` capabilities.
+2. Run `npx -y @fission-ai/openspec@latest validate --all --strict` (or the installed `openspec` CLI) and fix errors before implementation review.
+3. Implement against the approved change; keep tasks checked off in `tasks.md`.
+4. After the change merges, archive it (`openspec archive` / `/opsx-archive`) so main specs stay current and the proposal moves under `openspec/changes/archive/`.
+
+Do not land behavior changes that skip the proposal → validate → implement → archive loop. Tooling: Cursor skills/commands under `.cursor/` from `openspec init --tools cursor`. Project context: `openspec/config.yaml` (+ human index `openspec/project.md`).
 
 ## Human Gate decisions (approved 2026-09-10 — issue #3)
 
