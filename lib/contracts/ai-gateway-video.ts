@@ -49,7 +49,8 @@ export const AI_GATEWAY_SEEDANCE_DURATION_DEFAULT_SEC = 5 as const;
 
 /**
  * Gateway HeyGen image-to-video @ 480p ≈ $0.01/s → 1¢/s catalog unit.
- * Cheaper than direct heygen_high (2¢/s) so rank/policy prefers Gateway.
+ * Kept as fallback when HEYGEN_API_KEY is missing / heygen_high inactive.
+ * Direct heygen_high (Avatar III photo ≈ 4¢/s) is preferred when active.
  */
 export const AI_GATEWAY_HEYGEN_UNIT_COST_CENTS_PER_SECOND = 1 as const;
 

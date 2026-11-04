@@ -70,7 +70,7 @@ export const reelScriptReadabilityVoiceoverSchema = z
   .object({
     wordCount: z.number().int().min(0),
     targetWordCount: z.number().int().min(0),
-    targetDurationSec: z.number().int().min(15).max(45),
+    targetDurationSec: z.number().int().min(8).max(45),
     wordsPerSecondTarget: z.literal(REEL_SCRIPT_WORDS_PER_SECOND_TARGET),
     status: voiceoverReadabilityStatusSchema,
   })

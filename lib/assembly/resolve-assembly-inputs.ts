@@ -2,6 +2,7 @@ import "server-only";
 
 import {
   ASSEMBLY_BROLL_CLIP_MAX,
+  ASSEMBLY_PATH_TAG_AVATAR_SEGMENTS,
   ASSEMBLY_PATH_TAG_BROLL_STITCH,
   ASSEMBLY_PATH_TAG_PRIMARY,
   type AssemblyPathTag,
@@ -17,6 +18,13 @@ import { VIDEO_JOBS_TABLE } from "@/lib/video-jobs/video-job-row";
 import { loadMediaAssetForAssembly } from "./load-media-asset-for-assembly";
 import { parseColdOpenTrimSec } from "./parse-cold-open-trim-sec";
 
+export type AssemblyAvatarSegmentInput = {
+  outputMediaAssetId: string;
+  segmentIndex: number;
+  startSec: number;
+  durationSec: number;
+};
+
 export type ResolveAssemblyInputsSuccess = {
   ok: true;
   pathTag: AssemblyPathTag;
@@ -25,6 +33,8 @@ export type ResolveAssemblyInputsSuccess = {
   voiceoverAssetId: string | null;
   remuxVoiceover: boolean;
   coldOpenTrimSec: number | null;
+  /** Present when pathTag is avatar_segments (ordered by segment_index). */
+  avatarSegments?: AssemblyAvatarSegmentInput[];
 };
 
 export type ResolveAssemblyInputsResult =
@@ -72,6 +82,66 @@ async function resolveLatestPrimaryAssetId(params: {
     clientId: params.clientId,
   });
   return owned ? primaryVideoAssetId : null;
+}
+
+/**
+ * Completed primary jobs that carry segment metadata (avatar multi-clip).
+ * Ordered by segment_index ASC.
+ */
+export async function resolveCompletedAvatarSegments(params: {
+  clientId: string;
+  reelScriptId: string;
+}): Promise<AssemblyAvatarSegmentInput[]> {
+  if (!isSupabaseConfigured()) {
+    return [];
+  }
+
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from(VIDEO_JOBS_TABLE)
+    .select(
+      "output_media_asset_id, segment_index, segment_start_sec, segment_duration_sec",
+    )
+    .eq("client_id", params.clientId)
+    .eq("reel_script_id", params.reelScriptId)
+    .eq("asset_role", "primary")
+    .eq("status", "completed")
+    .not("output_media_asset_id", "is", null)
+    .not("segment_index", "is", null)
+    .order("segment_index", { ascending: true })
+    .limit(4);
+
+  if (error || !data?.length) {
+    return [];
+  }
+
+  const segments: AssemblyAvatarSegmentInput[] = [];
+  for (const row of data as Array<{
+    output_media_asset_id: string;
+    segment_index: number | null;
+    segment_start_sec: number | null;
+    segment_duration_sec: number | null;
+  }>) {
+    if (
+      typeof row.segment_index !== "number" ||
+      typeof row.segment_start_sec !== "number" ||
+      typeof row.segment_duration_sec !== "number"
+    ) {
+      continue;
+    }
+    const owned = await verifyMediaAssetOwned({
+      assetId: row.output_media_asset_id,
+      clientId: params.clientId,
+    });
+    if (!owned) continue;
+    segments.push({
+      outputMediaAssetId: row.output_media_asset_id,
+      segmentIndex: row.segment_index,
+      startSec: row.segment_start_sec,
+      durationSec: row.segment_duration_sec,
+    });
+  }
+  return segments;
 }
 
 /**
@@ -156,8 +226,34 @@ export async function resolveAssemblyInputs(input: {
     targetDurationSec: input.targetDurationSec,
   });
 
-  // Talking-head: always Phase A primary path — ignore broll even if present.
+  // Talking-head / avatar: prefer multi-segment timeline when segment jobs exist.
   if (input.modalidad !== "faceless") {
+    const avatarSegments = await resolveCompletedAvatarSegments({
+      clientId: input.clientId,
+      reelScriptId: input.reelScriptId,
+    });
+    const voiceoverAssetId = await resolveOwnedVoiceover({
+      clientId: input.clientId,
+      reelScriptId: input.reelScriptId,
+    });
+
+    if (avatarSegments.length >= 1 && voiceoverAssetId) {
+      const brollAssetIds = await resolveCompletedBrollAssetIds({
+        clientId: input.clientId,
+        reelScriptId: input.reelScriptId,
+      });
+      return {
+        ok: true,
+        pathTag: ASSEMBLY_PATH_TAG_AVATAR_SEGMENTS,
+        primaryVideoAssetId: avatarSegments[0]!.outputMediaAssetId,
+        brollAssetIds,
+        voiceoverAssetId,
+        remuxVoiceover: true,
+        coldOpenTrimSec: null,
+        avatarSegments,
+      };
+    }
+
     const primaryVideoAssetId = await resolveLatestPrimaryAssetId({
       clientId: input.clientId,
       reelScriptId: input.reelScriptId,
@@ -169,11 +265,6 @@ export async function resolveAssemblyInputs(input: {
         messageKey: "scripts.assembly.errors.inputsIncomplete",
       };
     }
-
-    const voiceoverAssetId = await resolveOwnedVoiceover({
-      clientId: input.clientId,
-      reelScriptId: input.reelScriptId,
-    });
 
     return {
       ok: true,

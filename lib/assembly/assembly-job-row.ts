@@ -2,6 +2,7 @@ import "server-only";
 
 import type { AssemblyJobStatus, AssemblyPathTag } from "@/lib/contracts/assembly-job";
 import {
+  ASSEMBLY_PATH_TAG_AVATAR_SEGMENTS,
   ASSEMBLY_PATH_TAG_BROLL_STITCH,
   ASSEMBLY_PATH_TAG_PRIMARY,
   ASSEMBLY_TEMPLATE_REEL_V1_BASIC,
@@ -55,6 +56,9 @@ function parseAssemblyPathTag(raw: unknown): AssemblyPathTag {
   if (raw === ASSEMBLY_PATH_TAG_BROLL_STITCH) {
     return ASSEMBLY_PATH_TAG_BROLL_STITCH;
   }
+  if (raw === ASSEMBLY_PATH_TAG_AVATAR_SEGMENTS) {
+    return ASSEMBLY_PATH_TAG_AVATAR_SEGMENTS;
+  }
   return ASSEMBLY_PATH_TAG_PRIMARY;
 }
 
@@ -87,7 +91,11 @@ export function mapAssemblyJobRow(
       : null;
   const brollAssetIds = parseBrollAssetIds(raw.broll_asset_ids);
 
-  if (assemblyPathTag === ASSEMBLY_PATH_TAG_PRIMARY && !primaryVideoAssetId) {
+  if (
+    (assemblyPathTag === ASSEMBLY_PATH_TAG_PRIMARY ||
+      assemblyPathTag === ASSEMBLY_PATH_TAG_AVATAR_SEGMENTS) &&
+    !primaryVideoAssetId
+  ) {
     return null;
   }
   if (

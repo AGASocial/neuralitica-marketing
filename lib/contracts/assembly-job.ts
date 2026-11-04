@@ -12,10 +12,13 @@ export const ASSEMBLY_TEMPLATE_REEL_V1_BASIC = "reel_v1_basic" as const;
 /** US-9.1 Phase B — fingerprint / row path tags (exact strings). */
 export const ASSEMBLY_PATH_TAG_PRIMARY = "primary" as const;
 export const ASSEMBLY_PATH_TAG_BROLL_STITCH = "broll_stitch" as const;
+/** Avatar talking-head with 1–2 lip-sync segments + optional b-roll cutaways. */
+export const ASSEMBLY_PATH_TAG_AVATAR_SEGMENTS = "avatar_segments" as const;
 
 export const assemblyPathTagSchema = z.enum([
   ASSEMBLY_PATH_TAG_PRIMARY,
   ASSEMBLY_PATH_TAG_BROLL_STITCH,
+  ASSEMBLY_PATH_TAG_AVATAR_SEGMENTS,
 ]);
 
 export type AssemblyPathTag = z.infer<typeof assemblyPathTagSchema>;

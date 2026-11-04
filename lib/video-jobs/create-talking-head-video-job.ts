@@ -47,7 +47,8 @@ function isAllowedTalkingHeadProviderKey(providerKey: string): boolean {
   return (
     providerKey === DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead ||
     providerKey === DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHeadLoop ||
-    providerKey === "heygen_high"
+    providerKey === "heygen_high" ||
+    providerKey === DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHeadGateway
   );
 }
 

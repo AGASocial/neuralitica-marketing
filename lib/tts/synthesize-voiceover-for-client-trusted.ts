@@ -20,6 +20,7 @@ import {
   ttsVoiceoverNotFoundError,
   ttsVoiceoverProviderUnavailableError,
 } from "@/lib/tts/errors";
+import { getReelDurationPolicyForModality } from "@/lib/reel-duration-policy/get-reel-duration-policy";
 import { loadReelScriptForVoiceover } from "@/lib/tts/load-reel-script-for-voiceover";
 import { resolveTtsProviderForSynthesis } from "@/lib/tts/resolve-tts-provider-for-synthesis";
 import { resolveVoiceForSynthesis } from "@/lib/tts/resolve-voice-for-synthesis";
@@ -149,9 +150,14 @@ export async function synthesizeVoiceoverForClientTrusted(
       return ttsVoiceoverInternalError();
     }
 
+    const durationPolicy = await getReelDurationPolicyForModality(
+      script.modalidad,
+    );
     const durationCheck = assertVoiceoverDurationMatchesTarget({
       actualDurationSec: storedAsset.durationSec,
       targetDurationSec: script.targetDurationSec,
+      modalidad: script.modalidad,
+      policy: durationPolicy,
     });
     if (!durationCheck.ok) {
       console.error("[tts] trusted voiceover duration outside target tolerance", {

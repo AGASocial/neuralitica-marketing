@@ -128,10 +128,10 @@ Canon de módulos y prioridades: confirmado (S3.LOTE). Detalle módulo a módulo
 - Confirmado: S3.M5 (2026-08-27). **Ampliado cierre (2026-08-28):** playbook + tendencias + modalidad dinámica por slot.
 
 ### Módulo: Video Script Agent — Prioridad: P1
-- El System automáticamente: por cada slot de Estrategia genera Paquete de guion adaptado al **Formato de Reel**, **modalidad de producción** y **Táctica de tendencia** si aplica (`guion_hints` del playbook/tendencia); incluye hook, cuerpo, CTA, texto en pantalla, VO, beats visuales B-roll, notas cold open/rewind cuando `editing_hints` lo indiquen (~15–45s) en `neuramark_reel_scripts`; respeta Ficha viva y `must_disclose_not_owner`; auto en ciclo tras estrategia; schema-validate; LLM vía catálogo/tier.
+- El System automáticamente: por cada slot de Estrategia genera Paquete de guion adaptado al **Formato de Reel**, **modalidad de producción** y **Táctica de tendencia** si aplica (`guion_hints` del playbook/tendencia); incluye hook, cuerpo, CTA, texto en pantalla, VO, beats visuales B-roll, notas cold open/rewind cuando `editing_hints` lo indiquen en `neuramark_reel_scripts`; duración objetivo según **`neuramark_reel_duration_policies`** (avatar **8–15s**, faceless **15–45s**; nunca videos avatar de ~30s); respeta Ficha viva y `must_disclose_not_owner`; auto en ciclo tras estrategia; schema-validate; LLM vía catálogo/tier.
 - Operator/Cliente: ver guiones; Operator regenera un slot sin regenerar la semana; warnings de largo on-screen/VO.
 - Fuera V1: edición libre larga del guion por Cliente (correcciones vía Aprobación).
-- Confirmado: S3.M6 (2026-08-27).
+- Confirmado: S3.M6 (2026-08-27). **Duraciones por política (ADR-0007, 2026-11-03).**
 
 ### Módulo: Caption Agent — Prioridad: P1
 - El System automáticamente: por cada guion genera caption + hashtags + keywords locales + variantes CTA en `neuramark_reel_captions`; límites IG; auto en ciclo; schema-validate; plain text; LLM vía catálogo/tier.
@@ -144,14 +144,17 @@ Canon de módulos y prioridades: confirmado (S3.LOTE). Detalle módulo a módulo
 - Confirmado: S3.M8 (2026-08-27).
 
 ### Módulo: Video Provider Adapter — Prioridad: P1
-- System: adapters únicos (`estimate/create/status/fetch`); jobs en `neuramark_video_jobs`; low-tier SadTalker/Wan + catálogo TTS/LLM; download-and-own; keys server-only; re-check consent+budget; auto en ciclo.
-- Operator: estado/reintentos; upload manual (bypass costo, no QA); HeyGen = high/P1 no default.
-- Confirmado: S3.M9 (2026-08-27).
+- System: adapters únicos (`estimate/create/status/fetch`); jobs en `neuramark_video_jobs`; download-and-own; keys server-only; re-check consent+budget; auto en ciclo.
+- **Avatar / talking-head (preferido):** HeyGen **direct API v3** (`heygen_high`) — talking photo, audio-driven por voiceover ElevenLabs propio, **9:16 720p** cover crop; **AI Gateway** `ai_gateway_heygen_avatar` = fallback. Segmentos avatar **≤8s**, **1–2** por Reel (mezclados con B-roll/ángulos); total avatar **8–15s** vía `neuramark_reel_duration_policies` (ADR-0007). Evidencia lip-sync: direct audio corr ~0.992 vs gateway ~0.28.
+- **TTS:** ElevenLabs direct; voz desde `neuramark_avatars` (gender/language + clone `elevenlabs_voice_id`).
+- **B-roll:** AI Gateway Seedance fast (+ fallbacks de catálogo); low-tier Wan/LTX según cost policy.
+- Operator: estado/reintentos; upload manual (bypass costo, no QA); HeyGen high sigue siendo override auditado cuando aplica.
+- Confirmado: S3.M9 (2026-08-27). **Pipeline avatar ADR-0007 (2026-11-03).**
 
 ### Módulo: Media Assembly Pipeline — Prioridad: P1
-- System: ensambla Reel 9:16 (TTS + visual + timing) vía FFmpeg args-array → `neuramark_assembled_reels`; aplica `editing_hints` del formato/tendencia (ej. cold open + rewind); subtítulos/logo/cover; TTS catálogo EN/ES (CosyVoice2 low); solo `media_assets` propios; auto en ciclo → QA.
-- Cliente/Operator: preview; voz desde catálogo limitado.
-- Confirmado: S3.M10 (2026-08-27).
+- System: ensambla Reel 9:16 (TTS + visual + timing) vía FFmpeg args-array → `neuramark_assembled_reels`; path `avatar_segments` coloca 1–2 clips lip-sync + cutaways B-roll cuando la política lo permite; aplica `editing_hints` del formato/tendencia (ej. cold open + rewind); subtítulos/logo/cover; TTS ElevenLabs (voz de `neuramark_avatars`); solo `media_assets` propios; auto en ciclo → QA.
+- Cliente/Operator: preview; voz desde avatar/catálogo limitado.
+- Confirmado: S3.M10 (2026-08-27). **Segmentos avatar + política de duración (ADR-0007).**
 
 ### Módulo: QA/Compliance Agent — Prioridad: P1
 - System: post-ensamblado checks (tono, claims, claridad, CTA, disclosure IA, avatar); `neuramark_qa_reports`; blocking vs overridable; gate a Aprobación; auto en ciclo.

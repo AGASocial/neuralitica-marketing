@@ -4,7 +4,10 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { ASSEMBLY_PATH_TAG_BROLL_STITCH } from "@/lib/contracts/assembly-job";
+import {
+  ASSEMBLY_PATH_TAG_AVATAR_SEGMENTS,
+  ASSEMBLY_PATH_TAG_BROLL_STITCH,
+} from "@/lib/contracts/assembly-job";
 import { roundDurationSecDown } from "@/lib/media/probe-video-duration";
 import { getMediaStorage } from "@/lib/media/storage/get-media-storage";
 import {
@@ -20,6 +23,7 @@ import {
   buildBrollConcatArgs,
   formatBrollConcatListContents,
 } from "./ffmpeg/build-broll-concat-args";
+import { buildAvatarSegmentTimelineArgs } from "./ffmpeg/build-avatar-segment-timeline-args";
 import { buildReelV1BasicArgs } from "./ffmpeg/build-reel-v1-basic-args";
 import { generateAssembledReelStorageKey } from "./generate-assembled-reel-storage-key";
 import { insertAssembledReelMediaAsset } from "./insert-assembled-reel-media-asset";
@@ -30,9 +34,15 @@ import {
 } from "./load-media-asset-for-assembly";
 import { resolveBrollOutputDurationSec } from "./ffmpeg/build-broll-concat-args";
 import { resolveReelV1OutputDurationSec } from "./ffmpeg/build-reel-v1-basic-args";
+import { resolveCompletedAvatarSegments } from "./resolve-assembly-inputs";
 import { parseColdOpenTrimSec } from "./parse-cold-open-trim-sec";
 import { probeLocalMediaFile } from "./probe-media-streams";
 import { runFfmpeg, type RunFfmpegOptions } from "./run-ffmpeg";
+import { getReelDurationPolicies } from "@/lib/reel-duration-policy/get-reel-duration-policy";
+import {
+  avatarSegmentsMaxFromPolicy,
+  avatarSegmentsMinFromPolicy,
+} from "@/lib/contracts/reel-duration-policy";
 
 export const ASSEMBLY_FAILURE_TENANCY_MISMATCH =
   "scripts.assembly.failure.tenancyMismatch" as const;
@@ -146,7 +156,136 @@ export async function runAssemblyJob(
     return;
   }
 
+  if (activeJob.assemblyPathTag === ASSEMBLY_PATH_TAG_AVATAR_SEGMENTS) {
+    await runAvatarSegmentsPath(activeJob, deps);
+    return;
+  }
+
   await runPrimaryPath(activeJob, deps);
+}
+
+async function runAvatarSegmentsPath(
+  activeJob: NonNullable<
+    Awaited<ReturnType<typeof loadAssemblyJobByIdUnscoped>>
+  >,
+  deps: RunAssemblyJobDeps,
+): Promise<void> {
+  if (!activeJob.voiceoverAssetId) {
+    await failAssemblyJob(activeJob.id, ASSEMBLY_FAILURE_MISSING_AUDIO);
+    return;
+  }
+
+  const segments = await resolveCompletedAvatarSegments({
+    clientId: activeJob.clientId,
+    reelScriptId: activeJob.reelScriptId,
+  });
+  const durationPolicies = await getReelDurationPolicies();
+  const avatarPolicy = durationPolicies.avatar;
+  const minSegments = avatarSegmentsMinFromPolicy(avatarPolicy);
+  const maxSegments = avatarSegmentsMaxFromPolicy(avatarPolicy);
+  if (segments.length < minSegments || segments.length > maxSegments) {
+    await failAssemblyJob(activeJob.id, ASSEMBLY_FAILURE_TENANCY_MISMATCH);
+    return;
+  }
+
+  const voiceoverAsset = await loadMediaAssetForAssembly(
+    activeJob.voiceoverAssetId,
+  );
+  if (!voiceoverAsset || voiceoverAsset.clientId !== activeJob.clientId) {
+    await failAssemblyJob(activeJob.id, ASSEMBLY_FAILURE_TENANCY_MISMATCH);
+    return;
+  }
+
+  const tempRoot = await mkdtemp(
+    path.join(tmpdir(), `neuramark-assembly-avatar-${activeJob.id}-`),
+  );
+  const outputPath = path.join(tempRoot, "output.mp4");
+  const probeFn = deps.probeLocalMediaFile ?? probeLocalMediaFile;
+  const ffmpegRunner =
+    deps.runFfmpeg ?? ((args: string[]) => runFfmpeg(args));
+
+  try {
+    const storage = getMediaStorage();
+    const segmentLocals: Array<{
+      localPath: string;
+      startSec: number;
+      durationSec: number;
+    }> = [];
+
+    for (let i = 0; i < segments.length; i += 1) {
+      const seg = segments[i]!;
+      const asset = await loadMediaAssetForAssembly(seg.outputMediaAssetId);
+      if (!asset || asset.clientId !== activeJob.clientId) {
+        await failAssemblyJob(activeJob.id, ASSEMBLY_FAILURE_TENANCY_MISMATCH);
+        return;
+      }
+      storage.assertSafeKey(asset.storageKey);
+      const localPath = path.join(tempRoot, `seg${i}.mp4`);
+      const stream = await storage.readStream(asset.storageKey);
+      await writeFile(localPath, await streamToBuffer(stream));
+      segmentLocals.push({
+        localPath,
+        startSec: seg.startSec,
+        durationSec: seg.durationSec,
+      });
+    }
+
+    const brollPaths: string[] = [];
+    for (let i = 0; i < activeJob.brollAssetIds.length; i += 1) {
+      const assetId = activeJob.brollAssetIds[i]!;
+      const asset = await loadMediaAssetForAssembly(assetId);
+      if (!asset || asset.clientId !== activeJob.clientId) {
+        continue;
+      }
+      storage.assertSafeKey(asset.storageKey);
+      const localPath = path.join(tempRoot, `broll${i}.mp4`);
+      const stream = await storage.readStream(asset.storageKey);
+      await writeFile(localPath, await streamToBuffer(stream));
+      brollPaths.push(localPath);
+    }
+
+    storage.assertSafeKey(voiceoverAsset.storageKey);
+    const ext = voiceoverExtensionFromStorageKey(voiceoverAsset.storageKey);
+    const voiceoverPath = path.join(tempRoot, `voiceover.${ext}`);
+    const voiceoverStream = await storage.readStream(voiceoverAsset.storageKey);
+    await writeFile(voiceoverPath, await streamToBuffer(voiceoverStream));
+
+    const voiceoverProbe = await probeFn(voiceoverPath);
+    if (!voiceoverProbe) {
+      await failAssemblyJob(activeJob.id, ASSEMBLY_FAILURE_PROBE);
+      return;
+    }
+
+    const toleranceSec = getAssemblyDurationToleranceSec();
+    const expectedDurationSec = voiceoverProbe.durationSec;
+    const ffmpegArgs = buildAvatarSegmentTimelineArgs({
+      segments: segmentLocals,
+      brollPaths: avatarPolicy.brollCutawaysAllowed ? brollPaths : [],
+      localVoiceoverPath: voiceoverPath,
+      localOutputPath: outputPath,
+      voiceoverDurationSec: voiceoverProbe.durationSec,
+      cutawaySec: avatarPolicy.brollCutawaysAllowed ? undefined : 0,
+    });
+
+    await finishFfmpegUpload({
+      activeJob,
+      tempRoot,
+      outputPath,
+      ffmpegArgs,
+      ffmpegRunner,
+      probeFn,
+      toleranceSec,
+      expectedDurationSec,
+    });
+  } catch (error) {
+    console.error("[assembly] runAssemblyJob avatar segments failed", {
+      assemblyJobId: activeJob.id,
+      message: error instanceof Error ? error.message : "unknown",
+    });
+    await failAssemblyJob(activeJob.id, ASSEMBLY_FAILURE_STORAGE);
+  } finally {
+    await rm(tempRoot, { recursive: true, force: true });
+  }
 }
 
 async function runPrimaryPath(

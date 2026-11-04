@@ -50,8 +50,8 @@ const STUB_DEFAULT_ESTIMATE_CENTS: Record<(typeof STUB_VIDEO_KEYS)[number], numb
     [DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHead]: 19,
     /** US-8.5 — catalog per_clip 21¢ (kill 10¢ stub leftover). */
     [DEFAULT_LOW_TIER_PROVIDER_KEYS.broll]: 21,
-    /** Fallback when duration missing — 30s × 2¢. */
-    heygen_high: 60,
+    /** Fallback when duration missing — 30s × 4¢ (Avatar III photo). */
+    heygen_high: 120,
   };
 
 let singletonRegistry: ProviderRegistry | null = null;
@@ -193,17 +193,26 @@ function buildBootstrapCatalog(): ProviderCatalogRow[] {
       key: "heygen_high",
       assetRole: "talking_head",
       tier: "high",
-      active: false,
+      active: true,
       costModel: {
         billingUnit: "per_second",
         unitCostCents: HEYGEN_UNIT_COST_CENTS_PER_SECOND,
         metadata: {
-          plan: "standard",
+          plan: "api_payg_avatar_iii_photo",
           vendor: "heygen",
+          engine: "avatar_iii",
+          resolution: "720p",
           approxPerMinuteCents: HEYGEN_APPROX_PER_MINUTE_CENTS,
+          preferredTalkingHead: true,
         },
       },
       envKeyName: "HEYGEN_API_KEY",
+      capabilities: {
+        transport: "heygen_direct_v3",
+        preferredTalkingHead: true,
+        resolution: "720p",
+        aspectRatio: "9:16",
+      },
     },
     {
       key: "ltx_broll_high",

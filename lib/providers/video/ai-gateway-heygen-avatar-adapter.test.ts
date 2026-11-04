@@ -318,7 +318,7 @@ describe("AI Gateway HeyGen avatar adapter", () => {
     }
   });
 
-  it("5 — resolveProvider prefers gateway heygen over heygen_high when both active", () => {
+  it("5 — resolveProvider prefers heygen_high DIRECT over gateway when both active", () => {
     const { resolveProvider } = withServerOnlyStub(
       () =>
         require("../provider-adapters.ts") as typeof import("../provider-adapters"),
@@ -333,7 +333,43 @@ describe("AI Gateway HeyGen avatar adapter", () => {
         tier: "high",
         active: true,
         capabilities: {},
-        costModel: { billingUnit: "per_second", unitCostCents: 2 },
+        costModel: { billingUnit: "per_second", unitCostCents: 4 },
+        envKeyName: "HEYGEN_API_KEY",
+      }),
+      providerCatalogRowSchema.parse({
+        key: AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY,
+        assetRole: "talking_head",
+        tier: "high",
+        active: true,
+        capabilities: {},
+        costModel: { billingUnit: "per_second", unitCostCents: 1 },
+        envKeyName: "AI_GATEWAY_API_KEY",
+      }),
+    ];
+
+    const resolved = resolveProvider(catalog, {
+      assetRole: "talking_head",
+      tier: "high",
+    });
+    assert.equal(resolved.key, "heygen_high");
+  });
+
+  it("5b — resolveProvider falls back to gateway when heygen_high inactive", () => {
+    const { resolveProvider } = withServerOnlyStub(
+      () =>
+        require("../provider-adapters.ts") as typeof import("../provider-adapters"),
+    );
+    const { AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY } = loadContracts();
+    const { providerCatalogRowSchema } = loadProvidersContracts();
+
+    const catalog = [
+      providerCatalogRowSchema.parse({
+        key: "heygen_high",
+        assetRole: "talking_head",
+        tier: "high",
+        active: false,
+        capabilities: {},
+        costModel: { billingUnit: "per_second", unitCostCents: 4 },
         envKeyName: "HEYGEN_API_KEY",
       }),
       providerCatalogRowSchema.parse({

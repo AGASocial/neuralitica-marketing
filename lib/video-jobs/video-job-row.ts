@@ -21,12 +21,15 @@ export type VideoJobRow = {
   spendEventId: string | null;
   operatorClientId: string | null;
   attempt: number;
+  segmentIndex: number | null;
+  segmentStartSec: number | null;
+  segmentDurationSec: number | null;
   createdAt: string;
   updatedAt: string;
 };
 
 const VIDEO_JOB_SELECT =
-  "id, client_id, reel_script_id, provider_key, provider_tier, asset_role, external_job_id, status, estimated_cost_cents, actual_cost_cents, failure_reason, portrait_asset_id, voiceover_asset_id, output_media_asset_id, parent_job_id, spend_event_id, operator_client_id, attempt, created_at, updated_at";
+  "id, client_id, reel_script_id, provider_key, provider_tier, asset_role, external_job_id, status, estimated_cost_cents, actual_cost_cents, failure_reason, portrait_asset_id, voiceover_asset_id, output_media_asset_id, parent_job_id, spend_event_id, operator_client_id, attempt, segment_index, segment_start_sec, segment_duration_sec, created_at, updated_at";
 
 export const VIDEO_JOB_SELECT_COLUMNS = VIDEO_JOB_SELECT;
 
@@ -85,6 +88,14 @@ export function mapVideoJobRow(raw: Record<string, unknown>): VideoJobRow | null
         ? raw.operator_client_id
         : null,
     attempt: raw.attempt,
+    segmentIndex:
+      typeof raw.segment_index === "number" ? raw.segment_index : null,
+    segmentStartSec:
+      typeof raw.segment_start_sec === "number" ? raw.segment_start_sec : null,
+    segmentDurationSec:
+      typeof raw.segment_duration_sec === "number"
+        ? raw.segment_duration_sec
+        : null,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
   };

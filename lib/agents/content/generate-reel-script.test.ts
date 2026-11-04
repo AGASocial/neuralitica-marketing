@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import Module from "node:module";
 import path from "node:path";
 import { describe, it } from "node:test";
+
+import { FALLBACK_REEL_DURATION_POLICIES } from "@/lib/contracts/reel-duration-policy";
 import { fileURLToPath } from "node:url";
 
 import type { ContentStrategySlot } from "@/lib/contracts/content-strategy";
@@ -29,7 +31,9 @@ function clearReelScriptModuleCache() {
     if (
       normalized.includes("/lib/agents/content/generate-reel-script") ||
       normalized.includes("/lib/providers/llm/stub-reel-script-llm-adapter") ||
-      normalized.includes("/lib/qa/build-generic-disclosure-prompt-hint")
+      normalized.includes("/lib/qa/build-generic-disclosure-prompt-hint") ||
+      normalized.includes("/lib/reel-duration-policy/") ||
+      normalized.includes("/lib/contracts/reel-duration-policy")
     ) {
       delete require.cache[key];
     }
@@ -174,7 +178,7 @@ describe("reelScriptPackageSchema", () => {
     assert.equal(result.success, true);
   });
 
-  it("rejects targetDurationSec outside 15-45", async () => {
+  it("rejects targetDurationSec outside 8-45", async () => {
     const { reelScriptPackageSchema } = await import(
       "@/lib/contracts/reel-script"
     );
@@ -185,9 +189,20 @@ describe("reelScriptPackageSchema", () => {
         cta: "CTA",
         onScreenText: "Text",
         voiceoverText: "VO",
-        targetDurationSec: 10,
+        targetDurationSec: 7,
       }).success,
       false,
+    );
+    assert.equal(
+      reelScriptPackageSchema.safeParse({
+        hook: "Hook",
+        body: "Body",
+        cta: "CTA",
+        onScreenText: "Text",
+        voiceoverText: "VO",
+        targetDurationSec: 10,
+      }).success,
+      true,
     );
     assert.equal(
       reelScriptPackageSchema.safeParse({
@@ -329,6 +344,7 @@ describe("generate-reel-script agent module", () => {
       profile: PROFILE,
       slotContext,
       locale: "es",
+      durationPolicy: FALLBACK_REEL_DURATION_POLICIES.faceless,
     });
 
     assert.match(userPrompt, new RegExp(`<${UNTRUSTED_BUSINESS_PROFILE_TAG}>`));
@@ -382,6 +398,7 @@ describe("generate-reel-script agent module", () => {
       profile: PROFILE,
       slotContext,
       locale: "es",
+      durationPolicy: FALLBACK_REEL_DURATION_POLICIES.faceless,
       revisionContext,
     });
 
@@ -413,6 +430,7 @@ describe("generate-reel-script agent module", () => {
       profile: PROFILE,
       slotContext,
       locale: "es",
+      durationPolicy: FALLBACK_REEL_DURATION_POLICIES.faceless,
     });
 
     assert.match(userPrompt, /Un solo tip accionable para el hook/);
@@ -434,6 +452,7 @@ describe("generate-reel-script agent module", () => {
       profile: PROFILE,
       slotContext,
       locale: "es",
+      durationPolicy: FALLBACK_REEL_DURATION_POLICIES.faceless,
     });
 
     assert.match(userPrompt, /Mostrar resultado primero en el hook/);
@@ -457,10 +476,12 @@ describe("generate-reel-script agent module", () => {
       profile: PROFILE,
       slotContext,
       locale: "es",
+      durationPolicy: FALLBACK_REEL_DURATION_POLICIES.avatar,
     });
 
     assert.match(systemPrompt, /presentador de IA/i);
     assert.match(systemPrompt, /no es el dueño del negocio/i);
+    assert.match(systemPrompt, /8–15 seconds/);
   });
 
   it("mustDiscloseForSlot is false for faceless even when profile flag is true", async () => {
@@ -496,7 +517,7 @@ describe("generate-reel-script agent module", () => {
             cta: "CTA",
             onScreenText: "Text",
             voiceoverText: "VO",
-            targetDurationSec: 10,
+            targetDurationSec: 7,
           }),
         ),
       (error: unknown) => {
@@ -639,6 +660,7 @@ describe("generate-reel-script agent module", () => {
       profile: PROFILE,
       slotContext,
       locale: "es",
+      durationPolicy: FALLBACK_REEL_DURATION_POLICIES.faceless,
       presenterGender: "male",
     });
     assert.match(systemPrompt, /español solamente/i);

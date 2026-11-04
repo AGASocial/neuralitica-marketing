@@ -6,6 +6,8 @@ import { existsSync, readFileSync } from "node:fs";
 import Module from "node:module";
 import path from "node:path";
 import { describe, it } from "node:test";
+
+import { FALLBACK_REEL_DURATION_POLICIES } from "@/lib/contracts/reel-duration-policy";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -587,9 +589,16 @@ describe("reel script contracts (US-5.1)", () => {
     assert.equal(
       reelScriptPackageSchema.safeParse({
         ...VALID_SCRIPT_PACKAGE,
-        targetDurationSec: 10,
+        targetDurationSec: 7,
       }).success,
       false,
+    );
+    assert.equal(
+      reelScriptPackageSchema.safeParse({
+        ...VALID_SCRIPT_PACKAGE,
+        targetDurationSec: 10,
+      }).success,
+      true,
     );
     assert.equal(
       reelScriptPackageSchema.safeParse({
@@ -1381,6 +1390,7 @@ describe("reel script agent (US-5.1)", () => {
     const { systemPrompt, userPrompt } = buildReelScriptPrompts({
       profile: PROFILE_OK,
       locale: "es",
+      durationPolicy: FALLBACK_REEL_DURATION_POLICIES.faceless,
       slotContext: {
         slot: VALID_SLOT,
         modalidad: "faceless",
@@ -1409,6 +1419,7 @@ describe("reel script agent (US-5.1)", () => {
     const { userPrompt } = buildReelScriptPrompts({
       profile: PROFILE_OK,
       locale: "es",
+      durationPolicy: FALLBACK_REEL_DURATION_POLICIES.faceless,
       slotContext: {
         slot: VALID_SLOT,
         modalidad: "faceless",
@@ -1439,6 +1450,7 @@ describe("reel script agent (US-5.1)", () => {
     const { systemPrompt } = buildReelScriptPrompts({
       profile: PROFILE_OK,
       locale: "es",
+      durationPolicy: FALLBACK_REEL_DURATION_POLICIES.avatar,
       slotContext: {
         slot: { ...VALID_SLOT, modalidad: "generic_avatar" },
         modalidad: "generic_avatar",

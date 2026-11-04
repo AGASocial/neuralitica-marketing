@@ -1,6 +1,11 @@
 /**
- * Frozen HeyGen / heygen_high contract constants (US-8.7 CONTRACT).
+ * Frozen HeyGen DIRECT / heygen_high contract constants (API v3).
  * FE-safe — no secrets. Adapter reads env via HEYGEN_ENV_KEY_NAME at runtime.
+ *
+ * @see https://developers.heygen.com/endpoint-version-comparison.md
+ * @see https://developers.heygen.com/audio-to-video.md
+ * @see https://developers.heygen.com/docs/avatar-from-photo.md
+ * @see https://developers.heygen.com/reference/upload-asset
  */
 import { z } from "zod";
 
@@ -19,6 +24,15 @@ export const HEYGEN_DEFAULT_AVATAR_ID_ENV = "HEYGEN_DEFAULT_AVATAR_ID" as const;
 /** HeyGen External API control plane — only host for create/get. */
 export const HEYGEN_API_BASE_URL = "https://api.heygen.com" as const;
 
+/** Upload asset (v3) — multipart/form-data. */
+export const HEYGEN_UPLOAD_ASSET_PATH = "/v3/assets" as const;
+
+/** Create photo / prompt / twin avatar (v3). */
+export const HEYGEN_CREATE_AVATAR_PATH = "/v3/avatars" as const;
+
+/** Poll avatar look status — append `/{look_id}`. */
+export const HEYGEN_GET_AVATAR_LOOK_PATH_PREFIX = "/v3/avatars/looks/" as const;
+
 /** Create video (v3). */
 export const HEYGEN_CREATE_VIDEO_PATH = "/v3/videos" as const;
 
@@ -29,10 +43,11 @@ export const HEYGEN_GET_VIDEO_PATH_PREFIX = "/v3/videos/" as const;
 export const HEYGEN_API_KEY_HEADER = "X-Api-Key" as const;
 
 /**
- * Non–Avatar-IV engine for `type: "avatar"` creates.
- * HeyGen defaults to Avatar IV when `engine` is omitted on avatar requests —
- * omitting is a BUILD veto. Avatar V is out of scope.
- * @see https://developers.heygen.com/reference/create-video
+ * Photo-avatar engine for `type: "avatar"` creates.
+ * Avatar III is the dedicated photo-to-video pipeline (cheapest photo rate).
+ * HeyGen defaults to Avatar IV when `engine` is omitted — omitting is a BUILD veto.
+ * Avatar V is out of scope.
+ * @see https://developers.heygen.com/models.md
  */
 export const HEYGEN_AVATAR_ENGINE = {
   type: "avatar_iii",
@@ -61,6 +76,10 @@ export const HEYGEN_FETCH_TIMEOUT_MS = 120_000 as const;
 export const HEYGEN_FETCH_MAX_BYTES = 104_857_600 as const;
 export const HEYGEN_FETCH_MAX_REDIRECTS = 3 as const;
 
+/** Photo-avatar look poll — avoid hanging the createJob path. */
+export const HEYGEN_LOOK_POLL_INTERVAL_MS = 2_000 as const;
+export const HEYGEN_LOOK_POLL_MAX_ATTEMPTS = 60 as const;
+
 /** Short-lived provider-readable asset URL TTL at createJob (seconds). */
 export const HEYGEN_INPUT_URL_TTL_SEC = 300 as const;
 
@@ -68,32 +87,47 @@ export const HEYGEN_INPUT_URL_TTL_SEC = 300 as const;
 export const HEYGEN_BILLING_UNIT = "per_second" as const;
 
 /**
- * Standard plan unit cost (cents per second).
- * 2¢/s ≈ $1.20/min — aligns USER_STORIES ~$1/min AC via approxPerMinuteCents: 120.
- * Corrects prior US-X.4 seed of 7¢/s (~$4.20/min).
+ * Avatar III Photo Avatar self-serve API rate: $0.0433/sec → 4¢/s catalog unit
+ * (integer cents; docs list 4.33¢ — rounded down for estimates).
+ * @see https://developers.heygen.com/docs/pricing
  */
-export const HEYGEN_UNIT_COST_CENTS_PER_SECOND = 2 as const;
+export const HEYGEN_UNIT_COST_CENTS_PER_SECOND = 4 as const;
 
 /** Approx per-minute cents for Operator estimate copy / metadata. */
-export const HEYGEN_APPROX_PER_MINUTE_CENTS = 120 as const;
+export const HEYGEN_APPROX_PER_MINUTE_CENTS = 240 as const;
 
-/** Frozen catalog cost_model JSON shape (Phase B migration target). */
+/** Published docs unit (USD/sec) — stored in catalog metadata for audit. */
+export const HEYGEN_DOCS_UNIT_COST_USD_PER_SEC = 0.0433 as const;
+
+/** Frozen catalog cost_model JSON shape (v3 DIRECT migration target). */
 export const HEYGEN_CATALOG_COST_MODEL = {
   billingUnit: HEYGEN_BILLING_UNIT,
   unitCostCents: HEYGEN_UNIT_COST_CENTS_PER_SECOND,
   metadata: {
-    plan: "standard",
+    plan: "api_payg_avatar_iii_photo",
     vendor: "heygen",
+    engine: "avatar_iii",
+    resolution: "720p",
     approxPerMinuteCents: HEYGEN_APPROX_PER_MINUTE_CENTS,
+    docsUnitCostUsdPerSec: HEYGEN_DOCS_UNIT_COST_USD_PER_SEC,
+    pricingSource: "https://developers.heygen.com/docs/pricing",
   },
 } as const;
 
-/** V1 create defaults for avatar / image requests. */
+/**
+ * v3 create defaults — 9:16 full-frame 720p with cover fit (no letterbox).
+ * @see https://developers.heygen.com/audio-to-video.md (fit / aspect_ratio / resolution)
+ */
 export const HEYGEN_DEFAULT_CREATE_OPTIONS = {
-  resolution: "1080p",
+  resolution: "720p",
   aspect_ratio: "9:16",
+  fit: "cover",
   output_format: "mp4",
 } as const;
+
+/** Portrait preprocess target before upload (9:16 @ 720p). */
+export const HEYGEN_PORTRAIT_CROP_WIDTH = 720 as const;
+export const HEYGEN_PORTRAIT_CROP_HEIGHT = 1280 as const;
 
 /** MIME types accepted for own_avatar portrait inputs resolved server-side. */
 export const HEYGEN_PORTRAIT_MIME_ALLOWLIST = [
@@ -148,3 +182,6 @@ export const HEYGEN_HIGH_TIER_RATIONALE_KEY = "cheapest_active_high_tier" as con
 
 /** i18n key prefix for Operator FE (Phase B). */
 export const HEYGEN_FE_I18N_PREFIX = "scripts.heygen." as const;
+
+/** DB table for cached photo-avatar looks. */
+export const HEYGEN_AVATAR_LOOKS_TABLE = "neuramark_heygen_avatar_looks" as const;
