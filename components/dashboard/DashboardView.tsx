@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 import { OpenChatButton } from "@/components/dashboard/OpenChatButton";
+import { ClientLocalDateTime } from "@/components/i18n/ClientLocalDateTime";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusAlert } from "@/components/ui/status-alert";
@@ -124,21 +124,6 @@ function progressPercent(progress: OwnerHomeCampaignProgress): number {
   return Math.round((progress.completed / progress.total) * 100);
 }
 
-function formatLastUpdatedClient(
-  template: string,
-  iso: string,
-  locale: Locale,
-): string {
-  const date = new Date(iso);
-  const time = Number.isNaN(date.getTime())
-    ? iso
-    : new Intl.DateTimeFormat(locale === "es" ? "es" : "en", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(date);
-  return template.replace("{time}", time);
-}
-
 export function DashboardView({
   title,
   subtitle,
@@ -162,13 +147,11 @@ export function DashboardView({
   setupCompletion,
   setupCompletionCopy,
 }: DashboardViewProps) {
-  // Format after mount to avoid SSR/client timezone hydration mismatch (#418).
-  const [lastUpdatedLabel, setLastUpdatedLabel] = useState("");
-  useEffect(() => {
-    setLastUpdatedLabel(
-      formatLastUpdatedClient(lastUpdatedTemplate, lastUpdatedAt, locale),
-    );
-  }, [lastUpdatedAt, lastUpdatedTemplate, locale]);
+  // After-mount local time — avoids SSR UTC vs browser TZ hydration #418.
+  const lastUpdatedTemplateWithDate = lastUpdatedTemplate.replace(
+    "{time}",
+    "{date}",
+  );
 
   const countItems = [
     { label: thisWeekCopy.scheduled, value: weekCounts.scheduled },
@@ -182,8 +165,12 @@ export function DashboardView({
       <div>
         <h1 className="font-display text-4xl text-fog sm:text-5xl">{title}</h1>
         <p className="mt-2 max-w-3xl text-dim">{subtitle}</p>
-        <p className="mt-2 text-xs text-dim" suppressHydrationWarning>
-          {lastUpdatedLabel}
+        <p className="mt-2 text-xs text-dim">
+          <ClientLocalDateTime
+            iso={lastUpdatedAt}
+            locale={locale}
+            template={lastUpdatedTemplateWithDate}
+          />
         </p>
       </div>
 

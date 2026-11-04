@@ -68,7 +68,7 @@ export function UserMenu({ locale, displayName, email, copy }: UserMenuProps) {
           type="button"
           variant="ghost"
           size="sm"
-          className="flex h-9 max-w-[14rem] items-center gap-2 px-1.5 text-dim hover:text-fog"
+          className="relative z-50 flex h-10 min-h-10 min-w-10 shrink-0 items-center gap-2 px-1.5 text-dim hover:text-fog sm:max-w-[14rem]"
           aria-label={copy.menuAriaLabel}
           disabled={pending}
         >

@@ -329,6 +329,12 @@ export const approvalListItemDtoSchema = z
     hasDisclosure: z.boolean().optional(),
     overrideCount: z.number().int().nonnegative().optional(),
     videoAssetId: z.string().uuid().optional(),
+    /** Weekly plan tema, else script hook — owner-facing card title. */
+    title: z.string().optional(),
+    /** Visual modality used as the format badge key. */
+    formatKey: z.enum(["own_avatar", "generic_avatar", "faceless"]).optional(),
+    /** Assembled reel completion time (preferred over approval createdAt). */
+    assembledAt: z.string().datetime({ offset: true }).optional(),
   })
   .strict();
 

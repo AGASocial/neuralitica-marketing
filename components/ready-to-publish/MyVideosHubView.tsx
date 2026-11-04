@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { ClientLocalDateTime } from "@/components/i18n/ClientLocalDateTime";
 import { Button } from "@/components/ui/button";
 import { StatusAlert } from "@/components/ui/status-alert";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -13,6 +14,7 @@ import type {
   MyVideosInProductionItem,
   MyVideosPendingItem,
 } from "@/lib/approvals/list-my-videos-hub";
+import type { VisualModality } from "@/lib/contracts/visual-preferences";
 
 export type MyVideosHubCopy = {
   title: string;
@@ -35,6 +37,8 @@ export type MyVideosHubCopy = {
   inProductionStatus: string;
   pendingStatus: string;
   progressHint: string;
+  untitled: string;
+  formatLabels: Record<VisualModality, string>;
 };
 
 type MyVideosHubViewProps = {
@@ -46,15 +50,16 @@ type MyVideosHubViewProps = {
   copy: MyVideosHubCopy;
 };
 
-function formatWhen(iso: string, locale: "en" | "es"): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) {
-    return iso;
+function pendingTitle(item: MyVideosPendingItem, untitled: string): string {
+  const title = item.title?.trim();
+  if (title) {
+    return title;
   }
-  return new Intl.DateTimeFormat(locale === "es" ? "es" : "en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+  const caption = item.captionPreview?.trim();
+  if (caption) {
+    return caption;
+  }
+  return untitled;
 }
 
 function PendingCard({
@@ -69,6 +74,10 @@ function PendingCard({
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const formatLabel = item.formatKey
+    ? copy.formatLabels[item.formatKey]
+    : null;
+  const whenIso = item.assembledAt ?? item.createdAt;
 
   function onApprove() {
     setError(null);
@@ -89,8 +98,8 @@ function PendingCard({
     <li className="border border-edge rounded-lg py-4 px-[1.1rem] bg-panel space-y-3">
       <div className="flex flex-wrap gap-[0.4rem]">
         <StatusBadge value={copy.pendingStatus} severity="warning" />
-        {item.hasDisclosure ? (
-          <StatusBadge value={copy.disclosureChip} severity="info" />
+        {formatLabel ? (
+          <StatusBadge value={formatLabel} severity="info" />
         ) : null}
       </div>
       {item.videoPreviewUrl ? (
@@ -102,11 +111,11 @@ function PendingCard({
           src={item.videoPreviewUrl}
         />
       ) : null}
-      <p className="m-0 text-fog leading-[1.45] break-words">
-        {item.captionPreview?.trim() ? item.captionPreview : "—"}
+      <p className="m-0 text-fog font-medium leading-[1.45] break-words">
+        {pendingTitle(item, copy.untitled)}
       </p>
       <p className="m-0 text-dim text-sm">
-        {formatWhen(item.createdAt, locale)}
+        <ClientLocalDateTime iso={whenIso} locale={locale} />
       </p>
       {error ? <StatusAlert severity="error" text={error} /> : null}
       <div className="flex flex-wrap gap-2">
@@ -181,7 +190,7 @@ export function MyVideosHubView({
                   />
                   <p className="mt-2 mb-0 text-fog">{copy.progressHint}</p>
                   <p className="m-0 mt-1 text-dim text-sm">
-                    {formatWhen(item.updatedAt, locale)}
+                    <ClientLocalDateTime iso={item.updatedAt} locale={locale} />
                   </p>
                 </li>
               ))}
@@ -249,13 +258,14 @@ export function MyVideosHubView({
                       <p className="mt-0 mx-0 mb-[0.35rem] text-fog leading-[1.45] break-words">
                         {item.captionPreview?.trim()
                           ? item.captionPreview
-                          : "—"}
+                          : copy.untitled}
                       </p>
                       <p className="m-0 text-dim text-sm">
-                        {copy.decidedAt.replace(
-                          "{date}",
-                          formatWhen(item.decidedAt, locale),
-                        )}
+                        <ClientLocalDateTime
+                          iso={item.decidedAt}
+                          locale={locale}
+                          template={copy.decidedAt}
+                        />
                       </p>
                     </div>
                     <Link

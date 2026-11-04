@@ -84,6 +84,12 @@ export default async function ReadyToPublishPage() {
         inProductionStatus: hub.inProductionStatus,
         pendingStatus: hub.pendingStatus,
         progressHint: hub.progressHint,
+        untitled: hub.untitled,
+        formatLabels: {
+          own_avatar: t.preferences.modes.own_avatar.label,
+          generic_avatar: t.preferences.modes.generic_avatar.label,
+          faceless: t.preferences.modes.faceless.label,
+        },
       }}
     />
   );
