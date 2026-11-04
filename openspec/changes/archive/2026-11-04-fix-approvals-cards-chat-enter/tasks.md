@@ -17,4 +17,4 @@
 
 ## 4. Verify
 
-- [ ] 4.1 Lint, typecheck, tests
+- [x] 4.1 Lint, typecheck, tests
