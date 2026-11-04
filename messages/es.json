@@ -52,20 +52,70 @@
     "confirmAccept": "Cerrar sesión",
     "confirmReject": "Cancelar",
     "nav": {
-      "dashboard": "Panel",
-      "profile": "Ficha viva",
+      "home": "Inicio",
+      "myCampaign": "Mi campaña",
+      "myVideos": "Mis videos",
+      "myBusiness": "Mi negocio",
+      "advanced": "Avanzado",
+      "dashboard": "Inicio",
+      "profile": "Ficha de mi negocio",
       "preferences": "Preferencias",
-      "approvals": "Aprobaciones",
-      "readyToPublish": "Listo para publicar",
+      "approvals": "Mi campaña",
+      "readyToPublish": "Mis videos",
       "playbook": "Playbook de formatos",
       "trends": "Snapshots de tendencias",
-      "strategy": "Estrategia semanal",
+      "strategy": "Plan semanal",
       "scripts": "Guiones",
       "calendar": "Calendario de contenido",
-      "costPolicy": "Política de costo"
+      "costPolicy": "Política de costo",
+      "cycle": "Corrida semanal"
     },
     "navAriaLabel": "Navegación principal",
     "mobileNavAriaLabel": "Navegación móvil"
+  },
+  "orchestratorChat": {
+    "title": "Tu asistente",
+    "description": "Dime qué necesitas. Yo te propongo el siguiente paso.",
+    "openLabel": "Chat",
+    "openShortcutHint": "Atajo de teclado Control o Command + J",
+    "closeLabel": "Cerrar chat",
+    "placeholder": "Pregunta lo que quieras sobre tu campaña…",
+    "send": "Enviar",
+    "attach": "Adjuntar una foto",
+    "attaching": "Subiendo tu foto…",
+    "empty": "Hola — te ayudo con tu plan y videos. Prueba “¿Cómo va mi campaña?” o adjunta una foto tuya.",
+    "error": "Algo salió mal. Inténtalo de nuevo.",
+    "attachError": "No pudimos guardar esa foto. Revisa el archivo e inténtalo de nuevo.",
+    "attachedNote": "Adjunté una foto ({filename}). Id de referencia: {assetId}",
+    "proposal": {
+      "title": "Confirma por favor",
+      "approve": "Aprobar",
+      "changeSomething": "Cambiar algo",
+      "approving": "Trabajando…",
+      "success": "Listo.",
+      "error": "No se pudo completar. Inténtalo de nuevo.",
+      "spendHint": "Si apruebas, se usarán unos {amount}.",
+      "spendUnknown": "Esto puede usar un cargo pequeño de escritura con IA. No corre nada hasta que apruebes."
+    },
+    "status": {
+      "campaignTitle": "Cómo van las cosas",
+      "planTitle": "Plan de esta semana",
+      "scriptsTitle": "Textos de los videos",
+      "pendingVideos": "{count} video(s) esperando tu OK",
+      "readyVideos": "{count} video(s) listos para publicar",
+      "planNone": "Aún no hay plan para esta semana",
+      "planDraft": "Borrador del plan — espera tu OK",
+      "planApproved": "Plan aprobado",
+      "planUnknown": "No pudimos ver el estado del plan",
+      "noPlan": "Aún no hay plan. Pídeme que lo arme.",
+      "videosLabel": "Video {n}",
+      "scriptsReady": "{count} texto(s) listos",
+      "scriptsWaiting": "{count} todavía pendientes",
+      "emptyScripts": "Aún no hay textos para un plan aprobado."
+    },
+    "errors": {
+      "internal": "Algo salió mal. Inténtalo más tarde."
+    }
   },
   "auth": {
     "localeSwitcher": {
