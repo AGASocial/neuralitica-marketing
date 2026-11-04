@@ -86,6 +86,7 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
       spendUnknown: t.orchestratorChat.proposal.spendUnknown,
       stylePresenter: t.orchestratorChat.proposal.stylePresenter,
       styleImages: t.orchestratorChat.proposal.styleImages,
+      styleVoice: t.orchestratorChat.proposal.styleVoice,
     },
     status: {
       campaignTitle: t.orchestratorChat.status.campaignTitle,

@@ -232,6 +232,34 @@ describe("orchestrator-chat contracts", () => {
     });
   });
 
+  it("confirm_tts_generation is distinct from video paid confirm", async () => {
+    const { proposeConfirmTtsGenerationOutputSchema: schema } = await import(
+      "./orchestrator-chat"
+    );
+    const parsed = schema.parse({
+      ok: true,
+      proposal: {
+        kind: "confirm_tts_generation",
+        requiresConfirmation: true,
+        mutates: false,
+        incursSpend: true,
+        estimatedCostCents: 1,
+        confirmEstimateCents: 1,
+        summary: "Creating the voice costs about $0.01.",
+        weekStart: WEEK,
+        slotIndex: 0,
+        reelScriptId: "44444444-4444-4444-8444-444444444444",
+        styleLabel: "voice",
+        paidKind: "tts",
+        action: "confirmTtsGenerationFromChat",
+        charCount: 120,
+      },
+    });
+    assertProposalIsNonMutating(parsed.proposal);
+    assert.equal(parsed.proposal.paidKind, "tts");
+    assert.equal(parsed.proposal.styleLabel, "voice");
+  });
+
   it("enable_own_avatar is non-mutating Preferencias proposal", async () => {
     const { proposeEnableOwnAvatarOutputSchema: schema } = await import(
       "./orchestrator-chat"

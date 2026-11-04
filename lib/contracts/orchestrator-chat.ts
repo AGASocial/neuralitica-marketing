@@ -34,6 +34,7 @@ export const ORCHESTRATOR_PROPOSAL_KINDS = [
   "save_interview_answer",
   "submit_interview",
   "enable_own_avatar",
+  "confirm_tts_generation",
 ] as const;
 
 /** Owner-safe media preview path (same shape as approval packages). */
@@ -727,6 +728,57 @@ export const proposeEnableOwnAvatarOutputSchema = z
 
 export type ProposeEnableOwnAvatarOutput = z.infer<
   typeof proposeEnableOwnAvatarOutputSchema
+>;
+
+/**
+ * Separate TTS/voice spend confirm (KAN-84.15) — not b-roll/HeyGen.
+ * Estimate from ElevenLabs catalog constants; nothing runs until Approve.
+ */
+export const proposeConfirmTtsGenerationInputSchema = z
+  .object({
+    weekStart: trendWeekStartSchema.optional(),
+    slotIndex: z.number().int().min(0).max(6).optional(),
+    reelScriptId: z.string().uuid().optional(),
+  })
+  .strict();
+
+export type ProposeConfirmTtsGenerationInput = z.infer<
+  typeof proposeConfirmTtsGenerationInputSchema
+>;
+
+export const proposeConfirmTtsGenerationOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    proposal: orchestratorProposalMetaSchema.extend({
+      kind: z.literal("confirm_tts_generation"),
+      weekStart: trendWeekStartSchema,
+      slotIndex: z.number().int().min(0).max(6),
+      reelScriptId: z.string().uuid(),
+      tema: z.string().max(200).optional(),
+      styleLabel: z.literal("voice"),
+      paidKind: z.literal("tts"),
+      action: z.literal("confirmTtsGenerationFromChat"),
+      confirmEstimateCents: z.number().int().nonnegative(),
+      charCount: z.number().int().nonnegative(),
+      incursSpend: z.literal(true),
+      estimatedCostCents: z.number().int().nonnegative(),
+    }),
+  })
+  .strict();
+
+export type ProposeConfirmTtsGenerationOutput = z.infer<
+  typeof proposeConfirmTtsGenerationOutputSchema
+>;
+
+export const confirmTtsGenerationFromChatInputSchema = z
+  .object({
+    reelScriptId: z.string().uuid(),
+    confirmEstimateCents: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export type ConfirmTtsGenerationFromChatInput = z.infer<
+  typeof confirmTtsGenerationFromChatInputSchema
 >;
 
 export const orchestratorToolErrorSchema = z

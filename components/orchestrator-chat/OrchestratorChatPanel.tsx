@@ -144,6 +144,16 @@ function asProposal(output: unknown): KnownProposal | null {
   ) {
     return p as KnownProposal;
   }
+  if (
+    p.kind === "confirm_tts_generation" &&
+    typeof p.reelScriptId === "string" &&
+    typeof p.confirmEstimateCents === "number" &&
+    typeof p.estimatedCostCents === "number" &&
+    p.paidKind === "tts" &&
+    p.styleLabel === "voice"
+  ) {
+    return p as KnownProposal;
+  }
   if (p.kind === "grant_presenter_consent") {
     return p as KnownProposal;
   }
@@ -702,6 +712,7 @@ function OrchestratorChatSession({
                       part.type === "tool-proposeRequestVideoChanges" ||
                       part.type === "tool-proposeRegenerateScript" ||
                       part.type === "tool-proposeConfirmPaidGeneration" ||
+                      part.type === "tool-proposeConfirmTtsGeneration" ||
                       part.type === "tool-proposeGrantPresenterConsent" ||
                       part.type === "tool-proposeSetPresenterVoice" ||
                       part.type === "tool-proposeSaveInterviewAnswer" ||

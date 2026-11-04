@@ -100,7 +100,8 @@
       "spendHint": "About {amount} will be used if you approve.",
       "spendUnknown": "This may use a small AI writing charge. Nothing runs until you approve.",
       "stylePresenter": "With your face / on-camera presenter",
-      "styleImages": "Images and text only"
+      "styleImages": "Images and text only",
+      "styleVoice": "Spoken voice for this video (separate from video cost)"
     },
     "status": {
       "campaignTitle": "Where things stand",

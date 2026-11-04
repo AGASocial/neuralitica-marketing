@@ -30,6 +30,8 @@ import {
   getReadyVideoDownloadOutputSchema,
   proposeConfirmPaidGenerationInputSchema,
   proposeConfirmPaidGenerationOutputSchema,
+  proposeConfirmTtsGenerationInputSchema,
+  proposeConfirmTtsGenerationOutputSchema,
   proposeGrantPresenterConsentInputSchema,
   proposeGrantPresenterConsentOutputSchema,
   proposeEnableOwnAvatarInputSchema,
@@ -61,6 +63,7 @@ import {
   orchestratorForbidden,
   orchestratorValidationError,
 } from "@/lib/orchestrator-chat/authorize";
+import { estimateTtsCostCentsFromTextLength } from "@/lib/orchestrator-chat/estimate-tts-cost";
 import { proposalSummary } from "@/lib/orchestrator-chat/proposal-copy";
 import { resolveOrchestratorWeekStart } from "@/lib/orchestrator-chat/week";
 import {
@@ -963,6 +966,91 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
         };
         assertProposalIsNonMutating(proposal);
         return proposeConfirmPaidGenerationOutputSchema.parse({
+          ok: true,
+          proposal,
+        });
+      },
+    }),
+
+    proposeConfirmTtsGeneration: tool({
+      description:
+        "Propose paid spoken-voice (TTS) generation with a plain price from ElevenLabs catalog constants. DISTINCT from proposeConfirmPaidGeneration (video/images/on-camera). Does NOT synthesize until Approve. Operator only.",
+      inputSchema: proposeConfirmTtsGenerationInputSchema,
+      execute: async (raw) => {
+        if (!isOperator(user)) {
+          return toolError(orchestratorForbidden());
+        }
+        const parsed = proposeConfirmTtsGenerationInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const weekStart = resolveOrchestratorWeekStart(parsed.data.weekStart);
+        const approved = await getApprovedStrategyForWeek({
+          clientId: user.id,
+          weekStart,
+        });
+        if (!approved || approved.status !== "approved") {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "Approve this week’s plan before creating voiceovers.",
+          });
+        }
+        const { items } = await buildReelScriptListForStrategy({
+          clientId: user.id,
+          weekStart,
+          strategyId: approved.id,
+          version: approved.version,
+          brief: approved.brief,
+        });
+        const generated = items.filter(
+          (i) => i.status === "generated" && i.scriptId && i.package,
+        );
+        const item =
+          parsed.data.reelScriptId !== undefined
+            ? generated.find((i) => i.scriptId === parsed.data.reelScriptId)
+            : parsed.data.slotIndex !== undefined
+              ? generated.find((i) => i.slotIndex === parsed.data.slotIndex)
+              : generated[0];
+        if (!item || !item.scriptId || !item.package) {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "Write the video texts first, then confirm the voice cost.",
+          });
+        }
+        const voiceoverText = item.package.voiceoverText?.trim() ?? "";
+        if (!voiceoverText) {
+          return toolError({
+            ok: false,
+            error: "VALIDATION_ERROR",
+            message: "This write-up has no spoken text yet.",
+          });
+        }
+        const estimatedCostCents = estimateTtsCostCentsFromTextLength(
+          voiceoverText.length,
+        );
+        const proposal = {
+          kind: "confirm_tts_generation" as const,
+          requiresConfirmation: true as const,
+          mutates: false as const,
+          incursSpend: true as const,
+          estimatedCostCents,
+          confirmEstimateCents: estimatedCostCents,
+          summary: proposalSummary(locale, "confirm_tts_generation", {
+            amountCents: estimatedCostCents,
+          }),
+          weekStart,
+          slotIndex: item.slotIndex,
+          reelScriptId: item.scriptId,
+          tema: item.tema,
+          styleLabel: "voice" as const,
+          paidKind: "tts" as const,
+          action: "confirmTtsGenerationFromChat" as const,
+          charCount: voiceoverText.length,
+        };
+        assertProposalIsNonMutating(proposal);
+        return proposeConfirmTtsGenerationOutputSchema.parse({
           ok: true,
           proposal,
         });

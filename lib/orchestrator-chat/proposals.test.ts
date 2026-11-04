@@ -41,6 +41,8 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(source, /proposeRequestVideoChanges/);
     assert.match(source, /proposeRegenerateScript/);
     assert.match(source, /proposeConfirmPaidGeneration/);
+    assert.match(source, /proposeConfirmTtsGeneration/);
+    assert.match(source, /estimateTtsCostCentsFromTextLength/);
     assert.match(source, /getVideoPreview/);
     assert.match(source, /getScriptPreview/);
     assert.match(source, /getGuidedProgress/);
@@ -81,6 +83,7 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(card, /regenerateReelScriptSlot/);
     assert.match(card, /request_changes/);
     assert.match(card, /confirmPaidGenerationFromChat/);
+    assert.match(card, /confirmTtsGenerationFromChat/);
     assert.match(card, /grantAvatarConsent/);
     assert.match(card, /upsertAvatar/);
     assert.match(card, /persistInterviewDraft/);
@@ -88,6 +91,20 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(card, /upsertVisualPreferences/);
     assert.doesNotMatch(card, /createHeygenTalkingHeadVideoJob/);
     assert.doesNotMatch(card, /createBrollVideoJobs/);
+  });
+
+  it("TTS confirm action re-checks estimate and never starts video jobs", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const action = readFileSync(
+      join(here, "actions/confirm-tts-generation.ts"),
+      "utf8",
+    );
+    assert.match(action, /estimateTtsCostCentsFromTextLength/);
+    assert.match(action, /confirmEstimateCents/);
+    assert.match(action, /ESTIMATE_MISMATCH/);
+    assert.match(action, /synthesizeVoiceoverForReelScript/);
+    assert.doesNotMatch(action, /createBrollVideoJobs/);
+    assert.doesNotMatch(action, /createHeygenTalkingHeadVideoJob/);
   });
 
   it("enable_own_avatar proposal never triggers avatar video generation", () => {
