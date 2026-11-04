@@ -105,6 +105,9 @@ export function asProposal(output: unknown): KnownProposal | null {
   ) {
     return p as KnownProposal;
   }
+  if (p.kind === "enable_auto_pilot") {
+    return p as KnownProposal;
+  }
   return null;
 }
 
@@ -123,6 +126,7 @@ export const PROPOSE_TOOL_TYPES = [
   "tool-proposeSaveInterviewAnswer",
   "tool-proposeSubmitInterview",
   "tool-proposeEnableOwnAvatar",
+  "tool-proposeEnableAutoPilot",
 ] as const;
 
 export function isProposeToolType(type: string): boolean {

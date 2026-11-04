@@ -40,6 +40,8 @@ import {
   proposeGrantPresenterConsentOutputSchema,
   proposeEnableOwnAvatarInputSchema,
   proposeEnableOwnAvatarOutputSchema,
+  proposeEnableAutoPilotInputSchema,
+  proposeEnableAutoPilotOutputSchema,
   proposeSaveInterviewAnswerInputSchema,
   proposeSaveInterviewAnswerOutputSchema,
   proposeSetPresenterVoiceInputSchema,
@@ -1564,6 +1566,32 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
         };
         assertProposalIsNonMutating(proposal);
         return proposeSetPresenterVoiceOutputSchema.parse({
+          ok: true,
+          proposal,
+        });
+      },
+    }),
+
+    proposeEnableAutoPilot: tool({
+      description:
+        "MUST call when the owner asks to enable Autopilot / Piloto automático (ES: “ponlo en piloto automático”, “activa el piloto automático”). Returns enable_auto_pilot confirmation card (Aprobar / Cambiar). Does NOT save until Approve. NEVER spends, publishes to Instagram, or starts video jobs.",
+      inputSchema: proposeEnableAutoPilotInputSchema,
+      execute: async (raw) => {
+        const parsed = proposeEnableAutoPilotInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const proposal = {
+          kind: "enable_auto_pilot" as const,
+          requiresConfirmation: true as const,
+          mutates: false as const,
+          incursSpend: false as const,
+          estimatedCostCents: null,
+          summary: proposalSummary(locale, "enable_auto_pilot"),
+          action: "upsertAutomationSettings" as const,
+        };
+        assertProposalIsNonMutating(proposal);
+        return proposeEnableAutoPilotOutputSchema.parse({
           ok: true,
           proposal,
         });

@@ -19,6 +19,7 @@ const KNOWN_TOOL_NAMES = [
   "proposeConfirmPaidGeneration",
   "proposeConfirmTtsGeneration",
   "proposeEnableOwnAvatar",
+  "proposeEnableAutoPilot",
   "getGuidedProgress",
   "getReadyVideoDownload",
   "getPresenterSetupStatus",

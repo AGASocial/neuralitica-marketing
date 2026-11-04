@@ -15,6 +15,7 @@ import {
   type HoyNextSlot,
 } from "@/lib/contracts/hoy-feed";
 import { loadLatestStrategyRowWithApproval } from "@/lib/content-strategy/load-latest-strategy-row-with-approval";
+import { listUnreadHoyNotifications } from "@/lib/automation/events";
 import { buildHoyTimeline } from "@/lib/dashboard/build-hoy-timeline";
 import {
   buildOwnerHomeNextAction,
@@ -263,6 +264,11 @@ export async function loadHoyFeed(params: {
       null,
   });
 
+  const hoyNotifications = await listUnreadHoyNotifications({
+    clientId: params.user.id,
+    limit: 5,
+  });
+
   const dto: HoyFeedDto = {
     weekStart,
     lastUpdatedAt,
@@ -274,6 +280,14 @@ export async function loadHoyFeed(params: {
     nextAction: buildOwnerHomeNextAction(stepKey),
     showNextActionCard,
     results: { insightsAvailable: false },
+    notifications: hoyNotifications.map((n) => ({
+      id: n.id,
+      kind: n.kind,
+      title: n.title,
+      body: n.body,
+      approvalIds: n.approvalIds,
+      createdAt: n.createdAt,
+    })),
   };
 
   return hoyFeedDtoSchema.parse(dto);
