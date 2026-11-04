@@ -107,3 +107,15 @@ _Evitar_: Publicación manual asistida (como único modo V1), auto-publish sin A
 **Métricas lite**:
 Registro básico de rendimiento (views, likes, comments, saves, DMs) para aprendizaje del siguiente ciclo.
 _Evitar_: analytics avanzados
+
+**Orchestrator chat**:
+Superficie conversacional persistente (panel derecho / Inicio) donde el dueño del negocio opera la campaña en lenguaje llano; el motor planifica desde onboarding; no sustituye Server Actions de dominio.
+_Evitar_: chatbot genérico, jerga técnica al Cliente, MCP-UI (salvo capa opcional), auto-publish, auto-spend
+
+**Proposal card (chat)**:
+Resultado de un tool de acción que **no muta**; resumen humano + CTA primario **Aprobar** / secundario **Cambiar algo**; mutación solo al Aprobar vía Server Action existente.
+_Evitar_: tool execute que escribe en DB, silent confirm, múltiples CTAs técnicos
+
+**Avanzado (nav)**:
+Sección Operator que agrupa pantallas técnicas (estrategia, guiones, calendario, playbook, tendencias, costo); oculta del dueño no-operator.
+_Evitar_: exponer links Operator en nav Cliente

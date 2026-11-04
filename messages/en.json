@@ -52,20 +52,70 @@
     "confirmAccept": "Log out",
     "confirmReject": "Cancel",
     "nav": {
+      "home": "Home",
+      "myCampaign": "My campaign",
+      "myVideos": "My videos",
+      "myBusiness": "My business",
+      "advanced": "Advanced",
       "dashboard": "Dashboard",
-      "profile": "Living profile",
+      "profile": "My business profile",
       "preferences": "Preferences",
-      "approvals": "Approvals",
-      "readyToPublish": "Ready to publish",
+      "approvals": "My campaign",
+      "readyToPublish": "My videos",
       "playbook": "Format catalog",
       "trends": "Trend snapshots",
-      "strategy": "Weekly strategy",
+      "strategy": "Weekly plan",
       "scripts": "Scripts",
       "calendar": "Content calendar",
-      "costPolicy": "Cost policy"
+      "costPolicy": "Cost policy",
+      "cycle": "Weekly run"
     },
     "navAriaLabel": "Main navigation",
     "mobileNavAriaLabel": "Mobile navigation"
+  },
+  "orchestratorChat": {
+    "title": "Your assistant",
+    "description": "Tell me what you need. I’ll suggest the next step.",
+    "openLabel": "Chat",
+    "openShortcutHint": "Keyboard shortcut Control or Command + J",
+    "closeLabel": "Close chat",
+    "placeholder": "Ask anything about your campaign…",
+    "send": "Send",
+    "attach": "Attach a photo",
+    "attaching": "Uploading your photo…",
+    "empty": "Hi — I can help with your plan and videos. Try “How’s my campaign?” or attach a photo of you.",
+    "error": "Something went wrong. Please try again.",
+    "attachError": "We could not save that photo. Check the file and try again.",
+    "attachedNote": "I attached a photo ({filename}). Reference id: {assetId}",
+    "proposal": {
+      "title": "Please confirm",
+      "approve": "Approve",
+      "changeSomething": "Change something",
+      "approving": "Working…",
+      "success": "Done.",
+      "error": "That didn’t work. Please try again.",
+      "spendHint": "About {amount} will be used if you approve.",
+      "spendUnknown": "This may use a small AI writing charge. Nothing runs until you approve."
+    },
+    "status": {
+      "campaignTitle": "Where things stand",
+      "planTitle": "This week’s plan",
+      "scriptsTitle": "Video write-ups",
+      "pendingVideos": "{count} video(s) waiting for your OK",
+      "readyVideos": "{count} video(s) ready to post",
+      "planNone": "No plan yet for this week",
+      "planDraft": "Plan draft — waiting for your OK",
+      "planApproved": "Plan approved",
+      "planUnknown": "Plan status unavailable",
+      "noPlan": "No plan yet. Ask me to create one.",
+      "videosLabel": "Video {n}",
+      "scriptsReady": "{count} write-up(s) ready",
+      "scriptsWaiting": "{count} still waiting",
+      "emptyScripts": "No write-ups yet for an approved plan."
+    },
+    "errors": {
+      "internal": "Something went wrong. Please try again later."
+    }
   },
   "auth": {
     "localeSwitcher": {
