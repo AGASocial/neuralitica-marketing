@@ -21,6 +21,7 @@ context: |
   - 0007 Avatar video pipeline (HeyGen direct v3, ElevenLabs TTS, duration policies)
   - 0008 UI Tailwind v4 + shadcn Campaña
   - 0009 Orchestrator chat (proposal cards, persistence, stick-to-bottom, TTS/own-avatar)
+  - 0010 Onboarding chat vs wizard (hybrid: KAN-99 checklist spine; no multi-page wizard now)
 
   OpenSpec workflow: every change starts with openspec/changes/<id>/ (proposal, tasks, spec
   deltas), validate --strict, archive after merge. Main specs live under openspec/specs/.

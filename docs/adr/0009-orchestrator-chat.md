@@ -62,6 +62,10 @@ empty state until Instagram insights exist in-product (no Graph publish or new
 insights API from Home), recent videos strip, and compact **Atajos**. Server
 loaders use zod DTOs; Home never mutates, spends, or publishes.
 
+**Onboarding shape (KAN-100 / ADR-0010):** hybrid — setup checklist (KAN-99) is
+the lightweight wizard spine; steps complete via chat or existing pages; no
+separate multi-page wizard now.
+
 **Transcript scroll:** the message list uses stick-to-bottom (`useStickToBottom`):
 always scroll on send; keep sticking while streaming/new parts if within ~80px of
 the bottom; pause when the user scrolls up; resume when they return. A small
