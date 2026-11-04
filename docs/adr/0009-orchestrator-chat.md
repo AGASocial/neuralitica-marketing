@@ -77,7 +77,7 @@ container is the transcript pane only (full-height sheet, safe-area insets).
 | `proposeRegenerateScript` | proposal | operator | **no** → `regenerateReelScriptSlot` | “Rewrite this write-up?” |
 | `proposeConfirmPaidGeneration` | proposal | operator | **no** until Approve → `confirmPaidGenerationFromChat` (re-checks estimate, then b-roll/HeyGen) | “This costs about $X — approve?” |
 
-Later: photo/presenter setup via chat, MCP-UI host, thread persistence.
+Later: MCP-UI host (optional).
 
 **KAN-93:** Paid media never starts from chat without `confirm_paid_generation`
 (plain price from existing cost-policy previews). Approve re-validates the live
@@ -92,13 +92,25 @@ never publishes to Instagram.
 `proposeSetPresenterVoice` → `upsertAvatar` (gender/language coherence);
 photo via existing attach path.
 
+**KAN-95 — thread persistence:** Tables
+`neuramark_orchestrator_conversations` (per `client_id`, title, timestamps) and
+`neuramark_orchestrator_messages` (`role`, `parts` jsonb, `ui_message_id`,
+`created_at`). RLS ENABLE + deny-by-default (service-role Node only; owner scope
+via `getCurrentUser().id = client_id`). `POST /api/chat` saves user+assistant
+messages on stream `onFinish`; panel loads latest conversation on open;
+**New conversation** / **Nueva conversación** starts a fresh thread id. Zod
+contracts in `lib/contracts/orchestrator-chat.ts`. Migration file under
+`supabase/migrations/`; prod apply is orchestrator-owned (Supabase MCP
+`apply_migration` to project `lrnhrzpwgyhkruwxeppw`) — feature PRs do not apply
+remote migrations.
+
 ### Phases
 
 1. **P1:** Owner IA + Advanced grouping; chat sheet; API; read + proposal tools;
    image attach; contract tests; plain-language system prompt.
 2. **P2:** Richer video/script cards; spend-confirm cards.
 3. **P3:** Presenter/photo setup via chat; optional MCP-UI.
-4. **P4:** Model eval; chat thread persistence.
+4. **P4:** Model eval (KAN-97); chat thread persistence (KAN-95).
 
 ## Consecuencias
 

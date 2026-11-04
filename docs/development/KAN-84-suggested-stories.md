@@ -16,7 +16,7 @@ Epic: Orchestrator agent chat + generative UI + extreme abstraction (ADR-0009).
 | KAN-84.7 | Video approve/change card | Preview + Approve / Change something → `decideApproval`. |
 | KAN-84.8 | Spend confirm before paid gen | Plain “this costs about $X” from cost policy; never auto-spend. |
 | KAN-84.9 | Presenter photo setup via chat | Consent + photo + voice in plain steps. |
-| KAN-84.10 | Chat thread persistence | `neuramark_*` threads; resume. |
+| KAN-84.10 / **KAN-95** | Chat thread persistence | `neuramark_orchestrator_conversations` + `_messages`; resume latest; New conversation / Nueva conversación; persist on `/api/chat` finish. |
 | KAN-84.11 | MCP-UI optional | Same safety; not required for V1. |
 | KAN-84.12 | Model quality eval | flash-lite vs stronger when orchestration quality needs it. |
 

@@ -88,6 +88,8 @@
     "attachError": "We could not save that photo. Check the file and try again.",
     "attachedNote": "I attached a photo ({filename}). Reference id: {assetId}",
     "newMessages": "↓ New messages",
+    "newConversation": "New conversation",
+    "loadingConversation": "Loading your chat…",
     "proposal": {
       "title": "Please confirm",
       "approve": "Approve",

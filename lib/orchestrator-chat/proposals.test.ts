@@ -91,4 +91,16 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(route, /sendReasoning:\s*false/);
     assert.match(route, /resolveChatBodyLocale/);
   });
+
+  it("chat route persists conversation messages on finish (KAN-95)", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const route = readFileSync(
+      join(here, "../../app/api/chat/route.ts"),
+      "utf8",
+    );
+    assert.match(route, /originalMessages:\s*messages/);
+    assert.match(route, /onFinish:/);
+    assert.match(route, /persistConversationMessages/);
+    assert.match(route, /generateMessageId/);
+  });
 });
