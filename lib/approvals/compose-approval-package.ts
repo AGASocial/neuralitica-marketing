@@ -141,6 +141,14 @@ export async function composeApprovalPackage(params: {
         }
       : null;
 
+  const captionPreview = truncateCaptionPreview(caption.record.caption);
+  const cardMeta = await resolveApprovalListCardMeta({
+    clientId: params.clientId,
+    assembly,
+    captionPreview,
+    fallbackCreatedAt: params.approval.createdAt,
+  });
+
   const pkg: ApprovalPackageDto = {
     approvalId: params.approval.id,
     assembledReelId: params.approval.assembledReelId,
@@ -169,6 +177,7 @@ export async function composeApprovalPackage(params: {
       overriddenCheckKeys: gate.overriddenCheckKeys,
       uncoveredFailedCheckKeys: gate.uncoveredFailedCheckKeys,
     },
+    ...(cardMeta.title.trim() ? { reelTitle: cardMeta.title.trim() } : {}),
     revisionCount: params.approval.revisionCount,
     maxRevisionRounds,
     revisionsRemaining,

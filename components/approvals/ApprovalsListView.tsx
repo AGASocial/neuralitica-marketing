@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 
+import { ClientLocalDateTime } from "@/components/i18n/ClientLocalDateTime";
+import { MediaThumbnail } from "@/components/media/MediaThumbnail";
 import { Button } from "@/components/ui/button";
 import { StatusAlert } from "@/components/ui/status-alert";
 import { StatusBadge } from "@/components/ui/status-badge";
-
+import { mediaPreviewUrl } from "@/lib/approvals/caption-preview";
 import type { ApprovalListItemDto } from "@/lib/contracts/approval";
 
 export type ApprovalsListCopy = {
@@ -16,9 +18,13 @@ export type ApprovalsListCopy = {
   backDashboard: string;
   reviewCta: string;
   createdAt: string;
+  cardSummary: string;
+  untitled: string;
   disclosureChip: string;
+  disclosureTooltip: string;
   overridesChip: string;
   pendingStatus: string;
+  thumbnailAlt: string;
 };
 
 type ApprovalsListViewProps = {
@@ -28,15 +34,16 @@ type ApprovalsListViewProps = {
   copy: ApprovalsListCopy;
 };
 
-function formatCreatedAt(iso: string, locale: "en" | "es"): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) {
-    return iso;
+function cardTitle(item: ApprovalListItemDto, untitled: string): string {
+  const title = item.title?.trim();
+  if (title) {
+    return title;
   }
-  return new Intl.DateTimeFormat(locale === "es" ? "es" : "en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+  const caption = item.captionPreview?.trim();
+  if (caption) {
+    return caption;
+  }
+  return untitled;
 }
 
 export function ApprovalsListView({
@@ -69,63 +76,76 @@ export function ApprovalsListView({
       ) : null}
 
       {!loadFailed && items.length > 0 ? (
-        <ul
-          className="list-none m-0 p-0 flex flex-col gap-3"
-        >
-          {items.map((item) => (
-            <li
-              key={item.approvalId}
-              className="border border-edge rounded-lg py-4 px-[1.1rem] bg-panel"
-            >
-              <div
-                className="flex flex-wrap items-start justify-between gap-3"
+        <ul className="list-none m-0 p-0 flex flex-col gap-3">
+          {items.map((item) => {
+            const previewSrc = item.videoAssetId
+              ? mediaPreviewUrl(item.videoAssetId)
+              : null;
+            return (
+              <li
+                key={item.approvalId}
+                className="border border-edge rounded-lg py-4 px-[1.1rem] bg-panel"
               >
-                <div className="flex-[1_1_200px] min-w-0">
-                  <div
-                    className="flex flex-wrap gap-[0.4rem] mb-2"
-                  >
-                    <StatusBadge value={copy.pendingStatus} severity="warning" />
-                    {item.hasDisclosure ? (
-                      <StatusBadge value={copy.disclosureChip} severity="info" />
-                    ) : null}
-                    {item.overrideCount != null && item.overrideCount > 0 ? (
-                      <StatusBadge
-                        value={copy.overridesChip.replace(
-                          "{count}",
-                          String(item.overrideCount),
-                        )}
-                        severity="secondary"
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex flex-[1_1_220px] min-w-0 gap-3">
+                    {previewSrc ? (
+                      <MediaThumbnail
+                        src={previewSrc}
+                        kind="video"
+                        alt={copy.thumbnailAlt}
+                        className="size-16 shrink-0 rounded-md"
                       />
                     ) : null}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap gap-[0.4rem] mb-2">
+                        <StatusBadge
+                          value={copy.pendingStatus}
+                          severity="warning"
+                        />
+                        {item.hasDisclosure ? (
+                          <StatusBadge
+                            value={copy.disclosureChip}
+                            severity="info"
+                            title={copy.disclosureTooltip}
+                          />
+                        ) : null}
+                        {item.overrideCount != null && item.overrideCount > 0 ? (
+                          <StatusBadge
+                            value={copy.overridesChip.replace(
+                              "{count}",
+                              String(item.overrideCount),
+                            )}
+                            severity="secondary"
+                          />
+                        ) : null}
+                      </div>
+                      <p className="mt-0 mx-0 mb-[0.35rem] text-fog font-medium leading-[1.45] break-words">
+                        {cardTitle(item, copy.untitled)}
+                      </p>
+                      <p className="mt-0 mx-0 mb-[0.35rem] text-dim text-sm leading-[1.45]">
+                        {copy.cardSummary}
+                      </p>
+                      <p className="m-0 text-dim text-sm">
+                        <ClientLocalDateTime
+                          iso={item.createdAt}
+                          locale={locale}
+                          template={copy.createdAt}
+                        />
+                      </p>
+                    </div>
                   </div>
-                  <p
-                    className="mt-0 mx-0 mb-[0.35rem] text-fog leading-[1.45] break-words"
+                  <Link
+                    href={`/approvals/${item.approvalId}`}
+                    className="no-underline shrink-0"
                   >
-                    {item.captionPreview?.trim()
-                      ? item.captionPreview
-                      : "—"}
-                  </p>
-                  <p className="m-0 text-dim text-sm">
-                    {copy.createdAt.replace(
-                      "{date}",
-                      formatCreatedAt(item.createdAt, locale),
-                    )}
-                  </p>
+                    <Button type="button" size="sm">
+                      {copy.reviewCta}
+                    </Button>
+                  </Link>
                 </div>
-                <Link
-                  href={`/approvals/${item.approvalId}`}
-                  className="no-underline shrink-0"
-                >
-                  <Button
-                    type="button"
-                    size="sm"
-                  >
-                    {copy.reviewCta}
-                  </Button>
-                </Link>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       ) : null}
     </div>

@@ -34,10 +34,12 @@ describe("resolveApprovalListCardMeta", () => {
     assert.match(compose, /resolveApprovalListCardMeta/);
     assert.match(compose, /assembledAt: meta\.assembledAt/);
     assert.match(compose, /title: meta\.title/);
+    assert.match(compose, /reelTitle/);
 
     assert.match(contract, /assembledAt:/);
     assert.match(contract, /formatKey:/);
     assert.match(contract, /title:/);
+    assert.match(contract, /reelTitle:/);
 
     assert.match(hub, /formatLabels/);
     assert.match(hub, /assembledAt/);

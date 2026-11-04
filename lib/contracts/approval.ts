@@ -304,6 +304,8 @@ export const approvalPackageDtoSchema = z
     disclosure: approvalDisclosureDtoSchema,
     qaOverrides: z.array(approvalQaOverrideDtoSchema).default([]),
     gate: approvalGateInfoSchema.optional(),
+    /** Read-time reel title (tema → hook → caption); not a DB column. */
+    reelTitle: z.string().optional(),
     /** US-11.2 — BUILD always populates after migration; optional in Zod until persist layer lands. */
     revisionCount: z.number().int().nonnegative().optional(),
     maxRevisionRounds: z.number().int().positive().optional(),

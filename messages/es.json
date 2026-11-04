@@ -554,8 +554,12 @@
       "backDashboard": "Volver al panel",
       "reviewCta": "Revisar",
       "createdAt": "Recibido {date}",
-      "disclosureChip": "Disclosure",
-      "overridesChip": "{count} notas de QA"
+      "cardSummary": "Revisa este video antes de publicarlo",
+      "untitled": "Video",
+      "disclosureChip": "Aviso de IA",
+      "disclosureTooltip": "Este video indica que usa IA",
+      "overridesChip": "{count} notas de QA",
+      "thumbnailAlt": "Vista previa del video"
     },
     "detail": {
       "title": "Revisar paquete",
@@ -565,7 +569,9 @@
       "caption": "Caption de Instagram",
       "selectedCta": "Llamado a la acción",
       "hashtags": "Hashtags",
-      "disclosureTitle": "Disclosure",
+      "disclosureTitle": "Aviso de IA",
+      "disclosureTooltip": "Este video indica que usa IA",
+      "untitled": "Video",
       "overridesTitle": "Notas de QA",
       "overridesEmpty": "No se registraron notas de QA para este paquete.",
       "overrideReason": "{reason}",
