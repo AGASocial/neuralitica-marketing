@@ -96,6 +96,10 @@ _Evitar_: approval decision
 Reglas server-side de presupuesto máximo y tier de provider antes de generar.
 _Evitar_: cost policy (EN UI ok), max_cost como concepto de negocio suelto
 
+**Política de duración de Reel**:
+Límites server-side de duración total / segmentos avatar / cutaways B-roll por familia de modalidad (`avatar` vs `faceless`), persistidos en `neuramark_reel_duration_policies` y consumidos por guion, TTS, jobs avatar y ensamblado. Avatar: 8–15s total, segmentos ≤8s, 1–2 segmentos; faceless: 15–45s.
+_Evitar_: hardcoded duration constants (salvo fallback de carga), 30s avatar video
+
 **Publicación en Instagram**:
 Acción del System que publica un Reel aprobado en la cuenta Instagram Business del Cliente vía API (Graph), ya sea inmediata (botón) o programada. Requiere Aprobación previa.
 _Evitar_: Publicación manual asistida (como único modo V1), auto-publish sin Aprobación

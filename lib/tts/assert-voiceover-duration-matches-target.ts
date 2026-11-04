@@ -2,15 +2,15 @@
  * Reject TTS that is too short/long vs script targetDurationSec.
  *
  * Faceless / default: target ± tolerance (historically 15±2 → min 13).
- * Avatar modalities: absolute 8–15s band so a valid ~12.5s avatar VO is not
- * rejected against a stale 13s floor from a 15±2 faceless rule.
+ * Avatar modalities: absolute policy band (fallback 8–15s) so a valid ~12.5s
+ * avatar VO is not rejected against a stale 13s floor from a 15±2 faceless rule.
  */
 
 import {
-  AVATAR_REEL_TARGET_DURATION_SEC_MAX,
-  AVATAR_REEL_TARGET_DURATION_SEC_MIN,
-  isAvatarVisualModality,
-} from "@/lib/contracts/avatar-reel-duration";
+  FALLBACK_REEL_DURATION_POLICIES,
+  policyForVisualModality,
+  type ReelDurationPolicy,
+} from "@/lib/contracts/reel-duration-policy";
 import type { VisualModality } from "@/lib/contracts/visual-preferences";
 import type { VisualMode } from "@/lib/contracts/providers";
 
@@ -32,8 +32,10 @@ export function assertVoiceoverDurationMatchesTarget(params: {
   actualDurationSec: number | null | undefined;
   targetDurationSec: number;
   toleranceSec?: number;
-  /** When avatar modality, use absolute 8–15s bounds instead of target±tol. */
+  /** When avatar modality, use absolute policy bounds instead of target±tol. */
   modalidad?: VisualModality | VisualMode | null;
+  /** Preferred: policy from getReelDurationPolicyForModality. */
+  policy?: ReelDurationPolicy;
 }): AssertVoiceoverDurationMatchesTargetResult {
   const toleranceSec =
     params.toleranceSec ?? TTS_DURATION_TOLERANCE_SEC_DEFAULT;
@@ -48,11 +50,15 @@ export function assertVoiceoverDurationMatchesTarget(params: {
     return { ok: true };
   }
 
+  const policy =
+    params.policy ??
+    policyForVisualModality(FALLBACK_REEL_DURATION_POLICIES, params.modalidad);
+
   let minAllowedSec: number;
   let maxAllowedSec: number;
-  if (isAvatarVisualModality(params.modalidad)) {
-    minAllowedSec = AVATAR_REEL_TARGET_DURATION_SEC_MIN;
-    maxAllowedSec = AVATAR_REEL_TARGET_DURATION_SEC_MAX;
+  if (policy.modalityKey === "avatar") {
+    minAllowedSec = policy.targetDurationSecMin;
+    maxAllowedSec = policy.targetDurationSecMax;
   } else {
     minAllowedSec = params.targetDurationSec - toleranceSec;
     maxAllowedSec = params.targetDurationSec + toleranceSec;

@@ -27,12 +27,12 @@ import { fitVoiceoverToWordBudget } from "@/lib/agents/content/fit-voiceover-to-
 import { looksLikeTruncatedVoiceoverTail } from "@/lib/agents/content/voiceover-completeness";
 import { buildGenericDisclosurePromptHint } from "@/lib/qa/build-generic-disclosure-prompt-hint";
 import {
-  AVATAR_REEL_TARGET_DURATION_SEC_MAX,
-  AVATAR_REEL_TARGET_DURATION_SEC_MIN,
   clampReelTargetDurationSec,
   isAvatarVisualModality,
-  reelTargetDurationBoundsForModality,
-} from "@/lib/contracts/avatar-reel-duration";
+  reelTargetDurationBoundsFromPolicy,
+  type ReelDurationPolicy,
+} from "@/lib/contracts/reel-duration-policy";
+import { getReelDurationPolicyForModality } from "@/lib/reel-duration-policy/get-reel-duration-policy";
 import { REEL_SCRIPT_WORDS_PER_SECOND_TARGET } from "@/lib/contracts/reel-script-readability";
 import { computeScriptReadabilityMetrics } from "@/lib/reel-scripts/compute-script-readability";
 import type { LlmProviderAdapter } from "@/lib/providers/provider-adapters";
@@ -81,6 +81,8 @@ export type ReelScriptPromptInput = {
   /** Presenter gender for grammar (Spanish masculine/feminine agreement). */
   presenterGender?: AvatarGender;
   revisionContext?: RevisionContext;
+  /** Duration bounds from neuramark_reel_duration_policies (or loader fallback). */
+  durationPolicy: ReelDurationPolicy;
 };
 
 export type ReelScriptPrompts = {
@@ -243,8 +245,14 @@ function serializeTacticaHints(
 export function buildReelScriptPrompts(
   input: ReelScriptPromptInput,
 ): ReelScriptPrompts {
-  const { profile, slotContext, locale, presenterGender, revisionContext } =
-    input;
+  const {
+    profile,
+    slotContext,
+    locale,
+    presenterGender,
+    revisionContext,
+    durationPolicy,
+  } = input;
   const { slot, formatoHints, tacticaHints, mustDiscloseForSlot, modalidad } =
     slotContext;
 
@@ -260,18 +268,16 @@ export function buildReelScriptPrompts(
     locale,
   );
 
-  const durationBounds = reelTargetDurationBoundsForModality(modalidad);
+  const durationBounds = reelTargetDurationBoundsFromPolicy(durationPolicy);
   const isAvatar = isAvatarVisualModality(modalidad);
   const durationHint =
     formatoHints.duracionIdealSeg !== null
       ? `Target duration hint from formato: ${formatoHints.duracionIdealSeg} seconds (must still be ${durationBounds.min}–${durationBounds.max} for this modality).`
       : `Target duration must be an integer between ${durationBounds.min} and ${durationBounds.max} seconds inclusive for modality ${modalidad}.`;
-  const wordBudgetExampleSec = isAvatar
-    ? AVATAR_REEL_TARGET_DURATION_SEC_MIN
-    : 15;
+  const wordBudgetExampleSec = durationBounds.min;
   const wordBudgetExampleHighSec = isAvatar
-    ? AVATAR_REEL_TARGET_DURATION_SEC_MAX
-    : 30;
+    ? durationBounds.max
+    : Math.min(30, durationBounds.max);
 
   const systemPrompt = [
     "You are a server-side Instagram Reels video script agent.",
@@ -297,8 +303,8 @@ export function buildReelScriptPrompts(
     `- Production modality for this slot (trusted): ${modalidad}`,
     durationHint,
     isAvatar
-      ? `- Avatar / talking-head reels MUST be short: ${AVATAR_REEL_TARGET_DURATION_SEC_MIN}–${AVATAR_REEL_TARGET_DURATION_SEC_MAX} seconds (prefer ~12s).`
-      : "- Faceless reels keep the longer 15–45 second range.",
+      ? `- Avatar / talking-head reels MUST be short: ${durationBounds.min}–${durationBounds.max} seconds (prefer ~12s). Never write 30s avatar videos.`
+      : `- Faceless reels keep the longer ${durationBounds.min}–${durationBounds.max} second range.`,
     `- voiceoverText word budget: hit ~${REEL_SCRIPT_WORDS_PER_SECOND_TARGET} words per second of targetDurationSec (e.g. ${wordBudgetExampleSec}s → ~${Math.round(wordBudgetExampleSec * REEL_SCRIPT_WORDS_PER_SECOND_TARGET)} words; ${wordBudgetExampleHighSec}s → ~${Math.round(wordBudgetExampleHighSec * REEL_SCRIPT_WORDS_PER_SECOND_TARGET)} words). Stay within 90–100% of that budget — too few words makes TTS finish early.`,
     "- voiceoverText MUST be a complete spoken script that ends in a finished sentence with terminal punctuation (. ! ? …). Never stop mid-clause (forbidden tails like \"Recuerda, yo soy\" / \"Remember, I am\").",
     "- Prefer dropping an earlier full sentence over cutting the closing CTA mid-sentence.",
@@ -377,12 +383,16 @@ export async function generateReelScriptForSlot(
     params.profile,
     params.avatarLanguage ?? params.locale,
   );
+  const durationPolicy = await getReelDurationPolicyForModality(
+    params.slotContext.modalidad,
+  );
   const { systemPrompt, userPrompt } = buildReelScriptPrompts({
     profile: params.profile,
     slotContext: params.slotContext,
     locale,
     presenterGender: params.presenterGender,
     revisionContext: params.revisionContext,
+    durationPolicy,
   });
 
   const baseInput = {
@@ -452,6 +462,7 @@ export async function generateReelScriptForSlot(
 
     const clampedTargetDurationSec = clampReelTargetDurationSec({
       targetDurationSec: schema.data.targetDurationSec,
+      policy: durationPolicy,
       modalidad: params.slotContext.modalidad,
     });
 

@@ -35,7 +35,8 @@ function clearModuleCache() {
       normalized.includes("/lib/supabase/server") ||
       normalized.includes("/lib/providers/") ||
       normalized.includes("/lib/cost-policy/") ||
-      normalized.includes("/lib/visual-preferences/")
+      normalized.includes("/lib/visual-preferences/") ||
+      normalized.includes("/lib/reel-duration-policy/")
     ) {
       delete require.cache[key];
     }
@@ -293,6 +294,43 @@ function installHeygenMocks(options: HeygenMockOptions) {
 
     if (req.includes("log-provider-decision")) {
       return { logProviderDecision: async () => {} };
+    }
+
+    if (req.includes("get-reel-duration-policy")) {
+      const {
+        FALLBACK_REEL_DURATION_POLICIES,
+      } = require("../contracts/reel-duration-policy.ts") as {
+        FALLBACK_REEL_DURATION_POLICIES: {
+          avatar: unknown;
+          faceless: unknown;
+        };
+      };
+      return {
+        getReelDurationPolicies: async () => FALLBACK_REEL_DURATION_POLICIES,
+        getReelDurationPolicyForModality: async () =>
+          FALLBACK_REEL_DURATION_POLICIES.avatar,
+        loadReelDurationPoliciesFresh: async () =>
+          FALLBACK_REEL_DURATION_POLICIES,
+      };
+    }
+
+    if (req.includes("materialize-avatar-segment-voiceovers")) {
+      return {
+        materializeAvatarSegmentVoiceovers: async (params: {
+          segments: Array<{
+            index: number;
+            text: string;
+            startSec: number;
+            durationSec: number;
+            requestDurationSec: number;
+            wordCount: number;
+          }>;
+        }) =>
+          params.segments.map((segment) => ({
+            ...segment,
+            voiceoverAssetId: VOICEOVER_ASSET_ID,
+          })),
+      };
     }
 
     if (req.includes("enqueue-video-job-poll")) {
@@ -689,7 +727,7 @@ describe("US-8.7 Phase B — HeyGen unlock + fallback", () => {
     assert.match(source, /heygen_high/);
   });
 
-  it("11 — M1: client targetDurationSec: 1 cannot shrink estimate below package duration", async () => {
+  it("11 — M1: client targetDurationSec: 1 cannot shrink estimate below package / planned segment duration", async () => {
     await withServerOnlyStub(async () => {
       clearModuleCache();
       let budgetEstimate: number | undefined;
@@ -701,7 +739,8 @@ describe("US-8.7 Phase B — HeyGen unlock + fallback", () => {
           visualMode: "own_avatar",
           modalidad: "own_avatar",
           hasReferenceLoop: false,
-          package: { targetDurationSec: 30, voiceoverText: "HeyGen path" },
+          // Avatar policy band (8–15); single short sentence → one planned segment.
+          package: { targetDurationSec: 12, voiceoverText: "HeyGen path" },
         },
         onBudget: (args) => {
           budgetEstimate = args?.estimatedCostCents;
@@ -725,11 +764,11 @@ describe("US-8.7 Phase B — HeyGen unlock + fallback", () => {
           confirmEstimateCents: 2,
         });
         assert.equal(result.ok, true);
-        assert.equal(harness.getLastEstimateDurationSec(), 30);
-        assert.equal(createDuration, 30);
-        assert.equal(budgetEstimate, 60);
-        assert.equal(result.estimatedCostCents, 60);
-        assert.equal(harness.getInserted()?.estimated_cost_cents, 60);
+        assert.equal(harness.getLastEstimateDurationSec(), 12);
+        assert.equal(createDuration, 12);
+        assert.equal(budgetEstimate, 24);
+        assert.equal(result.estimatedCostCents, 24);
+        assert.equal(harness.getInserted()?.estimated_cost_cents, 24);
       } finally {
         harness.restore();
       }

@@ -38,6 +38,11 @@ import { resolveCompletedAvatarSegments } from "./resolve-assembly-inputs";
 import { parseColdOpenTrimSec } from "./parse-cold-open-trim-sec";
 import { probeLocalMediaFile } from "./probe-media-streams";
 import { runFfmpeg, type RunFfmpegOptions } from "./run-ffmpeg";
+import { getReelDurationPolicies } from "@/lib/reel-duration-policy/get-reel-duration-policy";
+import {
+  avatarSegmentsMaxFromPolicy,
+  avatarSegmentsMinFromPolicy,
+} from "@/lib/contracts/reel-duration-policy";
 
 export const ASSEMBLY_FAILURE_TENANCY_MISMATCH =
   "scripts.assembly.failure.tenancyMismatch" as const;
@@ -174,7 +179,11 @@ async function runAvatarSegmentsPath(
     clientId: activeJob.clientId,
     reelScriptId: activeJob.reelScriptId,
   });
-  if (segments.length < 1) {
+  const durationPolicies = await getReelDurationPolicies();
+  const avatarPolicy = durationPolicies.avatar;
+  const minSegments = avatarSegmentsMinFromPolicy(avatarPolicy);
+  const maxSegments = avatarSegmentsMaxFromPolicy(avatarPolicy);
+  if (segments.length < minSegments || segments.length > maxSegments) {
     await failAssemblyJob(activeJob.id, ASSEMBLY_FAILURE_TENANCY_MISMATCH);
     return;
   }
@@ -251,10 +260,11 @@ async function runAvatarSegmentsPath(
     const expectedDurationSec = voiceoverProbe.durationSec;
     const ffmpegArgs = buildAvatarSegmentTimelineArgs({
       segments: segmentLocals,
-      brollPaths,
+      brollPaths: avatarPolicy.brollCutawaysAllowed ? brollPaths : [],
       localVoiceoverPath: voiceoverPath,
       localOutputPath: outputPath,
       voiceoverDurationSec: voiceoverProbe.durationSec,
+      cutawaySec: avatarPolicy.brollCutawaysAllowed ? undefined : 0,
     });
 
     await finishFfmpegUpload({

@@ -7,6 +7,7 @@ import {
 import { resolveAvatarRequestDurationSec } from "@/lib/video-jobs/resolve-avatar-request-duration-sec";
 import { planAvatarVoiceoverSegments } from "@/lib/video-jobs/plan-avatar-voiceover-segments";
 import { materializeAvatarSegmentVoiceovers } from "@/lib/video-jobs/materialize-avatar-segment-voiceovers";
+import { getReelDurationPolicyForModality } from "@/lib/reel-duration-policy/get-reel-duration-policy";
 import {
   HEYGEN_FALLBACK_RATIONALE_KEY,
   HEYGEN_HIGH_TIER_RATIONALE_KEY,
@@ -385,6 +386,9 @@ export async function createHeygenTalkingHeadVideoJob(
       assetId: voiceoverAssetId,
       clientId: input.clientId,
     });
+    const durationPolicy = await getReelDurationPolicyForModality(
+      script.modalidad ?? script.visualMode,
+    );
     // Prefer VO length; segments further ceil per-slice for the provider request.
     const plannedSegments = planAvatarVoiceoverSegments({
       voiceoverText: script.package.voiceoverText,
@@ -394,6 +398,7 @@ export async function createHeygenTalkingHeadVideoJob(
           voiceoverDurationSec,
           scriptTargetDurationSec,
         }),
+      policy: durationPolicy,
     });
     // V1 create path: one job for the first (or only) segment covering the
     // full VO when a single segment is planned. Multi-segment enqueue creates

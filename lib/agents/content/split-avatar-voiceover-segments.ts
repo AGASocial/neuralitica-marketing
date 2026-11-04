@@ -1,11 +1,17 @@
 /**
- * Split avatar voiceover into 1–2 segments on sentence boundaries.
- * Each segment ≤ AVATAR_VOICEOVER_SEGMENT_MAX_SEC (~8s). If total ≤ 8s → one segment.
+ * Split avatar voiceover into 1–N segments on sentence boundaries.
+ * Each segment ≤ maxSegmentSec (policy avatarSegmentMaxSec, fallback 8s).
+ * If total ≤ maxSegmentSec → one segment. Cap at maxSegments (policy, fallback 2).
  * Duration estimates use the calibrated ~2.5 words/sec target when no measured
  * total duration is supplied; when totalDurationSec is known, sentence weights
  * are scaled to sum exactly to that duration.
  */
-import { AVATAR_VOICEOVER_SEGMENT_MAX_SEC } from "@/lib/contracts/avatar-reel-duration";
+import {
+  FALLBACK_REEL_DURATION_POLICIES,
+  avatarSegmentMaxSecFromPolicy,
+  avatarSegmentsMaxFromPolicy,
+  type ReelDurationPolicy,
+} from "@/lib/contracts/reel-duration-policy";
 import { REEL_SCRIPT_WORDS_PER_SECOND_TARGET } from "@/lib/contracts/reel-script-readability";
 import { countVoiceoverWords } from "@/lib/reel-scripts/compute-script-readability";
 import { splitVoiceoverSentences } from "@/lib/agents/content/fit-voiceover-to-word-budget";
@@ -33,7 +39,7 @@ function estimateDurationFromWords(wordCount: number): number {
 }
 
 /**
- * Pack sentences into at most two segments, each ≤ maxSegmentSec.
+ * Pack sentences into at most maxSegments segments, each ≤ maxSegmentSec.
  * Prefers a single segment when total duration fits.
  */
 export function splitAvatarVoiceoverSegments(params: {
@@ -41,9 +47,15 @@ export function splitAvatarVoiceoverSegments(params: {
   /** Measured full VO duration when available (preferred). */
   totalDurationSec?: number | null;
   maxSegmentSec?: number;
+  maxSegments?: number;
+  /** Preferred: avatar policy from loader. */
+  policy?: ReelDurationPolicy;
 }): SplitAvatarVoiceoverSegmentsResult {
+  const policy = params.policy ?? FALLBACK_REEL_DURATION_POLICIES.avatar;
   const maxSegmentSec =
-    params.maxSegmentSec ?? AVATAR_VOICEOVER_SEGMENT_MAX_SEC;
+    params.maxSegmentSec ?? avatarSegmentMaxSecFromPolicy(policy);
+  const maxSegments =
+    params.maxSegments ?? avatarSegmentsMaxFromPolicy(policy);
   const text = params.voiceoverText.trim();
   const sentences = splitVoiceoverSentences(text);
   const wordCounts = sentences.map((s) => countVoiceoverWords(s));
@@ -79,7 +91,11 @@ export function splitAvatarVoiceoverSegments(params: {
     Math.max(0.05, estimateDurationFromWords(w) * scale),
   );
 
-  if (totalDurationSec <= maxSegmentSec || sentences.length === 1) {
+  if (
+    totalDurationSec <= maxSegmentSec ||
+    sentences.length === 1 ||
+    maxSegments <= 1
+  ) {
     return {
       segments: [
         {
@@ -94,8 +110,8 @@ export function splitAvatarVoiceoverSegments(params: {
     };
   }
 
-  // Find a sentence boundary split where both sides are ≤ maxSegmentSec,
-  // preferring a split near the midpoint.
+  // V1: pack into at most two segments (policy max is 2). Find a sentence
+  // boundary split where both sides are ≤ maxSegmentSec, preferring midpoint.
   let bestSplit = -1;
   let bestScore = Number.POSITIVE_INFINITY;
   let cum = 0;
@@ -112,8 +128,8 @@ export function splitAvatarVoiceoverSegments(params: {
     }
   }
 
-  // If no clean ≤8s/≤8s split, still bisect at the midpoint sentence so we
-  // never emit more than two segments; callers ceil duration for the provider.
+  // If no clean ≤max/≤max split, still bisect at the midpoint sentence so we
+  // never emit more than maxSegments; callers ceil duration for the provider.
   if (bestSplit < 0) {
     let running = 0;
     const midpoint = totalDurationSec / 2;
@@ -136,23 +152,25 @@ export function splitAvatarVoiceoverSegments(params: {
   const leftWords = wordCounts.slice(0, bestSplit).reduce((s, n) => s + n, 0);
   const rightWords = totalWords - leftWords;
 
+  const segments: AvatarVoiceoverSegment[] = [
+    {
+      index: 0,
+      text: leftSentences.join(" "),
+      startSec: 0,
+      durationSec: leftDuration,
+      wordCount: leftWords,
+    },
+    {
+      index: 1,
+      text: rightSentences.join(" "),
+      startSec: leftDuration,
+      durationSec: rightDuration,
+      wordCount: rightWords,
+    },
+  ];
+
   return {
-    segments: [
-      {
-        index: 0,
-        text: leftSentences.join(" "),
-        startSec: 0,
-        durationSec: leftDuration,
-        wordCount: leftWords,
-      },
-      {
-        index: 1,
-        text: rightSentences.join(" "),
-        startSec: leftDuration,
-        durationSec: rightDuration,
-        wordCount: rightWords,
-      },
-    ],
+    segments: segments.slice(0, maxSegments),
     totalDurationSec,
   };
 }

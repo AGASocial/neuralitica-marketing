@@ -1,9 +1,15 @@
 /**
- * Plan 1–2 avatar talking-head segments from full VO text + measured duration.
+ * Plan 1–N avatar talking-head segments from full VO text + measured duration.
  * Provider request duration = ceil(segment audio length), not script target.
+ * Bounds come from reel duration policy (fallback when caller omits policy).
  */
 import { splitAvatarVoiceoverSegments } from "@/lib/agents/content/split-avatar-voiceover-segments";
-import { AVATAR_VOICEOVER_SEGMENT_MAX_SEC } from "@/lib/contracts/avatar-reel-duration";
+import {
+  FALLBACK_REEL_DURATION_POLICIES,
+  avatarSegmentMaxSecFromPolicy,
+  avatarSegmentsMaxFromPolicy,
+  type ReelDurationPolicy,
+} from "@/lib/contracts/reel-duration-policy";
 
 export type PlannedAvatarVoiceoverSegment = {
   index: number;
@@ -19,11 +25,21 @@ export function planAvatarVoiceoverSegments(params: {
   voiceoverText: string;
   totalDurationSec: number | null | undefined;
   maxSegmentSec?: number;
+  maxSegments?: number;
+  policy?: ReelDurationPolicy;
 }): PlannedAvatarVoiceoverSegment[] {
+  const policy = params.policy ?? FALLBACK_REEL_DURATION_POLICIES.avatar;
+  const maxSegmentSec =
+    params.maxSegmentSec ?? avatarSegmentMaxSecFromPolicy(policy);
+  const maxSegments =
+    params.maxSegments ?? avatarSegmentsMaxFromPolicy(policy);
+
   const split = splitAvatarVoiceoverSegments({
     voiceoverText: params.voiceoverText,
     totalDurationSec: params.totalDurationSec,
-    maxSegmentSec: params.maxSegmentSec ?? AVATAR_VOICEOVER_SEGMENT_MAX_SEC,
+    maxSegmentSec,
+    maxSegments,
+    policy,
   });
 
   return split.segments.map((segment) => ({
@@ -31,6 +47,8 @@ export function planAvatarVoiceoverSegments(params: {
     text: segment.text,
     startSec: segment.startSec,
     durationSec: segment.durationSec,
+    // Ceil measured slice; splitter already targets ≤ maxSegmentSec when
+    // sentence boundaries allow. Do not silently shrink below audio length.
     requestDurationSec: Math.max(1, Math.ceil(segment.durationSec)),
     wordCount: segment.wordCount,
   }));
