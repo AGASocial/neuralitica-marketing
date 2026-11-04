@@ -5,8 +5,12 @@ import { tool } from "ai";
 import type { CurrentUser } from "@/lib/auth/get-current-user-types";
 import {
   assertProposalIsNonMutating,
+  getScriptPreviewInputSchema,
+  getScriptPreviewOutputSchema,
   getScriptsStatusInputSchema,
   getScriptsStatusOutputSchema,
+  getVideoPreviewInputSchema,
+  getVideoPreviewOutputSchema,
   getWeeklyStrategyInputSchema,
   getWeeklyStrategyOutputSchema,
   listCampaignStatusInputSchema,
@@ -22,6 +26,10 @@ import {
   proposeGenerateStrategyOutputSchema,
   proposeGenerateVideosInputSchema,
   proposeGenerateVideosOutputSchema,
+  proposeRegenerateScriptInputSchema,
+  proposeRegenerateScriptOutputSchema,
+  proposeRequestVideoChangesInputSchema,
+  proposeRequestVideoChangesOutputSchema,
   type OrchestratorToolError,
 } from "@/lib/contracts/orchestrator-chat";
 import type { Locale } from "@/lib/i18n/locales";
@@ -32,8 +40,11 @@ import {
 } from "@/lib/orchestrator-chat/authorize";
 import { proposalSummary } from "@/lib/orchestrator-chat/proposal-copy";
 import { resolveOrchestratorWeekStart } from "@/lib/orchestrator-chat/week";
-import { listApprovedApprovalsForClientUser } from "@/lib/approvals/list-get-approvals";
-import { listPendingApprovalsForClientUser } from "@/lib/approvals/list-get-approvals";
+import {
+  getApprovalPackageForClient,
+  listApprovedApprovalsForClientUser,
+  listPendingApprovalsForClientUser,
+} from "@/lib/approvals/list-get-approvals";
 import { loadLatestStrategyRowWithApproval } from "@/lib/content-strategy/load-latest-strategy-row-with-approval";
 import { toContentStrategyView } from "@/lib/content-strategy/to-strategy-view";
 import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved-strategy-for-week";
@@ -309,7 +320,7 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
 
     proposeApprovePendingVideo: tool({
       description:
-        "Propose approving a video waiting for the owner. Does NOT approve until the user taps Approve on the card.",
+        "Propose approving a video waiting for the owner, with playable preview. Does NOT approve until the user taps Approve on the card.",
       inputSchema: proposeApprovePendingVideoInputSchema,
       execute: async (raw) => {
         const parsed = proposeApprovePendingVideoInputSchema.safeParse(raw);
@@ -335,6 +346,10 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
             message: "No video is waiting for approval right now.",
           });
         }
+        const pkg = await getApprovalPackageForClient({
+          rawInput: { approvalId: item.approvalId },
+          user,
+        });
         const proposal = {
           kind: "approve_pending_video" as const,
           requiresConfirmation: true as const,
@@ -345,10 +360,266 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
           approvalId: item.approvalId,
           action: "decideApproval" as const,
           decision: "approved" as const,
-          captionPreview: item.captionPreview?.slice(0, 200),
+          captionPreview:
+            pkg.ok === true
+              ? pkg.package.caption.body.slice(0, 500)
+              : item.captionPreview?.slice(0, 500),
+          ...(pkg.ok === true
+            ? {
+                videoPreviewUrl: pkg.package.video.previewUrl,
+                ...(pkg.package.cover?.previewUrl
+                  ? { coverPreviewUrl: pkg.package.cover.previewUrl }
+                  : {}),
+              }
+            : {}),
         };
         assertProposalIsNonMutating(proposal);
         return proposeApprovePendingVideoOutputSchema.parse({
+          ok: true,
+          proposal,
+        });
+      },
+    }),
+
+    getVideoPreview: tool({
+      description:
+        "Show a playable preview of a video waiting for the owner (or a specific approval). Use when the user asks to see/watch a video.",
+      inputSchema: getVideoPreviewInputSchema,
+      execute: async (raw) => {
+        const parsed = getVideoPreviewInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        let approvalId = parsed.data.approvalId;
+        if (!approvalId) {
+          const pending = await listPendingApprovalsForClientUser({ user });
+          if (!pending.ok || pending.items.length === 0) {
+            return toolError({
+              ok: false,
+              error: "NOT_FOUND",
+              message: "No video is waiting for approval right now.",
+            });
+          }
+          approvalId = pending.items[0]!.approvalId;
+        }
+        const pkg = await getApprovalPackageForClient({
+          rawInput: { approvalId },
+          user,
+        });
+        if (!pkg.ok) {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "Could not load that video preview.",
+          });
+        }
+        return getVideoPreviewOutputSchema.parse({
+          ok: true,
+          approvalId: pkg.package.approvalId,
+          status: pkg.package.status,
+          videoPreviewUrl: pkg.package.video.previewUrl,
+          ...(pkg.package.cover?.previewUrl
+            ? { coverPreviewUrl: pkg.package.cover.previewUrl }
+            : {}),
+          captionBody: pkg.package.caption.body.slice(0, 2000),
+          selectedCtaText: pkg.package.caption.selectedCtaText.slice(0, 200),
+        });
+      },
+    }),
+
+    getScriptPreview: tool({
+      description:
+        "Show the plain-language write-up for one video this week so the owner can read it. Operator/Advanced.",
+      inputSchema: getScriptPreviewInputSchema,
+      execute: async (raw) => {
+        if (!isOperator(user)) {
+          return toolError(orchestratorForbidden());
+        }
+        const parsed = getScriptPreviewInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const weekStart = resolveOrchestratorWeekStart(parsed.data.weekStart);
+        const approved = await getApprovedStrategyForWeek({
+          clientId: user.id,
+          weekStart,
+        });
+        if (!approved || approved.status !== "approved") {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "No approved plan with write-ups for that week.",
+          });
+        }
+        const { items } = await buildReelScriptListForStrategy({
+          clientId: user.id,
+          weekStart,
+          strategyId: approved.id,
+          version: approved.version,
+          brief: approved.brief,
+        });
+        const slotIndex =
+          parsed.data.slotIndex ??
+          items.find((i) => i.status === "generated")?.slotIndex ??
+          items[0]?.slotIndex;
+        if (slotIndex === undefined) {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "No write-up to show.",
+          });
+        }
+        const item = items.find((i) => i.slotIndex === slotIndex);
+        if (!item) {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "No write-up for that video.",
+          });
+        }
+        return getScriptPreviewOutputSchema.parse({
+          ok: true,
+          weekStart,
+          slotIndex: item.slotIndex,
+          scriptId: item.scriptId,
+          tema: item.tema,
+          status: item.status,
+          ...(item.package
+            ? {
+                hook: item.package.hook.slice(0, 500),
+                body: item.package.body.slice(0, 2000),
+                cta: item.package.cta.slice(0, 300),
+              }
+            : {}),
+        });
+      },
+    }),
+
+    proposeRequestVideoChanges: tool({
+      description:
+        "Propose requesting changes on a pending video after the owner describes what to change. Does NOT submit until Approve. Call this when they use Change something and tell you the edit.",
+      inputSchema: proposeRequestVideoChangesInputSchema,
+      execute: async (raw) => {
+        const parsed = proposeRequestVideoChangesInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const pending = await listPendingApprovalsForClientUser({ user });
+        if (!pending.ok) {
+          return toolError({
+            ok: false,
+            error: "INTERNAL",
+            message: "Could not load videos waiting for approval.",
+          });
+        }
+        const item =
+          parsed.data.approvalId !== undefined
+            ? pending.items.find((i) => i.approvalId === parsed.data.approvalId)
+            : pending.items[0];
+        if (!item) {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "No video is waiting for approval right now.",
+          });
+        }
+        const pkg = await getApprovalPackageForClient({
+          rawInput: { approvalId: item.approvalId },
+          user,
+        });
+        const tags = parsed.data.tags ?? ["script", "caption"];
+        const proposal = {
+          kind: "request_video_changes" as const,
+          requiresConfirmation: true as const,
+          mutates: false as const,
+          incursSpend: false,
+          estimatedCostCents: null,
+          summary: proposalSummary(locale, "request_video_changes"),
+          approvalId: item.approvalId,
+          action: "decideApproval" as const,
+          decision: "request_changes" as const,
+          changeSummary: parsed.data.changeSummary.slice(0, 500),
+          tags,
+          captionPreview:
+            pkg.ok === true
+              ? pkg.package.caption.body.slice(0, 500)
+              : item.captionPreview?.slice(0, 500),
+          ...(pkg.ok === true
+            ? {
+                videoPreviewUrl: pkg.package.video.previewUrl,
+                ...(pkg.package.cover?.previewUrl
+                  ? { coverPreviewUrl: pkg.package.cover.previewUrl }
+                  : {}),
+              }
+            : {}),
+        };
+        assertProposalIsNonMutating(proposal);
+        return proposeRequestVideoChangesOutputSchema.parse({
+          ok: true,
+          proposal,
+        });
+      },
+    }),
+
+    proposeRegenerateScript: tool({
+      description:
+        "Propose rewriting one video’s write-up after the owner describes the change. Does NOT regenerate until Approve. Operator/Advanced.",
+      inputSchema: proposeRegenerateScriptInputSchema,
+      execute: async (raw) => {
+        if (!isOperator(user)) {
+          return toolError(orchestratorForbidden());
+        }
+        const parsed = proposeRegenerateScriptInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const weekStart = resolveOrchestratorWeekStart(parsed.data.weekStart);
+        const approved = await getApprovedStrategyForWeek({
+          clientId: user.id,
+          weekStart,
+        });
+        if (!approved || approved.status !== "approved") {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "No approved plan for that week.",
+          });
+        }
+        const { items } = await buildReelScriptListForStrategy({
+          clientId: user.id,
+          weekStart,
+          strategyId: approved.id,
+          version: approved.version,
+          brief: approved.brief,
+        });
+        const item = items.find((i) => i.slotIndex === parsed.data.slotIndex);
+        if (!item || item.status !== "generated" || !item.package) {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "That write-up is not ready to rewrite yet.",
+          });
+        }
+        const proposal = {
+          kind: "regenerate_script" as const,
+          requiresConfirmation: true as const,
+          mutates: false as const,
+          incursSpend: true,
+          estimatedCostCents: null,
+          summary: proposalSummary(locale, "regenerate_script"),
+          weekStart,
+          slotIndex: item.slotIndex,
+          action: "regenerateReelScriptSlot" as const,
+          ...(parsed.data.changeSummary
+            ? { changeSummary: parsed.data.changeSummary.slice(0, 500) }
+            : {}),
+          tema: item.tema,
+          hook: item.package.hook.slice(0, 500),
+          body: item.package.body.slice(0, 2000),
+          cta: item.package.cta.slice(0, 300),
+        };
+        assertProposalIsNonMutating(proposal);
+        return proposeRegenerateScriptOutputSchema.parse({
           ok: true,
           proposal,
         });

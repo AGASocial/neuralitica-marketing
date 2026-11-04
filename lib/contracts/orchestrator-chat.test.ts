@@ -195,4 +195,68 @@ describe("orchestrator-chat contracts", () => {
     assertProposalIsNonMutating(parsed.proposal);
     assert.equal(parsed.proposal.paidMediaRequiresCostConfirm, true);
   });
+
+  it("proposeRequestVideoChanges and regenerate_script are non-mutating", async () => {
+    const {
+      proposeRequestVideoChangesOutputSchema: reqSchema,
+      proposeRegenerateScriptOutputSchema: regenSchema,
+      getVideoPreviewOutputSchema: videoSchema,
+      getScriptPreviewOutputSchema: scriptSchema,
+    } = await import("./orchestrator-chat");
+    const approvalId = "22222222-2222-4222-8222-222222222222";
+    const assetId = "33333333-3333-4333-8333-333333333333";
+    const req = reqSchema.parse({
+      ok: true,
+      proposal: {
+        kind: "request_video_changes",
+        requiresConfirmation: true,
+        mutates: false,
+        incursSpend: false,
+        estimatedCostCents: null,
+        summary: "Request changes.",
+        approvalId,
+        action: "decideApproval",
+        decision: "request_changes",
+        changeSummary: "Make the opening shorter",
+        tags: ["script"],
+        videoPreviewUrl: `/api/media/assets/${assetId}`,
+      },
+    });
+    assertProposalIsNonMutating(req.proposal);
+
+    const regen = regenSchema.parse({
+      ok: true,
+      proposal: {
+        kind: "regenerate_script",
+        requiresConfirmation: true,
+        mutates: false,
+        incursSpend: true,
+        estimatedCostCents: null,
+        summary: "Rewrite write-up.",
+        weekStart: WEEK,
+        slotIndex: 0,
+        action: "regenerateReelScriptSlot",
+        hook: "Hi neighbors",
+        body: "We fix leaks fast.",
+        cta: "Call us",
+      },
+    });
+    assertProposalIsNonMutating(regen.proposal);
+
+    videoSchema.parse({
+      ok: true,
+      approvalId,
+      status: "pending",
+      videoPreviewUrl: `/api/media/assets/${assetId}`,
+      captionBody: "Caption",
+    });
+    scriptSchema.parse({
+      ok: true,
+      weekStart: WEEK,
+      slotIndex: 0,
+      scriptId: null,
+      tema: "Tip",
+      status: "pending",
+    });
+  });
 });

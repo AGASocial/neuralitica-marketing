@@ -113,6 +113,16 @@
       "scriptsWaiting": "{count} todavía pendientes",
       "emptyScripts": "Aún no hay textos para un plan aprobado."
     },
+    "preview": {
+      "videoTitle": "Tu video",
+      "scriptTitle": "Texto del video",
+      "captionLabel": "Pie de foto",
+      "hookLabel": "Apertura",
+      "bodyLabel": "Texto principal",
+      "ctaLabel": "Llamada a la acción",
+      "playHint": "Dale play para verlo. Luego aprueba o dime qué cambiar.",
+      "pendingScript": "Este texto todavía no está listo."
+    },
     "errors": {
       "internal": "Algo salió mal. Inténtalo más tarde."
     }

@@ -64,9 +64,13 @@ right-side sheet (header toggle + keyboard shortcut), and Home emphasizes chat.
 | `proposeApprovePendingVideo` | proposal | client + operator | **no** → `decideApproval` | “Approve this video?” |
 | `proposeGenerateScripts` | proposal | operator | **no** → `generateReelScripts` | “Write this week’s videos?” |
 | `proposeGenerateVideos` | proposal | operator | **no** → prepare scripts; paid media needs cost card (KAN-93) | “Create the videos?” |
+| `getVideoPreview` | read | client + operator | no | Playable video + caption |
+| `getScriptPreview` | read | operator | no | Readable write-up |
+| `proposeRequestVideoChanges` | proposal | client + operator | **no** → `decideApproval` request_changes | “Apply these changes?” |
+| `proposeRegenerateScript` | proposal | operator | **no** → `regenerateReelScriptSlot` | “Rewrite this write-up?” |
 
-Later: script/video preview cards, spend confirm before paid generation, photo/
-presenter setup via chat, MCP-UI host, thread persistence.
+Later: spend confirm before paid generation (KAN-93), photo/presenter setup via
+chat, MCP-UI host, thread persistence.
 
 ### Phases
 

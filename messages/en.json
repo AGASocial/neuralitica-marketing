@@ -113,6 +113,16 @@
       "scriptsWaiting": "{count} still waiting",
       "emptyScripts": "No write-ups yet for an approved plan."
     },
+    "preview": {
+      "videoTitle": "Your video",
+      "scriptTitle": "Video write-up",
+      "captionLabel": "Caption",
+      "hookLabel": "Opening",
+      "bodyLabel": "Main text",
+      "ctaLabel": "Call to action",
+      "playHint": "Press play to watch. Then approve or tell me what to change.",
+      "pendingScript": "This write-up is not ready yet."
+    },
     "errors": {
       "internal": "Something went wrong. Please try again later."
     }

@@ -21,7 +21,14 @@ export const ORCHESTRATOR_PROPOSAL_KINDS = [
   "approve_pending_video",
   "generate_scripts",
   "generate_videos",
+  "request_video_changes",
+  "regenerate_script",
 ] as const;
+
+/** Owner-safe media preview path (same shape as approval packages). */
+export const orchestratorPreviewUrlSchema = z
+  .string()
+  .regex(/^\/api\/media\/assets\/[0-9a-f-]{36}$/i);
 
 export const orchestratorProposalKindSchema = z.enum(ORCHESTRATOR_PROPOSAL_KINDS);
 export type OrchestratorProposalKind = z.infer<
@@ -226,13 +233,137 @@ export const proposeApprovePendingVideoOutputSchema = z
       approvalId: z.string().uuid(),
       action: z.literal("decideApproval"),
       decision: z.literal("approved"),
-      captionPreview: z.string().max(200).optional(),
+      captionPreview: z.string().max(500).optional(),
+      videoPreviewUrl: orchestratorPreviewUrlSchema.optional(),
+      coverPreviewUrl: orchestratorPreviewUrlSchema.optional(),
     }),
   })
   .strict();
 
 export type ProposeApprovePendingVideoOutput = z.infer<
   typeof proposeApprovePendingVideoOutputSchema
+>;
+
+export const getVideoPreviewInputSchema = z
+  .object({
+    approvalId: z.string().uuid().optional(),
+  })
+  .strict();
+
+export type GetVideoPreviewInput = z.infer<typeof getVideoPreviewInputSchema>;
+
+export const getVideoPreviewOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    approvalId: z.string().uuid(),
+    status: z.string().min(1).max(40),
+    videoPreviewUrl: orchestratorPreviewUrlSchema,
+    coverPreviewUrl: orchestratorPreviewUrlSchema.optional(),
+    captionBody: z.string().max(2000),
+    selectedCtaText: z.string().max(200).optional(),
+  })
+  .strict();
+
+export type GetVideoPreviewOutput = z.infer<typeof getVideoPreviewOutputSchema>;
+
+export const getScriptPreviewInputSchema = z
+  .object({
+    weekStart: trendWeekStartSchema.optional(),
+    slotIndex: z.number().int().min(0).max(6).optional(),
+  })
+  .strict();
+
+export type GetScriptPreviewInput = z.infer<typeof getScriptPreviewInputSchema>;
+
+export const getScriptPreviewOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    weekStart: trendWeekStartSchema,
+    slotIndex: z.number().int().min(0).max(6),
+    scriptId: z.string().uuid().nullable(),
+    tema: z.string().max(200),
+    status: z.enum(["pending", "generated"]),
+    hook: z.string().max(500).optional(),
+    body: z.string().max(2000).optional(),
+    cta: z.string().max(300).optional(),
+  })
+  .strict();
+
+export type GetScriptPreviewOutput = z.infer<
+  typeof getScriptPreviewOutputSchema
+>;
+
+export const proposeRequestVideoChangesInputSchema = z
+  .object({
+    approvalId: z.string().uuid().optional(),
+    changeSummary: z.string().trim().min(1).max(500),
+    tags: z
+      .array(z.enum(["script", "caption", "assembly", "branding"]))
+      .min(1)
+      .max(4)
+      .optional(),
+  })
+  .strict();
+
+export type ProposeRequestVideoChangesInput = z.infer<
+  typeof proposeRequestVideoChangesInputSchema
+>;
+
+export const proposeRequestVideoChangesOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    proposal: orchestratorProposalMetaSchema.extend({
+      kind: z.literal("request_video_changes"),
+      approvalId: z.string().uuid(),
+      action: z.literal("decideApproval"),
+      decision: z.literal("request_changes"),
+      changeSummary: z.string().min(1).max(500),
+      tags: z
+        .array(z.enum(["script", "caption", "assembly", "branding"]))
+        .min(1)
+        .max(4),
+      videoPreviewUrl: orchestratorPreviewUrlSchema.optional(),
+      coverPreviewUrl: orchestratorPreviewUrlSchema.optional(),
+      captionPreview: z.string().max(500).optional(),
+    }),
+  })
+  .strict();
+
+export type ProposeRequestVideoChangesOutput = z.infer<
+  typeof proposeRequestVideoChangesOutputSchema
+>;
+
+export const proposeRegenerateScriptInputSchema = z
+  .object({
+    weekStart: trendWeekStartSchema.optional(),
+    slotIndex: z.number().int().min(0).max(6),
+    changeSummary: z.string().trim().min(1).max(500).optional(),
+  })
+  .strict();
+
+export type ProposeRegenerateScriptInput = z.infer<
+  typeof proposeRegenerateScriptInputSchema
+>;
+
+export const proposeRegenerateScriptOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    proposal: orchestratorProposalMetaSchema.extend({
+      kind: z.literal("regenerate_script"),
+      weekStart: trendWeekStartSchema,
+      slotIndex: z.number().int().min(0).max(6),
+      action: z.literal("regenerateReelScriptSlot"),
+      changeSummary: z.string().max(500).optional(),
+      tema: z.string().max(200).optional(),
+      hook: z.string().max(500).optional(),
+      body: z.string().max(2000).optional(),
+      cta: z.string().max(300).optional(),
+    }),
+  })
+  .strict();
+
+export type ProposeRegenerateScriptOutput = z.infer<
+  typeof proposeRegenerateScriptOutputSchema
 >;
 
 export const proposeGenerateScriptsInputSchema = z
