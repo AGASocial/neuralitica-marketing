@@ -297,3 +297,33 @@ export function mapMyVideosPendingToCard(input: {
     ],
   });
 }
+
+/** Hoy Needs-OK card: Approve + Change (Change opens anchored chat via onAction). */
+export function mapHoyPendingToCard(input: {
+  item: ApprovalListItemDto & { videoPreviewUrl?: string };
+  title: string;
+  summary?: string;
+  approveLabel: string;
+  changeLabel: string;
+  badges?: string[];
+  locale?: "en" | "es";
+}): AgentCardData {
+  return parseAgentCard({
+    type: "reel_approval",
+    title: input.title,
+    summary: input.summary,
+    props: {
+      approvalId: input.item.approvalId,
+      videoPreviewUrl: input.item.videoPreviewUrl,
+      captionPreview: input.item.captionPreview,
+      previewMode: input.item.videoPreviewUrl ? "player" : "thumbnail",
+      badges: input.badges,
+      createdAtIso: input.item.assembledAt ?? input.item.createdAt,
+      locale: input.locale,
+    },
+    actions: [
+      { id: "approve", label: input.approveLabel, role: "primary" },
+      { id: "change", label: input.changeLabel, role: "secondary" },
+    ],
+  });
+}

@@ -146,7 +146,7 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(ttsBlock, /¿Cuánto cuesta la voz para mi video\?/);
   });
 
-  it("mobile chat FAB is safe-area aware and hidden when panel open", () => {
+  it("mobile chat FAB is removed in favor of layout composer (KAN-104/105)", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const panel = readFileSync(
       join(
@@ -155,11 +155,12 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
       ),
       "utf8",
     );
-    assert.match(panel, /OrchestratorChatFab/);
-    assert.match(panel, /safe-area-inset-bottom/);
-    assert.match(panel, /safe-area-inset-right/);
-    assert.match(panel, /md:hidden/);
-    assert.match(panel, /if \(open\) \{\s*return null;/);
+    const shell = readFileSync(
+      join(here, "../../components/layout/AppShell.tsx"),
+      "utf8",
+    );
+    assert.doesNotMatch(panel, /OrchestratorChatFab/);
+    assert.match(shell, /OwnerComposer/);
   });
 
   it("paid generation only runs from confirm action after Approve", () => {

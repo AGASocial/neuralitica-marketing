@@ -52,7 +52,7 @@ MCP-UI (`@mcp-ui/*`) is optional later — same proposal/confirm semantics.
 Old flat nav (5 client + 6 operator links) is replaced by this grouping. **All
 existing routes stay reachable**; nothing is deleted. Chat is a persistent
 right-side sheet (header **Chat** toggle always labeled + keyboard shortcut;
-mobile FAB bottom-right, safe-area aware, hidden while the sheet is open), and
+layout compositor in the owner shell — FAB removed in KAN-104/105; see ADR-0011), and
 Home emphasizes chat.
 
 **Home dashboard (KAN-98):** `/dashboard` is an owner status home — single next

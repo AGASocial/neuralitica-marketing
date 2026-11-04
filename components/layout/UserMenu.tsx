@@ -36,9 +36,20 @@ type UserMenuProps = {
   displayName: string;
   email: string;
   copy: UserMenuCopy;
+  /** Operator Advanced links — shown in menu on small viewports (KAN-105). */
+  advancedLinks?: {
+    label: string;
+    items: Array<{ href: string; label: string }>;
+  };
 };
 
-export function UserMenu({ locale, displayName, email, copy }: UserMenuProps) {
+export function UserMenu({
+  locale,
+  displayName,
+  email,
+  copy,
+  advancedLinks,
+}: UserMenuProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -104,6 +115,17 @@ export function UserMenu({ locale, displayName, email, copy }: UserMenuProps) {
         <DropdownMenuItem asChild>
           <Link href="/settings">{copy.settings}</Link>
         </DropdownMenuItem>
+        {advancedLinks && advancedLinks.items.length > 0 ? (
+          <div className="md:hidden">
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>{advancedLinks.label}</DropdownMenuLabel>
+            {advancedLinks.items.map((item) => (
+              <DropdownMenuItem key={item.href} asChild>
+                <Link href={item.href}>{item.label}</Link>
+              </DropdownMenuItem>
+            ))}
+          </div>
+        ) : null}
         <DropdownMenuSeparator />
         <div className="px-1 py-1">
           <LogoutButton appearance="header" copy={copy.logout} />

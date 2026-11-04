@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MessageSquareIcon } from "lucide-react";
 
 import {
   AppNavMenu,
@@ -6,23 +7,24 @@ import {
   type AppNavLink,
 } from "@/components/layout/AppNavMenu";
 import { UserMenu } from "@/components/layout/UserMenu";
-import {
-  OrchestratorChatFab,
-  OrchestratorChatPanel,
-  OrchestratorChatToggle,
-} from "@/components/orchestrator-chat/OrchestratorChatPanel";
+import { OrchestratorChatPanel } from "@/components/orchestrator-chat/OrchestratorChatPanel";
+import { Button } from "@/components/ui/button";
 import type { CurrentUser } from "@/lib/auth/get-current-user";
 import { getTranslations } from "@/lib/i18n/get-translations";
-import { loadSuggestedPromptChips } from "@/lib/orchestrator-chat/load-suggested-prompt-chips";
+import type { SuggestedPromptChip } from "@/lib/orchestrator-chat/select-suggested-prompt-chips";
 
 type AppHeaderProps = {
   locale: "en" | "es";
   user: CurrentUser;
+  suggestedChips: SuggestedPromptChip[];
 };
 
-export async function AppHeader({ locale, user }: AppHeaderProps) {
+export async function AppHeader({
+  locale,
+  user,
+  suggestedChips,
+}: AppHeaderProps) {
   const t = getTranslations(locale);
-  const suggestedChips = await loadSuggestedPromptChips({ user, locale });
 
   const primary: AppNavLink[] = [
     { href: "/dashboard", label: t.header.nav.home },
@@ -41,22 +43,27 @@ export async function AppHeader({ locale, user }: AppHeaderProps) {
     },
   ];
 
-  if (user.role === "operator") {
+  const advancedItems =
+    user.role === "operator"
+      ? [
+          { href: "/operator/strategy", label: t.header.nav.strategy },
+          { href: "/operator/scripts", label: t.header.nav.scripts },
+          { href: "/operator/calendar", label: t.header.nav.calendar },
+          { href: "/operator/playbook", label: t.header.nav.playbook },
+          { href: "/operator/trends", label: t.header.nav.trends },
+          {
+            href: "/operator/settings/cost-policy",
+            label: t.header.nav.costPolicy,
+          },
+          { href: "/operator/cycle", label: t.header.nav.cycle },
+        ]
+      : [];
+
+  if (advancedItems.length > 0) {
     groups.push({
       id: "advanced",
       label: t.header.nav.advanced,
-      items: [
-        { href: "/operator/strategy", label: t.header.nav.strategy },
-        { href: "/operator/scripts", label: t.header.nav.scripts },
-        { href: "/operator/calendar", label: t.header.nav.calendar },
-        { href: "/operator/playbook", label: t.header.nav.playbook },
-        { href: "/operator/trends", label: t.header.nav.trends },
-        {
-          href: "/operator/settings/cost-policy",
-          label: t.header.nav.costPolicy,
-        },
-        { href: "/operator/cycle", label: t.header.nav.cycle },
-      ],
+      items: advancedItems,
     });
   }
 
@@ -174,14 +181,30 @@ export async function AppHeader({ locale, user }: AppHeaderProps) {
           />
 
           <div className="ml-auto flex shrink-0 items-center gap-1.5 text-sm text-dim sm:gap-3">
-            <OrchestratorChatToggle
-              openLabel={t.orchestratorChat.openLabel}
-              shortcutHint={t.orchestratorChat.openShortcutHint}
-            />
+            <Button
+              asChild
+              type="button"
+              variant="outline"
+              size="sm"
+              className="border-edge bg-panel text-fog hover:bg-panel/80"
+            >
+              <Link href="/conversation">
+                <MessageSquareIcon className="size-4" aria-hidden />
+                <span>{t.orchestratorChat.conversationLabel}</span>
+              </Link>
+            </Button>
             <UserMenu
               locale={locale}
               displayName={user.displayName}
               email={user.email}
+              advancedLinks={
+                advancedItems.length > 0
+                  ? {
+                      label: t.header.nav.advanced,
+                      items: advancedItems,
+                    }
+                  : undefined
+              }
               copy={{
                 menuAriaLabel: t.header.userMenu.menuAriaLabel,
                 languageLabel: t.header.userMenu.languageLabel,
@@ -201,21 +224,12 @@ export async function AppHeader({ locale, user }: AppHeaderProps) {
             />
           </div>
         </div>
-
-        <AppNavMenu
-          primary={primary}
-          groups={groups}
-          ariaLabel={t.header.mobileNavAriaLabel}
-          className="flex gap-1 overflow-x-auto border-t border-edge px-4 py-2 md:hidden"
-          linkClassName="text-xs"
-        />
       </header>
       <OrchestratorChatPanel
         copy={chatCopy}
         locale={locale}
         suggestedChips={suggestedChips}
       />
-      <OrchestratorChatFab openLabel={t.orchestratorChat.openLabel} />
     </>
   );
 }

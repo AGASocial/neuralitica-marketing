@@ -9,7 +9,7 @@ import es from "../../messages/es.json";
 
 describe("dashboard owner locale copy (KAN-84.16 / KAN-98)", () => {
   it("ES catalog translates owner home section titles", () => {
-    assert.equal(es.dashboard.title, "Inicio");
+    assert.equal(es.dashboard.title, "Hoy");
     assert.equal(es.dashboard.nextAction.sectionTitle, "Qué hacer ahora");
     assert.equal(es.dashboard.thisWeek.title, "Esta semana");
     assert.equal(es.dashboard.campaignProgress.title, "Avance de campaña");

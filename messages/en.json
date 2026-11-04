@@ -1,8 +1,8 @@
 {
   "appName": "Neuralitica Marketing",
   "dashboard": {
-    "title": "Home",
-    "subtitle": "What needs you now, and how this week is going.",
+    "title": "Today",
+    "subtitle": "Your agent worked while you were away.",
     "lastUpdated": "Last updated {time}",
     "nextAction": {
       "sectionTitle": "What to do now",
@@ -126,7 +126,29 @@
       "title": "Database not connected",
       "body": "Add Supabase credentials to .env to connect the database."
     },
-    "loadError": "We could not load your home summary. Refresh to try again."
+    "loadError": "We could not load your home summary. Refresh to try again.",
+    "hoy": {
+      "needsOk": "Needs your OK",
+      "whatIDid": "What I did",
+      "next": "Next in your campaign",
+      "results": "Results",
+      "approve": "Approve",
+      "change": "Change…",
+      "seeAllPending": "See {count} more waiting",
+      "pendingStatus": "Waiting for OK",
+      "timelineEmpty": "Nothing here yet — ask your agent below.",
+      "nextActionCtaOpenChat": "Open chat",
+      "slotDone": "done",
+      "slotNeedsOk": "needs OK",
+      "slotPreparing": "preparing",
+      "slotScheduled": "scheduled",
+      "timeline": {
+        "approvedVideo": "Approved “{title}”",
+        "planApproved": "Approved this week’s plan",
+        "generatedVideos": "Prepared {count} new videos for your OK",
+        "workingOnVideos": "Working on {count} videos"
+      }
+    }
   },
   "header": {
     "signedInAs": "Signed in as",
@@ -144,10 +166,10 @@
       "settings": "Settings"
     },
     "nav": {
-      "home": "Home",
-      "myCampaign": "My campaign",
-      "myVideos": "My videos",
-      "myBusiness": "My business",
+      "home": "Today",
+      "myCampaign": "Campaign",
+      "myVideos": "Videos",
+      "myBusiness": "Business",
       "advanced": "Advanced",
       "dashboard": "Dashboard",
       "profile": "My business profile",
@@ -163,13 +185,14 @@
       "cycle": "Weekly run"
     },
     "navAriaLabel": "Main navigation",
-    "mobileNavAriaLabel": "Mobile navigation"
+    "mobileNavAriaLabel": "Mobile navigation",
+    "mobileTabBarAriaLabel": "Primary tabs"
   },
   "orchestratorChat": {
     "title": "Your assistant",
     "description": "Tell me what you need. I’ll suggest the next step.",
     "openLabel": "Chat",
-    "openShortcutHint": "Keyboard shortcut Control or Command + J",
+    "openShortcutHint": "Keyboard shortcut Control or Command + J focuses the composer",
     "closeLabel": "Close chat",
     "placeholder": "Ask anything about your campaign…",
     "send": "Send",
@@ -264,7 +287,12 @@
     },
     "errors": {
       "internal": "Something went wrong. Please try again later."
-    }
+    },
+    "conversationLabel": "Conversation",
+    "layoutPlaceholder": "Ask your agent anything… (⌘J)",
+    "micLabel": "Dictate with microphone",
+    "micListening": "Listening… tap to stop",
+    "canvasTitle": "Cards"
   },
   "auth": {
     "localeSwitcher": {

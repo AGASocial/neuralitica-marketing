@@ -1,12 +1,10 @@
-import { DashboardView } from "@/components/dashboard/DashboardView";
+import { HoyFeedView } from "@/components/dashboard/HoyFeedView";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
-import type {
-  OwnerHomeDashboardDto,
-  OwnerHomeNextStepKey,
-} from "@/lib/contracts/owner-home-dashboard";
-import { loadOwnerHomeDashboard } from "@/lib/dashboard/load-owner-home-dashboard";
+import type { OwnerHomeNextStepKey } from "@/lib/contracts/owner-home-dashboard";
+import type { HoyFeedDto } from "@/lib/contracts/hoy-feed";
 import { buildOwnerHomeNextAction } from "@/lib/dashboard/compute-owner-home-snapshot";
 import { shouldShowSetupCompletionOnHome } from "@/lib/dashboard/compute-setup-completion";
+import { loadHoyFeed } from "@/lib/dashboard/load-hoy-feed";
 import { loadSetupCompletion } from "@/lib/dashboard/load-setup-completion";
 import type { SetupCompletionDto } from "@/lib/contracts/setup-completion";
 import { getTranslations } from "@/lib/i18n/get-translations";
@@ -24,22 +22,6 @@ function isNextNavigationError(error: unknown): boolean {
     (error.digest.startsWith("NEXT_REDIRECT") ||
       error.digest.startsWith("NEXT_HTTP_ERROR"))
   );
-}
-
-function trafficStatusLabel(
-  t: ReturnType<typeof getTranslations>["dashboard"]["thisWeek"],
-  light: "green" | "yellow" | "red" | "neutral",
-): string {
-  switch (light) {
-    case "green":
-      return t.statusGreen;
-    case "yellow":
-      return t.statusYellow;
-    case "red":
-      return t.statusRed;
-    default:
-      return t.statusNeutral;
-  }
 }
 
 function nextActionCopyFor(
@@ -63,32 +45,22 @@ export default async function DashboardPage() {
 
   let loadError: string | undefined;
   let setupCompletion: SetupCompletionDto | undefined;
-  let data: OwnerHomeDashboardDto = {
+  let data: HoyFeedDto = {
     weekStart: "1970-01-05",
     lastUpdatedAt: new Date().toISOString(),
+    pendingApprovals: [],
+    selectedPendingIds: [],
+    pendingOverflowCount: 0,
+    timeline: [],
+    nextSlots: [],
     nextAction: buildOwnerHomeNextAction("interview"),
-    weekCounts: {
-      scheduled: 0,
-      published: 0,
-      waitingForOk: 0,
-      inProduction: 0,
-    },
-    trafficLight: "neutral",
-    campaignProgress: { completed: 0, total: 0, hasPlan: false },
+    showNextActionCard: true,
     results: { insightsAvailable: false },
-    recentVideos: [],
-    atajos: [
-      { id: "interview", href: "/interview" },
-      { id: "profile", href: "/profile" },
-      { id: "preferences", href: "/settings/preferences" },
-      { id: "approvals", href: "/approvals" },
-      { id: "readyToPublish", href: "/ready-to-publish" },
-    ],
   };
 
   if (user) {
     try {
-      data = await loadOwnerHomeDashboard({ user });
+      data = await loadHoyFeed({ user, locale });
     } catch (error) {
       if (isNextNavigationError(error)) {
         throw error;
@@ -104,70 +76,48 @@ export default async function DashboardPage() {
       if (isNextNavigationError(error)) {
         throw error;
       }
-      // Setup section is additive — ignore load failures.
     }
   }
 
-  const ofVideos = t.dashboard.campaignProgress.ofVideos
-    .replace("{completed}", String(data.campaignProgress.completed))
-    .replace("{total}", String(data.campaignProgress.total));
+  const hoy = t.dashboard.hoy;
 
   return (
-    <DashboardView
-      title={t.dashboard.title}
-      subtitle={t.dashboard.subtitle}
-      lastUpdatedAt={data.lastUpdatedAt}
-      lastUpdatedTemplate={t.dashboard.lastUpdated}
+    <HoyFeedView
       locale={locale}
-      setupBanner={supabaseReady ? undefined : t.dashboard.setupBanner}
-      loadError={loadError}
+      copy={{
+        title: t.dashboard.title,
+        subtitle: t.dashboard.subtitle,
+        needsOk: hoy.needsOk,
+        whatIDid: hoy.whatIDid,
+        next: hoy.next,
+        results: hoy.results,
+        resultsEmpty: t.dashboard.results.empty,
+        resultsEmptyHint: t.dashboard.results.emptyHint,
+        approve: hoy.approve,
+        change: hoy.change,
+        seeAllPending: hoy.seeAllPending,
+        pendingStatus: hoy.pendingStatus,
+        timelineEmpty: hoy.timelineEmpty,
+        nextActionCtaOpenChat: hoy.nextActionCtaOpenChat,
+        slotDone: hoy.slotDone,
+        slotNeedsOk: hoy.slotNeedsOk,
+        slotPreparing: hoy.slotPreparing,
+        slotScheduled: hoy.slotScheduled,
+        loadError,
+        setupBanner: supabaseReady ? undefined : t.dashboard.setupBanner,
+        timelineMessages: hoy.timeline,
+      }}
+      pendingApprovals={data.pendingApprovals}
+      selectedPendingIds={data.selectedPendingIds}
+      pendingOverflowCount={data.pendingOverflowCount}
+      timeline={data.timeline}
+      nextSlots={data.nextSlots}
       nextAction={data.nextAction}
+      showNextActionCard={data.showNextActionCard}
       nextActionCopy={nextActionCopyFor(
         t.dashboard.nextAction,
         data.nextAction.stepKey,
       )}
-      weekCounts={data.weekCounts}
-      trafficLight={data.trafficLight}
-      thisWeekCopy={{
-        title: t.dashboard.thisWeek.title,
-        scheduled: t.dashboard.thisWeek.scheduled,
-        published: t.dashboard.thisWeek.published,
-        waitingForOk: t.dashboard.thisWeek.waitingForOk,
-        inProduction: t.dashboard.thisWeek.inProduction,
-        statusLabel: trafficStatusLabel(
-          t.dashboard.thisWeek,
-          data.trafficLight,
-        ),
-      }}
-      campaignProgress={data.campaignProgress}
-      campaignCopy={{
-        title: t.dashboard.campaignProgress.title,
-        ofVideos,
-        empty: t.dashboard.campaignProgress.empty,
-      }}
-      resultsCopy={{
-        title: t.dashboard.results.title,
-        empty: t.dashboard.results.empty,
-        emptyHint: t.dashboard.results.emptyHint,
-      }}
-      recentVideos={data.recentVideos}
-      recentCopy={{
-        title: t.dashboard.recentVideos.title,
-        empty: t.dashboard.recentVideos.empty,
-        openAll: t.dashboard.recentVideos.openAll,
-        untitled: t.dashboard.recentVideos.untitled,
-      }}
-      atajos={data.atajos}
-      atajosCopy={{
-        title: t.dashboard.atajos.title,
-        labels: {
-          interview: t.dashboard.atajos.interview,
-          profile: t.dashboard.atajos.profile,
-          preferences: t.dashboard.atajos.preferences,
-          approvals: t.dashboard.atajos.approvals,
-          readyToPublish: t.dashboard.atajos.readyToPublish,
-        },
-      }}
       setupCompletion={setupCompletion}
       setupCompletionCopy={
         setupCompletion
