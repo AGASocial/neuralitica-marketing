@@ -1010,20 +1010,23 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
             i.package &&
             (i.package.voiceoverText?.trim() ?? "").length > 0,
         );
-        const eligibleVideos = generated.map((i) => {
-          const voiceoverText = i.package!.voiceoverText!.trim();
-          const estimatedCostCents = estimateTtsCostCentsFromTextLength(
-            voiceoverText.length,
-          );
-          return {
-            reelScriptId: i.scriptId!,
-            slotIndex: i.slotIndex,
-            tema: i.tema.slice(0, 200),
-            estimatedCostCents,
-            confirmEstimateCents: estimatedCostCents,
-            charCount: voiceoverText.length,
-          };
-        });
+        const eligibleVideos = generated
+          .map((i) => {
+            const voiceoverText = i.package!.voiceoverText!.trim();
+            const estimatedCostCents = estimateTtsCostCentsFromTextLength(
+              voiceoverText.length,
+            );
+            return {
+              reelScriptId: i.scriptId!,
+              slotIndex: i.slotIndex,
+              tema: i.tema.slice(0, 200),
+              estimatedCostCents,
+              confirmEstimateCents: estimatedCostCents,
+              charCount: voiceoverText.length,
+            };
+          })
+          .sort((a, b) => a.slotIndex - b.slotIndex)
+          .slice(0, 7);
         if (eligibleVideos.length === 0) {
           return toolError({
             ok: false,

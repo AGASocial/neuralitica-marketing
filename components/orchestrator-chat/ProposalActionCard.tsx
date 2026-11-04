@@ -44,8 +44,8 @@ export type ProposalCardCopy = {
   stylePresenter: string;
   styleImages: string;
   styleVoice: string;
-  pickVideo?: string;
-  videoOption?: string;
+  pickVideo: string;
+  videoOption: string;
 };
 
 type TtsEligibleVideo = {
@@ -518,18 +518,16 @@ export function ProposalActionCard({
             {stylePlain ? <p>{stylePlain}</p> : null}
             {proposal.eligibleVideos.length > 1 ? (
               <div className="space-y-2">
-                <p className="text-xs text-dim">
-                  {copy.pickVideo ?? "Choose a video"}
-                </p>
+                <p className="text-xs text-dim">{copy.pickVideo}</p>
                 <div
-                  className="flex flex-wrap gap-2"
+                  className="hidden flex-wrap gap-2 sm:flex"
                   role="group"
-                  aria-label={copy.pickVideo ?? "Choose a video"}
+                  aria-label={copy.pickVideo}
                 >
                   {proposal.eligibleVideos.map((video) => {
                     const selected =
                       ttsSelection?.reelScriptId === video.reelScriptId;
-                    const label = (copy.videoOption ?? "Video {n}")
+                    const label = copy.videoOption
                       .replace("{n}", String(video.slotIndex + 1))
                       .replace("{tema}", video.tema);
                     return (
@@ -553,9 +551,7 @@ export function ProposalActionCard({
                   })}
                 </div>
                 <label className="block sm:hidden">
-                  <span className="sr-only">
-                    {copy.pickVideo ?? "Choose a video"}
-                  </span>
+                  <span className="sr-only">{copy.pickVideo}</span>
                   <select
                     className="w-full rounded-md border border-edge bg-deep px-2 py-2 text-sm text-fog"
                     disabled={pending || done}
@@ -574,7 +570,7 @@ export function ProposalActionCard({
                         key={video.reelScriptId}
                         value={video.reelScriptId}
                       >
-                        {(copy.videoOption ?? "Video {n}")
+                        {copy.videoOption
                           .replace("{n}", String(video.slotIndex + 1))
                           .replace("{tema}", video.tema)}
                         {` · ${formatCents(video.estimatedCostCents)}`}
