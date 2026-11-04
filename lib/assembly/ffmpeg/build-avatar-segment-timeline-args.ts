@@ -48,6 +48,9 @@ export function buildAvatarSegmentTimelineArgs(
   }
 
   const total = input.voiceoverDurationSec;
+  // Only one cutaway slot exists; extra b-roll inputs would leave unconnected
+  // filter outputs and make ffmpeg fail.
+  const brollPaths = input.brollPaths.slice(0, 1);
   const cutawaySec = Math.max(
     0,
     Math.min(
@@ -57,7 +60,7 @@ export function buildAvatarSegmentTimelineArgs(
   );
   const hasCutaway =
     cutawaySec > 0 &&
-    input.brollPaths.length > 0 &&
+    brollPaths.length > 0 &&
     input.segments.length >= 2;
 
   const args: string[] = ["-y"];
@@ -65,13 +68,13 @@ export function buildAvatarSegmentTimelineArgs(
   for (const segment of input.segments) {
     args.push("-i", segment.localPath);
   }
-  for (const broll of input.brollPaths) {
+  for (const broll of brollPaths) {
     args.push("-i", broll);
   }
   args.push("-i", input.localVoiceoverPath);
 
   const segmentCount = input.segments.length;
-  const brollCount = input.brollPaths.length;
+  const brollCount = brollPaths.length;
   const voiceoverIndex = segmentCount + brollCount;
 
   // Build filter_complex: normalize each visual input, then overlay on a black base.
@@ -82,13 +85,17 @@ export function buildAvatarSegmentTimelineArgs(
 
   for (let i = 0; i < segmentCount; i += 1) {
     filterParts.push(
-      `[${i}:v]${BASE_SCALE},fps=30,format=yuv420p[seg${i}]`,
+      `[${i}:v]setpts=PTS-STARTPTS+${formatDurationSec(input.segments[i]!.startSec)}/TB,${BASE_SCALE},fps=30,format=yuv420p[seg${i}]`,
     );
   }
+  const brollStartSec =
+    segmentCount >= 2
+      ? Math.max(0, input.segments[1]!.startSec - cutawaySec / 2)
+      : Math.max(0, total / 2 - cutawaySec / 2);
   for (let i = 0; i < brollCount; i += 1) {
     const idx = segmentCount + i;
     filterParts.push(
-      `[${idx}:v]${BASE_SCALE},fps=30,format=yuv420p[broll${i}]`,
+      `[${idx}:v]setpts=PTS-STARTPTS+${formatDurationSec(brollStartSec)}/TB,${BASE_SCALE},fps=30,format=yuv420p[broll${i}]`,
     );
   }
 
