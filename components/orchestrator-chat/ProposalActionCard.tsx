@@ -26,7 +26,9 @@ import { generateReelScripts } from "@/lib/reel-scripts/actions/generate-reel-sc
 import { regenerateReelScriptSlot } from "@/lib/reel-scripts/actions/regenerate-reel-script-slot";
 import { persistInterviewDraft } from "@/lib/interview/actions/persist-interview-draft";
 import { submitInterview } from "@/lib/interview/actions/submit-interview";
+import type { FacelessStyle, VisualModality } from "@/lib/contracts/visual-preferences";
 import { grantAvatarConsent } from "@/lib/visual-preferences/grant-avatar-consent";
+import { upsertVisualPreferences } from "@/lib/visual-preferences/upsert-visual-preferences";
 import { buildInterviewAnswerFragment } from "@/lib/orchestrator-chat/interview-questions";
 
 export type ProposalCardCopy = {
@@ -170,6 +172,15 @@ type SubmitInterviewProposal = ProposalBase & {
   estimatedCostCents: null;
 };
 
+type EnableOwnAvatarProposal = ProposalBase & {
+  kind: "enable_own_avatar";
+  action: "upsertVisualPreferences";
+  allowedModes: VisualModality[];
+  facelessStyle: FacelessStyle | null;
+  incursSpend: false;
+  estimatedCostCents: null;
+};
+
 export type KnownProposal =
   | GenerateProposal
   | ApproveStrategyProposal
@@ -182,7 +193,8 @@ export type KnownProposal =
   | GrantPresenterConsentProposal
   | SetPresenterVoiceProposal
   | SaveInterviewAnswerProposal
-  | SubmitInterviewProposal;
+  | SubmitInterviewProposal
+  | EnableOwnAvatarProposal;
 
 type ProposalActionCardProps = {
   proposal: KnownProposal;
@@ -287,6 +299,13 @@ export function ProposalActionCard({
           }
         } else if (proposal.kind === "submit_interview") {
           const result = await submitInterview({});
+          ok = result.ok === true;
+        } else if (proposal.kind === "enable_own_avatar") {
+          const result = await upsertVisualPreferences({
+            allowedModes: proposal.allowedModes,
+            facelessStyle: proposal.facelessStyle,
+            genericAvatarId: null,
+          });
           ok = result.ok === true;
         } else {
           const result = await decideApproval({

@@ -165,6 +165,13 @@ function asProposal(output: unknown): KnownProposal | null {
   if (p.kind === "submit_interview") {
     return p as KnownProposal;
   }
+  if (
+    p.kind === "enable_own_avatar" &&
+    Array.isArray(p.allowedModes) &&
+    p.allowedModes.includes("own_avatar")
+  ) {
+    return p as KnownProposal;
+  }
   return null;
 }
 
@@ -698,7 +705,8 @@ function OrchestratorChatSession({
                       part.type === "tool-proposeGrantPresenterConsent" ||
                       part.type === "tool-proposeSetPresenterVoice" ||
                       part.type === "tool-proposeSaveInterviewAnswer" ||
-                      part.type === "tool-proposeSubmitInterview") &&
+                      part.type === "tool-proposeSubmitInterview" ||
+                      part.type === "tool-proposeEnableOwnAvatar") &&
                     part.state === "output-available"
                   ) {
                     const proposal = asProposal(part.output);

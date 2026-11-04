@@ -14,7 +14,8 @@ export function proposalSummary(
     | "grant_presenter_consent"
     | "set_presenter_voice"
     | "save_interview_answer"
-    | "submit_interview",
+    | "submit_interview"
+    | "enable_own_avatar",
   params?: { slotCount?: number; amountCents?: number; stepLabel?: string },
 ): string {
   const es = locale === "es";
@@ -77,6 +78,10 @@ export function proposalSummary(
       return es
         ? "Enviar la entrevista completa y abrir tu ficha viva. No se envía hasta que apruebes."
         : "Submit the finished interview and open your living profile. Nothing submits until you approve.";
+    case "enable_own_avatar":
+      return es
+        ? "Activar videos con tu cara en Preferencias. Solo guarda el permiso de estilo; no crea ningún video hasta que apruebes un costo aparte."
+        : "Enable on-camera videos in Preferences. This only saves the style setting; it does not create any video until you approve a separate cost card.";
     default:
       return es ? "Confirma por favor." : "Please confirm.";
   }
