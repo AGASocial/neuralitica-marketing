@@ -14,6 +14,10 @@ import type {
   OwnerHomeTrafficLight,
   OwnerHomeWeekCounts,
 } from "@/lib/contracts/owner-home-dashboard";
+import type {
+  SetupCompletionDto,
+  SetupStepId,
+} from "@/lib/contracts/setup-completion";
 
 export type DashboardCard = {
   title: string;
@@ -63,6 +67,15 @@ type AtajosCopy = {
   labels: Record<OwnerHomeAtajo["id"], string>;
 };
 
+type SetupCompletionCopy = {
+  title: string;
+  progress: string;
+  doIt: string;
+  optional: string;
+  done: string;
+  steps: Record<SetupStepId, string>;
+};
+
 type DashboardViewProps = {
   title: string;
   subtitle: string;
@@ -84,6 +97,8 @@ type DashboardViewProps = {
   recentCopy: RecentCopy;
   atajos: OwnerHomeAtajo[];
   atajosCopy: AtajosCopy;
+  setupCompletion?: SetupCompletionDto;
+  setupCompletionCopy?: SetupCompletionCopy;
 };
 
 function trafficDotClass(light: OwnerHomeTrafficLight): string {
@@ -122,6 +137,8 @@ export function DashboardView({
   recentCopy,
   atajos,
   atajosCopy,
+  setupCompletion,
+  setupCompletionCopy,
 }: DashboardViewProps) {
   const countItems = [
     { label: thisWeekCopy.scheduled, value: weekCounts.scheduled },
@@ -286,6 +303,63 @@ export function DashboardView({
           </ul>
         )}
       </section>
+
+      {setupCompletion && setupCompletionCopy ? (
+        <section aria-labelledby="home-setup" className="space-y-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2
+              id="home-setup"
+              className="font-display text-2xl font-normal text-fog"
+            >
+              {setupCompletionCopy.title}
+            </h2>
+            <p className="text-sm text-dim">{setupCompletionCopy.progress}</p>
+          </div>
+          <div
+            className="h-2 overflow-hidden rounded-full bg-edge"
+            role="progressbar"
+            aria-valuenow={setupCompletion.percentComplete}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div
+              className="h-full rounded-full bg-fog/80"
+              style={{ width: `${setupCompletion.percentComplete}%` }}
+            />
+          </div>
+          <ul className="space-y-2">
+            {setupCompletion.steps.map((step) => (
+              <li
+                key={step.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-edge bg-panel px-4 py-3"
+              >
+                <div>
+                  <p className="text-fog">
+                    {setupCompletionCopy.steps[step.id]}
+                  </p>
+                  <p className="text-xs text-dim">
+                    {step.done
+                      ? setupCompletionCopy.done
+                      : step.required
+                        ? null
+                        : setupCompletionCopy.optional}
+                  </p>
+                </div>
+                {step.done ? null : step.ctaKind === "open_chat" ? (
+                  <OpenChatButton
+                    label={setupCompletionCopy.doIt}
+                    className="w-fit rounded-full"
+                  />
+                ) : step.href ? (
+                  <Button asChild variant="outline" className="rounded-full">
+                    <Link href={step.href}>{setupCompletionCopy.doIt}</Link>
+                  </Button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section aria-labelledby="home-atajos" className="space-y-3">
         <h2

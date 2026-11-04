@@ -477,6 +477,35 @@ export type GetGuidedProgressOutput = z.infer<
   typeof getGuidedProgressOutputSchema
 >;
 
+export const getSetupStatusInputSchema = z.object({}).strict();
+
+export const getSetupStatusStepSchema = z
+  .object({
+    id: z.enum([
+      "business_profile",
+      "interview",
+      "visual_preferences",
+      "instagram_connected",
+      "plan_approved",
+      "presenter_avatar",
+    ]),
+    done: z.boolean(),
+    required: z.boolean(),
+  })
+  .strict();
+
+export const getSetupStatusOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    percentComplete: z.number().int().min(0).max(100),
+    requiredDone: z.number().int().min(0),
+    requiredTotal: z.number().int().min(1),
+    steps: z.array(getSetupStatusStepSchema).min(1),
+  })
+  .strict();
+
+export type GetSetupStatusOutput = z.infer<typeof getSetupStatusOutputSchema>;
+
 export const getReadyVideoDownloadInputSchema = z
   .object({
     approvalId: z.string().uuid().optional(),

@@ -30,7 +30,7 @@ Epic: Orchestrator agent chat + generative UI + extreme abstraction (ADR-0009).
 | Key | Title | Notes |
 |-----|-------|-------|
 | **KAN-98** | Owner home dashboard | Replace Inicio menu-card grid with next action, week counts, campaign progress, Results (empty until IG insights), recent videos, Atajos. Read-only. |
-| **KAN-99** | Setup completion | `computeSetupCompletion` + Inicio checklist + chat `getSetupStatus`. |
+| **KAN-99** | Setup completion | `computeSetupCompletion` + Inicio checklist (hide at 100%) + chat `getSetupStatus` for “¿Qué me falta?”. Instagram step stays incomplete until connect exists. |
 | **KAN-100** | Onboarding chat vs wizard ADR | Docs-only ADR-0010; default hybrid recommendation. |
 
 ## Out of scope for chat

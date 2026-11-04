@@ -6,6 +6,9 @@ import type {
 } from "@/lib/contracts/owner-home-dashboard";
 import { loadOwnerHomeDashboard } from "@/lib/dashboard/load-owner-home-dashboard";
 import { buildOwnerHomeNextAction } from "@/lib/dashboard/compute-owner-home-snapshot";
+import { shouldShowSetupCompletionOnHome } from "@/lib/dashboard/compute-setup-completion";
+import { loadSetupCompletion } from "@/lib/dashboard/load-setup-completion";
+import type { SetupCompletionDto } from "@/lib/contracts/setup-completion";
 import { getTranslations } from "@/lib/i18n/get-translations";
 import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
@@ -74,6 +77,7 @@ export default async function DashboardPage() {
   const supabaseReady = isSupabaseConfigured();
 
   let loadError: string | undefined;
+  let setupCompletion: SetupCompletionDto | undefined;
   let data: OwnerHomeDashboardDto = {
     weekStart: "1970-01-05",
     lastUpdatedAt: new Date().toISOString(),
@@ -105,6 +109,17 @@ export default async function DashboardPage() {
         throw error;
       }
       loadError = t.dashboard.loadError;
+    }
+    try {
+      const completion = await loadSetupCompletion({ user });
+      if (shouldShowSetupCompletionOnHome(completion)) {
+        setupCompletion = completion;
+      }
+    } catch (error) {
+      if (isNextNavigationError(error)) {
+        throw error;
+      }
+      // Setup section is additive — ignore load failures.
     }
   }
 
@@ -170,6 +185,22 @@ export default async function DashboardPage() {
           readyToPublish: t.dashboard.atajos.readyToPublish,
         },
       }}
+      setupCompletion={setupCompletion}
+      setupCompletionCopy={
+        setupCompletion
+          ? {
+              title: t.dashboard.setupCompletion.title,
+              progress: t.dashboard.setupCompletion.progress.replace(
+                "{percent}",
+                String(setupCompletion.percentComplete),
+              ),
+              doIt: t.dashboard.setupCompletion.doIt,
+              optional: t.dashboard.setupCompletion.optional,
+              done: t.dashboard.setupCompletion.done,
+              steps: t.dashboard.setupCompletion.steps,
+            }
+          : undefined
+      }
     />
   );
 }

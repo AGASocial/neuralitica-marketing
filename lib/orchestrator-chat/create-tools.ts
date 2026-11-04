@@ -22,6 +22,8 @@ import {
   proposeApproveStrategyOutputSchema,
   getGuidedProgressInputSchema,
   getGuidedProgressOutputSchema,
+  getSetupStatusInputSchema,
+  getSetupStatusOutputSchema,
   getInterviewStatusInputSchema,
   getInterviewStatusOutputSchema,
   getPresenterSetupStatusInputSchema,
@@ -72,6 +74,7 @@ import {
   listPendingApprovalsForClientUser,
 } from "@/lib/approvals/list-get-approvals";
 import { loadLatestStrategyRowWithApproval } from "@/lib/content-strategy/load-latest-strategy-row-with-approval";
+import { loadSetupCompletion } from "@/lib/dashboard/load-setup-completion";
 import { toContentStrategyView } from "@/lib/content-strategy/to-strategy-view";
 import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved-strategy-for-week";
 import { buildReelScriptListForStrategy } from "@/lib/reel-scripts/list-reel-scripts-for-week";
@@ -1077,6 +1080,30 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
         return proposeConfirmTtsGenerationOutputSchema.parse({
           ok: true,
           proposal,
+        });
+      },
+    }),
+
+    getSetupStatus: tool({
+      description:
+        "Show setup / onboarding completion: business profile, interview, visual preferences, Instagram connect, plan approved, optional presenter. Call for “what’s left?” / “¿Qué me falta?”. Read-only; never mutates, spends, or publishes.",
+      inputSchema: getSetupStatusInputSchema,
+      execute: async (raw) => {
+        const parsed = getSetupStatusInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const completion = await loadSetupCompletion({ user });
+        return getSetupStatusOutputSchema.parse({
+          ok: true,
+          percentComplete: completion.percentComplete,
+          requiredDone: completion.requiredDone,
+          requiredTotal: completion.requiredTotal,
+          steps: completion.steps.map((step) => ({
+            id: step.id,
+            done: step.done,
+            required: step.required,
+          })),
         });
       },
     }),

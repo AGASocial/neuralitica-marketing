@@ -72,6 +72,7 @@ container is the transcript pane only (full-height sheet, safe-area insets).
 
 | Tool | Kind | Role | Mutates? | Owner-facing card |
 |------|------|------|----------|-------------------|
+| `getSetupStatus` | read | client + operator | no | Setup % + missing steps (“¿Qué me falta?”) — KAN-99 |
 | `listCampaignStatus` | read | client + operator | no | “Where things stand” |
 | `getWeeklyStrategy` | read | client + operator (own) | no | “This week’s plan” (plain) |
 | `getScriptsStatus` | read | operator | no | Advanced status (plain labels) |
