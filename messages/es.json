@@ -1,8 +1,8 @@
 {
   "appName": "Neuralitica Marketing",
   "dashboard": {
-    "title": "Inicio",
-    "subtitle": "Qué necesitas hacer ahora y cómo va esta semana.",
+    "title": "Hoy",
+    "subtitle": "Tu agente trabajó mientras dormías.",
     "lastUpdated": "Actualizado {time}",
     "nextAction": {
       "sectionTitle": "Qué hacer ahora",
@@ -126,7 +126,29 @@
       "title": "Base de datos no conectada",
       "body": "Añade las credenciales de Supabase en .env para conectar la base de datos."
     },
-    "loadError": "No pudimos cargar tu resumen de inicio. Actualiza para intentarlo de nuevo."
+    "loadError": "No pudimos cargar tu resumen de inicio. Actualiza para intentarlo de nuevo.",
+    "hoy": {
+      "needsOk": "Necesita tu OK",
+      "whatIDid": "Lo que hice",
+      "next": "Próximo en tu campaña",
+      "results": "Resultados",
+      "approve": "Aprobar",
+      "change": "Cambiar…",
+      "seeAllPending": "Ver {count} más pendientes",
+      "pendingStatus": "Esperando tu OK",
+      "timelineEmpty": "Aún no hay nada aquí — pídele algo a tu agente abajo.",
+      "nextActionCtaOpenChat": "Abrir chat",
+      "slotDone": "listo",
+      "slotNeedsOk": "por aprobar",
+      "slotPreparing": "en preparación",
+      "slotScheduled": "programado",
+      "timeline": {
+        "approvedVideo": "Aprobé “{title}”",
+        "planApproved": "Aprobé el plan de la semana",
+        "generatedVideos": "Generé {count} videos nuevos para tu OK",
+        "workingOnVideos": "Estoy trabajando en {count} videos"
+      }
+    }
   },
   "header": {
     "signedInAs": "Sesión iniciada como",
@@ -144,10 +166,10 @@
       "settings": "Configuración"
     },
     "nav": {
-      "home": "Inicio",
-      "myCampaign": "Mi campaña",
-      "myVideos": "Mis videos",
-      "myBusiness": "Mi negocio",
+      "home": "Hoy",
+      "myCampaign": "Campaña",
+      "myVideos": "Videos",
+      "myBusiness": "Negocio",
       "advanced": "Avanzado",
       "dashboard": "Inicio",
       "profile": "Ficha de mi negocio",
@@ -163,13 +185,14 @@
       "cycle": "Corrida semanal"
     },
     "navAriaLabel": "Navegación principal",
-    "mobileNavAriaLabel": "Navegación móvil"
+    "mobileNavAriaLabel": "Navegación móvil",
+    "mobileTabBarAriaLabel": "Pestañas principales"
   },
   "orchestratorChat": {
     "title": "Tu asistente",
     "description": "Dime qué necesitas. Yo te propongo el siguiente paso.",
     "openLabel": "Chat",
-    "openShortcutHint": "Atajo de teclado Control o Command + J",
+    "openShortcutHint": "El atajo Control o Comando + J enfoca el compositor",
     "closeLabel": "Cerrar chat",
     "placeholder": "Pregunta lo que quieras sobre tu campaña…",
     "send": "Enviar",
@@ -264,7 +287,12 @@
     },
     "errors": {
       "internal": "Algo salió mal. Inténtalo más tarde."
-    }
+    },
+    "conversationLabel": "Conversación",
+    "layoutPlaceholder": "Pídele algo a tu agente… (⌘J)",
+    "micLabel": "Dictar con el micrófono",
+    "micListening": "Escuchando… toca para parar",
+    "canvasTitle": "Tarjetas"
   },
   "auth": {
     "localeSwitcher": {

@@ -216,13 +216,13 @@ export function OrchestratorChatToggle({
   openLabel: string;
   shortcutHint: string;
 }) {
-  const { toggle, open } = useOrchestratorChat();
+  const { setOpen, open } = useOrchestratorChat();
   return (
     <Button
       type="button"
       variant="outline"
       size="sm"
-      onClick={toggle}
+      onClick={() => setOpen(true)}
       aria-expanded={open}
       aria-controls="orchestrator-chat-panel"
       className="border-edge bg-panel text-fog hover:bg-panel/80"
@@ -230,27 +230,6 @@ export function OrchestratorChatToggle({
       <MessageSquareIcon className="size-4" aria-hidden />
       <span>{openLabel}</span>
       <span className="sr-only">{shortcutHint}</span>
-    </Button>
-  );
-}
-
-/** Mobile-only FAB — hidden when the chat sheet is open. Safe-area aware. */
-export function OrchestratorChatFab({ openLabel }: { openLabel: string }) {
-  const { open, setOpen } = useOrchestratorChat();
-  if (open) {
-    return null;
-  }
-  return (
-    <Button
-      type="button"
-      onClick={() => setOpen(true)}
-      aria-controls="orchestrator-chat-panel"
-      aria-expanded={false}
-      aria-label={openLabel}
-      className="fixed z-50 flex size-14 items-center justify-center rounded-full bg-butter text-deep shadow-lg hover:bg-butter/90 md:hidden bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-[max(1.25rem,env(safe-area-inset-right))]"
-    >
-      <MessageSquareIcon className="size-6" aria-hidden />
-      <span className="sr-only">{openLabel}</span>
     </Button>
   );
 }
@@ -401,6 +380,11 @@ function OrchestratorChatSession({
   locale: Locale;
   suggestedChips: SuggestedPromptChip[];
 }) {
+  const {
+    pendingSendText,
+    consumePendingSendText,
+    setConversationHasUserMessages,
+  } = useOrchestratorChat();
   const [input, setInput] = useState("");
   const [attachPending, setAttachPending] = useState(false);
   const [attachError, setAttachError] = useState<string | null>(null);
@@ -425,6 +409,10 @@ function OrchestratorChatSession({
   const hasUserMessages = conversationHasUserMessages(messages);
   const showSuggested = !hasUserMessages && suggestedChips.length > 0;
 
+  useEffect(() => {
+    setConversationHasUserMessages(hasUserMessages);
+  }, [hasUserMessages, setConversationHasUserMessages]);
+
   const contentKey = useMemo(() => {
     const last = messages[messages.length - 1];
     const partsSig = last
@@ -447,6 +435,24 @@ function OrchestratorChatSession({
     scrollToBottom,
     stickOnSend,
   } = useStickToBottom({ contentKey });
+
+  useEffect(() => {
+    if (!pendingSendText || busy) {
+      return;
+    }
+    const text = consumePendingSendText();
+    if (!text) {
+      return;
+    }
+    stickOnSend();
+    void sendMessage({ text });
+  }, [
+    pendingSendText,
+    busy,
+    consumePendingSendText,
+    sendMessage,
+    stickOnSend,
+  ]);
 
   function focusChangeSomething() {
     inputRef.current?.focus();

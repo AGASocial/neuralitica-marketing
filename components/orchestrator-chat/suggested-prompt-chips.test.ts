@@ -24,6 +24,16 @@ describe("SuggestedPromptChips + panel hide-on-user-messages", () => {
     );
   });
 
+  it("layout composer hides chips once conversation has user messages", () => {
+    const composer = readFileSync(
+      join(here, "../layout/OwnerComposer.tsx"),
+      "utf8",
+    );
+    assert.match(composer, /conversationHasUserMessages/);
+    assert.match(composer, /SuggestedPromptChips/);
+    assert.match(composer, /showChips/);
+  });
+
   it("EN/ES catalogs expose fixed capability chip", () => {
     const es = JSON.parse(
       readFileSync(join(here, "../../messages/es.json"), "utf8"),

@@ -23,6 +23,7 @@ export {
 
 export {
   mapApprovalListItemToCard,
+  mapHoyPendingToCard,
   mapMyVideosPendingToCard,
   mapProposalToAgentCard,
   type ProposalCardLabels,

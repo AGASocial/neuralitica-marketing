@@ -35,8 +35,10 @@ studies summarized in analisis §4) shows:
 ## Consequences
 
 - Home IA evolves from KPI dashboard (KAN-98) toward Hoy feed; existing
-  routes remain reachable.
-- Nav/copy will rename Inicio → Hoy in a later story; compositor replaces FAB
-  as the primary chat entry (KAN-104/105).
-- ADR-0009 chat sheet remains until compositor lands; ADR-0010 hybrid
-  onboarding spine remains until KAN-106 specializes first-run to Option A.
+  routes remain reachable (`/dashboard` stays Hoy).
+- **KAN-104/105 (landed):** Inicio → Hoy/Today; layout compositor replaces
+  FAB; Cmd/Ctrl+J focuses composer; mobile bottom tab bar; `/conversation`
+  full-screen Option A layout one tap away; Advanced in user menu on mobile.
+- ADR-0009 chat sheet remains as the conversation panel opened from the
+  compositor; ADR-0010 hybrid onboarding spine remains until KAN-106
+  specializes first-run to Option A.
