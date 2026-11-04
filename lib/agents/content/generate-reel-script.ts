@@ -362,7 +362,8 @@ export function parseAndValidateReelScriptPackage(
     );
   }
 
-  const result = reelScriptPackageSchema.safeParse(parsed);
+  // LLMs sometimes add extra keys (e.g. "disclosure"); drop them instead of failing.
+  const result = reelScriptPackageSchema.strip().safeParse(parsed);
   if (!result.success) {
     throw new ReelScriptAgentError(
       "AGENT_OUTPUT_INVALID",
@@ -444,7 +445,7 @@ export async function generateReelScriptForSlot(
       );
       continue;
     }
-    const schema = reelScriptPackageSchema.safeParse(parsed);
+    const schema = reelScriptPackageSchema.strip().safeParse(parsed);
     if (!schema.success) {
       lastError = new ReelScriptAgentError(
         "AGENT_OUTPUT_INVALID",
