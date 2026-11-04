@@ -4,7 +4,6 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import {
   ImagePlusIcon,
-  MessageSquareIcon,
   PlusIcon,
   SendIcon,
   XIcon,
@@ -105,31 +104,6 @@ type OrchestratorChatPanelProps = {
   locale: Locale;
   suggestedChips: SuggestedPromptChip[];
 };
-
-export function OrchestratorChatToggle({
-  openLabel,
-  shortcutHint,
-}: {
-  openLabel: string;
-  shortcutHint: string;
-}) {
-  const { setOpen, open } = useOrchestratorChat();
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      onClick={() => setOpen(true)}
-      aria-expanded={open}
-      aria-controls="orchestrator-chat-panel"
-      className="border-edge bg-panel text-fog hover:bg-panel/80"
-    >
-      <MessageSquareIcon className="size-4" aria-hidden />
-      <span>{openLabel}</span>
-      <span className="sr-only">{shortcutHint}</span>
-    </Button>
-  );
-}
 
 function newConversationId(): string {
   return crypto.randomUUID();
