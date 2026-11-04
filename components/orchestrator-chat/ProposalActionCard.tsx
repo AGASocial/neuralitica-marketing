@@ -19,9 +19,12 @@ import {
 import { approveContentStrategy } from "@/lib/content-strategy/actions/approve-content-strategy";
 import { generateContentStrategy } from "@/lib/content-strategy/actions/generate-content-strategy";
 import { decideApproval } from "@/lib/approvals/actions/decide-approval";
+import { upsertAvatar } from "@/lib/avatars/upsert-avatar";
+import { AVATAR_CONSENT_DISCLOSURE_V1 } from "@/lib/contracts/avatar-consent";
 import { confirmPaidGenerationFromChat } from "@/lib/orchestrator-chat/actions/confirm-paid-generation";
 import { generateReelScripts } from "@/lib/reel-scripts/actions/generate-reel-scripts";
 import { regenerateReelScriptSlot } from "@/lib/reel-scripts/actions/regenerate-reel-script-slot";
+import { grantAvatarConsent } from "@/lib/visual-preferences/grant-avatar-consent";
 
 export type ProposalCardCopy = {
   title: string;
@@ -122,6 +125,22 @@ type ConfirmPaidGenerationProposal = ProposalBase & {
   estimatedCostCents: number;
 };
 
+type GrantPresenterConsentProposal = ProposalBase & {
+  kind: "grant_presenter_consent";
+  action: "grantAvatarConsent";
+  incursSpend: false;
+  estimatedCostCents: null;
+};
+
+type SetPresenterVoiceProposal = ProposalBase & {
+  kind: "set_presenter_voice";
+  action: "upsertAvatar";
+  gender: "male" | "female";
+  language: "en" | "es";
+  incursSpend: false;
+  estimatedCostCents: null;
+};
+
 export type KnownProposal =
   | GenerateProposal
   | ApproveStrategyProposal
@@ -130,7 +149,9 @@ export type KnownProposal =
   | GenerateVideosProposal
   | RequestVideoChangesProposal
   | RegenerateScriptProposal
-  | ConfirmPaidGenerationProposal;
+  | ConfirmPaidGenerationProposal
+  | GrantPresenterConsentProposal
+  | SetPresenterVoiceProposal;
 
 type ProposalActionCardProps = {
   proposal: KnownProposal;
@@ -204,6 +225,18 @@ export function ProposalActionCard({
             ...(proposal.targetDurationSec !== undefined
               ? { targetDurationSec: proposal.targetDurationSec }
               : {}),
+          });
+          ok = result.ok === true;
+        } else if (proposal.kind === "grant_presenter_consent") {
+          const result = await grantAvatarConsent({
+            affirmed: true,
+            consentVersion: AVATAR_CONSENT_DISCLOSURE_V1,
+          });
+          ok = result.ok === true;
+        } else if (proposal.kind === "set_presenter_voice") {
+          const result = await upsertAvatar({
+            gender: proposal.gender,
+            language: proposal.language,
           });
           ok = result.ok === true;
         } else {
