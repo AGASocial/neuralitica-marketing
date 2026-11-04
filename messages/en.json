@@ -143,6 +143,14 @@
       "statusCurrent": "now",
       "statusDone": "done"
     },
+    "interview": {
+      "title": "Business interview",
+      "progress": "Step {progress}",
+      "completed": "Your business interview is already complete.",
+      "readyToSubmit": "All answers are in — approve Submit when you’re ready.",
+      "listHint": "Reply with a short list (one item per line is fine).",
+      "textHint": "Reply in a short paragraph."
+    },
     "download": {
       "title": "Download your video",
       "hint": "Watch it, then download. Publishing to Instagram stays outside this chat.",

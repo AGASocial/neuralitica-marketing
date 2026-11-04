@@ -27,6 +27,11 @@ import {
   VideoPreviewCard,
   type PreviewCardCopy,
 } from "@/components/orchestrator-chat/PreviewCards";
+import { AssistantMarkdown } from "@/components/orchestrator-chat/AssistantMarkdown";
+import {
+  InterviewProgressCard,
+  type InterviewProgressCardCopy,
+} from "@/components/orchestrator-chat/InterviewProgressCard";
 import {
   ProgressCard,
   type ProgressCardCopy,
@@ -66,6 +71,7 @@ export type OrchestratorChatCopy = {
   status: StatusCardCopy;
   preview: PreviewCardCopy;
   progress: ProgressCardCopy;
+  interview: InterviewProgressCardCopy;
   download: DownloadReadyCardCopy;
 };
 
@@ -146,6 +152,17 @@ function asProposal(output: unknown): KnownProposal | null {
     (p.gender === "male" || p.gender === "female") &&
     (p.language === "en" || p.language === "es")
   ) {
+    return p as KnownProposal;
+  }
+  if (
+    p.kind === "save_interview_answer" &&
+    typeof p.currentStep === "string" &&
+    typeof p.stepLabel === "string" &&
+    typeof p.answerPreview === "string"
+  ) {
+    return p as KnownProposal;
+  }
+  if (p.kind === "submit_interview") {
     return p as KnownProposal;
   }
   return null;
@@ -435,6 +452,14 @@ function OrchestratorChatSession({
                     if (!visible) {
                       return null;
                     }
+                    if (message.role === "assistant") {
+                      return (
+                        <AssistantMarkdown
+                          key={`${message.id}-t-${index}`}
+                          text={visible}
+                        />
+                      );
+                    }
                     return (
                       <p key={`${message.id}-t-${index}`} className="whitespace-pre-wrap">
                         {visible}
@@ -556,6 +581,46 @@ function OrchestratorChatSession({
                   }
 
                   if (
+                    part.type === "tool-getInterviewStatus" &&
+                    part.state === "output-available"
+                  ) {
+                    const output = part.output as {
+                      ok?: boolean;
+                      progressLabel?: string;
+                      stepLabel?: string;
+                      question?: string;
+                      helper?: string;
+                      status?: "not_started" | "in_progress" | "completed";
+                      canSubmit?: boolean;
+                      answerKind?: "list" | "text";
+                    };
+                    if (
+                      output?.ok &&
+                      output.progressLabel &&
+                      output.stepLabel &&
+                      output.question &&
+                      output.helper &&
+                      output.status &&
+                      output.answerKind != null &&
+                      typeof output.canSubmit === "boolean"
+                    ) {
+                      return (
+                        <InterviewProgressCard
+                          key={`${message.id}-iv-${index}`}
+                          progressLabel={output.progressLabel}
+                          stepLabel={output.stepLabel}
+                          question={output.question}
+                          helper={output.helper}
+                          status={output.status}
+                          canSubmit={output.canSubmit}
+                          answerKind={output.answerKind}
+                          copy={copy.interview}
+                        />
+                      );
+                    }
+                  }
+
+                  if (
                     part.type === "tool-getGuidedProgress" &&
                     part.state === "output-available"
                   ) {
@@ -631,7 +696,9 @@ function OrchestratorChatSession({
                       part.type === "tool-proposeRegenerateScript" ||
                       part.type === "tool-proposeConfirmPaidGeneration" ||
                       part.type === "tool-proposeGrantPresenterConsent" ||
-                      part.type === "tool-proposeSetPresenterVoice") &&
+                      part.type === "tool-proposeSetPresenterVoice" ||
+                      part.type === "tool-proposeSaveInterviewAnswer" ||
+                      part.type === "tool-proposeSubmitInterview") &&
                     part.state === "output-available"
                   ) {
                     const proposal = asProposal(part.output);

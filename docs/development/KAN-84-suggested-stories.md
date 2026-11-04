@@ -19,6 +19,10 @@ Epic: Orchestrator agent chat + generative UI + extreme abstraction (ADR-0009).
 | KAN-84.10 / **KAN-95** | Chat thread persistence | `neuramark_orchestrator_conversations` + `_messages`; resume latest; New conversation / Nueva conversación; persist on `/api/chat` finish. |
 | KAN-84.11 | MCP-UI optional | Same safety; not required for V1. |
 | KAN-84.12 | Model quality eval | flash-lite vs stronger when orchestration quality needs it. |
+| KAN-84.13 | Company interview in chat | Reuse `/interview` + `neuramark_interview_sessions`; one question at a time; `getInterviewStatus` / `proposeSaveInterviewAnswer` / `proposeSubmitInterview`; Markdown assistant text. |
+| KAN-84.14 | Activate own_avatar from chat | Confirmation card → `upsertVisualPreferences` (modalities only); never starts HeyGen/avatar generation. |
+| KAN-84.15 | TTS/voice cost confirm card | Separate from b-roll/HeyGen paid card; estimate from ElevenLabs constants; nothing until Approve. |
+| KAN-84.16 | Dashboard ES owner copy | Translate remaining dashboard/owner-facing English via `messages/` locale. |
 
 ## Out of scope for chat
 

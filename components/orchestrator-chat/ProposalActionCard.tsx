@@ -24,7 +24,10 @@ import { AVATAR_CONSENT_DISCLOSURE_V1 } from "@/lib/contracts/avatar-consent";
 import { confirmPaidGenerationFromChat } from "@/lib/orchestrator-chat/actions/confirm-paid-generation";
 import { generateReelScripts } from "@/lib/reel-scripts/actions/generate-reel-scripts";
 import { regenerateReelScriptSlot } from "@/lib/reel-scripts/actions/regenerate-reel-script-slot";
+import { persistInterviewDraft } from "@/lib/interview/actions/persist-interview-draft";
+import { submitInterview } from "@/lib/interview/actions/submit-interview";
 import { grantAvatarConsent } from "@/lib/visual-preferences/grant-avatar-consent";
+import { buildInterviewAnswerFragment } from "@/lib/orchestrator-chat/interview-questions";
 
 export type ProposalCardCopy = {
   title: string;
@@ -141,6 +144,32 @@ type SetPresenterVoiceProposal = ProposalBase & {
   estimatedCostCents: null;
 };
 
+type SaveInterviewAnswerProposal = ProposalBase & {
+  kind: "save_interview_answer";
+  action: "persistInterviewDraft";
+  currentStep:
+    | "services"
+    | "zone"
+    | "tone"
+    | "offers"
+    | "objections"
+    | "style"
+    | "restrictions";
+  stepLabel: string;
+  answerPreview: string;
+  description?: string;
+  items?: string[];
+  incursSpend: false;
+  estimatedCostCents: null;
+};
+
+type SubmitInterviewProposal = ProposalBase & {
+  kind: "submit_interview";
+  action: "submitInterview";
+  incursSpend: false;
+  estimatedCostCents: null;
+};
+
 export type KnownProposal =
   | GenerateProposal
   | ApproveStrategyProposal
@@ -151,7 +180,9 @@ export type KnownProposal =
   | RegenerateScriptProposal
   | ConfirmPaidGenerationProposal
   | GrantPresenterConsentProposal
-  | SetPresenterVoiceProposal;
+  | SetPresenterVoiceProposal
+  | SaveInterviewAnswerProposal
+  | SubmitInterviewProposal;
 
 type ProposalActionCardProps = {
   proposal: KnownProposal;
@@ -238,6 +269,24 @@ export function ProposalActionCard({
             gender: proposal.gender,
             language: proposal.language,
           });
+          ok = result.ok === true;
+        } else if (proposal.kind === "save_interview_answer") {
+          const fragment = buildInterviewAnswerFragment({
+            currentStep: proposal.currentStep,
+            description: proposal.description,
+            items: proposal.items,
+          });
+          if (!fragment) {
+            ok = false;
+          } else {
+            const result = await persistInterviewDraft({
+              currentStep: proposal.currentStep,
+              answers: fragment,
+            });
+            ok = result.ok === true;
+          }
+        } else if (proposal.kind === "submit_interview") {
+          const result = await submitInterview({});
           ok = result.ok === true;
         } else {
           const result = await decideApproval({
@@ -377,6 +426,11 @@ export function ProposalActionCard({
             {proposal.tema ? <p className="text-fog/90">{proposal.tema}</p> : null}
             {stylePlain ? <p>{stylePlain}</p> : null}
           </>
+        ) : null}
+        {proposal.kind === "save_interview_answer" ? (
+          <p className="text-fog/90">
+            {proposal.stepLabel}: {proposal.answerPreview}
+          </p>
         ) : null}
         {spendNote}
         {statusNotes}

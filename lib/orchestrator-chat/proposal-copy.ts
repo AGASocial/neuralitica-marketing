@@ -12,8 +12,10 @@ export function proposalSummary(
     | "regenerate_script"
     | "confirm_paid_generation"
     | "grant_presenter_consent"
-    | "set_presenter_voice",
-  params?: { slotCount?: number; amountCents?: number },
+    | "set_presenter_voice"
+    | "save_interview_answer"
+    | "submit_interview",
+  params?: { slotCount?: number; amountCents?: number; stepLabel?: string },
 ): string {
   const es = locale === "es";
   const amount =
@@ -65,6 +67,16 @@ export function proposalSummary(
       return es
         ? "Guardar cómo suena tu presentador (género y idioma) para que coincida con tu foto."
         : "Save how your on-camera presenter should sound (gender and language) to match your photo.";
+    case "save_interview_answer": {
+      const label = params?.stepLabel ?? (es ? "este paso" : "this step");
+      return es
+        ? `Guardar tu respuesta de ${label} en la ficha de tu negocio. No se guarda hasta que apruebes.`
+        : `Save your ${label} answer to your business profile. Nothing is saved until you approve.`;
+    }
+    case "submit_interview":
+      return es
+        ? "Enviar la entrevista completa y abrir tu ficha viva. No se envía hasta que apruebes."
+        : "Submit the finished interview and open your living profile. Nothing submits until you approve.";
     default:
       return es ? "Confirma por favor." : "Please confirm.";
   }

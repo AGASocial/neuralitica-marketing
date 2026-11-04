@@ -143,6 +143,14 @@
       "statusCurrent": "ahora",
       "statusDone": "listo"
     },
+    "interview": {
+      "title": "Entrevista de negocio",
+      "progress": "Paso {progress}",
+      "completed": "Tu entrevista de negocio ya está completa.",
+      "readyToSubmit": "Ya están todas las respuestas — aprueba Enviar cuando quieras.",
+      "listHint": "Responde con una lista corta (un elemento por línea está bien).",
+      "textHint": "Responde en un párrafo corto."
+    },
     "download": {
       "title": "Descarga tu video",
       "hint": "Míralo y descárgalo. Publicar en Instagram se hace fuera de este chat.",
