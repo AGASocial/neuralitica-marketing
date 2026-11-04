@@ -7,15 +7,23 @@ Provide the authenticated app shell: Campaña header navigation grouped for owne
 ## Requirements
 
 ### Requirement: Owner primary navigation
-The app shell SHALL show owner top-level links Home (`/dashboard`), My campaign (`/approvals`), My videos (`/ready-to-publish`), and a My business group for profile and preferences, using localized labels from the message catalogs (ADR-0009 IA). The Home route SHALL render the owner home dashboard (next action, week status, progress, results, recent videos, Atajos) rather than only a menu-card shortcut grid.
+The app shell SHALL show owner top-level links labeled Hoy/Today (`/dashboard`), Campaña/Campaign (`/approvals`), Videos (`/ready-to-publish`), and Negocio/Business (profile + preferences), using localized message catalogs. On `md+` viewports these MAY appear in the header; on small viewports the shell SHALL use a safe-area-aware bottom tab bar (Hoy · Campaña · Videos · Negocio) instead of a duplicate top nav strip. Hoy SHALL render the feed from `owner-home-dashboard`.
 
 #### Scenario: Active client sees owner nav
 - **WHEN** an active Cliente loads any `(app)` page
-- **THEN** the header includes the owner links and business group without Operator Advanced
+- **THEN** the shell includes the owner Hoy/Campaña/Videos/Negocio destinations without Operator Advanced in the primary tab/rail
 
 #### Scenario: Home is the owner dashboard
-- **WHEN** the owner opens Home (`/dashboard`)
-- **THEN** the page shows the owner home dashboard sections defined by the `owner-home-dashboard` capability
+- **WHEN** the owner opens Home / Hoy (`/dashboard`)
+- **THEN** the page shows the Hoy feed sections defined by the `owner-home-dashboard` capability
+
+#### Scenario: Hoy is the owner feed
+- **WHEN** the owner opens Hoy (`/dashboard`)
+- **THEN** the page shows Needs OK, What I did, Next, and Results blocks
+
+#### Scenario: Mobile bottom tab bar
+- **WHEN** an owner loads an `(app)` page on a small viewport
+- **THEN** a bottom tab bar with Hoy, Campaña, Videos, and Negocio is visible and accounts for `env(safe-area-inset-bottom)`
 
 ### Requirement: Operator Advanced group
 When `user.role === "operator"`, the shell SHALL add an Advanced group linking to strategy, scripts, calendar, playbook, trends, cost policy, and cycle Operator routes. Existing routes remain reachable (ADR-0009).
@@ -27,17 +35,6 @@ When `user.role === "operator"`, the shell SHALL add an Advanced group linking t
 #### Scenario: Cliente hides Advanced
 - **WHEN** the user role is `client`
 - **THEN** the Advanced group MUST NOT render
-
-### Requirement: Chat toggle and mobile FAB
-The shell SHALL include a header Chat toggle (always labeled) and a mobile safe-area FAB that opens the orchestrator chat sheet; the FAB MUST hide while the sheet is open (ADR-0009).
-
-#### Scenario: Open chat from header
-- **WHEN** the user activates the Chat toggle
-- **THEN** the right-side chat sheet opens over the current page
-
-#### Scenario: Mobile FAB
-- **WHEN** the sheet is closed on a small viewport
-- **THEN** the FAB remains available; when the sheet is open the FAB is hidden
 
 ### Requirement: Campaña UI primitives
 Shell and nav SHALL compose Tailwind v4 + shadcn/ui Campaña tokens (`components/ui/*`) rather than PrimeReact (ADR-0008).
@@ -62,3 +59,33 @@ The authenticated app header SHALL replace the separate “Signed in as” text,
 - **THEN** they navigate to `/settings`
 - **WHEN** the user confirms Cerrar sesión
 - **THEN** the existing logout action runs
+
+### Requirement: Layout compositor replaces FAB
+The authenticated owner shell SHALL render a large always-visible orchestrator compositor on all owner pages (pinned above the mobile tab bar). The shell MUST NOT render a floating chat FAB. Cmd/Ctrl+J SHALL focus the layout compositor.
+
+#### Scenario: No mobile FAB
+- **WHEN** the chat panel is closed on a small viewport
+- **THEN** no floating chat FAB is rendered; the layout compositor remains available
+
+#### Scenario: Shortcut focuses composer
+- **WHEN** the user presses Cmd/Ctrl+J while focus is not already in an editable field
+- **THEN** the layout compositor receives focus
+
+#### Scenario: Send opens conversation panel
+- **WHEN** the owner submits text from the layout composer
+- **THEN** the orchestrator conversation panel opens and the message is sent through the existing chat transport
+
+#### Scenario: Conversación full screen
+- **WHEN** the owner activates Conversación
+- **THEN** they navigate to `/conversation` showing the full-screen conversation layout
+
+### Requirement: Advanced in user menu on mobile
+When `user.role === "operator"`, Advanced operator links SHALL remain available. On small viewports Advanced MUST appear in the user account menu (not the bottom tab bar). On `md+` viewports Advanced MAY remain as a header nav group.
+
+#### Scenario: Operator mobile Advanced
+- **WHEN** an Operator opens the user menu on a small viewport
+- **THEN** Advanced / operator tool links are reachable from that menu
+
+#### Scenario: Cliente hides Advanced
+- **WHEN** the user role is `client`
+- **THEN** Advanced MUST NOT render in nav or user menu
