@@ -1,0 +1,4 @@
+- [x] OpenChatButton focuses composer
+- [x] Remove OrchestratorChatToggle
+- [x] Audit chat cards vs AgentCard style
+- [x] Test
