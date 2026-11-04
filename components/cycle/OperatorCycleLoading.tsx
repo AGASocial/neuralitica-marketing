@@ -1,6 +1,6 @@
 "use client";
 
-import { ProgressSpinner } from "primereact/progressspinner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type OperatorCycleLoadingProps = {
   label: string;
@@ -9,20 +9,14 @@ type OperatorCycleLoadingProps = {
 export function OperatorCycleLoading({ label }: OperatorCycleLoadingProps) {
   return (
     <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "1rem",
-        minHeight: "240px",
-        color: "#4b5563",
-      }}
+      className="mx-auto flex min-h-60 w-full max-w-5xl flex-col justify-center gap-4 text-dim"
       aria-busy="true"
       aria-live="polite"
     >
-      <ProgressSpinner style={{ width: "48px", height: "48px" }} strokeWidth="4" />
-      <span>{label}</span>
+      <span className="text-sm">{label}</span>
+      <Skeleton className="h-10 w-2/3 bg-panel" />
+      <Skeleton className="h-24 w-full bg-panel" />
+      <Skeleton className="h-40 w-full bg-panel" />
     </div>
   );
 }

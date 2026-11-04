@@ -3,11 +3,18 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
-import { Calendar } from "primereact/calendar";
-import { Message } from "primereact/message";
-import { Sidebar } from "primereact/sidebar";
+import {
+  CalendarDays,
+  Check,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  FileText,
+  Pencil,
+} from "lucide-react";
 
+import { WeekPicker } from "@/components/campana/WeekPicker";
 import { CalendarStatusTag } from "@/components/calendar/CalendarStatusTag";
 import {
   MarkPublishedDialog,
@@ -17,6 +24,16 @@ import {
   ReelMetricsSection,
   type ReelMetricsSectionCopy,
 } from "@/components/calendar/ReelMetricsSection";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { StatusAlert } from "@/components/ui/status-alert";
 import type {
   CalendarPipelineStatus,
   CalendarSlotDetailDto,
@@ -26,6 +43,7 @@ import type {
 import type { ContentStrategySlotGoal } from "@/lib/contracts/content-strategy";
 import type { ReelMetricsDto } from "@/lib/contracts/reel-metrics";
 import { formatWeekRange, normalizeToIsoMonday } from "@/lib/trend/normalize-week-start";
+import { cn } from "@/lib/utils";
 
 type CalendarPageCopy = {
   title: string;
@@ -72,10 +90,6 @@ type OperatorCalendarViewProps = {
   copy: CalendarPageCopy;
 };
 
-function weekStartToDate(weekStart: string): Date {
-  return new Date(`${weekStart}T12:00:00.000Z`);
-}
-
 function shiftWeek(weekStart: string, deltaDays: number): string {
   const date = new Date(`${weekStart}T12:00:00.000Z`);
   date.setUTCDate(date.getUTCDate() + deltaDays);
@@ -121,11 +135,26 @@ function formatDayHeader(isoDate: string, locale: string): string {
 
 function PageHeader({ copy }: { copy: CalendarPageCopy }) {
   return (
-    <div style={{ marginBottom: "1.5rem" }}>
-      <h1 style={{ margin: "0 0 0.35rem", fontSize: "1.75rem", fontWeight: 700 }}>
-        {copy.title}
-      </h1>
-      <p style={{ margin: 0, color: "#6b7280", maxWidth: "48rem" }}>{copy.subtitle}</p>
+    <div className="mb-8">
+      <h1 className="font-display text-4xl text-fog sm:text-5xl">{copy.title}</h1>
+      <p className="mt-2 max-w-3xl text-dim">{copy.subtitle}</p>
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-dim">
+        {label}
+      </div>
+      <div className="text-fog">{children}</div>
     </div>
   );
 }
@@ -140,104 +169,53 @@ function SlotCard({ slot, copy, onSelect }: SlotCardProps) {
   const isPublished = slot.pipelineStatus === "published";
 
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(slot)}
-      style={{
-        display: "block",
-        width: "100%",
-        textAlign: "left",
-        padding: "0.65rem",
-        marginBottom: "0.5rem",
-        border: "1px solid #e5e7eb",
-        borderRadius: "0.5rem",
-        background: "#ffffff",
-        cursor: "pointer",
-      }}
-    >
-      {slot.thumbnailPreviewUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={slot.thumbnailPreviewUrl}
-          alt=""
-          style={{
-            width: "100%",
-            aspectRatio: "9 / 16",
-            objectFit: "cover",
-            borderRadius: "0.35rem",
-            marginBottom: "0.5rem",
-            background: "#f3f4f6",
-          }}
-        />
+    <div className="mb-2 overflow-hidden rounded-xl border border-edge bg-panel transition-colors focus-within:ring-2 focus-within:ring-butter hover:bg-edge/60">
+      <button
+        type="button"
+        onClick={() => onSelect(slot)}
+        className="block w-full p-2.5 text-left focus-visible:outline-none"
+      >
+        {slot.thumbnailPreviewUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={slot.thumbnailPreviewUrl}
+            alt=""
+            className="mb-2 aspect-[9/16] w-full rounded-lg bg-deep object-cover"
+          />
+        ) : null}
+        <div className="mb-1 text-xs text-dim">{slot.clientDisplayName}</div>
+        <div className="mb-2 text-sm font-bold leading-snug text-fog">
+          {slot.tema}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <CalendarStatusTag
+            status={slot.pipelineStatus}
+            label={copy.status[slot.pipelineStatus]}
+            changesRequested={slot.changesRequested}
+            changesRequestedLabel={copy.changesRequestedLabel}
+          />
+          {isPublished ? (
+            <span
+              aria-hidden
+              className="inline-flex size-5 items-center justify-center rounded-full bg-butter text-deep"
+            >
+              <Check className="size-3" />
+            </span>
+          ) : null}
+        </div>
+      </button>
+      {isPublished && slot.instagramPostUrl ? (
+        <a
+          href={slot.instagramPostUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={copy.markPublished.viewOnInstagram}
+          className="mx-2.5 mb-2.5 inline-flex size-6 items-center justify-center rounded text-butter hover:bg-deep"
+        >
+          <ExternalLink className="size-4" aria-hidden />
+        </a>
       ) : null}
-      <div style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: "0.25rem" }}>
-        {slot.clientDisplayName}
-      </div>
-      <div
-        style={{
-          fontWeight: 600,
-          fontSize: "0.875rem",
-          marginBottom: "0.5rem",
-          lineHeight: 1.3,
-        }}
-      >
-        {slot.tema}
-      </div>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "0.35rem",
-          alignItems: "center",
-        }}
-      >
-        <CalendarStatusTag
-          status={slot.pipelineStatus}
-          label={copy.status[slot.pipelineStatus]}
-          changesRequested={slot.changesRequested}
-          changesRequestedLabel={copy.changesRequestedLabel}
-        />
-        {isPublished ? (
-          <span
-            aria-hidden
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "1.25rem",
-              height: "1.25rem",
-              borderRadius: "9999px",
-              background: "#7c3aed",
-              color: "#ffffff",
-              fontSize: "0.65rem",
-            }}
-          >
-            <i className="pi pi-check" />
-          </span>
-        ) : null}
-        {isPublished && slot.instagramPostUrl ? (
-          <a
-            href={slot.instagramPostUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={copy.markPublished.viewOnInstagram}
-            onClick={(event) => event.stopPropagation()}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "1.25rem",
-              height: "1.25rem",
-              borderRadius: "0.25rem",
-              color: "#7c3aed",
-              fontSize: "0.85rem",
-            }}
-          >
-            <i className="pi pi-instagram" />
-          </a>
-        ) : null}
-      </div>
-    </button>
+    </div>
   );
 }
 
@@ -252,15 +230,14 @@ function GapWarnings({ warnings, copy }: GapWarningsProps) {
   }
 
   return (
-    <div style={{ display: "grid", gap: "0.5rem", marginBottom: "1.25rem" }}>
+    <div className="mb-5 grid gap-2">
       {warnings.map((warning) => (
-        <Message
+        <StatusAlert
           key={warning.clientId}
           severity="warn"
           text={copy.gapWarning
             .replace("{client}", warning.clientDisplayName)
             .replace("{count}", String(warning.missingCount))}
-          style={{ width: "100%" }}
         />
       ))}
     </div>
@@ -279,7 +256,6 @@ export function OperatorCalendarView({
   const [selectedSlot, setSelectedSlot] = useState<CalendarSlotDetailDto | null>(null);
   const [markPublishedOpen, setMarkPublishedOpen] = useState(false);
 
-  const weekDate = weekStartToDate(weekStart);
   const weekRangeLabel = formatWeekRange(weekStart, locale);
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
 
@@ -334,110 +310,80 @@ export function OperatorCalendarView({
     selectedSlot.assembledReelId != null;
 
   return (
-    <div>
+    <div className="mx-auto max-w-[1400px]">
       <PageHeader copy={copy} />
 
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "flex-end",
-          gap: "1rem",
-          marginBottom: "1.5rem",
-        }}
-      >
-        <div style={{ flex: "1 1 240px", maxWidth: "320px" }}>
-          <label
-            htmlFor="calendar-week-picker"
-            style={{ display: "block", fontWeight: 600, marginBottom: "0.5rem" }}
-          >
+      <div className="mb-6 flex flex-wrap items-end gap-4">
+        <div className="max-w-xs flex-1 basis-60 space-y-2">
+          <Label htmlFor="calendar-week-picker" className="text-fog">
             {copy.weekLabel}
-          </label>
-          <Calendar
-            inputId="calendar-week-picker"
-            value={weekDate}
-            onChange={(event) => {
-              if (!event.value) {
-                return;
-              }
-              navigateWeek(normalizeToIsoMonday(event.value));
-            }}
-            dateFormat="yy-mm-dd"
-            showIcon
-            style={{ width: "100%" }}
+          </Label>
+          <WeekPicker
+            id="calendar-week-picker"
+            weekStart={weekStart}
+            locale={locale}
+            onSelectWeek={navigateWeek}
           />
-          <p style={{ margin: "0.5rem 0 0", color: "#6b7280", fontSize: "0.875rem" }}>
-            {weekRangeLabel}
-          </p>
+          <p className="text-sm text-dim">{weekRangeLabel}</p>
         </div>
 
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+        <div className="flex gap-2">
           <Button
             type="button"
-            icon="pi pi-chevron-left"
-            label={copy.prevWeek}
-            className="p-button-outlined"
+            variant="outline"
+            className="rounded-full border-edge bg-transparent text-fog hover:bg-panel hover:text-fog"
             onClick={() => navigateWeek(shiftWeek(weekStart, -7))}
-          />
+          >
+            <ChevronLeft aria-hidden />
+            {copy.prevWeek}
+          </Button>
           <Button
             type="button"
-            icon="pi pi-chevron-right"
-            iconPos="right"
-            label={copy.nextWeek}
-            className="p-button-outlined"
+            variant="outline"
+            className="rounded-full border-edge bg-transparent text-fog hover:bg-panel hover:text-fog"
             onClick={() => navigateWeek(shiftWeek(weekStart, 7))}
-          />
+          >
+            {copy.nextWeek}
+            <ChevronRight aria-hidden />
+          </Button>
         </div>
       </div>
 
       {loadFailed ? (
-        <div style={{ marginBottom: "1rem" }}>
-          <Message severity="error" text={copy.loadError} style={{ width: "100%" }} />
-          <Link href="/dashboard" style={{ display: "inline-block", marginTop: "1rem" }}>
-            <Button type="button" label={copy.backDashboard} className="p-button-text" />
-          </Link>
+        <div className="mb-4 space-y-4">
+          <StatusAlert severity="error" text={copy.loadError} />
+          <Button
+            asChild
+            variant="ghost"
+            className="text-butter hover:text-butter"
+          >
+            <Link href="/dashboard">{copy.backDashboard}</Link>
+          </Button>
         </div>
       ) : null}
 
       {!loadFailed && data.clientsWithoutApprovedStrategyCount > 0 ? (
-        <Message
+        <StatusAlert
           severity="info"
+          className="mb-4"
           text={copy.clientsWithoutStrategy.replace(
             "{count}",
             String(data.clientsWithoutApprovedStrategyCount),
           )}
-          style={{ width: "100%", marginBottom: "1rem" }}
         />
       ) : null}
 
       {!loadFailed ? <GapWarnings warnings={data.gapWarnings} copy={copy} /> : null}
 
       {!loadFailed && data.slots.length === 0 ? (
-        <Message severity="info" text={copy.emptyWeek} style={{ width: "100%" }} />
+        <StatusAlert severity="info" text={copy.emptyWeek} />
       ) : null}
 
       {!loadFailed && data.slots.length > 0 ? (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(7, minmax(140px, 1fr))",
-            gap: "0.75rem",
-            overflowX: "auto",
-            paddingBottom: "0.5rem",
-          }}
-        >
+        <div className="grid grid-cols-[repeat(7,minmax(150px,1fr))] gap-3 overflow-x-auto pb-2">
           {weekDates.map((date) => (
-            <div key={date} style={{ minWidth: "140px" }}>
-              <div
-                style={{
-                  fontWeight: 600,
-                  fontSize: "0.875rem",
-                  marginBottom: "0.75rem",
-                  paddingBottom: "0.5rem",
-                  borderBottom: "2px solid #e5e7eb",
-                  color: "#374151",
-                }}
-              >
+            <div key={date} className="min-w-[150px]">
+              <div className="mb-3 border-b-2 border-edge pb-2 text-sm font-bold text-fog">
                 {formatDayHeader(date, locale)}
               </div>
               {(slotsByDate.get(date) ?? []).map((slot) => (
@@ -453,173 +399,161 @@ export function OperatorCalendarView({
         </div>
       ) : null}
 
-      <Sidebar
-        visible={selectedSlot !== null}
-        position="right"
-        onHide={() => {
-          setSelectedSlot(null);
-          setMarkPublishedOpen(false);
+      {/*
+        The sheet yields to the mark-published dialog while it is open (modal
+        focus traps must not stack); selectedSlot is retained so the sheet
+        returns when the dialog closes.
+      */}
+      <Sheet
+        open={selectedSlot !== null && !markPublishedOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedSlot(null);
+            setMarkPublishedOpen(false);
+          }
         }}
-        style={{ width: "min(420px, 100vw)" }}
-        header={copy.sidebar.title}
       >
-        {selectedSlot ? (
-          <div style={{ display: "grid", gap: "1rem" }}>
-            <div>
-              <div style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: "0.25rem" }}>
-                {copy.sidebar.client}
-              </div>
-              <div style={{ fontWeight: 600 }}>{selectedSlot.clientDisplayName}</div>
-            </div>
+        <SheetContent
+          side="right"
+          showCloseButton={false}
+          className="w-full overflow-y-auto border-edge bg-panel p-0 text-fog sm:max-w-md"
+        >
+          <SheetHeader className="border-b border-edge p-5">
+            <SheetTitle className="font-display text-3xl font-normal text-fog">
+              {copy.sidebar.title}
+            </SheetTitle>
+            <SheetDescription className="sr-only">
+              {selectedSlot?.tema ?? copy.sidebar.title}
+            </SheetDescription>
+          </SheetHeader>
 
-            <div>
-              <div style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: "0.25rem" }}>
-                {copy.sidebar.tema}
-              </div>
-              <div style={{ fontWeight: 600 }}>{selectedSlot.tema}</div>
-            </div>
+          {selectedSlot ? (
+            <div className="grid gap-4 px-5 pb-5">
+              <DetailRow label={copy.sidebar.client}>
+                <span className="font-semibold">
+                  {selectedSlot.clientDisplayName}
+                </span>
+              </DetailRow>
 
-            <div>
-              <div style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: "0.25rem" }}>
-                {copy.sidebar.goal}
-              </div>
-              <div>{goalLabel(selectedSlot.goal)}</div>
-            </div>
+              <DetailRow label={copy.sidebar.tema}>
+                <span className="font-semibold">{selectedSlot.tema}</span>
+              </DetailRow>
 
-            <div>
-              <div style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: "0.25rem" }}>
-                {copy.sidebar.scheduledDate}
-              </div>
-              <div>{formatScheduledDate(selectedSlot.scheduledDate, locale)}</div>
-            </div>
+              <DetailRow label={copy.sidebar.goal}>
+                {goalLabel(selectedSlot.goal)}
+              </DetailRow>
 
-            <div>
-              <div style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: "0.25rem" }}>
-                {copy.sidebar.slotIndex}
-              </div>
-              <div>{selectedSlot.slotIndex + 1}</div>
-            </div>
+              <DetailRow label={copy.sidebar.scheduledDate}>
+                {formatScheduledDate(selectedSlot.scheduledDate, locale)}
+              </DetailRow>
 
-            <div>
-              <div style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: "0.25rem" }}>
-                {copy.sidebar.pipelineStatus}
-              </div>
-              <CalendarStatusTag
-                status={selectedSlot.pipelineStatus}
-                label={copy.status[selectedSlot.pipelineStatus]}
-                changesRequested={selectedSlot.changesRequested}
-                changesRequestedLabel={copy.changesRequestedLabel}
-              />
-            </div>
+              <DetailRow label={copy.sidebar.slotIndex}>
+                {selectedSlot.slotIndex + 1}
+              </DetailRow>
 
-            {showUpdatePublishedCta && selectedSlot.publishedAt ? (
-              <div>
-                <div style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: "0.25rem" }}>
-                  {copy.markPublished.publishedOnLabel}
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}
+              <DetailRow label={copy.sidebar.pipelineStatus}>
+                <CalendarStatusTag
+                  status={selectedSlot.pipelineStatus}
+                  label={copy.status[selectedSlot.pipelineStatus]}
+                  changesRequested={selectedSlot.changesRequested}
+                  changesRequestedLabel={copy.changesRequestedLabel}
+                />
+              </DetailRow>
+
+              {showUpdatePublishedCta && selectedSlot.publishedAt ? (
+                <DetailRow label={copy.markPublished.publishedOnLabel}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5">
+                      <CheckCircle2 className="size-4 text-butter" aria-hidden />
+                      {formatPublishedAt(selectedSlot.publishedAt)}
+                    </span>
+                    {selectedSlot.instagramPostUrl ? (
+                      <a
+                        href={selectedSlot.instagramPostUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-butter underline-offset-4 hover:underline"
+                      >
+                        <ExternalLink className="size-4" aria-hidden />
+                        {copy.markPublished.viewOnInstagram}
+                      </a>
+                    ) : null}
+                  </div>
+                </DetailRow>
+              ) : null}
+
+              {showMarkPublishedCta ? (
+                <Button
+                  type="button"
+                  className="w-full rounded-full"
+                  onClick={() => setMarkPublishedOpen(true)}
                 >
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
-                    <i className="pi pi-check" style={{ color: "#7c3aed" }} aria-hidden />
-                    {formatPublishedAt(selectedSlot.publishedAt)}
-                  </span>
-                  {selectedSlot.instagramPostUrl ? (
-                    <a
-                      href={selectedSlot.instagramPostUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.35rem",
-                        color: "#7c3aed",
-                        fontWeight: 600,
-                        fontSize: "0.875rem",
-                      }}
+                  <CheckCircle2 aria-hidden />
+                  {copy.markPublished.markCta}
+                </Button>
+              ) : null}
+
+              {showUpdatePublishedCta ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full rounded-full border-edge bg-transparent text-fog hover:bg-deep hover:text-fog"
+                  onClick={() => setMarkPublishedOpen(true)}
+                >
+                  <Pencil aria-hidden />
+                  {copy.markPublished.updateCta}
+                </Button>
+              ) : null}
+
+              {showMetricsSection ? (
+                <ReelMetricsSection
+                  slot={selectedSlot}
+                  copy={copy.metrics}
+                  locale={locale}
+                  onSuccess={handleMetricsSuccess}
+                />
+              ) : null}
+
+              {canDeepLink ? (
+                <div className="flex flex-col gap-2">
+                  <Button asChild className="w-full rounded-full">
+                    <Link
+                      href={`/operator/scripts?weekStart=${weekStart}&highlightSlot=${selectedSlot.slotIndex}`}
                     >
-                      <i className="pi pi-instagram" aria-hidden />
-                      {copy.markPublished.viewOnInstagram}
-                    </a>
-                  ) : null}
+                      <FileText aria-hidden />
+                      {copy.sidebar.openScripts}
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="w-full rounded-full border-edge bg-transparent text-fog hover:bg-deep hover:text-fog"
+                  >
+                    <Link href={`/operator/strategy?weekStart=${weekStart}`}>
+                      <CalendarDays aria-hidden />
+                      {copy.sidebar.viewStrategy}
+                    </Link>
+                  </Button>
                 </div>
-              </div>
-            ) : null}
+              ) : (
+                <StatusAlert
+                  severity="info"
+                  text={copy.sidebar.deepLinkDisabledHint}
+                />
+              )}
 
-            {showMarkPublishedCta ? (
               <Button
                 type="button"
-                label={copy.markPublished.markCta}
-                icon="pi pi-check-circle"
-                style={{ width: "100%" }}
-                onClick={() => setMarkPublishedOpen(true)}
-              />
-            ) : null}
-
-            {showUpdatePublishedCta ? (
-              <Button
-                type="button"
-                label={copy.markPublished.updateCta}
-                icon="pi pi-pencil"
-                className="p-button-outlined"
-                style={{ width: "100%" }}
-                onClick={() => setMarkPublishedOpen(true)}
-              />
-            ) : null}
-
-            {showMetricsSection && selectedSlot ? (
-              <ReelMetricsSection
-                slot={selectedSlot}
-                copy={copy.metrics}
-                locale={locale}
-                onSuccess={handleMetricsSuccess}
-              />
-            ) : null}
-
-            {canDeepLink ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                <Link
-                  href={`/operator/scripts?weekStart=${weekStart}&highlightSlot=${selectedSlot.slotIndex}`}
-                >
-                  <Button
-                    type="button"
-                    label={copy.sidebar.openScripts}
-                    icon="pi pi-file-edit"
-                    style={{ width: "100%" }}
-                  />
-                </Link>
-                <Link href={`/operator/strategy?weekStart=${weekStart}`}>
-                  <Button
-                    type="button"
-                    label={copy.sidebar.viewStrategy}
-                    icon="pi pi-calendar"
-                    className="p-button-outlined"
-                    style={{ width: "100%" }}
-                  />
-                </Link>
-              </div>
-            ) : (
-              <Message
-                severity="info"
-                text={copy.sidebar.deepLinkDisabledHint}
-                style={{ width: "100%" }}
-              />
-            )}
-
-            <Button
-              type="button"
-              label={copy.sidebar.close}
-              className="p-button-text"
-              onClick={() => setSelectedSlot(null)}
-            />
-          </div>
-        ) : null}
-      </Sidebar>
+                variant="ghost"
+                className={cn("text-dim hover:text-fog")}
+                onClick={() => setSelectedSlot(null)}
+              >
+                {copy.sidebar.close}
+              </Button>
+            </div>
+          ) : null}
+        </SheetContent>
+      </Sheet>
 
       {selectedSlot && markPublishedOpen ? (
         <MarkPublishedDialog

@@ -2,12 +2,18 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
-import { Message } from "primereact/message";
-import { Panel } from "primereact/panel";
-import { Skeleton } from "primereact/skeleton";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusAlert } from "@/components/ui/status-alert";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type {
   StrategyInsightsErrorCode,
   StrategyPerformanceInsightsDto,
@@ -101,19 +107,24 @@ function messageForInsightsError(
 
 function InsightsLoadingSkeleton() {
   return (
-    <div aria-busy="true" aria-live="polite">
-      <Skeleton height="1.25rem" width="60%" style={{ marginBottom: "0.75rem" }} />
-      <Skeleton height="8rem" />
+    <div aria-busy="true" aria-live="polite" className="space-y-3">
+      <Skeleton className="h-5 w-3/5 bg-edge" />
+      <Skeleton className="h-32 w-full bg-edge" />
     </div>
   );
 }
 
 function InsightsEmptyState({ copy }: { copy: StrategyInsightsCopy }) {
   return (
-    <div>
-      <Message severity="info" text={copy.empty} style={{ width: "100%" }} />
-      <p style={{ margin: "0.75rem 0 0", fontSize: "0.9rem" }}>
-        <Link href="/operator/calendar">{copy.calendarHint}</Link>
+    <div className="space-y-3">
+      <StatusAlert severity="info" text={copy.empty} />
+      <p className="text-sm">
+        <Link
+          href="/operator/calendar"
+          className="text-butter underline-offset-4 hover:underline"
+        >
+          {copy.calendarHint}
+        </Link>
       </p>
     </div>
   );
@@ -132,69 +143,66 @@ function InsightsDataTable({
     .replace("{windowStart}", formatIsoDate(insights.windowStart, locale))
     .replace("{windowEnd}", formatIsoDate(insights.windowEnd, locale));
 
+  const numericColumns: Array<{
+    key: keyof Pick<
+      StrategyPerformanceThemeRow,
+      | "reelCount"
+      | "views"
+      | "likes"
+      | "comments"
+      | "saves"
+      | "dms"
+      | "engagementScore"
+    >;
+    header: string;
+  }> = [
+    { key: "reelCount", header: copy.columns.reelCount },
+    { key: "views", header: copy.columns.views },
+    { key: "likes", header: copy.columns.likes },
+    { key: "comments", header: copy.columns.comments },
+    { key: "saves", header: copy.columns.saves },
+    { key: "dms", header: copy.columns.dms },
+    { key: "engagementScore", header: copy.columns.engagementScore },
+  ];
+
   return (
     <div>
-      <p style={{ margin: "0 0 1rem", color: "#6b7280", fontSize: "0.875rem" }}>
-        {lookback}
-      </p>
-      <DataTable
-        value={insights.topThemes}
-        stripedRows
-        size="small"
-        emptyMessage={copy.empty}
-      >
-        <Column field="rank" header="#" style={{ width: "3rem" }} />
-        <Column field="tema" header={copy.columns.tema} />
-        <Column
-          field="reelCount"
-          header={copy.columns.reelCount}
-          body={(row: StrategyPerformanceThemeRow) =>
-            formatInteger(row.reelCount, locale)
-          }
-        />
-        <Column
-          field="views"
-          header={copy.columns.views}
-          body={(row: StrategyPerformanceThemeRow) =>
-            formatInteger(row.views, locale)
-          }
-        />
-        <Column
-          field="likes"
-          header={copy.columns.likes}
-          body={(row: StrategyPerformanceThemeRow) =>
-            formatInteger(row.likes, locale)
-          }
-        />
-        <Column
-          field="comments"
-          header={copy.columns.comments}
-          body={(row: StrategyPerformanceThemeRow) =>
-            formatInteger(row.comments, locale)
-          }
-        />
-        <Column
-          field="saves"
-          header={copy.columns.saves}
-          body={(row: StrategyPerformanceThemeRow) =>
-            formatInteger(row.saves, locale)
-          }
-        />
-        <Column
-          field="dms"
-          header={copy.columns.dms}
-          body={(row: StrategyPerformanceThemeRow) =>
-            formatInteger(row.dms, locale)
-          }
-        />
-        <Column
-          field="engagementScore"
-          header={copy.columns.engagementScore}
-          body={(row: StrategyPerformanceThemeRow) =>
-            formatInteger(row.engagementScore, locale)
-          }
-        />
-      </DataTable>
+      <p className="mb-4 text-sm text-dim">{lookback}</p>
+      {insights.topThemes.length === 0 ? (
+        <p className="text-sm text-dim">{copy.empty}</p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow className="border-edge hover:bg-transparent">
+              <TableHead className="w-12 text-dim">#</TableHead>
+              <TableHead className="text-dim">{copy.columns.tema}</TableHead>
+              {numericColumns.map((column) => (
+                <TableHead key={column.key} className="text-right text-dim">
+                  {column.header}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {insights.topThemes.map((row) => (
+              <TableRow
+                key={`${row.rank}-${row.tema}`}
+                className="border-edge even:bg-deep/40 hover:bg-deep/70"
+              >
+                <TableCell className="text-dim">{row.rank}</TableCell>
+                <TableCell className="whitespace-normal font-medium text-fog">
+                  {row.tema}
+                </TableCell>
+                {numericColumns.map((column) => (
+                  <TableCell key={column.key} className="text-right tabular-nums">
+                    {formatInteger(row[column.key], locale)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }
@@ -266,22 +274,23 @@ export function StrategyInsightsPanel({
   }, [clientId, copy]);
 
   return (
-    <Panel header={copy.title} style={{ marginBottom: "1.5rem" }}>
-      {error ? (
-        <Message
-          severity="error"
-          text={error}
-          style={{ width: "100%", marginBottom: "1rem" }}
-        />
-      ) : null}
+    <Card className="border-edge bg-panel/60 py-5">
+      <CardHeader className="px-5">
+        <CardTitle className="font-display text-2xl font-normal text-fog">
+          {copy.title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 px-5">
+        {error ? <StatusAlert severity="error" text={error} /> : null}
 
-      {loading ? (
-        <InsightsLoadingSkeleton />
-      ) : insights ? (
-        <InsightsDataTable insights={insights} locale={locale} copy={copy} />
-      ) : (
-        <InsightsEmptyState copy={copy} />
-      )}
-    </Panel>
+        {loading ? (
+          <InsightsLoadingSkeleton />
+        ) : insights ? (
+          <InsightsDataTable insights={insights} locale={locale} copy={copy} />
+        ) : (
+          <InsightsEmptyState copy={copy} />
+        )}
+      </CardContent>
+    </Card>
   );
 }

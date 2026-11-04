@@ -112,7 +112,9 @@
         "displayName": {
           "too_small": "Display name is required."
         }
-      }
+      },
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
     },
     "login": {
       "title": "Log in",
@@ -136,7 +138,9 @@
         "password": {
           "too_small": "Enter your password."
         }
-      }
+      },
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
     },
     "reset": {
       "title": "Reset your password",
@@ -169,7 +173,9 @@
         "password": {
           "too_small": "Enter a new password."
         }
-      }
+      },
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
     },
     "pending": {
       "title": "Account pending activation",
@@ -1972,6 +1978,15 @@
       "inProgress": "In progress",
       "ready": "Scripts ready",
       "planned": "To plan"
-    }
+    },
+    "weekLabel": "Week {n}",
+    "weekMeta": "{client} · week of {range}",
+    "slotsCount": "{count} reels",
+    "slotsProgress": "{done} of {total}",
+    "openScript": "Open script",
+    "createVideo": "Create video",
+    "editScript": "Edit",
+    "insightsHeading": "Performance",
+    "editBrief": "Edit brief"
   }
 }

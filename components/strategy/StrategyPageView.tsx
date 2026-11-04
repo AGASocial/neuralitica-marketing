@@ -1,16 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
-import { Calendar } from "primereact/calendar";
-import { Dropdown } from "primereact/dropdown";
-import { Message } from "primereact/message";
-import { Skeleton } from "primereact/skeleton";
-import { Tag } from "primereact/tag";
-import { Toast } from "primereact/toast";
+import { Check, FileText, Loader2, Save, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
+import { mapPipelineStatusToReelBadge } from "@/components/campana/pipeline-badge";
+import {
+  NewReelCard,
+  ReelCard,
+  type CampanaReelCardModel,
+} from "@/components/campana/ReelCard";
+import {
+  ScriptsSidePanel,
+  type CampanaScriptItem,
+} from "@/components/campana/ScriptsSidePanel";
+import { WeekPicker } from "@/components/campana/WeekPicker";
+import {
+  WeeksStrip,
+  type CampanaWeekCell,
+  type CampanaWeekStatus,
+} from "@/components/campana/WeeksStrip";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   briefsEqual,
   buildEditablePatch,
@@ -30,9 +54,12 @@ import { approveContentStrategy } from "@/lib/content-strategy/actions/approve-c
 import { generateContentStrategy } from "@/lib/content-strategy/actions/generate-content-strategy";
 import { updateContentStrategyBrief } from "@/lib/content-strategy/actions/update-content-strategy-brief";
 import type { OperatorClientOption } from "@/lib/content-strategy/load-operator-clients-for-strategy";
+import type { CalendarSlotDetailDto } from "@/lib/contracts/calendar";
+import type { ReelScriptListItem } from "@/lib/contracts/reel-script";
 import type { StrategyPerformanceInsightsDto } from "@/lib/contracts/strategy-insights";
 import type { VisualModality } from "@/lib/contracts/visual-preferences";
-import { formatWeekRange, normalizeToIsoMonday } from "@/lib/trend/normalize-week-start";
+import { formatWeekRange } from "@/lib/trend/normalize-week-start";
+import { cn } from "@/lib/utils";
 
 type StrategyPageCopy = {
   title: string;
@@ -128,6 +155,39 @@ type StrategyPageCopy = {
   };
 };
 
+/** Mirrors `messages.campana` (strategy-hub Campaña layout). */
+export type StrategyCampanaCopy = {
+  weeksAriaLabel: string;
+  reelsHeading: string;
+  viewCalendar: string;
+  scriptsHeading: string;
+  scriptsTotal: string;
+  strategyHeading: string;
+  newReel: string;
+  newReelHint: string;
+  rendering: string;
+  status: {
+    published: string;
+    scheduled: string;
+    review: string;
+    rendering: string;
+    draft: string;
+    approved: string;
+    inProgress: string;
+    ready: string;
+    planned: string;
+  };
+  weekLabel: string;
+  weekMeta: string;
+  slotsCount: string;
+  slotsProgress: string;
+  openScript: string;
+  createVideo: string;
+  editScript: string;
+  insightsHeading: string;
+  editBrief: string;
+};
+
 type StrategyPageViewProps = {
   weekStart: string;
   sessionClientId: string;
@@ -139,10 +199,55 @@ type StrategyPageViewProps = {
   loadFailed: boolean;
   locale: string;
   copy: StrategyPageCopy;
+  /** Operator calendar slots for `weekStart` (all clients); filtered by selected client. */
+  calendarSlots?: CalendarSlotDetailDto[];
+  /** Session-client reel scripts for `weekStart`. */
+  scriptItems?: ReelScriptListItem[];
+  campanaCopy?: StrategyCampanaCopy;
 };
 
-function weekStartToDate(weekStart: string): Date {
-  return new Date(`${weekStart}T12:00:00.000Z`);
+function shiftWeek(weekStart: string, deltaDays: number): string {
+  const date = new Date(`${weekStart}T12:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + deltaDays);
+  return date.toISOString().slice(0, 10);
+}
+
+/** ISO-8601 week number for a Monday `weekStart`. */
+function isoWeekNumber(weekStart: string): number {
+  const date = new Date(`${weekStart}T12:00:00.000Z`);
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = Date.UTC(date.getUTCFullYear(), 0, 1);
+  return Math.ceil(((date.getTime() - yearStart) / 86_400_000 + 1) / 7);
+}
+
+function formatShortRange(weekStart: string, locale: string): string {
+  const start = new Date(`${weekStart}T12:00:00.000Z`);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 6);
+  try {
+    const formatter = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    });
+    return `${formatter.format(start)} – ${formatter.format(end)}`;
+  } catch {
+    return weekStart;
+  }
+}
+
+function formatSlotDay(isoDate: string, locale: string): string {
+  try {
+    return new Intl.DateTimeFormat(locale, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(`${isoDate}T12:00:00.000Z`));
+  } catch {
+    return isoDate;
+  }
 }
 
 function formatApprovalDate(iso: string, locale: string): string {
@@ -217,9 +322,11 @@ export function StrategyPageView({
   loadFailed,
   locale,
   copy,
+  calendarSlots,
+  scriptItems,
+  campanaCopy,
 }: StrategyPageViewProps) {
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
   const [pending, setPending] = useState(false);
   const [saving, setSaving] = useState(false);
   const [approving, setApproving] = useState(false);
@@ -255,7 +362,6 @@ export function StrategyPageView({
     ];
   }, [clients, sessionClientId]);
 
-  const weekDate = weekStartToDate(weekStart);
   const weekRangeLabel = formatWeekRange(weekStart, locale);
   const generateLabel = strategy ? copy.regenerate : copy.generate;
   const isBusy = pending || saving || approving;
@@ -287,6 +393,162 @@ export function StrategyPageView({
           .replace("{name}", strategy.approvedBy.displayName)
           .replace("{date}", formatApprovalDate(strategy.approvedAt, locale))
       : null;
+
+  const selectedClient = clients.find((client) => client.id === selectedClientId);
+  const clientName = selectedClient?.displayName ?? null;
+  const canLinkScripts = selectedClientId === sessionClientId;
+  const scriptsHref = `/operator/scripts?weekStart=${weekStart}`;
+  const calendarHref = `/operator/calendar?weekStart=${weekStart}`;
+
+  const clientSlots = useMemo(
+    () =>
+      (calendarSlots ?? [])
+        .filter((slot) => slot.clientId === selectedClientId)
+        .sort(
+          (a, b) =>
+            a.scheduledDate.localeCompare(b.scheduledDate) ||
+            a.slotIndex - b.slotIndex,
+        ),
+    [calendarSlots, selectedClientId],
+  );
+
+  // Reel scripts are loaded for the session client only.
+  const clientScripts = useMemo(
+    () => (canLinkScripts ? (scriptItems ?? []) : []),
+    [canLinkScripts, scriptItems],
+  );
+
+  const reelCards = useMemo<CampanaReelCardModel[]>(() => {
+    if (!campanaCopy) {
+      return [];
+    }
+
+    if (clientSlots.length > 0) {
+      return clientSlots.map((slot) => {
+        const badge = mapPipelineStatusToReelBadge(slot.pipelineStatus);
+        return {
+          id: slot.slotId,
+          title: slot.tema,
+          subtitle: formatSlotDay(slot.scheduledDate, locale),
+          badge,
+          badgeLabel: campanaCopy.status[badge],
+          thumbnailUrl: slot.thumbnailPreviewUrl,
+          href:
+            canLinkScripts && slot.reelScriptId
+              ? `${scriptsHref}&highlightSlot=${slot.slotIndex}`
+              : calendarHref,
+        };
+      });
+    }
+
+    if (!strategy) {
+      return [];
+    }
+
+    return [...strategy.brief.slots]
+      .sort((a, b) => a.slotIndex - b.slotIndex)
+      .map((slot) => ({
+        id: `brief-slot-${slot.slotIndex}`,
+        title: slot.tema,
+        subtitle: slot.dayOfWeek
+          ? copy.days[slot.dayOfWeek]
+          : `${copy.slot.slotNumber} ${slot.slotIndex + 1}`,
+        badge: "planned" as const,
+        badgeLabel: campanaCopy.status.planned,
+      }));
+  }, [
+    calendarHref,
+    campanaCopy,
+    canLinkScripts,
+    clientSlots,
+    copy.days,
+    copy.slot.slotNumber,
+    locale,
+    scriptsHref,
+    strategy,
+  ]);
+
+  const publishedCount = clientSlots.filter(
+    (slot) => slot.pipelineStatus === "published",
+  ).length;
+
+  const currentWeekStatus = ((): CampanaWeekStatus => {
+    if (clientSlots.length > 0) {
+      if (publishedCount === clientSlots.length) {
+        return "published";
+      }
+      if (
+        clientSlots.some((slot) =>
+          ["generating", "qa", "pending"].includes(slot.pipelineStatus),
+        )
+      ) {
+        return "inProgress";
+      }
+    }
+    if (
+      clientScripts.length > 0 &&
+      clientScripts.every((item) => item.status === "generated")
+    ) {
+      return "ready";
+    }
+    if (strategy?.status === "approved") {
+      return "approved";
+    }
+    if (strategy?.status === "draft") {
+      return "draft";
+    }
+    return "planned";
+  })();
+
+  const weekCells = useMemo<CampanaWeekCell[]>(() => {
+    if (!campanaCopy) {
+      return [];
+    }
+    return [-7, 0, 7, 14].map((delta) => {
+      const cellWeekStart = shiftWeek(weekStart, delta);
+      const status: CampanaWeekStatus =
+        delta === 0 ? currentWeekStatus : "planned";
+      return {
+        weekStart: cellWeekStart,
+        title: campanaCopy.weekLabel.replace(
+          "{n}",
+          String(isoWeekNumber(cellWeekStart)),
+        ),
+        subtitle: `${formatShortRange(cellWeekStart, locale)} · ${campanaCopy.status[status]}`,
+        status,
+        selected: delta === 0,
+      };
+    });
+  }, [campanaCopy, currentWeekStatus, locale, weekStart]);
+
+  const scriptPanelItems = useMemo<CampanaScriptItem[]>(() => {
+    if (!campanaCopy) {
+      return [];
+    }
+    return clientScripts.map((item) => {
+      const generated = item.status === "generated";
+      const dayLabel = item.dayOfWeek
+        ? copy.days[item.dayOfWeek as ContentStrategyDayOfWeek]
+        : undefined;
+      return {
+        id: item.scriptId ?? `slot-${item.slotIndex}`,
+        meta: [
+          `${copy.slot.slotNumber} ${item.slotIndex + 1}`,
+          dayLabel,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        statusLabel: generated
+          ? campanaCopy.status.ready
+          : campanaCopy.status.planned,
+        statusTone: generated ? ("butter" as const) : ("dim" as const),
+        hook: item.package?.hook ?? item.tema,
+        href: `${scriptsHref}&highlightSlot=${item.slotIndex}`,
+        primaryActionLabel: generated ? campanaCopy.openScript : undefined,
+        secondaryActionLabel: generated ? campanaCopy.editScript : undefined,
+      };
+    });
+  }, [campanaCopy, clientScripts, copy.days, copy.slot.slotNumber, scriptsHref]);
 
   function navigateWeek(nextWeekStart: string) {
     const params = new URLSearchParams();
@@ -326,11 +588,7 @@ export function StrategyPageView({
       });
 
       if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastGenerateSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastGenerateSuccess, { duration: 4000 });
         router.refresh();
         return;
       }
@@ -361,11 +619,7 @@ export function StrategyPageView({
       });
 
       if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastSaveSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastSaveSuccess, { duration: 4000 });
         router.refresh();
         return;
       }
@@ -395,11 +649,7 @@ export function StrategyPageView({
       });
 
       if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastApproveSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastApproveSuccess, { duration: 4000 });
         router.refresh();
         return;
       }
@@ -416,85 +666,164 @@ export function StrategyPageView({
 
   if (loadFailed) {
     return (
-      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-        <PageHeader copy={copy} />
-        <Message severity="error" text={copy.loadError} style={{ width: "100%" }} />
+      <div className="mx-auto max-w-5xl space-y-4">
+        <PageHeader title={copy.title} subtitle={copy.subtitle} />
+        <StatusAlert severity="error" text={copy.loadError} />
         <Button
           type="button"
-          label={copy.backDashboard}
-          className="p-button-text"
-          style={{ marginTop: "1rem" }}
+          variant="ghost"
+          className="text-butter hover:text-butter"
           onClick={() => router.push("/dashboard")}
-        />
+        >
+          {copy.backDashboard}
+        </Button>
       </div>
     );
   }
 
-  return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-      <Toast ref={toastRef} />
-      <PageHeader copy={copy} />
+  const strategyThemes = strategy
+    ? strategy.brief.themes.slice(0, 2).join(" · ")
+    : "";
+  const headerTitle = strategyThemes.length > 0 ? strategyThemes : copy.title;
+  const eyebrow = campanaCopy
+    ? campanaCopy.weekMeta
+        .replace("{client}", clientName ?? "")
+        .replace("{range}", weekRangeLabel)
+    : clientName
+      ? `${clientName} · ${weekRangeLabel}`
+      : weekRangeLabel;
+  const showNewReel =
+    campanaCopy !== undefined &&
+    canLinkScripts &&
+    strategy?.status === "approved";
 
-      <div
-        style={{
-          display: "grid",
-          gap: "1rem",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          marginBottom: "1.5rem",
-        }}
-      >
-        <div>
-          <label
-            htmlFor="strategy-client-select"
-            style={{ display: "block", fontWeight: 600, marginBottom: "0.5rem" }}
-          >
+  const mainColumn = (
+    <div className="space-y-8 p-6 lg:p-8">
+      <header>
+        <p className="text-sm font-semibold text-butter">{eyebrow}</p>
+        <h1 className="mt-2 line-clamp-3 font-display text-4xl leading-tight text-fog sm:text-5xl">
+          {headerTitle}
+        </h1>
+        <p className="mt-2 max-w-3xl text-dim">{copy.subtitle}</p>
+      </header>
+
+      {campanaCopy ? (
+        <WeeksStrip
+          weeks={weekCells}
+          copy={{ ariaLabel: campanaCopy.weeksAriaLabel }}
+          onSelectWeek={(nextWeekStart) => {
+            if (!isBusy && nextWeekStart !== weekStart) {
+              navigateWeek(nextWeekStart);
+            }
+          }}
+          disabled={isBusy}
+        />
+      ) : null}
+
+      <div className="grid gap-4 sm:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]">
+        <div className="space-y-2">
+          <Label htmlFor="strategy-client-select" className="text-fog">
             {copy.clientLabel}
-          </label>
-          <Dropdown
-            inputId="strategy-client-select"
+          </Label>
+          <Select
             value={selectedClientId}
-            options={clientOptions}
             disabled={!clientSelectorEnabled || isBusy}
-            onChange={(event) => {
-              if (typeof event.value === "string") {
-                handleClientChange(event.value);
-              }
-            }}
-            style={{ width: "100%" }}
-          />
+            onValueChange={handleClientChange}
+          >
+            <SelectTrigger
+              id="strategy-client-select"
+              className="w-full border-edge bg-panel text-fog"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {clientOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {!clientSelectorEnabled ? (
-            <p style={{ margin: "0.5rem 0 0", color: "#6b7280", fontSize: "0.875rem" }}>
-              {copy.clientSessionHint}
-            </p>
+            <p className="text-sm text-dim">{copy.clientSessionHint}</p>
           ) : null}
         </div>
 
-        <div>
-          <label
-            htmlFor="strategy-week-picker"
-            style={{ display: "block", fontWeight: 600, marginBottom: "0.5rem" }}
-          >
+        <div className="space-y-2">
+          <Label htmlFor="strategy-week-picker" className="text-fog">
             {copy.weekLabel}
-          </label>
-          <Calendar
-            inputId="strategy-week-picker"
-            value={weekDate}
-            onChange={(event) => {
-              if (!event.value || isBusy) {
-                return;
-              }
-              navigateWeek(normalizeToIsoMonday(event.value));
-            }}
-            dateFormat="yy-mm-dd"
-            showIcon
+          </Label>
+          <WeekPicker
+            id="strategy-week-picker"
+            weekStart={weekStart}
+            locale={locale}
             disabled={isBusy}
-            style={{ width: "100%" }}
+            onSelectWeek={(nextWeekStart) => {
+              if (!isBusy) {
+                navigateWeek(nextWeekStart);
+              }
+            }}
           />
-          <p style={{ margin: "0.5rem 0 0", color: "#6b7280", fontSize: "0.875rem" }}>
-            {weekRangeLabel}
-          </p>
+          <p className="text-sm text-dim">{weekRangeLabel}</p>
         </div>
       </div>
+
+      {campanaCopy && (reelCards.length > 0 || showNewReel) ? (
+        <section aria-labelledby="strategy-reels-heading">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2
+                id="strategy-reels-heading"
+                className="font-display text-3xl text-fog"
+              >
+                {campanaCopy.reelsHeading}
+              </h2>
+              <p className="mt-1 text-sm text-dim">
+                {campanaCopy.slotsCount.replace(
+                  "{count}",
+                  String(reelCards.length),
+                )}
+                {clientSlots.length > 0
+                  ? ` · ${campanaCopy.slotsProgress
+                      .replace("{done}", String(publishedCount))
+                      .replace("{total}", String(clientSlots.length))}`
+                  : ""}
+              </p>
+            </div>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="rounded-full border-edge bg-transparent text-fog hover:bg-panel hover:text-fog"
+            >
+              <Link href={calendarHref}>{campanaCopy.viewCalendar}</Link>
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+            {reelCards.map((reel) => (
+              <ReelCard
+                key={reel.id}
+                reel={reel}
+                onSelect={() => {
+                  document
+                    .getElementById("strategy-brief")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              />
+            ))}
+            {showNewReel ? (
+              <NewReelCard
+                copy={{
+                  newReel: campanaCopy.newReel,
+                  newReelHint: campanaCopy.newReelHint,
+                  rendering: campanaCopy.rendering,
+                }}
+                href={scriptsHref}
+              />
+            ) : null}
+          </div>
+        </section>
+      ) : null}
 
       <StrategyInsightsPanel
         initialInsights={initialInsights}
@@ -504,154 +833,161 @@ export function StrategyPageView({
         copy={copy.insights}
       />
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "1rem",
-          flexWrap: "wrap",
-          marginBottom: "1rem",
-        }}
-      >
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-2">
           {strategy ? (
-            <Tag
+            <StatusBadge
+              severity={strategy.status === "approved" ? "success" : "warning"}
               value={
                 strategy.status === "approved"
                   ? copy.status.approved
                   : copy.status.draft
               }
-              severity={strategy.status === "approved" ? "success" : "warning"}
             />
           ) : null}
-          {versionLabel ? <TagLine text={versionLabel} /> : null}
+          {versionLabel ? (
+            <Badge
+              variant="outline"
+              className={cn("border-info/40 bg-info/15 text-info")}
+            >
+              {versionLabel}
+            </Badge>
+          ) : null}
         </div>
         <Button
           type="button"
-          label={generateLabel}
-          icon="pi pi-sparkles"
-          loading={pending}
+          className="rounded-full"
           disabled={isBusy}
           onClick={() => void handleGenerate()}
-        />
+        >
+          {pending ? (
+            <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden />
+          ) : (
+            <Sparkles aria-hidden />
+          )}
+          {generateLabel}
+        </Button>
       </div>
 
       {approvalCaption ? (
-        <p style={{ margin: "0 0 1rem", color: "#4b5563", fontSize: "0.9rem" }}>
-          {approvalCaption}
-        </p>
+        <p className="text-sm text-dim">{approvalCaption}</p>
       ) : null}
 
       {strategy?.status === "approved" ? (
-        <div style={{ marginBottom: "1rem" }}>
-          <Message
-            severity="info"
-            text={copy.approvedLockedHint}
-            style={{ width: "100%", marginBottom: "0.75rem" }}
-          />
-          <Link href={`/operator/scripts?weekStart=${weekStart}`}>
-            <Button type="button" label={copy.viewScripts} icon="pi pi-file-edit" />
-          </Link>
+        <div className="space-y-3">
+          <StatusAlert severity="info" text={copy.approvedLockedHint} />
+          <Button asChild className="rounded-full">
+            <Link href={scriptsHref}>
+              <FileText aria-hidden />
+              {copy.viewScripts}
+            </Link>
+          </Button>
         </div>
       ) : null}
 
       {strategy && canEdit ? (
-        <div
-          style={{
-            display: "flex",
-            gap: "0.5rem",
-            flexWrap: "wrap",
-            marginBottom: "1rem",
-          }}
-        >
+        <div className="flex flex-wrap gap-2">
           <Button
             type="button"
-            label={saving ? copy.saving : copy.save}
-            icon="pi pi-save"
-            loading={saving}
+            className="rounded-full"
             disabled={!isDirty || !hasValidThemes || isBusy}
             onClick={() => void handleSave()}
-          />
+          >
+            {saving ? (
+              <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden />
+            ) : (
+              <Save aria-hidden />
+            )}
+            {saving ? copy.saving : copy.save}
+          </Button>
           <Button
             type="button"
-            label={approving ? copy.approving : copy.approve}
-            icon="pi pi-check"
-            severity="success"
-            loading={approving}
+            className="rounded-full bg-success text-deep hover:bg-success/90"
             disabled={isDirty || isBusy}
             onClick={() => void handleApprove()}
-          />
+          >
+            {approving ? (
+              <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden />
+            ) : (
+              <Check aria-hidden />
+            )}
+            {approving ? copy.approving : copy.approve}
+          </Button>
         </div>
       ) : null}
 
-      {banner ? (
-        <Message severity="error" text={banner} style={{ width: "100%", marginBottom: "1rem" }} />
-      ) : null}
+      {banner ? <StatusAlert severity="error" text={banner} /> : null}
 
-      {pending ? (
-        <GeneratingSkeleton copy={copy} />
-      ) : strategy && displayBrief ? (
-        <StrategyBriefView
-          brief={displayBrief}
-          playbookLabels={playbookLabels}
-          isEditable={canEdit}
-          onBriefChange={canEdit ? setEditedBrief : undefined}
+      <section id="strategy-brief" className="scroll-mt-20">
+        {campanaCopy && canEdit ? (
+          <h2 className="mb-4 font-display text-3xl text-fog">
+            {campanaCopy.editBrief}
+          </h2>
+        ) : null}
+        {pending ? (
+          <GeneratingSkeleton text={copy.generating} />
+        ) : strategy && displayBrief ? (
+          <StrategyBriefView
+            brief={displayBrief}
+            playbookLabels={playbookLabels}
+            isEditable={canEdit}
+            onBriefChange={canEdit ? setEditedBrief : undefined}
+            copy={{
+              sections: copy.sections,
+              slot: copy.slot,
+              themes: copy.themes,
+              goals: copy.goals,
+              days: copy.days,
+              modalities: copy.modalities,
+            }}
+          />
+        ) : (
+          <StatusAlert severity="info" text={copy.empty} />
+        )}
+      </section>
+    </div>
+  );
+
+  if (!campanaCopy) {
+    return <div className="mx-auto max-w-5xl">{mainColumn}</div>;
+  }
+
+  return (
+    <div className="-mx-4 -my-6 grid min-h-[calc(100vh-4rem)] sm:-mx-6 lg:-mx-8 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="min-w-0">{mainColumn}</div>
+      <div className="border-t border-edge lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:border-t-0">
+        <ScriptsSidePanel
           copy={{
-            sections: copy.sections,
-            slot: copy.slot,
-            themes: copy.themes,
-            goals: copy.goals,
-            days: copy.days,
-            modalities: copy.modalities,
+            heading: campanaCopy.scriptsHeading,
+            totalLabel: campanaCopy.scriptsTotal,
+            strategyHeading: campanaCopy.strategyHeading,
           }}
+          totalCount={scriptPanelItems.length}
+          items={scriptPanelItems}
+          strategyBody={strategy ? strategy.brief.pillars.join(" · ") : null}
         />
-      ) : (
-        <Message severity="info" text={copy.empty} style={{ width: "100%" }} />
-      )}
+      </div>
     </div>
   );
 }
 
-function TagLine({ text }: { text: string }) {
+function GeneratingSkeleton({ text }: { text: string }) {
   return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "0.35rem 0.75rem",
-        borderRadius: "9999px",
-        background: "#eef2ff",
-        color: "#3730a3",
-        fontSize: "0.875rem",
-        fontWeight: 600,
-      }}
-    >
-      {text}
-    </span>
-  );
-}
-
-function GeneratingSkeleton({ copy }: { copy: StrategyPageCopy }) {
-  return (
-    <div aria-busy="true" aria-live="polite">
-      <Message
-        severity="info"
-        text={copy.generating}
-        style={{ width: "100%", marginBottom: "1rem" }}
-      />
-      <Skeleton height="2rem" style={{ marginBottom: "1rem" }} />
-      <Skeleton height="6rem" style={{ marginBottom: "1rem" }} />
-      <Skeleton height="8rem" style={{ marginBottom: "1rem" }} />
-      <Skeleton height="8rem" />
+    <div aria-busy="true" aria-live="polite" className="space-y-4">
+      <StatusAlert severity="info" text={text} />
+      <Skeleton className="h-8 w-full bg-panel" />
+      <Skeleton className="h-24 w-full bg-panel" />
+      <Skeleton className="h-32 w-full bg-panel" />
+      <Skeleton className="h-32 w-full bg-panel" />
     </div>
   );
 }
 
-function PageHeader({ copy }: { copy: Pick<StrategyPageCopy, "title" | "subtitle"> }) {
+function PageHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div style={{ marginBottom: "1.5rem" }}>
-      <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem" }}>{copy.title}</h1>
-      <p style={{ margin: 0, color: "#4b5563" }}>{copy.subtitle}</p>
+    <div>
+      <h1 className="font-display text-4xl text-fog sm:text-5xl">{title}</h1>
+      <p className="mt-2 text-dim">{subtitle}</p>
     </div>
   );
 }
