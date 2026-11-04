@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { PendingActivationView } from "@/components/auth/PendingActivationView";
 import { loadPendingIdentity } from "@/lib/auth/require-user";
-import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getTranslations } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -24,18 +25,6 @@ type PendingSearchParams = Record<string, string | string[] | undefined>;
 type PendingPageProps = {
   searchParams: Promise<PendingSearchParams>;
 };
-
-function firstString(
-  value: string | string[] | undefined,
-): string | undefined {
-  if (typeof value === "string") {
-    return value;
-  }
-  if (Array.isArray(value) && typeof value[0] === "string") {
-    return value[0];
-  }
-  return undefined;
-}
 
 function pendingHref(locale: string): string {
   if (locale === "en") {
@@ -62,7 +51,7 @@ export default async function PendingActivationPage({
 }: PendingPageProps) {
   const identity = await loadPendingIdentity();
   const params = await searchParams;
-  const locale = resolveLocale(firstString(params.locale));
+  const locale = await resolveRequestLocale();
   const t = getTranslations(locale);
 
   if (hasUntrustedIdentityQuery(params)) {

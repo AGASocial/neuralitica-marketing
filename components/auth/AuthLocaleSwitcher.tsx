@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
 
+import { setLocalePreference } from "@/lib/i18n/actions/set-locale-preference";
 import type { Locale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
 
@@ -44,15 +46,28 @@ function hrefForLocale(
 export function AuthLocaleSwitcher({ locale, labels }: AuthLocaleSwitcherProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
 
   function hrefFor(nextLocale: Locale) {
     return hrefForLocale(pathname, searchParams, nextLocale);
+  }
+
+  function onSelect(nextLocale: Locale) {
+    if (nextLocale === locale || pending) {
+      return;
+    }
+    startTransition(async () => {
+      await setLocalePreference({ locale: nextLocale });
+      router.refresh();
+    });
   }
 
   return (
     <div className="flex items-center justify-center gap-2 text-sm">
       <Link
         href={hrefFor("en")}
+        onClick={() => onSelect("en")}
         className={cn(
           "rounded-full px-2 py-0.5 focus-visible:outline-none",
           locale === "en" ? "font-semibold text-butter" : "text-dim hover:text-fog",
@@ -66,6 +81,7 @@ export function AuthLocaleSwitcher({ locale, labels }: AuthLocaleSwitcherProps) 
       </span>
       <Link
         href={hrefFor("es")}
+        onClick={() => onSelect("es")}
         className={cn(
           "rounded-full px-2 py-0.5 focus-visible:outline-none",
           locale === "es" ? "font-semibold text-butter" : "text-dim hover:text-fog",

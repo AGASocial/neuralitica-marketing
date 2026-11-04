@@ -26,5 +26,12 @@ describe("listMyVideosHubForClientUser", () => {
     assert.match(view, /approveCta/);
     assert.match(view, /changeCta/);
     assert.match(view, /sectionInProduction/);
+
+    const listGet = readFileSync(
+      join(here, "list-get-approvals.ts"),
+      "utf8",
+    );
+    assert.match(listGet, /insertPendingApproval/);
+    assert.match(listGet, /loadApprovalByAssembledReelScoped/);
   });
 });

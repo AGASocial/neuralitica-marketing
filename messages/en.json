@@ -136,6 +136,13 @@
     "confirmMessage": "You will need to log in again on this device.",
     "confirmAccept": "Log out",
     "confirmReject": "Cancel",
+    "userMenu": {
+      "menuAriaLabel": "Account menu",
+      "languageLabel": "Language",
+      "languageEs": "Español",
+      "languageEn": "English",
+      "settings": "Settings"
+    },
     "nav": {
       "home": "Home",
       "myCampaign": "My campaign",
@@ -692,6 +699,13 @@
   },
   "legal": {
     "genericAvatarDisclosure": "This video uses an AI presenter who is not the business owner."
+  },
+  "accountSettings": {
+    "title": "Settings",
+    "subtitle": "Account and production settings.",
+    "preferencesLink": "Visual production preferences",
+    "preferencesHint": "Video modalities, avatar, and voice.",
+    "backDashboard": "Home"
   },
   "preferences": {
     "title": "Visual production preferences",

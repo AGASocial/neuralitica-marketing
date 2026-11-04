@@ -136,6 +136,13 @@
     "confirmMessage": "Tendrás que iniciar sesión de nuevo en este dispositivo.",
     "confirmAccept": "Cerrar sesión",
     "confirmReject": "Cancelar",
+    "userMenu": {
+      "menuAriaLabel": "Menú de cuenta",
+      "languageLabel": "Idioma",
+      "languageEs": "Español",
+      "languageEn": "English",
+      "settings": "Configuración"
+    },
     "nav": {
       "home": "Inicio",
       "myCampaign": "Mi campaña",
@@ -692,6 +699,13 @@
   },
   "legal": {
     "genericAvatarDisclosure": "Este video utiliza un presentador de IA que no es el dueño del negocio."
+  },
+  "accountSettings": {
+    "title": "Configuración",
+    "subtitle": "Ajustes de tu cuenta y de producción.",
+    "preferencesLink": "Preferencias de producción visual",
+    "preferencesHint": "Modalidades de video, avatar y voz.",
+    "backDashboard": "Inicio"
   },
   "preferences": {
     "title": "Preferencias de producción visual",

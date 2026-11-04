@@ -1,6 +1,7 @@
 import { AuthShell } from "@/components/auth/AuthShell";
 import { LoginForm } from "@/components/auth/LoginForm";
-import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getTranslations } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 
 type LoginPageProps = {
   searchParams: Promise<{
@@ -32,7 +33,8 @@ function pickNextCandidate(params: {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
-  const locale = resolveLocale(params.locale);
+  // Query header (middleware) > cookie > default es — never force English.
+  const locale = await resolveRequestLocale();
   const t = getTranslations(locale);
   const next = pickNextCandidate(params);
   const banner =
