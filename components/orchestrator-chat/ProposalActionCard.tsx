@@ -22,6 +22,7 @@ import { decideApproval } from "@/lib/approvals/actions/decide-approval";
 import { upsertAvatar } from "@/lib/avatars/upsert-avatar";
 import { AVATAR_CONSENT_DISCLOSURE_V1 } from "@/lib/contracts/avatar-consent";
 import { confirmPaidGenerationFromChat } from "@/lib/orchestrator-chat/actions/confirm-paid-generation";
+import { confirmTtsGenerationFromChat } from "@/lib/orchestrator-chat/actions/confirm-tts-generation";
 import { generateReelScripts } from "@/lib/reel-scripts/actions/generate-reel-scripts";
 import { regenerateReelScriptSlot } from "@/lib/reel-scripts/actions/regenerate-reel-script-slot";
 import { persistInterviewDraft } from "@/lib/interview/actions/persist-interview-draft";
@@ -42,6 +43,7 @@ export type ProposalCardCopy = {
   spendUnknown: string;
   stylePresenter: string;
   styleImages: string;
+  styleVoice: string;
 };
 
 type ProposalBase = {
@@ -181,6 +183,21 @@ type EnableOwnAvatarProposal = ProposalBase & {
   estimatedCostCents: null;
 };
 
+type ConfirmTtsGenerationProposal = ProposalBase & {
+  kind: "confirm_tts_generation";
+  weekStart: string;
+  slotIndex: number;
+  reelScriptId: string;
+  tema?: string;
+  styleLabel: "voice";
+  paidKind: "tts";
+  action: "confirmTtsGenerationFromChat";
+  confirmEstimateCents: number;
+  charCount: number;
+  incursSpend: true;
+  estimatedCostCents: number;
+};
+
 export type KnownProposal =
   | GenerateProposal
   | ApproveStrategyProposal
@@ -190,6 +207,7 @@ export type KnownProposal =
   | RequestVideoChangesProposal
   | RegenerateScriptProposal
   | ConfirmPaidGenerationProposal
+  | ConfirmTtsGenerationProposal
   | GrantPresenterConsentProposal
   | SetPresenterVoiceProposal
   | SaveInterviewAnswerProposal
@@ -268,6 +286,12 @@ export function ProposalActionCard({
             ...(proposal.targetDurationSec !== undefined
               ? { targetDurationSec: proposal.targetDurationSec }
               : {}),
+          });
+          ok = result.ok === true;
+        } else if (proposal.kind === "confirm_tts_generation") {
+          const result = await confirmTtsGenerationFromChat({
+            reelScriptId: proposal.reelScriptId,
+            confirmEstimateCents: proposal.confirmEstimateCents,
           });
           ok = result.ok === true;
         } else if (proposal.kind === "grant_presenter_consent") {
@@ -425,7 +449,9 @@ export function ProposalActionCard({
       ? proposal.styleLabel === "presenter"
         ? copy.stylePresenter
         : copy.styleImages
-      : null;
+      : proposal.kind === "confirm_tts_generation"
+        ? copy.styleVoice
+        : null;
 
   return (
     <Card className="border-edge bg-panel text-fog shadow-none">
@@ -440,7 +466,8 @@ export function ProposalActionCard({
         {proposal.kind === "approve_pending_video" && proposal.captionPreview ? (
           <p className="line-clamp-3 text-fog/90">{proposal.captionPreview}</p>
         ) : null}
-        {proposal.kind === "confirm_paid_generation" ? (
+        {proposal.kind === "confirm_paid_generation" ||
+        proposal.kind === "confirm_tts_generation" ? (
           <>
             {proposal.tema ? <p className="text-fog/90">{proposal.tema}</p> : null}
             {stylePlain ? <p>{stylePlain}</p> : null}

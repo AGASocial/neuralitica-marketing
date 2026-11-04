@@ -75,7 +75,8 @@ container is the transcript pane only (full-height sheet, safe-area insets).
 | `getScriptPreview` | read | operator | no | Readable write-up |
 | `proposeRequestVideoChanges` | proposal | client + operator | **no** → `decideApproval` request_changes | “Apply these changes?” |
 | `proposeRegenerateScript` | proposal | operator | **no** → `regenerateReelScriptSlot` | “Rewrite this write-up?” |
-| `proposeConfirmPaidGeneration` | proposal | operator | **no** until Approve → `confirmPaidGenerationFromChat` (re-checks estimate, then b-roll/HeyGen) | “This costs about $X — approve?” |
+| `proposeConfirmPaidGeneration` | proposal | operator | **no** until Approve → `confirmPaidGenerationFromChat` (re-checks estimate, then b-roll/HeyGen) | “This costs about $X — approve?” (video) |
+| `proposeConfirmTtsGeneration` | proposal | operator | **no** until Approve → `confirmTtsGenerationFromChat` (re-checks ElevenLabs estimate, then TTS) | “Voice costs about $X — approve?” — **separate** from video cost card |
 | `getInterviewStatus` | read | client + operator | no | Business interview progress + current question |
 | `proposeSaveInterviewAnswer` | proposal | client + operator | **no** → `persistInterviewDraft` | “Save this answer?” |
 | `proposeSubmitInterview` | proposal | client + operator | **no** → `submitInterview` | “Submit interview?” |
@@ -86,6 +87,11 @@ Later: MCP-UI host (optional).
 **KAN-93:** Paid media never starts from chat without `confirm_paid_generation`
 (plain price from existing cost-policy previews). Approve re-validates the live
 estimate before calling create jobs.
+
+**TTS voice spend:** `confirm_tts_generation` is a separate card from b-roll/HeyGen;
+estimate uses `ELEVENLABS_UNIT_COST_CENTS_PER_1M_CHARS` (no paid calls in the
+proposal tool). Approve → `confirmTtsGenerationFromChat` →
+`synthesizeVoiceoverForReelScript`.
 
 **Chat interview:** Same `neuramark_interview_sessions` as `/interview` (no new
 tables). Chat asks one step at a time via `getInterviewStatus`, saves through

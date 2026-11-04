@@ -15,7 +15,8 @@ export function proposalSummary(
     | "set_presenter_voice"
     | "save_interview_answer"
     | "submit_interview"
-    | "enable_own_avatar",
+    | "enable_own_avatar"
+    | "confirm_tts_generation",
   params?: { slotCount?: number; amountCents?: number; stepLabel?: string },
 ): string {
   const es = locale === "es";
@@ -82,6 +83,10 @@ export function proposalSummary(
       return es
         ? "Activar videos con tu cara en Preferencias. Solo guarda el permiso de estilo; no crea ningún video hasta que apruebes un costo aparte."
         : "Enable on-camera videos in Preferences. This only saves the style setting; it does not create any video until you approve a separate cost card.";
+    case "confirm_tts_generation":
+      return es
+        ? `Crear la voz de este video cuesta unos ${amount}. Es aparte del costo de video con imágenes o presentador. No se cobra nada hasta que apruebes.`
+        : `Creating the voice for this video costs about ${amount}. This is separate from image or on-camera video costs. Nothing is charged until you approve.`;
     default:
       return es ? "Confirma por favor." : "Please confirm.";
   }
