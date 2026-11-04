@@ -181,6 +181,14 @@ Canon de módulos y prioridades: confirmado (S3.LOTE). Detalle módulo a módulo
 - **Metrics Lite (P2):** Operator carga views/likes/comments/saves/DMs; System inyecta resumen ~4 semanas en siguiente Estrategia.
 - Confirmado: S3.M15 (2026-08-27).
 
+### Módulo: Orchestrator Chat — Prioridad: P2 (KAN-84)
+- **Principio:** abstracción extrema — un prestador sin conocimiento técnico/redes debe operar su campaña en lenguaje llano EN/ES; el motor planifica desde Entrevista/Ficha viva; el chat propone el siguiente paso; cada decisión es una card con CTA primario **Aprobar** / **Cambiar algo** (sin jerga: b-roll, faceless, provider, tokens, etc.).
+- El Cliente puede: Inicio (chat), Mi campaña, Mis videos, Mi negocio; conversar; adjuntar foto de referencia; confirmar planes/videos vía cards.
+- El Operator puede: lo mismo + sección **Avanzado** (estrategia, guiones, calendario, playbook, tendencias, costo, ciclo).
+- El System automáticamente: AI Gateway `streamText` + tools; lectura vía servicios existentes; acción = propuesta sin mutar; mutación solo al Aprobar vía Server Action; nunca auto-gasto ni publish IG desde chat; `getCurrentUser()` / role.
+- UI: AI SDK tool parts → shadcn Campaña (ADR-0009); MCP-UI opcional después.
+- Confirmado: ADR-0009 (2026-11-03).
+
 ### Stories (HL) — fuera de V1
 - Confirmado S3.M16: no se construye pipeline de Stories en V1; solo Reels (3/semana).
 
@@ -215,9 +223,10 @@ Flujos críticos confirmados (S4.LOTE):
 - **Instagram:** Graph Business Reels; tokens server-only (ADR-0002)
 - **Scheduler:** Vercel Cron → Route Handler con `CRON_SECRET` → encola ciclo (ADR-0001)
 - **Trabajo largo / FFmpeg:** worker Docker en **Fly.io** (ADR-0003); lee/escribe jobs en Supabase
-- **ADRs:** 0001 Ciclo semanal · 0002 Publish Reels · 0003 Worker Fly.io
+- **ADRs:** 0001 Ciclo semanal · 0002 Publish Reels · 0003 Worker Fly.io · 0007 Avatar pipeline · 0008 UI Campaña · 0009 Orchestrator chat
+- **Orchestrator chat (ADR-0009):** IA dueño mínima (Inicio/Mi campaña/Mis videos/Mi negocio) + Avanzado Operator; panel derecho + `POST /api/chat`; generative UI; mutaciones solo tras Aprobar; copy sin jerga técnica.
 
-Confirmado: S5.LOTE + S5.Q1 (2026-08-27).
+Confirmado: S5.LOTE + S5.Q1 (2026-08-27). Ampliado ADR-0009 (2026-11-03).
 
 ---
 
