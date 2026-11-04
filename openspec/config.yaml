@@ -1,0 +1,37 @@
+schema: spec-driven
+
+# Constraints agents cannot infer from code alone.
+# Product/domain truth remains SPEC.md + CONTEXT.md + docs/adr/ (see AGENTS.md D4).
+context: |
+  Product: Neuralitica Marketing — Instagram video-first Reels for local service providers.
+  Stack: Next.js App Router (Vercel) + Supabase (server-only, neuramark_ prefix) + EN/ES i18n
+  + Tailwind CSS v4 + shadcn/ui Campaña (ADR-0008). Identity via getCurrentUser(); role flag
+  client|operator only. Heavy FFmpeg/provider work: Fly.io worker (ADR-0003).
+
+  Product principles:
+  - Owner UX: plain language; no jargon (b-roll, faceless, tokens, QA, cost policy) in chat/UI.
+  - Never auto-spend; never publish to Instagram without explicit Cliente approval (SC-2).
+  - OpenSpec specs document CURRENT implemented behavior; SPEC/ADRs may be ahead of code.
+  - Instagram Graph publish stays in V1 scope (D1 / ADR-0002) even when UI is download-first.
+
+  ADR index (docs/adr/):
+  - 0001 Ciclo semanal automatizado (strategy + gen to approval queue)
+  - 0002 Publicación Reels Instagram Graph API (V1 scope; modes: publish now / schedule)
+  - 0003 Worker Fly.io + FFmpeg for long jobs
+  - 0007 Avatar video pipeline (HeyGen direct v3, ElevenLabs TTS, duration policies)
+  - 0008 UI Tailwind v4 + shadcn Campaña
+  - 0009 Orchestrator chat (proposal cards, persistence, stick-to-bottom, TTS/own-avatar)
+
+  OpenSpec workflow: every change starts with openspec/changes/<id>/ (proposal, tasks, spec
+  deltas), validate --strict, archive after merge. Main specs live under openspec/specs/.
+
+rules:
+  proposal:
+    - State why, what changes, and out of scope
+    - Link related ADRs and user stories when known
+  specs:
+    - Document observable current behavior with SHALL/MUST and Scenario WHEN/THEN
+    - Prefer short requirements; put edge cases in scenarios
+  tasks:
+    - Checkbox tasks; keep chunks reviewable
+    - Include validate openspec --all --strict when specs change
