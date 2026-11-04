@@ -79,4 +79,10 @@ Neutral protocol (this AGENTS.md + docs/governance/)
 
 - Single Next.js App Router app; Supabase only from server; `neuramark_` DB prefix; EN/ES i18n; Tailwind CSS v4 + shadcn/ui (Campaña); Vercel deploy; `getCurrentUser()` identity seam; operator/client role flag only.
 
+## Supabase migrations (prod)
+
+- Ship SQL under `supabase/migrations/` in the PR (idempotent-safe).
+- **Do not** apply migrations to remote/prod from feature agent sessions unless the human explicitly asks.
+- Production apply for project `lrnhrzpwgyhkruwxeppw` is done by the orchestrator via **Supabase MCP `apply_migration`** (see `docs/governance/OPERATIONS.md`).
+
 See parent `../AGENTS.md` and this repo `README.md` for full stack rules.

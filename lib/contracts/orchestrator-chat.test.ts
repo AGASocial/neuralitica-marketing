@@ -258,6 +258,50 @@ describe("orchestrator-chat contracts", () => {
     assert.equal(parsed.proposal.estimatedCostCents, 120);
   });
 
+  it("KAN-95 conversation persistence contracts accept round-trip shapes", async () => {
+    const {
+      orchestratorPersistedMessageSchema: msgSchema,
+      orchestratorConversationSchema: convoSchema,
+      loadLatestOrchestratorConversationResultSchema: loadSchema,
+      persistOrchestratorChatInputSchema: persistSchema,
+    } = await import("./orchestrator-chat");
+
+    const conversationId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const message = msgSchema.parse({
+      id: "msg_abc123",
+      role: "user",
+      parts: [{ type: "text", text: "How is my campaign?" }],
+    });
+    assert.equal(message.role, "user");
+
+    const conversation = convoSchema.parse({
+      id: conversationId,
+      title: "How is my campaign?",
+      createdAt: "2026-11-04T12:00:00.000Z",
+      updatedAt: "2026-11-04T12:05:00.000Z",
+    });
+    assert.equal(conversation.id, conversationId);
+
+    loadSchema.parse({
+      ok: true,
+      conversation,
+      messages: [message],
+    });
+
+    persistSchema.parse({
+      conversationId,
+      messages: [message],
+    });
+
+    assert.equal(
+      persistSchema.safeParse({
+        conversationId: "not-a-uuid",
+        messages: [],
+      }).success,
+      false,
+    );
+  });
+
   it("proposeRequestVideoChanges and regenerate_script are non-mutating", async () => {
     const {
       proposeRequestVideoChangesOutputSchema: reqSchema,

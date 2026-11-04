@@ -88,6 +88,8 @@
     "attachError": "No pudimos guardar esa foto. Revisa el archivo e inténtalo de nuevo.",
     "attachedNote": "Adjunté una foto ({filename}). Id de referencia: {assetId}",
     "newMessages": "↓ Nuevos mensajes",
+    "newConversation": "Nueva conversación",
+    "loadingConversation": "Cargando tu chat…",
     "proposal": {
       "title": "Confirma por favor",
       "approve": "Aprobar",

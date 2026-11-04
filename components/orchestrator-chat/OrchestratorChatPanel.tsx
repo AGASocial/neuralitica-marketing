@@ -1,9 +1,15 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
-import { ImagePlusIcon, MessageSquareIcon, SendIcon, XIcon } from "lucide-react";
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { DefaultChatTransport, type UIMessage } from "ai";
+import {
+  ImagePlusIcon,
+  MessageSquareIcon,
+  PlusIcon,
+  SendIcon,
+  XIcon,
+} from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 import { useOrchestratorChat } from "@/components/orchestrator-chat/OrchestratorChatContext";
 import { useStickToBottom } from "@/components/orchestrator-chat/use-stick-to-bottom";
@@ -34,6 +40,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { Locale } from "@/lib/i18n/locales";
+import { loadLatestOrchestratorConversation } from "@/lib/orchestrator-chat/actions/load-latest-conversation";
 import { prepareAvatarReferenceUpload } from "@/lib/media/prepare-avatar-reference-upload";
 import { uploadAvatarReferenceAsset } from "@/lib/media/upload-avatar-reference-asset";
 import { sanitizeOrchestratorVisibleText } from "@/lib/orchestrator-chat/sanitize-visible-text";
@@ -53,6 +60,8 @@ export type OrchestratorChatCopy = {
   attachError: string;
   attachedNote: string;
   newMessages: string;
+  newConversation: string;
+  loadingConversation: string;
   proposal: ProposalCardCopy;
   status: StatusCardCopy;
   preview: PreviewCardCopy;
@@ -167,11 +176,137 @@ export function OrchestratorChatToggle({
   );
 }
 
+function newConversationId(): string {
+  return crypto.randomUUID();
+}
+
 export function OrchestratorChatPanel({
   copy,
   locale,
 }: OrchestratorChatPanelProps) {
   const { open, setOpen } = useOrchestratorChat();
+  const [hydrated, setHydrated] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [seedMessages, setSeedMessages] = useState<UIMessage[]>([]);
+
+  useEffect(() => {
+    if (!open || hydrated) {
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const result = await loadLatestOrchestratorConversation();
+        if (cancelled) {
+          return;
+        }
+        if (result.ok && result.conversation) {
+          setConversationId(result.conversation.id);
+          setSeedMessages(
+            result.messages.map((message) => ({
+              id: message.id,
+              role: message.role,
+              parts: message.parts as UIMessage["parts"],
+            })),
+          );
+        } else {
+          setConversationId(newConversationId());
+          setSeedMessages([]);
+        }
+      } catch {
+        if (!cancelled) {
+          setConversationId(newConversationId());
+          setSeedMessages([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setHydrated(true);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, hydrated]);
+
+  function startNewConversation() {
+    setConversationId(newConversationId());
+    setSeedMessages([]);
+    setHydrated(true);
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetContent
+        id="orchestrator-chat-panel"
+        side="right"
+        showCloseButton={false}
+        className="gap-0 overflow-hidden border-edge bg-deep p-0 text-fog h-dvh max-h-dvh w-full sm:max-w-md"
+      >
+        <SheetHeader className="shrink-0 border-b border-edge px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <SheetTitle className="font-display text-2xl text-fog">
+                {copy.title}
+              </SheetTitle>
+              <SheetDescription className="text-dim">
+                {copy.description}
+              </SheetDescription>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={startNewConversation}
+                disabled={!hydrated}
+                className="text-dim hover:text-fog"
+              >
+                <PlusIcon className="size-4" aria-hidden />
+                <span className="hidden sm:inline">{copy.newConversation}</span>
+                <span className="sr-only sm:hidden">{copy.newConversation}</span>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setOpen(false)}
+                aria-label={copy.closeLabel}
+                className="text-dim hover:text-fog"
+              >
+                <XIcon className="size-4" />
+              </Button>
+            </div>
+          </div>
+        </SheetHeader>
+
+        {!hydrated || !conversationId ? (
+          <p className="px-4 py-4 text-sm text-dim">{copy.loadingConversation}</p>
+        ) : (
+          <OrchestratorChatSession
+            key={conversationId}
+            conversationId={conversationId}
+            initialMessages={seedMessages}
+            copy={copy}
+            locale={locale}
+          />
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function OrchestratorChatSession({
+  conversationId,
+  initialMessages,
+  copy,
+  locale,
+}: {
+  conversationId: string;
+  initialMessages: UIMessage[];
+  copy: OrchestratorChatCopy;
+  locale: Locale;
+}) {
   const [input, setInput] = useState("");
   const [attachPending, setAttachPending] = useState(false);
   const [attachError, setAttachError] = useState<string | null>(null);
@@ -187,7 +322,11 @@ export function OrchestratorChatPanel({
     [locale],
   );
 
-  const { messages, sendMessage, status, error } = useChat({ transport });
+  const { messages, sendMessage, status, error } = useChat({
+    id: conversationId,
+    messages: initialMessages,
+    transport,
+  });
   const busy = status === "submitted" || status === "streaming" || attachPending;
 
   const contentKey = useMemo(() => {
@@ -259,36 +398,6 @@ export function OrchestratorChatPanel({
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetContent
-        id="orchestrator-chat-panel"
-        side="right"
-        showCloseButton={false}
-        className="gap-0 overflow-hidden border-edge bg-deep p-0 text-fog h-dvh max-h-dvh w-full sm:max-w-md"
-      >
-        <SheetHeader className="shrink-0 border-b border-edge px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <SheetTitle className="font-display text-2xl text-fog">
-                {copy.title}
-              </SheetTitle>
-              <SheetDescription className="text-dim">
-                {copy.description}
-              </SheetDescription>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setOpen(false)}
-              aria-label={copy.closeLabel}
-              className="text-dim hover:text-fog"
-            >
-              <XIcon className="size-4" />
-            </Button>
-          </div>
-        </SheetHeader>
-
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="relative min-h-0 flex-1">
             <div
@@ -627,7 +736,5 @@ export function OrchestratorChatPanel({
             ) : null}
           </form>
         </div>
-      </SheetContent>
-    </Sheet>
   );
 }

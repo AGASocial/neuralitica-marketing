@@ -73,6 +73,8 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
     attachError: t.orchestratorChat.attachError,
     attachedNote: t.orchestratorChat.attachedNote,
     newMessages: t.orchestratorChat.newMessages,
+    newConversation: t.orchestratorChat.newConversation,
+    loadingConversation: t.orchestratorChat.loadingConversation,
     proposal: {
       title: t.orchestratorChat.proposal.title,
       approve: t.orchestratorChat.proposal.approve,

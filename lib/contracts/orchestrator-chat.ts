@@ -633,6 +633,88 @@ export const chatAttachmentAssetSchema = z
 
 export type ChatAttachmentAsset = z.infer<typeof chatAttachmentAssetSchema>;
 
+/** KAN-95: persisted conversation identity (UIMessage chat id). */
+export const orchestratorConversationIdSchema = z.string().uuid();
+
+export const orchestratorChatMessageRoleSchema = z.enum([
+  "user",
+  "assistant",
+  "system",
+]);
+
+export type OrchestratorChatMessageRole = z.infer<
+  typeof orchestratorChatMessageRoleSchema
+>;
+
+/** Opaque AI SDK UIMessage.id — not necessarily a UUID. */
+export const orchestratorUiMessageIdSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(128);
+
+/**
+ * Persisted UIMessage shape for resume (parts kept as JSON array;
+ * tool/schema validation happens when messages are sent to the model).
+ */
+export const orchestratorPersistedMessageSchema = z
+  .object({
+    id: orchestratorUiMessageIdSchema,
+    role: orchestratorChatMessageRoleSchema,
+    parts: z.array(z.unknown()).max(200),
+  })
+  .strict();
+
+export type OrchestratorPersistedMessage = z.infer<
+  typeof orchestratorPersistedMessageSchema
+>;
+
+export const orchestratorConversationSchema = z
+  .object({
+    id: orchestratorConversationIdSchema,
+    title: z.string().max(200),
+    createdAt: z.string().min(1).max(40),
+    updatedAt: z.string().min(1).max(40),
+  })
+  .strict();
+
+export type OrchestratorConversation = z.infer<
+  typeof orchestratorConversationSchema
+>;
+
+export const loadLatestOrchestratorConversationResultSchema = z
+  .object({
+    ok: z.literal(true),
+    conversation: orchestratorConversationSchema.nullable(),
+    messages: z.array(orchestratorPersistedMessageSchema).max(500),
+  })
+  .strict();
+
+export type LoadLatestOrchestratorConversationResult = z.infer<
+  typeof loadLatestOrchestratorConversationResultSchema
+>;
+
+export const persistOrchestratorChatInputSchema = z
+  .object({
+    conversationId: orchestratorConversationIdSchema,
+    messages: z.array(orchestratorPersistedMessageSchema).max(500),
+  })
+  .strict();
+
+export type PersistOrchestratorChatInput = z.infer<
+  typeof persistOrchestratorChatInputSchema
+>;
+
+export const chatRequestBodySchema = z
+  .object({
+    id: orchestratorConversationIdSchema.optional(),
+    messages: z.array(z.unknown()).max(500).optional(),
+    locale: z.unknown().optional(),
+  })
+  .passthrough();
+
+export type ChatRequestBody = z.infer<typeof chatRequestBodySchema>;
+
 /** Assert proposal outputs never claim mutation or skip confirmation. */
 export function assertProposalIsNonMutating(
   proposal: OrchestratorProposalMeta,
