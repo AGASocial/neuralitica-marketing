@@ -1,10 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
-import { Message } from "primereact/message";
-import { ProgressSpinner } from "primereact/progressspinner";
+import { ImagesIcon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
 
 import type { VideoJobErrorCode } from "@/lib/contracts/video-job";
 import { formatCentsForDisplay } from "@/lib/cost-policy/format-cents-for-display";
@@ -343,105 +351,99 @@ export function BrollGenerateConfirmDialog({
     }
   }
 
-  const footer = (
-    <div
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "0.5rem",
-        justifyContent: "flex-end",
-      }}
-    >
-      <Button
-        type="button"
-        label={copy.cancel}
-        className="p-button-text"
-        disabled={pending}
-        onClick={onHide}
-      />
-      <Button
-        type="button"
-        label={copy.confirm}
-        disabled={pending || loading || loadError !== null || !canConfirm}
-        loading={pending}
-        onClick={() => void handleConfirm()}
-      />
-    </div>
-  );
 
   const providerDisplay = providerLabel(providerKey, copy);
 
   return (
     <Dialog
-      header={copy.title}
-      visible={visible}
-      style={{ width: "min(480px, 95vw)" }}
-      onHide={onHide}
-      footer={footer}
-      closable={!pending}
-      dismissableMask={!pending}
+      open={visible}
+      onOpenChange={(open) => {
+        if (!open && !pending) {
+          onHide();
+        }
+      }}
     >
-      {loading ? (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.75rem",
-            padding: "1rem 0",
-          }}
-        >
-          <ProgressSpinner style={{ width: "28px", height: "28px" }} />
-          <span>{copy.loading}</span>
-        </div>
-      ) : null}
+      <DialogContent
+        className="w-[min(480px,95vw)] border-edge bg-panel text-fog sm:max-w-[480px]"
+        showCloseButton={!pending}
+        aria-describedby={undefined}
+        onInteractOutside={(event) => {
+          if (pending) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle className="font-display text-2xl">{copy.title}</DialogTitle>
+        </DialogHeader>
+        {loading ? (
+          <div className="flex items-center gap-3 py-4">
+            <Spinner className="size-7" />
+            <span>{copy.loading}</span>
+          </div>
+        ) : null}
 
-      {!loading && loadError ? (
-        <Message severity="error" text={loadError} style={{ width: "100%" }} />
-      ) : null}
+        {!loading && loadError ? (
+          <StatusAlert severity="error" text={loadError} className="w-full" />
+        ) : null}
 
-      {!loading && !loadError && estimatedCostCents !== null ? (
-        <>
-          {!canConfirm ? (
-            <Message
-              severity="warn"
-              text={
-                resolveMessageKey(blockedReasonKey, copy) ?? copy.ineligible
-              }
-              style={{ width: "100%", marginBottom: "1rem" }}
-            />
-          ) : null}
-          <dl style={{ margin: 0, fontSize: "0.9rem", display: "grid", gap: "0.5rem" }}>
-            {providerDisplay ? (
+        {!loading && !loadError && estimatedCostCents !== null ? (
+          <>
+            {!canConfirm ? (
+              <StatusAlert
+                severity="warn"
+                text={
+                  resolveMessageKey(blockedReasonKey, copy) ?? copy.ineligible
+                }
+                className="mb-4 w-full"
+              />
+            ) : null}
+            <dl className="m-0 grid gap-2 text-[0.9rem]">
+              {providerDisplay ? (
+                <div>
+                  <dt className="inline text-dim">
+                    {copy.providerLabel}:{" "}
+                  </dt>
+                  <dd className="m-0 inline font-semibold text-fog">
+                    {providerDisplay}
+                  </dd>
+                </div>
+              ) : null}
+              {clipCount !== null ? (
+                <div>
+                  <dt className="inline text-dim">
+                    {copy.clipCount}:{" "}
+                  </dt>
+                  <dd className="m-0 inline font-semibold text-fog">
+                    {clipCount}
+                  </dd>
+                </div>
+              ) : null}
               <div>
-                <dt style={{ display: "inline", color: "#6b7280" }}>
-                  {copy.providerLabel}:{" "}
+                <dt className="inline text-dim">
+                  {copy.estimated}:{" "}
                 </dt>
-                <dd style={{ display: "inline", margin: 0, fontWeight: 600 }}>
-                  {providerDisplay}
+                <dd className="m-0 inline font-semibold text-fog">
+                  {formatCentsForDisplay(estimatedCostCents, locale)}
                 </dd>
               </div>
-            ) : null}
-            {clipCount !== null ? (
-              <div>
-                <dt style={{ display: "inline", color: "#6b7280" }}>
-                  {copy.clipCount}:{" "}
-                </dt>
-                <dd style={{ display: "inline", margin: 0, fontWeight: 600 }}>
-                  {clipCount}
-                </dd>
-              </div>
-            ) : null}
-            <div>
-              <dt style={{ display: "inline", color: "#6b7280" }}>
-                {copy.estimated}:{" "}
-              </dt>
-              <dd style={{ display: "inline", margin: 0, fontWeight: 600 }}>
-                {formatCentsForDisplay(estimatedCostCents, locale)}
-              </dd>
-            </div>
-          </dl>
-        </>
-      ) : null}
+            </dl>
+          </>
+        ) : null}
+        <DialogFooter className="flex-wrap gap-2">
+          <Button type="button" variant="ghost" disabled={pending} onClick={onHide}>
+            {copy.cancel}
+          </Button>
+          <Button
+            type="button"
+            disabled={pending || loading || loadError !== null || !canConfirm}
+            onClick={() => void handleConfirm()}
+          >
+            {pending ? <Spinner className="size-4 text-current" /> : null}
+            {copy.confirm}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }
@@ -524,16 +526,17 @@ export function BrollGenerateControl({
   }
 
   return (
-    <div style={{ marginBottom: "0.75rem" }}>
+    <div className="mb-3">
       <Button
         type="button"
-        label={copy.button}
-        icon="pi pi-images"
-        size="small"
-        severity="secondary"
+        size="sm"
+        variant="outline"
         disabled={disabled || pending}
         onClick={() => setDialogVisible(true)}
-      />
+      >
+        <ImagesIcon />
+        {copy.button}
+      </Button>
       <BrollGenerateConfirmDialog
         visible={dialogVisible}
         reelScriptId={reelScriptId}

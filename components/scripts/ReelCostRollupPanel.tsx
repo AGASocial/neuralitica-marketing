@@ -1,7 +1,16 @@
 "use client";
 
-import { Message } from "primereact/message";
-import { Tag } from "primereact/tag";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 import type {
   ActualCostUnavailableReason,
@@ -95,19 +104,19 @@ function renderVariance(
   varianceCents: number,
   locale: string,
   copy: ReelCostRollupCopy,
-): { text: string; color: string } {
+): { text: string; className: string } {
   const formatted = formatCentsForDisplay(Math.abs(varianceCents), locale);
   const signedAmount =
     varianceCents > 0 ? `+${formatted}` : varianceCents < 0 ? `−${formatted}` : formatted;
 
   return {
     text: formatTemplate(copy.variance, { amount: signedAmount }),
-    color:
+    className:
       varianceCents > 0
-        ? "#b45309"
+        ? "text-butter"
         : varianceCents < 0
-          ? "#059669"
-          : "#6b7280",
+          ? "text-success"
+          : "text-dim",
   };
 }
 
@@ -122,166 +131,121 @@ export function ReelCostRollupPanel({
 
   return (
     <section
-      style={{
-        marginBottom: "1rem",
-        padding: "0.85rem 1rem",
-        borderRadius: "0.5rem",
-        border: "1px solid #e5e7eb",
-        background: "#f9fafb",
-      }}
+      className="mb-4 py-[0.85rem] px-4 rounded-lg border border-edge bg-panel"
       aria-label={copy.title}
     >
-      <h3 style={{ margin: "0 0 0.75rem", fontSize: "0.95rem", fontWeight: 600 }}>
+      <h3 className="font-display text-fog mt-0 mx-0 mb-3 text-[0.95rem] font-semibold">
         {copy.title}
       </h3>
 
       {!rollup || !hasComponents ? (
-        <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
-          <span style={{ marginRight: "0.35rem" }}>—</span>
+        <div className="text-sm text-dim">
+          <span className="mr-[0.35rem]">—</span>
           {copy.empty}
         </div>
       ) : (
-        <div style={{ display: "grid", gap: "0.75rem" }}>
+        <div className="grid gap-3">
           {rollup.isOverBudget ? (
-            <Message
+            <StatusAlert
               severity="warn"
-              style={{ width: "100%" }}
-              content={
-                <span style={{ fontSize: "0.875rem" }}>
+              className="w-full"
+            >
+              <span className="text-sm">
                   {formatTemplate(copy.overBudget, {
                     max: formatCentsForDisplay(rollup.maxCostCents, locale),
                   })}
                 </span>
-              }
-            />
+            </StatusAlert>
           ) : null}
 
           <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "0.5rem 1.25rem",
-              alignItems: "baseline",
-              fontSize: "0.875rem",
-            }}
+            className="flex flex-wrap gap-y-2 gap-x-5 items-baseline text-sm"
           >
             <div>
-              <span style={{ color: "#6b7280", marginRight: "0.35rem" }}>
+              <span className="text-dim mr-[0.35rem]">
                 {copy.estimated}
               </span>
-              <span style={{ fontWeight: 600, color: "#374151" }}>
+              <span className="font-semibold text-fog">
                 {formatCentsForDisplay(rollup.estimatedTotalCents, locale)}
               </span>
             </div>
             <div>
-              <span style={{ color: "#6b7280", marginRight: "0.35rem" }}>
+              <span className="text-dim mr-[0.35rem]">
                 {copy.actual}
               </span>
               {rollup.actualTotalCents !== null ? (
-                <span style={{ fontWeight: 600, color: "#374151" }}>
+                <span className="font-semibold text-fog">
                   {formatCentsForDisplay(rollup.actualTotalCents, locale)}
                 </span>
               ) : rollup.hasPendingActual ? (
-                <Tag value={copy.pending} severity="warning" />
+                <StatusBadge value={copy.pending} severity="warning" />
               ) : (
-                <span style={{ color: "#6b7280" }}>—</span>
+                <span className="text-dim">—</span>
               )}
             </div>
             {rollup.varianceCents !== null ? (() => {
               const variance = renderVariance(rollup.varianceCents, locale, copy);
               return (
-                <div style={{ color: variance.color }}>
+                <div className={variance.className}>
                   {variance.text}
                 </div>
               );
             })() : null}
           </div>
 
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: "0.875rem",
-              }}
-            >
-              <thead>
-                <tr style={{ borderBottom: "1px solid #e5e7eb", textAlign: "left" }}>
-                  <th
-                    style={{
-                      padding: "0.35rem 0.5rem 0.35rem 0",
-                      color: "#6b7280",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {copy.breakdownRole}
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.35rem 0.5rem",
-                      color: "#6b7280",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {copy.breakdownEstimated}
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.35rem 0 0.35rem 0.5rem",
-                      color: "#6b7280",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {copy.breakdownActual}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rollup.components.map((component) => {
-                  const actual = renderComponentActualValue(
-                    component.actualCostCents,
-                    component.hasPendingActual,
-                    component.unavailableReasonKeys,
-                    locale,
-                    copy,
-                  );
+          <Table className="text-sm">
+            <TableHeader>
+              <TableRow className="border-edge text-left hover:bg-transparent">
+                <TableHead className="h-auto pt-[0.35rem] pr-2 pb-[0.35rem] pl-0 font-semibold text-dim">
+                  {copy.breakdownRole}
+                </TableHead>
+                <TableHead className="h-auto px-2 py-[0.35rem] font-semibold text-dim">
+                  {copy.breakdownEstimated}
+                </TableHead>
+                <TableHead className="h-auto pt-[0.35rem] pr-0 pb-[0.35rem] pl-2 font-semibold text-dim">
+                  {copy.breakdownActual}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rollup.components.map((component) => {
+                const actual = renderComponentActualValue(
+                  component.actualCostCents,
+                  component.hasPendingActual,
+                  component.unavailableReasonKeys,
+                  locale,
+                  copy,
+                );
 
-                  return (
-                    <tr
-                      key={component.assetRole}
-                      style={{ borderBottom: "1px solid #f3f4f6" }}
+                return (
+                  <TableRow
+                    key={component.assetRole}
+                    className="border-edge hover:bg-transparent"
+                  >
+                    <TableCell className="pt-[0.45rem] pr-2 pb-[0.45rem] pl-0 font-semibold text-fog">
+                      {copy.component[COMPONENT_ROLE_KEYS[component.assetRole]]}
+                    </TableCell>
+                    <TableCell className="px-2 py-[0.45rem] text-fog">
+                      {component.estimatedCostCents > 0
+                        ? formatCentsForDisplay(component.estimatedCostCents, locale)
+                        : "—"}
+                    </TableCell>
+                    <TableCell
+                      className={cn(
+                        "py-[0.45rem] pr-0 pl-2",
+                        actual.subdued ? "text-dim" : "text-fog",
+                      )}
                     >
-                      <td
-                        style={{
-                          padding: "0.45rem 0.5rem 0.45rem 0",
-                          fontWeight: 600,
-                          color: "#374151",
-                        }}
-                      >
-                        {copy.component[COMPONENT_ROLE_KEYS[component.assetRole]]}
-                      </td>
-                      <td style={{ padding: "0.45rem 0.5rem", color: "#374151" }}>
-                        {component.estimatedCostCents > 0
-                          ? formatCentsForDisplay(component.estimatedCostCents, locale)
-                          : "—"}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.45rem 0 0.45rem 0.5rem",
-                          color: actual.subdued ? "#6b7280" : "#374151",
-                        }}
-                      >
-                        {actual.text}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      {actual.text}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
 
           {showPhaseNote ? (
-            <p style={{ margin: 0, fontSize: "0.8125rem", color: "#6b7280" }}>
+            <p className="m-0 text-[0.8125rem] text-dim">
               {copy.phaseNote}
             </p>
           ) : null}

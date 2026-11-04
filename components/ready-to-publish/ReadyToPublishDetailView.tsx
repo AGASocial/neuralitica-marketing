@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Tag } from "primereact/tag";
+
+import { StatusBadge } from "@/components/ui/status-badge";
 
 import { GenericAvatarDisclosurePreview } from "@/components/preferences/GenericAvatarDisclosurePreview";
 import { ReadyToPublishDownloadPanel } from "@/components/ready-to-publish/ReadyToPublishDownloadPanel";
@@ -52,32 +53,22 @@ export function ReadyToPublishDetailView({
   copy,
 }: ReadyToPublishDetailViewProps) {
   return (
-    <div style={{ maxWidth: "640px", margin: "0 auto" }}>
-      <div style={{ marginBottom: "1.25rem" }}>
+    <div className="max-w-[640px] my-0 mx-auto">
+      <div className="mb-5">
         <Link
           href="/ready-to-publish"
-          style={{
-            color: "#4b5563",
-            textDecoration: "none",
-            fontSize: "0.9rem",
-          }}
+          className="text-dim no-underline text-[0.9rem]"
         >
           ← {copy.backList}
         </Link>
         <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            gap: "0.6rem",
-            marginTop: "0.75rem",
-          }}
+          className="flex flex-wrap items-center gap-[0.6rem] mt-3"
         >
-          <h1 style={{ margin: 0, fontSize: "1.75rem" }}>{copy.title}</h1>
-          <Tag value={copy.approvedStatus} severity="success" />
+          <h1 className="font-display text-fog m-0 text-[1.75rem]">{copy.title}</h1>
+          <StatusBadge value={copy.approvedStatus} severity="success" />
         </div>
         {pkg.decidedAt ? (
-          <p style={{ margin: "0.5rem 0 0", color: "#6b7280", fontSize: "0.875rem" }}>
+          <p className="mt-2 mx-0 mb-0 text-dim text-sm">
             {copy.decidedAt.replace(
               "{date}",
               formatDateTime(pkg.decidedAt, locale),
@@ -86,7 +77,7 @@ export function ReadyToPublishDetailView({
         ) : null}
       </div>
 
-      <section aria-label={copy.videoLabel} style={{ marginBottom: "1.25rem" }}>
+      <section aria-label={copy.videoLabel} className="mb-5">
         <video
           key={pkg.video.previewUrl}
           controls
@@ -94,13 +85,7 @@ export function ReadyToPublishDetailView({
           preload="metadata"
           poster={pkg.cover?.previewUrl}
           src={pkg.video.previewUrl}
-          style={{
-            width: "100%",
-            maxHeight: "70vh",
-            background: "#111827",
-            borderRadius: "8px",
-            display: "block",
-          }}
+          className="w-full max-h-[70vh] bg-deep rounded-lg block"
         />
       </section>
 
@@ -111,61 +96,39 @@ export function ReadyToPublishDetailView({
         copy={copy.downloads}
       />
 
-      <section style={{ marginBottom: "1.25rem", marginTop: "1.5rem" }}>
+      <section className="mb-5 mt-6">
         <h2
-          style={{
-            margin: "0 0 0.5rem",
-            fontSize: "1rem",
-            color: "#374151",
-          }}
+          className="font-display mt-0 mx-0 mb-2 text-base text-fog"
         >
           {copy.caption}
         </h2>
         <p
-          style={{
-            margin: 0,
-            whiteSpace: "pre-wrap",
-            lineHeight: 1.5,
-            color: "#111827",
-          }}
+          className="m-0 whitespace-pre-wrap leading-[1.5] text-fog"
         >
           {pkg.caption.body}
         </p>
       </section>
 
-      <section style={{ marginBottom: "1.25rem" }}>
+      <section className="mb-5">
         <h2
-          style={{
-            margin: "0 0 0.5rem",
-            fontSize: "1rem",
-            color: "#374151",
-          }}
+          className="font-display mt-0 mx-0 mb-2 text-base text-fog"
         >
           {copy.selectedCta}
         </h2>
-        <p style={{ margin: 0, color: "#111827", lineHeight: 1.45 }}>
+        <p className="m-0 text-fog leading-[1.45]">
           {pkg.caption.selectedCtaText}
         </p>
       </section>
 
       {pkg.hashtags.length > 0 ? (
-        <section style={{ marginBottom: "1.25rem" }}>
+        <section className="mb-5">
           <h2
-            style={{
-              margin: "0 0 0.5rem",
-              fontSize: "1rem",
-              color: "#374151",
-            }}
+            className="font-display mt-0 mx-0 mb-2 text-base text-fog"
           >
             {copy.hashtags}
           </h2>
           <p
-            style={{
-              margin: 0,
-              color: "#4b5563",
-              lineHeight: 1.45,
-              wordBreak: "break-word",
-            }}
+            className="m-0 text-dim leading-[1.45] break-words"
           >
             {pkg.hashtags.join(" ")}
           </p>
@@ -173,13 +136,9 @@ export function ReadyToPublishDetailView({
       ) : null}
 
       {pkg.disclosure.required ? (
-        <div style={{ marginBottom: "1.25rem" }}>
+        <div className="mb-5">
           <h2
-            style={{
-              margin: "0 0 0.5rem",
-              fontSize: "1rem",
-              color: "#374151",
-            }}
+            className="font-display mt-0 mx-0 mb-2 text-base text-fog"
           >
             {copy.disclosureTitle}
           </h2>

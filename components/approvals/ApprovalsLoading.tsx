@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Message } from "primereact/message";
-import { ProgressSpinner } from "primereact/progressspinner";
+
+import { StatusAlert } from "@/components/ui/status-alert";
+import { Spinner } from "@/components/ui/spinner";
 
 type ApprovalsLoadingProps = {
   label: string;
@@ -13,17 +14,10 @@ export function ApprovalsLoading({ label }: ApprovalsLoadingProps) {
     <div
       role="status"
       aria-live="polite"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "1rem",
-        padding: "3rem 1rem",
-      }}
+      className="flex flex-col items-center justify-center gap-4 px-4 py-12"
     >
-      <ProgressSpinner aria-hidden />
-      <p style={{ margin: 0, color: "#4b5563" }}>{label}</p>
+      <Spinner className="size-12" />
+      <p className="m-0 text-dim">{label}</p>
     </div>
   );
 }
@@ -42,23 +36,12 @@ export function ApprovalsErrorState({
   backLabel,
 }: ApprovalsErrorStateProps) {
   return (
-    <div
-      style={{
-        maxWidth: 640,
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem",
-      }}
-    >
-      <Link
-        href={backHref}
-        style={{ color: "#4b5563", textDecoration: "none", fontSize: "0.9rem" }}
-      >
+    <div className="mx-auto flex max-w-[640px] flex-col gap-4">
+      <Link href={backHref} className="text-sm text-dim no-underline hover:text-fog">
         ← {backLabel}
       </Link>
-      <h1 style={{ margin: 0, fontSize: "1.75rem" }}>{title}</h1>
-      <Message severity="error" text={message} style={{ width: "100%" }} />
+      <h1 className="m-0 font-display text-3xl text-fog">{title}</h1>
+      <StatusAlert severity="error" text={message} className="w-full" />
     </div>
   );
 }

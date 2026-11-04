@@ -1,9 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
-import { Message } from "primereact/message";
+import { PaletteIcon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
 
 import type {
   ApplyBrandingForAssemblySuccess,
@@ -149,49 +158,44 @@ export function BrandingRebrandConfirmDialog({
     }
   }
 
-  const footer = (
-    <div
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "0.5rem",
-        justifyContent: "flex-end",
-      }}
-    >
-      <Button
-        type="button"
-        label={copy.cancel}
-        className="p-button-text"
-        disabled={pending}
-        onClick={onHide}
-      />
-      <Button
-        type="button"
-        label={copy.confirm}
-        icon="pi pi-palette"
-        disabled={pending || !assemblyJobId}
-        loading={pending}
-        onClick={() => void handleConfirm()}
-      />
-    </div>
-  );
-
   return (
     <Dialog
-      header={copy.title}
-      visible={visible}
-      style={{ width: "min(480px, 95vw)" }}
-      onHide={onHide}
-      footer={footer}
-      closable={!pending}
-      dismissableMask={!pending}
+      open={visible}
+      onOpenChange={(open) => {
+        if (!open && !pending) {
+          onHide();
+        }
+      }}
     >
-      <p style={{ margin: "0 0 1rem", fontSize: "0.9rem", color: "#374151" }}>
-        {copy.body}
-      </p>
-      {banner ? (
-        <Message severity="error" text={banner} style={{ width: "100%" }} />
-      ) : null}
+      <DialogContent
+        className="w-[min(480px,95vw)] border-edge bg-panel text-fog sm:max-w-[480px]"
+        showCloseButton={!pending}
+        aria-describedby={undefined}
+        onInteractOutside={(event) => {
+          if (pending) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle className="font-display text-2xl">{copy.title}</DialogTitle>
+        </DialogHeader>
+        <p className="m-0 text-sm text-fog">{copy.body}</p>
+        {banner ? <StatusAlert severity="error" text={banner} className="w-full" /> : null}
+        <DialogFooter className="flex-wrap gap-2">
+          <Button type="button" variant="ghost" disabled={pending} onClick={onHide}>
+            {copy.cancel}
+          </Button>
+          <Button
+            type="button"
+            disabled={pending || !assemblyJobId}
+            onClick={() => void handleConfirm()}
+          >
+            {pending ? <Spinner className="size-4 text-current" /> : <PaletteIcon />}
+            {copy.confirm}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }

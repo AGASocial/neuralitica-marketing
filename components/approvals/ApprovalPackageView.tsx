@@ -1,14 +1,27 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Button } from "primereact/button";
-import { Checkbox } from "primereact/checkbox";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { InputTextarea } from "primereact/inputtextarea";
-import { Message } from "primereact/message";
-import { Tag } from "primereact/tag";
-import { Toast } from "primereact/toast";
+import { CircleCheckIcon } from "lucide-react";
+import { toast } from "sonner";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 import { GenericAvatarDisclosurePreview } from "@/components/preferences/GenericAvatarDisclosurePreview";
 import { ReadyToPublishDownloadPanel } from "@/components/ready-to-publish/ReadyToPublishDownloadPanel";
@@ -209,7 +222,6 @@ export function ApprovalPackageView({
   checkLabels,
   copy,
 }: ApprovalPackageViewProps) {
-  const toastRef = useRef<Toast>(null);
   const [pkg, setPkg] = useState(initialPackage);
   const [rejectMode, setRejectMode] = useState(false);
   const [requestChangesMode, setRequestChangesMode] = useState(false);
@@ -220,6 +232,7 @@ export function ApprovalPackageView({
   >({});
   const [revisionSummary, setRevisionSummary] = useState("");
   const [banner, setBanner] = useState<string | null>(null);
+  const [confirmApproveOpen, setConfirmApproveOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const isPending = pkg.status === "pending_client";
@@ -312,11 +325,7 @@ export function ApprovalPackageView({
       if (!result.ok) {
         const message = mapErrorMessage(result.error.code, copy.errors);
         setBanner(message);
-        toastRef.current?.show({
-          severity: "error",
-          summary: message,
-          life: 5000,
-        });
+        toast.error(message, { duration: 5000 });
         return;
       }
 
@@ -343,11 +352,7 @@ export function ApprovalPackageView({
         toastSummary = copy.revision.toastSubmitted;
       }
 
-      toastRef.current?.show({
-        severity: "success",
-        summary: toastSummary,
-        life: 4000,
-      });
+      toast.success(toastSummary, { duration: 4000 });
     });
   }
 
@@ -356,51 +361,53 @@ export function ApprovalPackageView({
       return;
     }
 
-    confirmDialog({
-      header: copy.confirmApproveHeader,
-      message: copy.confirmApproveMessage,
-      acceptLabel: copy.confirmApprove,
-      rejectLabel: copy.cancelApprove,
-      icon: "pi pi-check-circle",
-      accept: () => {
-        runDecide("approved");
-      },
-    });
+    setConfirmApproveOpen(true);
   }
 
   return (
-    <div style={{ maxWidth: "640px", margin: "0 auto" }}>
-      <ConfirmDialog />
-      <Toast ref={toastRef} position="top-right" />
+    <div className="max-w-[640px] my-0 mx-auto">
+      <AlertDialog open={confirmApproveOpen} onOpenChange={setConfirmApproveOpen}>
+        <AlertDialogContent className="border-edge bg-panel text-fog">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 font-display text-2xl">
+              <CircleCheckIcon className="size-5 text-success" aria-hidden />
+              {copy.confirmApproveHeader}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-dim">
+              {copy.confirmApproveMessage}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{copy.cancelApprove}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                runDecide("approved");
+              }}
+            >
+              {copy.confirmApprove}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      <div style={{ marginBottom: "1.25rem" }}>
+      <div className="mb-5">
         <Link
           href="/approvals"
-          style={{
-            color: "#4b5563",
-            textDecoration: "none",
-            fontSize: "0.9rem",
-          }}
+          className="text-dim no-underline text-[0.9rem]"
         >
           ← {copy.backList}
         </Link>
         <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            gap: "0.6rem",
-            marginTop: "0.75rem",
-          }}
+          className="flex flex-wrap items-center gap-[0.6rem] mt-3"
         >
-          <h1 style={{ margin: 0, fontSize: "1.75rem" }}>{copy.title}</h1>
-          <Tag
+          <h1 className="font-display text-fog m-0 text-[1.75rem]">{copy.title}</h1>
+          <StatusBadge
             value={copy.status[pkg.status]}
             severity={statusSeverity(pkg.status)}
           />
         </div>
         {pkg.decidedAt ? (
-          <p style={{ margin: "0.5rem 0 0", color: "#6b7280", fontSize: "0.875rem" }}>
+          <p className="mt-2 mx-0 mb-0 text-dim text-sm">
             {copy.decidedAt.replace(
               "{date}",
               formatDateTime(pkg.decidedAt, locale),
@@ -410,32 +417,32 @@ export function ApprovalPackageView({
       </div>
 
       {banner ? (
-        <Message
+        <StatusAlert
           severity="error"
           text={banner}
-          style={{ width: "100%", marginBottom: "1rem" }}
+          className="w-full mb-4"
         />
       ) : null}
 
       {isWaiting ? (
-        <Message
+        <StatusAlert
           severity="info"
           text={copy.revision.waiting}
-          style={{ width: "100%", marginBottom: "1rem" }}
+          className="w-full mb-4"
         />
       ) : null}
 
       {isPending && gateBlocksApprove ? (
-        <Message
+        <StatusAlert
           severity="warn"
           text={copy.gateNotReadyHint}
-          style={{ width: "100%", marginBottom: "1rem" }}
+          className="w-full mb-4"
         />
       ) : null}
 
       <section
         aria-label={copy.videoLabel}
-        style={{ marginBottom: "1.25rem" }}
+        className="mb-5"
       >
         <video
           key={pkg.video.previewUrl}
@@ -444,71 +451,43 @@ export function ApprovalPackageView({
           preload="metadata"
           poster={pkg.cover?.previewUrl}
           src={pkg.video.previewUrl}
-          style={{
-            width: "100%",
-            maxHeight: "70vh",
-            background: "#111827",
-            borderRadius: "8px",
-            display: "block",
-          }}
+          className="w-full max-h-[70vh] bg-deep rounded-lg block"
         />
       </section>
 
-      <section style={{ marginBottom: "1.25rem" }}>
+      <section className="mb-5">
         <h2
-          style={{
-            margin: "0 0 0.5rem",
-            fontSize: "1rem",
-            color: "#374151",
-          }}
+          className="font-display mt-0 mx-0 mb-2 text-base text-fog"
         >
           {copy.caption}
         </h2>
         <p
-          style={{
-            margin: 0,
-            whiteSpace: "pre-wrap",
-            lineHeight: 1.5,
-            color: "#111827",
-          }}
+          className="m-0 whitespace-pre-wrap leading-[1.5] text-fog"
         >
           {pkg.caption.body}
         </p>
       </section>
 
-      <section style={{ marginBottom: "1.25rem" }}>
+      <section className="mb-5">
         <h2
-          style={{
-            margin: "0 0 0.5rem",
-            fontSize: "1rem",
-            color: "#374151",
-          }}
+          className="font-display mt-0 mx-0 mb-2 text-base text-fog"
         >
           {copy.selectedCta}
         </h2>
-        <p style={{ margin: 0, color: "#111827", lineHeight: 1.45 }}>
+        <p className="m-0 text-fog leading-[1.45]">
           {pkg.caption.selectedCtaText}
         </p>
       </section>
 
       {pkg.hashtags.length > 0 ? (
-        <section style={{ marginBottom: "1.25rem" }}>
+        <section className="mb-5">
           <h2
-            style={{
-              margin: "0 0 0.5rem",
-              fontSize: "1rem",
-              color: "#374151",
-            }}
+            className="font-display mt-0 mx-0 mb-2 text-base text-fog"
           >
             {copy.hashtags}
           </h2>
           <p
-            style={{
-              margin: 0,
-              color: "#4b5563",
-              lineHeight: 1.45,
-              wordBreak: "break-word",
-            }}
+            className="m-0 text-dim leading-[1.45] break-words"
           >
             {pkg.hashtags.join(" ")}
           </p>
@@ -516,13 +495,9 @@ export function ApprovalPackageView({
       ) : null}
 
       {pkg.disclosure.required ? (
-        <div style={{ marginBottom: "1.25rem" }}>
+        <div className="mb-5">
           <h2
-            style={{
-              margin: "0 0 0.5rem",
-              fontSize: "1rem",
-              color: "#374151",
-            }}
+            className="font-display mt-0 mx-0 mb-2 text-base text-fog"
           >
             {copy.disclosureTitle}
           </h2>
@@ -534,51 +509,31 @@ export function ApprovalPackageView({
         </div>
       ) : null}
 
-      <section style={{ marginBottom: "1.5rem" }}>
+      <section className="mb-6">
         <h2
-          style={{
-            margin: "0 0 0.5rem",
-            fontSize: "1rem",
-            color: "#374151",
-          }}
+          className="font-display mt-0 mx-0 mb-2 text-base text-fog"
         >
           {copy.overridesTitle}
         </h2>
         {pkg.qaOverrides.length === 0 ? (
-          <p style={{ margin: 0, color: "#6b7280", fontSize: "0.9rem" }}>
+          <p className="m-0 text-dim text-[0.9rem]">
             {copy.overridesEmpty}
           </p>
         ) : (
           <ul
-            style={{
-              listStyle: "none",
-              margin: 0,
-              padding: 0,
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.65rem",
-            }}
+            className="list-none m-0 p-0 flex flex-col gap-[0.65rem]"
           >
             {pkg.qaOverrides.map((override) => (
               <li
                 key={override.overrideId}
-                style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "8px",
-                  padding: "0.75rem 0.9rem",
-                  background: "#f9fafb",
-                }}
+                className="border border-edge rounded-lg py-3 px-[0.9rem] bg-panel"
               >
                 <p
-                  style={{
-                    margin: "0 0 0.35rem",
-                    fontWeight: 600,
-                    color: "#111827",
-                  }}
+                  className="mt-0 mx-0 mb-[0.35rem] font-semibold text-fog"
                 >
                   {checkLabels[override.checkKey] ?? override.checkKey}
                 </p>
-                <p style={{ margin: 0, color: "#4b5563", lineHeight: 1.45 }}>
+                <p className="m-0 text-dim leading-[1.45]">
                   {copy.overrideReason.replace("{reason}", override.reason)}
                 </p>
               </li>
@@ -597,17 +552,11 @@ export function ApprovalPackageView({
 
       {isPending ? (
         <section
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.75rem",
-            paddingTop: "0.25rem",
-            borderTop: "1px solid #e5e7eb",
-          }}
+          className="flex flex-col gap-3 pt-1 border-t border-edge"
         >
           {typeof revisionsRemaining === "number" &&
           typeof maxRevisionRounds === "number" ? (
-            <p style={{ margin: 0, color: "#4b5563", fontSize: "0.9rem" }}>
+            <p className="m-0 text-dim text-[0.9rem]">
               {copy.revision.remaining
                 .replace("{remaining}", String(revisionsRemaining))
                 .replace("{max}", String(maxRevisionRounds))}
@@ -615,38 +564,30 @@ export function ApprovalPackageView({
           ) : null}
 
           {pkg.extraRevisionGranted ? (
-            <Message
+            <StatusAlert
               severity="info"
               text={copy.revision.grantHint}
-              style={{ width: "100%" }}
+              className="w-full"
             />
           ) : null}
 
           {limitExceeded ? (
-            <Message
+            <StatusAlert
               severity="warn"
               text={copy.revision.limitExceeded}
-              style={{ width: "100%" }}
+              className="w-full"
             />
           ) : null}
 
           {requestChangesMode ? (
             <>
               <h2
-                style={{
-                  margin: 0,
-                  fontSize: "1rem",
-                  color: "#374151",
-                }}
+                className="font-display m-0 text-base text-fog"
               >
                 {copy.revision.tagsTitle}
               </h2>
               <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.85rem",
-                }}
+                className="flex flex-col gap-[0.85rem]"
               >
                 {APPROVAL_CHANGE_TAGS.map((tag) => {
                   const checked = selectedTags.includes(tag);
@@ -658,52 +599,41 @@ export function ApprovalPackageView({
                   return (
                     <div
                       key={tag}
-                      style={{
-                        border: "1px solid #e5e7eb",
-                        borderRadius: "8px",
-                        padding: "0.75rem 0.9rem",
-                        background: checked ? "#f9fafb" : "#fff",
-                      }}
+                      className={cn(
+                        "rounded-lg border border-edge px-[0.9rem] py-3",
+                        checked ? "bg-panel" : "bg-deep",
+                      )}
                     >
                       <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                        }}
+                        className="flex items-center gap-2"
                       >
                         <Checkbox
-                          inputId={`revision-tag-${tag}`}
+                          id={`revision-tag-${tag}`}
                           checked={checked}
                           disabled={pending}
-                          onChange={(event) =>
-                            toggleTag(tag, event.checked === true)
+                          onCheckedChange={(value) =>
+                            toggleTag(tag, value === true)
                           }
                         />
-                        <label
+                        <Label
                           htmlFor={`revision-tag-${tag}`}
-                          style={{ fontWeight: 600, color: "#111827" }}
+                          className="font-semibold text-fog"
                         >
                           {copy.revision.tags[tag]}
-                        </label>
+                        </Label>
                       </div>
                       {checked ? (
-                        <div style={{ marginTop: "0.65rem" }}>
-                          <label
+                        <div className="mt-[0.65rem]">
+                          <Label
                             htmlFor={`revision-notes-${tag}`}
-                            style={{
-                              display: "block",
-                              marginBottom: "0.35rem",
-                              fontSize: "0.875rem",
-                              color: "#374151",
-                            }}
+                            className="mb-[0.35rem] block text-sm text-fog"
                           >
                             {copy.revision.tagNotesLabel.replace(
                               "{tag}",
                               copy.revision.tags[tag],
                             )}
-                          </label>
-                          <InputTextarea
+                          </Label>
+                          <Textarea
                             id={`revision-notes-${tag}`}
                             value={noteValue}
                             onChange={(event) =>
@@ -713,26 +643,21 @@ export function ApprovalPackageView({
                               }))
                             }
                             rows={3}
-                            autoResize
                             disabled={pending}
                             maxLength={APPROVAL_FEEDBACK_MAX_LENGTH + 50}
                             placeholder={copy.revision.tagNotesHint}
-                            style={{ width: "100%" }}
+                            className="w-full"
                           />
                           <p
-                            style={{
-                              margin: "0.25rem 0 0",
-                              color: "#6b7280",
-                              fontSize: "0.8rem",
-                            }}
+                            className="mt-1 mx-0 mb-0 text-dim text-[0.8rem]"
                           >
                             {noteTrimmed.length}/{APPROVAL_FEEDBACK_MAX_LENGTH}
                           </p>
                           {noteTooLong ? (
-                            <Message
+                            <StatusAlert
                               severity="error"
                               text={copy.revision.noteTooLong}
-                              style={{ width: "100%", marginTop: "0.35rem" }}
+                              className="w-full mt-[0.35rem]"
                             />
                           ) : null}
                         </div>
@@ -742,140 +667,126 @@ export function ApprovalPackageView({
                 })}
               </div>
 
-              <label
+              <Label
                 htmlFor="revision-summary"
-                style={{ fontWeight: 600, color: "#374151" }}
+                className="font-semibold text-fog"
               >
                 {copy.revision.summaryLabel}
-              </label>
-              <InputTextarea
+              </Label>
+              <Textarea
                 id="revision-summary"
                 value={revisionSummary}
                 onChange={(event) => setRevisionSummary(event.target.value)}
                 rows={3}
-                autoResize
                 disabled={pending}
                 maxLength={APPROVAL_FEEDBACK_MAX_LENGTH + 50}
                 placeholder={copy.revision.summaryHint}
-                style={{ width: "100%" }}
+                className="w-full"
               />
-              <p style={{ margin: 0, color: "#6b7280", fontSize: "0.8rem" }}>
+              <p className="m-0 text-dim text-[0.8rem]">
                 {summaryTrimmed.length}/{APPROVAL_FEEDBACK_MAX_LENGTH}
               </p>
               {summaryTooLong ? (
-                <Message
+                <StatusAlert
                   severity="error"
                   text={copy.revision.noteTooLong}
-                  style={{ width: "100%" }}
+                  className="w-full"
                 />
               ) : null}
 
               <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "0.65rem",
-                }}
+                className="flex flex-wrap gap-[0.65rem]"
               >
                 <Button
                   type="button"
-                  label={
-                    pending
-                      ? copy.revision.requesting
-                      : copy.revision.confirmRequestChanges
-                  }
-                  severity="secondary"
                   disabled={pending || revisionFormInvalid}
                   onClick={() => runDecide("request_changes")}
-                />
+                  variant="secondary"
+                >
+                  {pending
+                    ? copy.revision.requesting
+                    : copy.revision.confirmRequestChanges}
+                </Button>
                 <Button
                   type="button"
-                  label={copy.revision.cancelRequestChanges}
-                  text
                   disabled={pending}
                   onClick={() => {
                     setRequestChangesMode(false);
                     resetRevisionForm();
                     setBanner(null);
                   }}
-                />
+                  variant="ghost"
+                >
+                  {copy.revision.cancelRequestChanges}
+                </Button>
               </div>
             </>
           ) : rejectMode ? (
             <>
-              <label
+              <Label
                 htmlFor="approval-reject-feedback"
-                style={{ fontWeight: 600, color: "#374151" }}
+                className="font-semibold text-fog"
               >
                 {copy.feedbackLabel}
-              </label>
-              <InputTextarea
+              </Label>
+              <Textarea
                 id="approval-reject-feedback"
                 value={feedback}
                 onChange={(event) => setFeedback(event.target.value)}
                 rows={4}
-                autoResize
                 disabled={pending}
                 maxLength={APPROVAL_FEEDBACK_MAX_LENGTH + 50}
                 placeholder={copy.feedbackHint}
-                style={{ width: "100%" }}
+                className="w-full"
               />
-              <p style={{ margin: 0, color: "#6b7280", fontSize: "0.8rem" }}>
+              <p className="m-0 text-dim text-[0.8rem]">
                 {feedbackTrimmed.length}/{APPROVAL_FEEDBACK_MAX_LENGTH}
               </p>
               {feedbackTooLong ? (
-                <Message
+                <StatusAlert
                   severity="error"
                   text={copy.feedbackTooLong}
-                  style={{ width: "100%" }}
+                  className="w-full"
                 />
               ) : null}
               <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "0.65rem",
-                }}
+                className="flex flex-wrap gap-[0.65rem]"
               >
                 <Button
                   type="button"
-                  label={pending ? copy.rejecting : copy.confirmReject}
-                  severity="danger"
                   disabled={pending || feedbackTooLong}
                   onClick={() => runDecide("rejected")}
-                />
+                  variant="destructive"
+                >
+                  {pending ? copy.rejecting : copy.confirmReject}
+                </Button>
                 <Button
                   type="button"
-                  label={copy.cancelReject}
-                  text
                   disabled={pending}
                   onClick={() => {
                     setRejectMode(false);
                     setFeedback("");
                     setBanner(null);
                   }}
-                />
+                  variant="ghost"
+                >
+                  {copy.cancelReject}
+                </Button>
               </div>
             </>
           ) : (
             <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "0.65rem",
-              }}
+              className="flex flex-wrap gap-[0.65rem]"
             >
               <Button
                 type="button"
-                label={pending ? copy.approving : copy.approve}
                 disabled={pending || gateBlocksApprove}
                 onClick={askToApprove}
-              />
+              >
+                {pending ? copy.approving : copy.approve}
+              </Button>
               <Button
                 type="button"
-                label={copy.reject}
-                severity="secondary"
-                outlined
                 disabled={pending}
                 onClick={() => {
                   setBanner(null);
@@ -883,13 +794,13 @@ export function ApprovalPackageView({
                   resetRevisionForm();
                   setRejectMode(true);
                 }}
-              />
+                variant="outline"
+              >
+                {copy.reject}
+              </Button>
               {canRequestChanges ? (
                 <Button
                   type="button"
-                  label={copy.revision.requestChanges}
-                  severity="secondary"
-                  outlined
                   disabled={pending || gateBlocksApprove}
                   onClick={() => {
                     setBanner(null);
@@ -897,7 +808,10 @@ export function ApprovalPackageView({
                     setFeedback("");
                     setRequestChangesMode(true);
                   }}
-                />
+                  variant="outline"
+                >
+                  {copy.revision.requestChanges}
+                </Button>
               ) : null}
             </div>
           )}
