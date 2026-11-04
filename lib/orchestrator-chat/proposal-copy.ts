@@ -9,10 +9,17 @@ export function proposalSummary(
     | "generate_scripts"
     | "generate_videos"
     | "request_video_changes"
-    | "regenerate_script",
-  params?: { slotCount?: number },
+    | "regenerate_script"
+    | "confirm_paid_generation",
+  params?: { slotCount?: number; amountCents?: number },
 ): string {
   const es = locale === "es";
+  const amount =
+    params?.amountCents != null
+      ? `$${(params.amountCents / 100).toFixed(2)}`
+      : es
+        ? "un costo estimado"
+        : "an estimated cost";
   switch (key) {
     case "generate_strategy":
       return es
@@ -44,6 +51,10 @@ export function proposalSummary(
       return es
         ? "Reescribir el texto de este video. Cargo pequeño de escritura con IA; no corre nada hasta que apruebes."
         : "Rewrite this video’s text. Small AI writing charge; nothing runs until you approve.";
+    case "confirm_paid_generation":
+      return es
+        ? `Crear este video cuesta unos ${amount}. No se cobra nada hasta que apruebes.`
+        : `Creating this video costs about ${amount}. Nothing is charged until you approve.`;
     default:
       return es ? "Confirma por favor." : "Please confirm.";
   }

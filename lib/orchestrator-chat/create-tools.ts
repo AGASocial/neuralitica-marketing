@@ -20,6 +20,8 @@ import {
   proposeApprovePendingVideoOutputSchema,
   proposeApproveStrategyInputSchema,
   proposeApproveStrategyOutputSchema,
+  proposeConfirmPaidGenerationInputSchema,
+  proposeConfirmPaidGenerationOutputSchema,
   proposeGenerateScriptsInputSchema,
   proposeGenerateScriptsOutputSchema,
   proposeGenerateStrategyInputSchema,
@@ -32,6 +34,9 @@ import {
   proposeRequestVideoChangesOutputSchema,
   type OrchestratorToolError,
 } from "@/lib/contracts/orchestrator-chat";
+import { previewBrollVideoJobsEstimate } from "@/lib/video-jobs/actions/preview-broll-video-jobs-estimate";
+import { previewHeygenTalkingHeadEstimate } from "@/lib/video-jobs/actions/create-heygen-talking-head-video-job";
+import { isFacelessNeedsBroll } from "@/lib/video-jobs/broll-estimate-shared";
 import type { Locale } from "@/lib/i18n/locales";
 import {
   isOperator,
@@ -727,6 +732,149 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
         };
         assertProposalIsNonMutating(proposal);
         return proposeGenerateVideosOutputSchema.parse({
+          ok: true,
+          proposal,
+        });
+      },
+    }),
+
+    proposeConfirmPaidGeneration: tool({
+      description:
+        "Propose paid video generation with a plain-language price from cost policy. Does NOT spend until the user taps Approve on the cost card. Call this before any on-camera, stock-footage, or paid video create.",
+      inputSchema: proposeConfirmPaidGenerationInputSchema,
+      execute: async (raw) => {
+        if (!isOperator(user)) {
+          return toolError(orchestratorForbidden());
+        }
+        const parsed = proposeConfirmPaidGenerationInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const weekStart = resolveOrchestratorWeekStart(parsed.data.weekStart);
+        const approved = await getApprovedStrategyForWeek({
+          clientId: user.id,
+          weekStart,
+        });
+        if (!approved || approved.status !== "approved") {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "Approve this week’s plan before creating videos.",
+          });
+        }
+        const { items } = await buildReelScriptListForStrategy({
+          clientId: user.id,
+          weekStart,
+          strategyId: approved.id,
+          version: approved.version,
+          brief: approved.brief,
+        });
+        const generated = items.filter(
+          (i) => i.status === "generated" && i.scriptId && i.package,
+        );
+        const item =
+          parsed.data.reelScriptId !== undefined
+            ? generated.find((i) => i.scriptId === parsed.data.reelScriptId)
+            : parsed.data.slotIndex !== undefined
+              ? generated.find((i) => i.slotIndex === parsed.data.slotIndex)
+              : generated[0];
+        if (!item || !item.scriptId || !item.package) {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "Write the video texts first, then confirm the cost.",
+          });
+        }
+
+        const needsBroll = isFacelessNeedsBroll({
+          visualMode: item.modalidad,
+          modalidad: item.modalidad,
+          brollBeatCount: item.package.brollBeats?.length ?? 0,
+        });
+
+        if (needsBroll) {
+          const preview = await previewBrollVideoJobsEstimate({
+            reelScriptId: item.scriptId,
+            clientId: user.id,
+          });
+          if (!preview.ok) {
+            return toolError({
+              ok: false,
+              error: "INTERNAL",
+              message: "Could not estimate the video cost.",
+            });
+          }
+          if (
+            "blockedReasonKey" in preview &&
+            preview.blockedReasonKey !== undefined
+          ) {
+            return toolError({
+              ok: false,
+              error: "NOT_FOUND",
+              message: "That video cannot be generated right now.",
+            });
+          }
+          const estimatedCostCents = preview.estimatedCostCents;
+          const proposal = {
+            kind: "confirm_paid_generation" as const,
+            requiresConfirmation: true as const,
+            mutates: false as const,
+            incursSpend: true as const,
+            estimatedCostCents,
+            confirmEstimateCents: estimatedCostCents,
+            summary: proposalSummary(locale, "confirm_paid_generation", {
+              amountCents: estimatedCostCents,
+            }),
+            weekStart,
+            slotIndex: item.slotIndex,
+            reelScriptId: item.scriptId,
+            tema: item.tema,
+            styleLabel: "images_and_text" as const,
+            paidKind: "broll" as const,
+            action: "confirmPaidGenerationFromChat" as const,
+          };
+          assertProposalIsNonMutating(proposal);
+          return proposeConfirmPaidGenerationOutputSchema.parse({
+            ok: true,
+            proposal,
+          });
+        }
+
+        const preview = await previewHeygenTalkingHeadEstimate({
+          reelScriptId: item.scriptId,
+          clientId: user.id,
+          targetDurationSec: item.package.targetDurationSec,
+        });
+        if (!preview.ok || !preview.eligible) {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message:
+              "On-camera video is not ready yet (photo/consent may be missing).",
+          });
+        }
+        const estimatedCostCents = preview.estimatedCostCents;
+        const proposal = {
+          kind: "confirm_paid_generation" as const,
+          requiresConfirmation: true as const,
+          mutates: false as const,
+          incursSpend: true as const,
+          estimatedCostCents,
+          confirmEstimateCents: estimatedCostCents,
+          summary: proposalSummary(locale, "confirm_paid_generation", {
+            amountCents: estimatedCostCents,
+          }),
+          weekStart,
+          slotIndex: item.slotIndex,
+          reelScriptId: item.scriptId,
+          tema: item.tema,
+          styleLabel: "presenter" as const,
+          paidKind: "heygen" as const,
+          action: "confirmPaidGenerationFromChat" as const,
+          targetDurationSec: preview.durationSec,
+        };
+        assertProposalIsNonMutating(proposal);
+        return proposeConfirmPaidGenerationOutputSchema.parse({
           ok: true,
           proposal,
         });

@@ -95,7 +95,9 @@
       "success": "Done.",
       "error": "That didn’t work. Please try again.",
       "spendHint": "About {amount} will be used if you approve.",
-      "spendUnknown": "This may use a small AI writing charge. Nothing runs until you approve."
+      "spendUnknown": "This may use a small AI writing charge. Nothing runs until you approve.",
+      "stylePresenter": "With your face / on-camera presenter",
+      "styleImages": "Images and text only"
     },
     "status": {
       "campaignTitle": "Where things stand",

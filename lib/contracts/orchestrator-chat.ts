@@ -23,6 +23,7 @@ export const ORCHESTRATOR_PROPOSAL_KINDS = [
   "generate_videos",
   "request_video_changes",
   "regenerate_script",
+  "confirm_paid_generation",
 ] as const;
 
 /** Owner-safe media preview path (same shape as approval packages). */
@@ -418,6 +419,58 @@ export const proposeGenerateVideosOutputSchema = z
 
 export type ProposeGenerateVideosOutput = z.infer<
   typeof proposeGenerateVideosOutputSchema
+>;
+
+export const proposeConfirmPaidGenerationInputSchema = z
+  .object({
+    weekStart: trendWeekStartSchema.optional(),
+    slotIndex: z.number().int().min(0).max(6).optional(),
+    reelScriptId: z.string().uuid().optional(),
+  })
+  .strict();
+
+export type ProposeConfirmPaidGenerationInput = z.infer<
+  typeof proposeConfirmPaidGenerationInputSchema
+>;
+
+export const proposeConfirmPaidGenerationOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    proposal: orchestratorProposalMetaSchema.extend({
+      kind: z.literal("confirm_paid_generation"),
+      weekStart: trendWeekStartSchema,
+      slotIndex: z.number().int().min(0).max(6),
+      reelScriptId: z.string().uuid(),
+      tema: z.string().max(200).optional(),
+      /** Plain owner label: on-camera vs images-and-text. */
+      styleLabel: z.enum(["presenter", "images_and_text"]),
+      paidKind: z.enum(["broll", "heygen"]),
+      action: z.literal("confirmPaidGenerationFromChat"),
+      /** Must match live estimate at Approve time for heygen. */
+      confirmEstimateCents: z.number().int().nonnegative(),
+      targetDurationSec: z.number().int().positive().max(120).optional(),
+      incursSpend: z.literal(true),
+      estimatedCostCents: z.number().int().nonnegative(),
+    }),
+  })
+  .strict();
+
+export type ProposeConfirmPaidGenerationOutput = z.infer<
+  typeof proposeConfirmPaidGenerationOutputSchema
+>;
+
+/** Client → server action body for paid confirm (no clientId — server fills). */
+export const confirmPaidGenerationFromChatInputSchema = z
+  .object({
+    reelScriptId: z.string().uuid(),
+    paidKind: z.enum(["broll", "heygen"]),
+    confirmEstimateCents: z.number().int().nonnegative(),
+    targetDurationSec: z.number().int().positive().max(120).optional(),
+  })
+  .strict();
+
+export type ConfirmPaidGenerationFromChatInput = z.infer<
+  typeof confirmPaidGenerationFromChatInputSchema
 >;
 
 export const orchestratorToolErrorSchema = z
