@@ -137,7 +137,7 @@
     "confirmAccept": "Log out",
     "confirmReject": "Cancel",
     "userMenu": {
-      "menuAriaLabel": "Account menu",
+      "menuAriaLabel": "User menu",
       "languageLabel": "Language",
       "languageEs": "Español",
       "languageEn": "English",
@@ -649,7 +649,8 @@
       "changeCta": "Change something",
       "inProductionStatus": "In production",
       "pendingStatus": "Waiting for OK",
-      "progressHint": "We’re still putting this video together. Check back shortly."
+      "progressHint": "We’re still putting this video together. Check back shortly.",
+      "untitled": "Video"
     },
     "list": {
       "title": "My videos",

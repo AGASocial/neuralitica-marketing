@@ -26,6 +26,9 @@ describe("listMyVideosHubForClientUser", () => {
     assert.match(view, /approveCta/);
     assert.match(view, /changeCta/);
     assert.match(view, /sectionInProduction/);
+    assert.match(view, /formatLabels/);
+    assert.match(view, /assembledAt/);
+    assert.match(view, /ClientLocalDateTime/);
 
     const listGet = readFileSync(
       join(here, "list-get-approvals.ts"),

@@ -137,7 +137,7 @@
     "confirmAccept": "Cerrar sesión",
     "confirmReject": "Cancelar",
     "userMenu": {
-      "menuAriaLabel": "Menú de cuenta",
+      "menuAriaLabel": "Menú de usuario",
       "languageLabel": "Idioma",
       "languageEs": "Español",
       "languageEn": "English",
@@ -649,7 +649,8 @@
       "changeCta": "Cambiar algo",
       "inProductionStatus": "En producción",
       "pendingStatus": "Esperando OK",
-      "progressHint": "Todavía estamos armando este video. Vuelve en un momento."
+      "progressHint": "Todavía estamos armando este video. Vuelve en un momento.",
+      "untitled": "Video"
     },
     "list": {
       "title": "Mis videos",

@@ -30,6 +30,7 @@ import {
   mediaPreviewUrl,
   truncateCaptionPreview,
 } from "@/lib/approvals/caption-preview";
+import { resolveApprovalListCardMeta } from "@/lib/approvals/resolve-approval-list-card-meta";
 
 export {
   APPROVAL_CAPTION_PREVIEW_MAX,
@@ -207,15 +208,27 @@ export async function toApprovalListItemDto(params: {
 }): Promise<ApprovalListItemDto> {
   const composed = await composeApprovalPackage(params);
   if (composed.ok) {
+    const captionPreview = truncateCaptionPreview(
+      composed.package.caption.body,
+    );
+    const meta = await resolveApprovalListCardMeta({
+      clientId: params.clientId,
+      assembly: composed.assembly,
+      captionPreview,
+      fallbackCreatedAt: params.approval.createdAt,
+    });
     return {
       approvalId: params.approval.id,
       assembledReelId: params.approval.assembledReelId,
       status: params.approval.status,
       createdAt: params.approval.createdAt,
-      captionPreview: truncateCaptionPreview(composed.package.caption.body),
+      captionPreview,
       hasDisclosure: composed.package.disclosure.required,
       overrideCount: composed.package.qaOverrides.length,
       videoAssetId: composed.package.video.assetId,
+      title: meta.title,
+      ...(meta.formatKey ? { formatKey: meta.formatKey } : {}),
+      assembledAt: meta.assembledAt,
     };
   }
 
@@ -246,6 +259,13 @@ export async function toApprovalListItemDto(params: {
     }
   }
 
+  const meta = await resolveApprovalListCardMeta({
+    clientId: params.clientId,
+    assembly,
+    captionPreview: captionPreview ?? "",
+    fallbackCreatedAt: params.approval.createdAt,
+  });
+
   return {
     approvalId: params.approval.id,
     assembledReelId: params.approval.assembledReelId,
@@ -254,5 +274,8 @@ export async function toApprovalListItemDto(params: {
     captionPreview: captionPreview ?? "",
     hasDisclosure,
     videoAssetId,
+    title: meta.title,
+    ...(meta.formatKey ? { formatKey: meta.formatKey } : {}),
+    assembledAt: meta.assembledAt,
   };
 }

@@ -168,7 +168,7 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
             linkClassName="text-sm"
           />
 
-          <div className="ml-auto flex shrink-0 items-center gap-2 text-sm text-dim sm:gap-3">
+          <div className="ml-auto flex shrink-0 items-center gap-1.5 text-sm text-dim sm:gap-3">
             <OrchestratorChatToggle
               openLabel={t.orchestratorChat.openLabel}
               shortcutHint={t.orchestratorChat.openShortcutHint}
