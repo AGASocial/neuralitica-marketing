@@ -11,7 +11,6 @@ import {
   OrchestratorChatPanel,
   OrchestratorChatToggle,
 } from "@/components/orchestrator-chat/OrchestratorChatPanel";
-import { OrchestratorChatProvider } from "@/components/orchestrator-chat/OrchestratorChatContext";
 import type { CurrentUser } from "@/lib/auth/get-current-user";
 import { getTranslations } from "@/lib/i18n/get-translations";
 
@@ -151,7 +150,7 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
   };
 
   return (
-    <OrchestratorChatProvider>
+    <>
       <header className="sticky top-0 z-40 border-b border-edge bg-deep/95 backdrop-blur-sm">
         <div className="flex h-16 items-center gap-4 px-4 sm:px-6 lg:px-8">
           <Link
@@ -214,6 +213,6 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
       </header>
       <OrchestratorChatPanel copy={chatCopy} locale={locale} />
       <OrchestratorChatFab openLabel={t.orchestratorChat.openLabel} />
-    </OrchestratorChatProvider>
+    </>
   );
 }
