@@ -24,6 +24,8 @@ export const ORCHESTRATOR_PROPOSAL_KINDS = [
   "request_video_changes",
   "regenerate_script",
   "confirm_paid_generation",
+  "grant_presenter_consent",
+  "set_presenter_voice",
 ] as const;
 
 /** Owner-safe media preview path (same shape as approval packages). */
@@ -542,6 +544,67 @@ export const confirmPaidGenerationFromChatInputSchema = z
 
 export type ConfirmPaidGenerationFromChatInput = z.infer<
   typeof confirmPaidGenerationFromChatInputSchema
+>;
+
+export const getPresenterSetupStatusInputSchema = z.object({}).strict();
+
+export const getPresenterSetupStatusOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    consentActive: z.boolean(),
+    onCameraEnabled: z.boolean(),
+    hasPresenterConfig: z.boolean(),
+    gender: z.enum(["male", "female"]).nullable(),
+    language: z.enum(["en", "es"]).nullable(),
+    nextHint: z.string().min(1).max(300),
+  })
+  .strict();
+
+export type GetPresenterSetupStatusOutput = z.infer<
+  typeof getPresenterSetupStatusOutputSchema
+>;
+
+export const proposeGrantPresenterConsentInputSchema = z.object({}).strict();
+
+export const proposeGrantPresenterConsentOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    proposal: orchestratorProposalMetaSchema.extend({
+      kind: z.literal("grant_presenter_consent"),
+      action: z.literal("grantAvatarConsent"),
+      incursSpend: z.literal(false),
+      estimatedCostCents: z.null(),
+    }),
+  })
+  .strict();
+
+export type ProposeGrantPresenterConsentOutput = z.infer<
+  typeof proposeGrantPresenterConsentOutputSchema
+>;
+
+export const proposeSetPresenterVoiceInputSchema = z
+  .object({
+    gender: z.enum(["male", "female"]),
+    language: z.enum(["en", "es"]),
+  })
+  .strict();
+
+export const proposeSetPresenterVoiceOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    proposal: orchestratorProposalMetaSchema.extend({
+      kind: z.literal("set_presenter_voice"),
+      action: z.literal("upsertAvatar"),
+      gender: z.enum(["male", "female"]),
+      language: z.enum(["en", "es"]),
+      incursSpend: z.literal(false),
+      estimatedCostCents: z.null(),
+    }),
+  })
+  .strict();
+
+export type ProposeSetPresenterVoiceOutput = z.infer<
+  typeof proposeSetPresenterVoiceOutputSchema
 >;
 
 export const orchestratorToolErrorSchema = z

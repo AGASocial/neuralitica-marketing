@@ -127,6 +127,16 @@ function asProposal(output: unknown): KnownProposal | null {
   ) {
     return p as KnownProposal;
   }
+  if (p.kind === "grant_presenter_consent") {
+    return p as KnownProposal;
+  }
+  if (
+    p.kind === "set_presenter_voice" &&
+    (p.gender === "male" || p.gender === "female") &&
+    (p.language === "en" || p.language === "es")
+  ) {
+    return p as KnownProposal;
+  }
   return null;
 }
 
@@ -384,6 +394,28 @@ export function OrchestratorChatPanel({
                   }
 
                   if (
+                    part.type === "tool-getPresenterSetupStatus" &&
+                    part.state === "output-available"
+                  ) {
+                    const output = part.output as {
+                      ok?: boolean;
+                      nextHint?: string;
+                      consentActive?: boolean;
+                      hasPresenterConfig?: boolean;
+                    };
+                    if (output?.ok && output.nextHint) {
+                      return (
+                        <p
+                          key={`${message.id}-ps-${index}`}
+                          className="rounded-lg border border-edge bg-panel px-3 py-2 text-sm text-fog"
+                        >
+                          {output.nextHint}
+                        </p>
+                      );
+                    }
+                  }
+
+                  if (
                     part.type === "tool-getGuidedProgress" &&
                     part.state === "output-available"
                   ) {
@@ -457,7 +489,9 @@ export function OrchestratorChatPanel({
                       part.type === "tool-proposeGenerateVideos" ||
                       part.type === "tool-proposeRequestVideoChanges" ||
                       part.type === "tool-proposeRegenerateScript" ||
-                      part.type === "tool-proposeConfirmPaidGeneration") &&
+                      part.type === "tool-proposeConfirmPaidGeneration" ||
+                      part.type === "tool-proposeGrantPresenterConsent" ||
+                      part.type === "tool-proposeSetPresenterVoice") &&
                     part.state === "output-available"
                   ) {
                     const proposal = asProposal(part.output);

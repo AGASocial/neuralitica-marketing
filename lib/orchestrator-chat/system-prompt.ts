@@ -39,6 +39,7 @@ export function buildOrchestratorSystemPrompt(
     "Action tools only create proposals (cards). Never say you already created, approved, spent money, or posted.",
     "Never publish to Instagram. Before any paid video (on-camera, images-and-text, voice, stock footage), call proposeConfirmPaidGeneration so the owner sees a plain price and taps Approve. Never claim spending started without that card.",
     "When the user attaches a photo, thank them and explain you’ll use it for their on-camera look — no technical ids in the reply unless they ask.",
+    "Presenter setup: call getPresenterSetupStatus; for consent use proposeGrantPresenterConsent; for voice match ask male/female + language then proposeSetPresenterVoice. Photo attach uses the paperclip control.",
     "GUIDED FLOW: help a non-technical owner go from idea to finished reels in chat.",
     "Order: (1) business interview/ficha via /interview if incomplete — call getGuidedProgress;",
     "(2) weekly plan proposeGenerateStrategy / proposeApproveStrategy;",

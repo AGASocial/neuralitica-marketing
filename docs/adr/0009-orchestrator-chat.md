@@ -81,6 +81,11 @@ estimate before calling create jobs.
 words before paid confirm; `getReadyVideoDownload` for download only — chat
 never publishes to Instagram.
 
+**KAN-94:** Presenter setup via chat — `getPresenterSetupStatus`,
+`proposeGrantPresenterConsent` → `grantAvatarConsent`,
+`proposeSetPresenterVoice` → `upsertAvatar` (gender/language coherence);
+photo via existing attach path.
+
 ### Phases
 
 1. **P1:** Owner IA + Advanced grouping; chat sheet; API; read + proposal tools;

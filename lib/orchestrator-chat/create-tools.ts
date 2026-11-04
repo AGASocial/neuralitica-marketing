@@ -22,10 +22,16 @@ import {
   proposeApproveStrategyOutputSchema,
   getGuidedProgressInputSchema,
   getGuidedProgressOutputSchema,
+  getPresenterSetupStatusInputSchema,
+  getPresenterSetupStatusOutputSchema,
   getReadyVideoDownloadInputSchema,
   getReadyVideoDownloadOutputSchema,
   proposeConfirmPaidGenerationInputSchema,
   proposeConfirmPaidGenerationOutputSchema,
+  proposeGrantPresenterConsentInputSchema,
+  proposeGrantPresenterConsentOutputSchema,
+  proposeSetPresenterVoiceInputSchema,
+  proposeSetPresenterVoiceOutputSchema,
   proposeGenerateScriptsInputSchema,
   proposeGenerateScriptsOutputSchema,
   proposeGenerateStrategyInputSchema,
@@ -59,6 +65,8 @@ import { toContentStrategyView } from "@/lib/content-strategy/to-strategy-view";
 import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved-strategy-for-week";
 import { buildReelScriptListForStrategy } from "@/lib/reel-scripts/list-reel-scripts-for-week";
 import { summarizeInterviewSessionRow } from "@/lib/interview/merge-answers";
+import { getAvatarForClientId } from "@/lib/avatars/get-avatar-for-client";
+import { hasActiveAvatarConsent } from "@/lib/visual-preferences/has-active-avatar-consent";
 import {
   createServerSupabaseClient,
   isSupabaseConfigured,
@@ -1062,6 +1070,121 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
           ],
           nextStepKey,
           nextStepHint: guidedHint(locale, nextStepKey),
+        });
+      },
+    }),
+
+    getPresenterSetupStatus: tool({
+      description:
+        "Show on-camera presenter setup status: consent, photo-ready style, gender/language. Use when the owner wants videos with their face.",
+      inputSchema: getPresenterSetupStatusInputSchema,
+      execute: async (raw) => {
+        const parsed = getPresenterSetupStatusInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const [consentActive, avatar] = await Promise.all([
+          hasActiveAvatarConsent(user.id),
+          getAvatarForClientId(user.id),
+        ]);
+        let onCameraEnabled = false;
+        if (isSupabaseConfigured()) {
+          const supabase = createServerSupabaseClient();
+          const { data } = await supabase
+            .from("neuramark_visual_preferences")
+            .select("allowed_modes")
+            .eq("client_id", user.id)
+            .maybeSingle();
+          const modes = data?.allowed_modes;
+          onCameraEnabled =
+            Array.isArray(modes) && modes.includes("own_avatar");
+        }
+        const hasPresenterConfig = avatar.exists === true;
+        const gender =
+          avatar.exists === true ? avatar.avatar.gender : null;
+        const language =
+          avatar.exists === true ? avatar.avatar.language : null;
+        const es = locale === "es";
+        let nextHint: string;
+        if (!consentActive) {
+          nextHint = es
+            ? "Siguiente: confirma que podemos usar tu foto (tarjeta de consentimiento) y adjunta una foto clara."
+            : "Next: confirm we can use your photo (consent card) and attach a clear photo.";
+        } else if (!hasPresenterConfig) {
+          nextHint = es
+            ? "Siguiente: elige cómo suena tu presentador (hombre/mujer e idioma) para que coincida con tu foto."
+            : "Next: choose how your presenter should sound (male/female and language) to match your photo.";
+        } else if (!onCameraEnabled) {
+          nextHint = es
+            ? "Siguiente: en Preferencias activa “con tu cara”, o pídeme videos con presentador."
+            : "Next: enable on-camera style in Preferences, or ask me for presenter videos.";
+        } else {
+          nextHint = es
+            ? "Tu presentador está listo. Podemos crear videos con tu cara (con confirmación de costo)."
+            : "Your presenter setup is ready. We can create on-camera videos (with cost confirmation).";
+        }
+        return getPresenterSetupStatusOutputSchema.parse({
+          ok: true,
+          consentActive,
+          onCameraEnabled,
+          hasPresenterConfig,
+          gender,
+          language,
+          nextHint,
+        });
+      },
+    }),
+
+    proposeGrantPresenterConsent: tool({
+      description:
+        "Propose granting consent to use the owner’s photo for on-camera videos. Does NOT grant until Approve.",
+      inputSchema: proposeGrantPresenterConsentInputSchema,
+      execute: async (raw) => {
+        const parsed = proposeGrantPresenterConsentInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const proposal = {
+          kind: "grant_presenter_consent" as const,
+          requiresConfirmation: true as const,
+          mutates: false as const,
+          incursSpend: false as const,
+          estimatedCostCents: null,
+          summary: proposalSummary(locale, "grant_presenter_consent"),
+          action: "grantAvatarConsent" as const,
+        };
+        assertProposalIsNonMutating(proposal);
+        return proposeGrantPresenterConsentOutputSchema.parse({
+          ok: true,
+          proposal,
+        });
+      },
+    }),
+
+    proposeSetPresenterVoice: tool({
+      description:
+        "Propose saving presenter gender + language so voice matches the photo. Plain inputs only (male/female, en/es). Does NOT save until Approve.",
+      inputSchema: proposeSetPresenterVoiceInputSchema,
+      execute: async (raw) => {
+        const parsed = proposeSetPresenterVoiceInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const proposal = {
+          kind: "set_presenter_voice" as const,
+          requiresConfirmation: true as const,
+          mutates: false as const,
+          incursSpend: false as const,
+          estimatedCostCents: null,
+          summary: proposalSummary(locale, "set_presenter_voice"),
+          action: "upsertAvatar" as const,
+          gender: parsed.data.gender,
+          language: parsed.data.language,
+        };
+        assertProposalIsNonMutating(proposal);
+        return proposeSetPresenterVoiceOutputSchema.parse({
+          ok: true,
+          proposal,
         });
       },
     }),

@@ -10,7 +10,9 @@ export function proposalSummary(
     | "generate_videos"
     | "request_video_changes"
     | "regenerate_script"
-    | "confirm_paid_generation",
+    | "confirm_paid_generation"
+    | "grant_presenter_consent"
+    | "set_presenter_voice",
   params?: { slotCount?: number; amountCents?: number },
 ): string {
   const es = locale === "es";
@@ -55,6 +57,14 @@ export function proposalSummary(
       return es
         ? `Crear este video cuesta unos ${amount}. No se cobra nada hasta que apruebes.`
         : `Creating this video costs about ${amount}. Nothing is charged until you approve.`;
+    case "grant_presenter_consent":
+      return es
+        ? "Confirmas que podemos usar tu foto para videos con tu cara. Puedes revocarlo después en Preferencias."
+        : "You confirm we may use your photo for on-camera videos. You can revoke later in Preferences.";
+    case "set_presenter_voice":
+      return es
+        ? "Guardar cómo suena tu presentador (género y idioma) para que coincida con tu foto."
+        : "Save how your on-camera presenter should sound (gender and language) to match your photo.";
     default:
       return es ? "Confirma por favor." : "Please confirm.";
   }

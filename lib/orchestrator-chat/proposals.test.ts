@@ -64,6 +64,8 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(card, /regenerateReelScriptSlot/);
     assert.match(card, /request_changes/);
     assert.match(card, /confirmPaidGenerationFromChat/);
+    assert.match(card, /grantAvatarConsent/);
+    assert.match(card, /upsertAvatar/);
   });
 
   it("paid generation only runs from confirm action after Approve", () => {
