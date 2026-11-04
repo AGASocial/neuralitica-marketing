@@ -6,7 +6,7 @@ import {
   generateContentStrategyInputSchema,
   type GenerateContentStrategyResult,
 } from "@/lib/contracts/content-strategy";
-import { isAuthGuardError, requireOperator } from "@/lib/auth/require-user";
+import { isAuthGuardError, requireActive } from "@/lib/auth/require-user";
 import { checkGenerationRateLimit } from "@/lib/content-strategy/check-generation-rate-limit";
 import {
   contentStrategyForbiddenError,
@@ -33,16 +33,17 @@ function authGuardEnvelope(error: {
 }
 
 /**
- * Operator trigger for weekly content strategy generation (US-4.1).
- * Frontend consumer: `/operator/strategy` — Generate strategy button.
+ * Weekly content strategy generation (US-4.1 / KAN-106).
+ * Operators may target another active client via `clientId`.
+ * Owners (Cliente) always generate for themselves.
  */
 export async function generateContentStrategy(
   rawInput: unknown,
 ): Promise<GenerateContentStrategyResult> {
   try {
-    let operator;
+    let user;
     try {
-      operator = await requireOperator("handler");
+      user = await requireActive("handler");
     } catch (error) {
       if (isAuthGuardError(error)) {
         return authGuardEnvelope(error);
@@ -63,13 +64,15 @@ export async function generateContentStrategy(
 
     const { weekStart, clientId: requestedClientId } = parsed.data;
 
-    let clientId = operator.id;
-    if (requestedClientId !== undefined) {
+    let clientId = user.id;
+    if (user.role === "operator" && requestedClientId !== undefined) {
       const clientCheck = await validateActiveOperatorClientId(requestedClientId);
       if (!clientCheck.ok) {
         return contentStrategyNotFoundError();
       }
       clientId = requestedClientId;
+    } else if (user.role !== "operator" && requestedClientId !== undefined) {
+      return contentStrategyForbiddenError();
     }
 
     const rateCheck = await checkGenerationRateLimit({ clientId, weekStart });
@@ -83,11 +86,13 @@ export async function generateContentStrategy(
     const result = await generateContentStrategyForClient({
       clientId,
       weekStart,
-      invokedBy: "operator",
+      invokedBy: user.role === "operator" ? "operator" : "client",
     });
 
     if (result.ok) {
       revalidatePath("/operator/strategy");
+      revalidatePath("/dashboard");
+      revalidatePath("/conversation");
     }
 
     return result;

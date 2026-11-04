@@ -1,19 +1,31 @@
 import { ConversationFullView } from "@/components/orchestrator-chat/ConversationFullView";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { loadSetupCompletion } from "@/lib/dashboard/load-setup-completion";
 import { getTranslations } from "@/lib/i18n/get-translations";
 import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 import { loadSuggestedPromptChips } from "@/lib/orchestrator-chat/load-suggested-prompt-chips";
 
 export const dynamic = "force-dynamic";
 
-export default async function ConversationPage() {
+type ConversationPageProps = {
+  searchParams: Promise<{ mode?: string }>;
+};
+
+export default async function ConversationPage({
+  searchParams,
+}: ConversationPageProps) {
   const user = await getCurrentUser();
   const locale = await resolveRequestLocale(user?.preferredLocale);
   const t = getTranslations(locale);
   if (!user) {
     throw new Error("Conversation page requires an authenticated user");
   }
+  const params = await searchParams;
+  const onboardingMode = params.mode === "onboarding";
   const suggestedChips = await loadSuggestedPromptChips({ user, locale });
+  const setupCompletion = onboardingMode
+    ? await loadSetupCompletion({ user })
+    : undefined;
 
   const copy = {
     title: t.orchestratorChat.title,
@@ -114,8 +126,25 @@ export default async function ConversationPage() {
       copy={copy}
       locale={locale}
       suggestedChips={suggestedChips}
-      pageTitle={t.orchestratorChat.conversationLabel}
+      pageTitle={
+        onboardingMode
+          ? t.orchestratorChat.onboarding.pageTitle
+          : t.orchestratorChat.conversationLabel
+      }
       canvasTitle={t.orchestratorChat.canvasTitle}
+      onboardingMode={onboardingMode}
+      setupCompletion={setupCompletion}
+      onboardingCopy={
+        onboardingMode
+          ? {
+              skipToHoy: t.orchestratorChat.onboarding.skipToHoy,
+              progressTitle: t.orchestratorChat.onboarding.progressTitle,
+              progressLabel: t.orchestratorChat.onboarding.progressLabel,
+              emptyHint: t.orchestratorChat.onboarding.emptyHint,
+              steps: t.dashboard.setupCompletion.steps,
+            }
+          : undefined
+      }
     />
   );
 }

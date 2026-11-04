@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   computeSetupCompletion,
   isInstagramConnectedInProduct,
+  shouldEnterOptionAOnboarding,
   shouldShowSetupCompletionOnHome,
 } from "@/lib/dashboard/compute-setup-completion";
 
@@ -58,5 +59,55 @@ describe("computeSetupCompletion (KAN-99)", () => {
     });
     assert.equal(result.percentComplete, 0);
     assert.equal(result.requiredDone, 0);
+  });
+});
+
+describe("shouldEnterOptionAOnboarding (KAN-106)", () => {
+  it("enters when incomplete setup and no approved content", () => {
+    assert.equal(
+      shouldEnterOptionAOnboarding({
+        role: "client",
+        percentComplete: 40,
+        hasApprovedPlan: false,
+        hasApprovedReel: false,
+      }),
+      true,
+    );
+  });
+
+  it("stays on Hoy when 80% setup but approved plan", () => {
+    assert.equal(
+      shouldEnterOptionAOnboarding({
+        role: "client",
+        percentComplete: 80,
+        hasApprovedPlan: true,
+        hasApprovedReel: false,
+      }),
+      false,
+    );
+  });
+
+  it("stays on Hoy when approved reel exists", () => {
+    assert.equal(
+      shouldEnterOptionAOnboarding({
+        role: "client",
+        percentComplete: 40,
+        hasApprovedPlan: false,
+        hasApprovedReel: true,
+      }),
+      false,
+    );
+  });
+
+  it("never redirects operators", () => {
+    assert.equal(
+      shouldEnterOptionAOnboarding({
+        role: "operator",
+        percentComplete: 0,
+        hasApprovedPlan: false,
+        hasApprovedReel: false,
+      }),
+      false,
+    );
   });
 });

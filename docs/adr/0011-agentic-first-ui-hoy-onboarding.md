@@ -39,6 +39,15 @@ studies summarized in analisis §4) shows:
 - **KAN-104/105 (landed):** Inicio → Hoy/Today; layout compositor replaces
   FAB; Cmd/Ctrl+J focuses composer; mobile bottom tab bar; `/conversation`
   full-screen Option A layout one tap away; Advanced in user menu on mobile.
+- **KAN-106 (Option A onboarding):** Owners with incomplete setup **and** no
+  approved plan **and** no approved reel redirect from `/dashboard` to
+  `/conversation?mode=onboarding` (progress + Skip to Today; actionable
+  proposal cards; mobile carousel). Operators and accounts with approved
+  content stay on Hoy. Skip uses `?skipOnboarding=1` for a one-shot Hoy view.
+- **KAN-107 (UX analytics):** Dual-write `track()` via `@vercel/analytics` and
+  persist to `neuramark_ux_events` (RLS deny-by-default; Server Action +
+  service role). Event catalog + SQL recipes:
+  `docs/development/UX-ANALYTICS.md`.
 - ADR-0009 chat sheet remains as the conversation panel opened from the
-  compositor; ADR-0010 hybrid onboarding spine remains until KAN-106
-  specializes first-run to Option A.
+  compositor; ADR-0010 hybrid checklist spine remains for setup %, with
+  KAN-106 specializing first-run routing to Option A.

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import { AgentCard } from "@/components/agent-cards/AgentCard";
 import { OpenChatButton } from "@/components/dashboard/OpenChatButton";
@@ -12,6 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusAlert } from "@/components/ui/status-alert";
 import { mapHoyPendingToCard } from "@/lib/agent-cards";
+import {
+  detectApprovalDevice,
+  trackUxEvent,
+} from "@/lib/analytics/track-ux-event";
 import { decideApproval } from "@/lib/approvals/actions/decide-approval";
 import { mediaPreviewUrl } from "@/lib/approvals/caption-preview";
 import type { ApprovalListItemDto } from "@/lib/contracts/approval";
@@ -113,6 +117,7 @@ function PendingHoyCard({
   const { openChangeForCard } = useOrchestratorChat();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const contentReadyAt = useRef(Date.now());
   const title = pendingTitle(item, copy.pendingStatus);
   const videoPreviewUrl = item.videoAssetId
     ? mediaPreviewUrl(item.videoAssetId)
@@ -135,6 +140,7 @@ function PendingHoyCard({
       statusNote={error ? <StatusAlert severity="error" text={error} /> : null}
       onAction={(event) => {
         if (event.id === "change") {
+          trackUxEvent("hoy_action", { action: "change", approval_id: item.approvalId });
           openChangeForCard({ cardId: item.approvalId, title });
           return;
         }
@@ -151,6 +157,13 @@ function PendingHoyCard({
             setError(copy.loadError ?? "Error");
             return;
           }
+          trackUxEvent("hoy_action", { action: "approve", approval_id: item.approvalId });
+          trackUxEvent("approval", {
+            device: detectApprovalDevice(),
+            ms_since_content_ready: Date.now() - contentReadyAt.current,
+            kind: "approve_pending_video",
+            surface: "hoy",
+          });
           router.refresh();
         });
       }}
@@ -176,6 +189,10 @@ export function HoyFeedView({
   const visiblePending = pendingApprovals.filter((p) =>
     selectedSet.has(p.approvalId),
   );
+
+  useEffect(() => {
+    trackUxEvent("hoy_visit", { acted: false });
+  }, []);
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 pb-4">

@@ -292,7 +292,14 @@
     "layoutPlaceholder": "Pídele algo a tu agente… (⌘J)",
     "micLabel": "Dictar con el micrófono",
     "micListening": "Escuchando… toca para parar",
-    "canvasTitle": "Tarjetas"
+    "canvasTitle": "Tarjetas",
+    "onboarding": {
+      "pageTitle": "Armemos tu campaña",
+      "skipToHoy": "Saltar a Hoy",
+      "progressTitle": "Configuración",
+      "progressLabel": "{percent}% listo",
+      "emptyHint": "Cuéntame de tu negocio y preparo tu primer plan y videos — nada se cobra hasta que apruebes."
+    }
   },
   "auth": {
     "localeSwitcher": {

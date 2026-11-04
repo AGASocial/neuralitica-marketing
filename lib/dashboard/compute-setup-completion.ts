@@ -79,6 +79,33 @@ export function shouldShowSetupCompletionOnHome(
   return completion.percentComplete < 100;
 }
 
+export type OptionAOnboardingGateInput = {
+  role: "client" | "operator";
+  percentComplete: number;
+  hasApprovedPlan: boolean;
+  hasApprovedReel: boolean;
+};
+
+/**
+ * KAN-106: Option A first-run only when setup is incomplete AND the owner has
+ * no approved plan and no approved reel. Operators never enter. An account at
+ * ~80% (Instagram still open) with an approved plan stays on Hoy.
+ */
+export function shouldEnterOptionAOnboarding(
+  input: OptionAOnboardingGateInput,
+): boolean {
+  if (input.role !== "client") {
+    return false;
+  }
+  if (input.percentComplete >= 100) {
+    return false;
+  }
+  if (input.hasApprovedPlan || input.hasApprovedReel) {
+    return false;
+  }
+  return true;
+}
+
 /** Instagram Graph connect is not implemented — never mark connected. */
 export function isInstagramConnectedInProduct(): false {
   return false;

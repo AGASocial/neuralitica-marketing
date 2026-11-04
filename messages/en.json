@@ -292,7 +292,14 @@
     "layoutPlaceholder": "Ask your agent anything… (⌘J)",
     "micLabel": "Dictate with microphone",
     "micListening": "Listening… tap to stop",
-    "canvasTitle": "Cards"
+    "canvasTitle": "Cards",
+    "onboarding": {
+      "pageTitle": "Let’s set up your campaign",
+      "skipToHoy": "Skip to Today",
+      "progressTitle": "Setup",
+      "progressLabel": "{percent}% ready",
+      "emptyHint": "Tell me about your business and I’ll prepare your first plan and videos — nothing spends until you approve."
+    }
   },
   "auth": {
     "localeSwitcher": {
