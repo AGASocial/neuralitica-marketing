@@ -7,27 +7,26 @@ import { fileURLToPath } from "node:url";
 import en from "../../messages/en.json";
 import es from "../../messages/es.json";
 
-describe("dashboard owner locale copy (KAN-84.16)", () => {
-  it("ES catalog translates the main dashboard card titles", () => {
-    assert.equal(es.dashboard.title, "Panel");
+describe("dashboard owner locale copy (KAN-84.16 / KAN-98)", () => {
+  it("ES catalog translates owner home section titles", () => {
+    assert.equal(es.dashboard.title, "Inicio");
+    assert.equal(es.dashboard.nextAction.sectionTitle, "Qué hacer ahora");
+    assert.equal(es.dashboard.thisWeek.title, "Esta semana");
+    assert.equal(es.dashboard.campaignProgress.title, "Avance de campaña");
+    assert.equal(
+      es.dashboard.results.empty,
+      "Conecta Instagram para ver resultados",
+    );
+    assert.equal(es.dashboard.atajos.title, "Atajos");
     assert.equal(es.dashboard.interviewCard.title, "Entrevista inicial");
     assert.equal(es.dashboard.profileCard.title, "Ficha viva");
-    assert.equal(
-      es.dashboard.preferencesCard.title,
-      "Preferencias de producción visual",
-    );
-    assert.equal(es.dashboard.readyToPublishCard.title, "Listo para publicar");
-    assert.equal(es.dashboard.productionCard.title, "Estado de producción");
 
     assert.notEqual(es.dashboard.title, en.dashboard.title);
     assert.notEqual(
-      es.dashboard.interviewCard.title,
-      en.dashboard.interviewCard.title,
+      es.dashboard.nextAction.sectionTitle,
+      en.dashboard.nextAction.sectionTitle,
     );
-    assert.notEqual(
-      es.dashboard.profileCard.title,
-      en.dashboard.profileCard.title,
-    );
+    assert.notEqual(es.dashboard.results.empty, en.dashboard.results.empty);
   });
 
   it("owner pages honor resolveRequestLocale (query + preferredLocale)", () => {

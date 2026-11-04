@@ -1,20 +1,16 @@
-import { DashboardView, type DashboardCard } from "@/components/dashboard/DashboardView";
+import { DashboardView } from "@/components/dashboard/DashboardView";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import type {
-  InterviewDashboardSummary,
-  InterviewStepKey,
-} from "@/lib/contracts/interview";
+  OwnerHomeDashboardDto,
+  OwnerHomeNextStepKey,
+} from "@/lib/contracts/owner-home-dashboard";
+import { loadOwnerHomeDashboard } from "@/lib/dashboard/load-owner-home-dashboard";
+import { buildOwnerHomeNextAction } from "@/lib/dashboard/compute-owner-home-snapshot";
 import { getTranslations } from "@/lib/i18n/get-translations";
 import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
-import { getInterviewDashboardSummary } from "@/lib/interview/get-interview-dashboard-summary";
-import { getBusinessProfileForClient } from "@/lib/profile/get-business-profile-for-client";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
-import type enMessages from "@/messages/en.json";
 
 export const dynamic = "force-dynamic";
-
-type InterviewCardCopy = (typeof enMessages)["dashboard"]["interviewCard"];
-type InterviewStepsCopy = (typeof enMessages)["interview"]["steps"];
 
 function isNextNavigationError(error: unknown): boolean {
   return (
@@ -27,48 +23,48 @@ function isNextNavigationError(error: unknown): boolean {
   );
 }
 
-function buildInterviewCard(
-  cardCopy: InterviewCardCopy,
-  stepsCopy: InterviewStepsCopy,
-  summary: InterviewDashboardSummary | undefined,
-  loadFailed: boolean,
-): DashboardCard {
-  if (loadFailed) {
-    return {
-      title: cardCopy.title,
-      body: cardCopy.loadError,
-      cta: cardCopy.cta,
-      error: true,
-    };
+function trafficStatusLabel(
+  t: ReturnType<typeof getTranslations>["dashboard"]["thisWeek"],
+  light: "green" | "yellow" | "red" | "neutral",
+): string {
+  switch (light) {
+    case "green":
+      return t.statusGreen;
+    case "yellow":
+      return t.statusYellow;
+    case "red":
+      return t.statusRed;
+    default:
+      return t.statusNeutral;
   }
+}
 
-  if (summary == null || (summary.status === "draft" && !summary.hasProgress)) {
-    return {
-      title: cardCopy.title,
-      body: cardCopy.body,
-      cta: cardCopy.cta,
-      href: "/interview",
-    };
-  }
-
-  if (summary.status === "completed") {
-    return {
-      title: cardCopy.title,
-      body: cardCopy.completedBody,
-      cta: cardCopy.completedCta,
-      href: "/profile",
-    };
-  }
-
-  const stepKey = summary.currentStep as InterviewStepKey;
-  const stepLabel = stepsCopy[stepKey]?.label ?? stepKey;
-
+function nextActionCopyFor(
+  t: ReturnType<typeof getTranslations>["dashboard"]["nextAction"],
+  stepKey: OwnerHomeNextStepKey,
+) {
+  const step = t[stepKey];
   return {
-    title: cardCopy.title,
-    body: cardCopy.resumeBody.replace("{step}", stepLabel),
-    cta: cardCopy.resumeCta,
-    href: "/interview",
+    sectionTitle: t.sectionTitle,
+    title: step.title,
+    body: step.body,
+    cta: step.cta,
   };
+}
+
+function formatLastUpdated(
+  template: string,
+  iso: string,
+  locale: string,
+): string {
+  const date = new Date(iso);
+  const time = Number.isNaN(date.getTime())
+    ? iso
+    : new Intl.DateTimeFormat(locale === "es" ? "es" : "en", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(date);
+  return template.replace("{time}", time);
 }
 
 export default async function DashboardPage() {
@@ -77,81 +73,103 @@ export default async function DashboardPage() {
   const t = getTranslations(locale);
   const supabaseReady = isSupabaseConfigured();
 
-  let interviewSummary: InterviewDashboardSummary | undefined;
-  let interviewLoadFailed = false;
-  let profileExists = false;
+  let loadError: string | undefined;
+  let data: OwnerHomeDashboardDto = {
+    weekStart: "1970-01-05",
+    lastUpdatedAt: new Date().toISOString(),
+    nextAction: buildOwnerHomeNextAction("interview"),
+    weekCounts: {
+      scheduled: 0,
+      published: 0,
+      waitingForOk: 0,
+      inProduction: 0,
+    },
+    trafficLight: "neutral",
+    campaignProgress: { completed: 0, total: 0, hasPlan: false },
+    results: { insightsAvailable: false },
+    recentVideos: [],
+    atajos: [
+      { id: "interview", href: "/interview" },
+      { id: "profile", href: "/profile" },
+      { id: "preferences", href: "/settings/preferences" },
+      { id: "approvals", href: "/approvals" },
+      { id: "readyToPublish", href: "/ready-to-publish" },
+    ],
+  };
 
-  try {
-    interviewSummary = await getInterviewDashboardSummary();
-  } catch (error) {
-    if (isNextNavigationError(error)) {
-      throw error;
+  if (user) {
+    try {
+      data = await loadOwnerHomeDashboard({ user });
+    } catch (error) {
+      if (isNextNavigationError(error)) {
+        throw error;
+      }
+      loadError = t.dashboard.loadError;
     }
-    interviewLoadFailed = true;
   }
 
-  try {
-    const profile = await getBusinessProfileForClient();
-    profileExists = profile.exists === true;
-  } catch (error) {
-    if (isNextNavigationError(error)) {
-      throw error;
-    }
-    profileExists = false;
-  }
-
-  const interviewCard = buildInterviewCard(
-    t.dashboard.interviewCard,
-    t.interview.steps,
-    interviewSummary,
-    interviewLoadFailed,
-  );
-
-  const profileCard: DashboardCard = {
-    ...t.dashboard.profileCard,
-    href: "/profile",
-  };
-
-  const preferencesCard: DashboardCard = {
-    ...t.dashboard.preferencesCard,
-    href: "/settings/preferences",
-  };
-
-  const approvalsCard: DashboardCard = {
-    ...t.dashboard.approvalsCard,
-    href: "/approvals",
-  };
-
-  const readyToPublishCard: DashboardCard = {
-    ...t.dashboard.readyToPublishCard,
-    href: "/ready-to-publish",
-  };
-
-  // When Ficha viva exists: elevate as primary/first card — no hard redirect.
-  const cards: DashboardCard[] = profileExists
-    ? [
-        profileCard,
-        interviewCard,
-        preferencesCard,
-        approvalsCard,
-        readyToPublishCard,
-        t.dashboard.productionCard,
-      ]
-    : [
-        interviewCard,
-        profileCard,
-        preferencesCard,
-        approvalsCard,
-        readyToPublishCard,
-        t.dashboard.productionCard,
-      ];
+  const ofVideos = t.dashboard.campaignProgress.ofVideos
+    .replace("{completed}", String(data.campaignProgress.completed))
+    .replace("{total}", String(data.campaignProgress.total));
 
   return (
     <DashboardView
       title={t.dashboard.title}
       subtitle={t.dashboard.subtitle}
+      lastUpdatedLabel={formatLastUpdated(
+        t.dashboard.lastUpdated,
+        data.lastUpdatedAt,
+        locale,
+      )}
       setupBanner={supabaseReady ? undefined : t.dashboard.setupBanner}
-      cards={cards}
+      loadError={loadError}
+      nextAction={data.nextAction}
+      nextActionCopy={nextActionCopyFor(
+        t.dashboard.nextAction,
+        data.nextAction.stepKey,
+      )}
+      weekCounts={data.weekCounts}
+      trafficLight={data.trafficLight}
+      thisWeekCopy={{
+        title: t.dashboard.thisWeek.title,
+        scheduled: t.dashboard.thisWeek.scheduled,
+        published: t.dashboard.thisWeek.published,
+        waitingForOk: t.dashboard.thisWeek.waitingForOk,
+        inProduction: t.dashboard.thisWeek.inProduction,
+        statusLabel: trafficStatusLabel(
+          t.dashboard.thisWeek,
+          data.trafficLight,
+        ),
+      }}
+      campaignProgress={data.campaignProgress}
+      campaignCopy={{
+        title: t.dashboard.campaignProgress.title,
+        ofVideos,
+        empty: t.dashboard.campaignProgress.empty,
+      }}
+      resultsCopy={{
+        title: t.dashboard.results.title,
+        empty: t.dashboard.results.empty,
+        emptyHint: t.dashboard.results.emptyHint,
+      }}
+      recentVideos={data.recentVideos}
+      recentCopy={{
+        title: t.dashboard.recentVideos.title,
+        empty: t.dashboard.recentVideos.empty,
+        openAll: t.dashboard.recentVideos.openAll,
+        untitled: t.dashboard.recentVideos.untitled,
+      }}
+      atajos={data.atajos}
+      atajosCopy={{
+        title: t.dashboard.atajos.title,
+        labels: {
+          interview: t.dashboard.atajos.interview,
+          profile: t.dashboard.atajos.profile,
+          preferences: t.dashboard.atajos.preferences,
+          approvals: t.dashboard.atajos.approvals,
+          readyToPublish: t.dashboard.atajos.readyToPublish,
+        },
+      }}
     />
   );
 }

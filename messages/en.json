@@ -1,8 +1,77 @@
 {
   "appName": "Neuralitica Marketing",
   "dashboard": {
-    "title": "Dashboard",
-    "subtitle": "Your content production at a glance.",
+    "title": "Home",
+    "subtitle": "What needs you now, and how this week is going.",
+    "lastUpdated": "Last updated {time}",
+    "nextAction": {
+      "sectionTitle": "What to do now",
+      "interview": {
+        "title": "Finish your business interview",
+        "body": "A few plain questions so we know your business.",
+        "cta": "Continue interview"
+      },
+      "plan": {
+        "title": "Set this week’s plan",
+        "body": "Ask your assistant to draft or approve the plan.",
+        "cta": "Open chat"
+      },
+      "scripts": {
+        "title": "Write this week’s videos",
+        "body": "Your assistant can prepare the texts for you.",
+        "cta": "Open chat"
+      },
+      "videos": {
+        "title": "Create the videos",
+        "body": "Ask your assistant when you are ready to continue.",
+        "cta": "Open chat"
+      },
+      "approve": {
+        "title": "Videos waiting for your OK",
+        "body": "Review them and say yes or ask for a change.",
+        "cta": "Review videos"
+      },
+      "ready": {
+        "title": "Videos ready to post",
+        "body": "Download and post when you like — nothing posts by itself.",
+        "cta": "Open my videos"
+      }
+    },
+    "thisWeek": {
+      "title": "This week",
+      "scheduled": "Scheduled",
+      "published": "Published",
+      "waitingForOk": "Waiting for my OK",
+      "inProduction": "In production",
+      "statusGreen": "On track",
+      "statusYellow": "Needs your attention",
+      "statusRed": "Blocked",
+      "statusNeutral": "Getting started"
+    },
+    "campaignProgress": {
+      "title": "Campaign progress",
+      "ofVideos": "{completed} of {total} videos",
+      "empty": "No plan for this week yet. Open chat to get started."
+    },
+    "results": {
+      "title": "Results",
+      "empty": "Connect Instagram to see results",
+      "emptyHint": "Reach, views, and followers will show here once Instagram is connected."
+    },
+    "recentVideos": {
+      "title": "Recent videos",
+      "empty": "No finished videos yet.",
+      "openAll": "My videos",
+      "untitled": "Video"
+    },
+    "atajos": {
+      "title": "Shortcuts",
+      "interview": "Interview",
+      "profile": "Living profile",
+      "preferences": "Preferences",
+      "approvals": "My campaign",
+      "readyToPublish": "My videos"
+    },
     "interviewCard": {
       "title": "Initial interview",
       "body": "Complete your guided interview so we can learn your business.",
@@ -41,7 +110,8 @@
     "setupBanner": {
       "title": "Database not connected",
       "body": "Add Supabase credentials to .env to connect the database."
-    }
+    },
+    "loadError": "We could not load your home summary. Refresh to try again."
   },
   "header": {
     "signedInAs": "Signed in as",

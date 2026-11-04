@@ -1,8 +1,77 @@
 {
   "appName": "Neuralitica Marketing",
   "dashboard": {
-    "title": "Panel",
-    "subtitle": "Tu producción de contenido de un vistazo.",
+    "title": "Inicio",
+    "subtitle": "Qué necesitas hacer ahora y cómo va esta semana.",
+    "lastUpdated": "Actualizado {time}",
+    "nextAction": {
+      "sectionTitle": "Qué hacer ahora",
+      "interview": {
+        "title": "Termina la ficha de tu negocio",
+        "body": "Unas preguntas sencillas para conocerte.",
+        "cta": "Continuar entrevista"
+      },
+      "plan": {
+        "title": "Arma el plan de esta semana",
+        "body": "Pide a tu asistente que prepare o apruebe el plan.",
+        "cta": "Abrir chat"
+      },
+      "scripts": {
+        "title": "Escribe los textos de los videos",
+        "body": "Tu asistente puede prepararlos por ti.",
+        "cta": "Abrir chat"
+      },
+      "videos": {
+        "title": "Crea los videos",
+        "body": "Habla con tu asistente cuando quieras seguir.",
+        "cta": "Abrir chat"
+      },
+      "approve": {
+        "title": "Videos esperando tu OK",
+        "body": "Revísalos y di que sí o pide un cambio.",
+        "cta": "Revisar videos"
+      },
+      "ready": {
+        "title": "Videos listos para publicar",
+        "body": "Descárgalos y publícalos cuando quieras — nada se publica solo.",
+        "cta": "Abrir mis videos"
+      }
+    },
+    "thisWeek": {
+      "title": "Esta semana",
+      "scheduled": "Programados",
+      "published": "Publicados",
+      "waitingForOk": "Esperando mi OK",
+      "inProduction": "En producción",
+      "statusGreen": "Todo bien",
+      "statusYellow": "Necesita tu atención",
+      "statusRed": "Bloqueado",
+      "statusNeutral": "Empezando"
+    },
+    "campaignProgress": {
+      "title": "Avance de campaña",
+      "ofVideos": "{completed} de {total} videos",
+      "empty": "Aún no hay plan esta semana. Abre el chat para empezar."
+    },
+    "results": {
+      "title": "Resultados",
+      "empty": "Conecta Instagram para ver resultados",
+      "emptyHint": "Alcance, vistas y seguidores aparecerán aquí cuando Instagram esté conectado."
+    },
+    "recentVideos": {
+      "title": "Videos recientes",
+      "empty": "Aún no hay videos terminados.",
+      "openAll": "Mis videos",
+      "untitled": "Video"
+    },
+    "atajos": {
+      "title": "Atajos",
+      "interview": "Entrevista",
+      "profile": "Ficha viva",
+      "preferences": "Preferencias",
+      "approvals": "Mi campaña",
+      "readyToPublish": "Mis videos"
+    },
     "interviewCard": {
       "title": "Entrevista inicial",
       "body": "Completa la entrevista guiada para que conozcamos tu negocio.",
@@ -41,7 +110,8 @@
     "setupBanner": {
       "title": "Base de datos no conectada",
       "body": "Añade las credenciales de Supabase en .env para conectar la base de datos."
-    }
+    },
+    "loadError": "No pudimos cargar tu resumen de inicio. Actualiza para intentarlo de nuevo."
   },
   "header": {
     "signedInAs": "Sesión iniciada como",

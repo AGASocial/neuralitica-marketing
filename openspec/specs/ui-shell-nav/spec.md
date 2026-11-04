@@ -7,11 +7,15 @@ Provide the authenticated app shell: Campaña header navigation grouped for owne
 ## Requirements
 
 ### Requirement: Owner primary navigation
-The app shell SHALL show owner top-level links Home (`/dashboard`), My campaign (`/approvals`), My videos (`/ready-to-publish`), and a My business group for profile and preferences, using localized labels from the message catalogs (ADR-0009 IA).
+The app shell SHALL show owner top-level links Home (`/dashboard`), My campaign (`/approvals`), My videos (`/ready-to-publish`), and a My business group for profile and preferences, using localized labels from the message catalogs (ADR-0009 IA). The Home route SHALL render the owner home dashboard (next action, week status, progress, results, recent videos, Atajos) rather than only a menu-card shortcut grid.
 
 #### Scenario: Active client sees owner nav
 - **WHEN** an active Cliente loads any `(app)` page
 - **THEN** the header includes the owner links and business group without Operator Advanced
+
+#### Scenario: Home is the owner dashboard
+- **WHEN** the owner opens Home (`/dashboard`)
+- **THEN** the page shows the owner home dashboard sections defined by the `owner-home-dashboard` capability
 
 ### Requirement: Operator Advanced group
 When `user.role === "operator"`, the shell SHALL add an Advanced group linking to strategy, scripts, calendar, playbook, trends, cost policy, and cycle Operator routes. Existing routes remain reachable (ADR-0009).

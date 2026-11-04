@@ -25,6 +25,14 @@ Epic: Orchestrator agent chat + generative UI + extreme abstraction (ADR-0009).
 | KAN-84.16 | Dashboard ES owner copy | Translate remaining dashboard/owner-facing English via `messages/` locale. |
 | KAN-84.17 | Mobile chat open affordance | FAB bottom-right (safe-area), hidden when panel open; header Chat label reachable on small screens. |
 
+## Related follow-ons (owner Home)
+
+| Key | Title | Notes |
+|-----|-------|-------|
+| **KAN-98** | Owner home dashboard | Replace Inicio menu-card grid with next action, week counts, campaign progress, Results (empty until IG insights), recent videos, Atajos. Read-only. |
+| **KAN-99** | Setup completion | `computeSetupCompletion` + Inicio checklist + chat `getSetupStatus`. |
+| **KAN-100** | Onboarding chat vs wizard ADR | Docs-only ADR-0010; default hybrid recommendation. |
+
 ## Out of scope for chat
 
 - Instagram publish from chat.
