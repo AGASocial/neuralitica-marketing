@@ -146,7 +146,9 @@
         "approvedVideo": "Aprobé “{title}”",
         "planApproved": "Aprobé el plan de la semana",
         "generatedVideos": "Generé {count} videos nuevos para tu OK",
-        "workingOnVideos": "Estoy trabajando en {count} videos"
+        "workingOnVideos": "Estoy trabajando en {count} videos",
+        "autoApproved": "Aprobé automáticamente “{title}” (Piloto automático, sin publicar)",
+        "autoApproveSkipped": "No aprobé “{title}” automáticamente; te lo dejé para tu OK"
       }
     }
   },
@@ -2262,9 +2264,9 @@
     "reviewAll": "Reviso todo",
     "reviewAllHint": "Por defecto. Te aviso para cada OK de video.",
     "autoPilot": "Piloto automático",
-    "autoPilotHint": "Puede auto-aprobar borradores dentro de tus topes (en F0 solo se registra; no publica en Instagram).",
+    "autoPilotHint": "Apruebo por ti los videos listos dentro de tus topes. Nunca publico en Instagram ni gasto en generar más.",
     "custom": "Personalizado por tipo",
-    "customHint": "Reglas avanzadas por tipo (F0 trata custom como “reviso todo” hasta definir reglas).",
+    "customHint": "Elige por tipo de video: lo apruebo yo o lo revisas tú.",
     "weeklyCap": "Tope de gasto semanal (centavos)",
     "maxItem": "Costo máximo por ítem para auto-aprobar (centavos)",
     "reminders": "Recordatorios",
@@ -2275,6 +2277,12 @@
     "saving": "Guardando…",
     "success": "Ajustes de automatización guardados.",
     "error": "No se pudo guardar. Intenta de nuevo.",
-    "centsHint": "Déjalo vacío para no limitar. Valores en centavos USD."
+    "centsHint": "Déjalo vacío para no limitar. Valores en centavos USD.",
+    "rulesTitle": "Reglas por tipo de video",
+    "ruleAuto": "Lo apruebo yo",
+    "ruleReview": "Lo reviso yo",
+    "typeOwnAvatar": "Con tu avatar",
+    "typeGenericAvatar": "Con avatar genérico",
+    "typeFaceless": "Sin rostro (faceless)"
   }
 }

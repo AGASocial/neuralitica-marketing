@@ -8,6 +8,8 @@ export const hoyTimelineKindSchema = z.enum([
   "generated_videos",
   "plan_approved",
   "job_progress",
+  "auto_approved",
+  "auto_approve_skipped",
 ]);
 
 export const hoyTimelineEntrySchema = z

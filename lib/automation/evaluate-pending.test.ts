@@ -58,7 +58,7 @@ describe("shouldAutoApproveCandidate", () => {
     );
   });
 
-  it("custom preset is not auto in F0", () => {
+  it("custom preset without an auto rule is not auto", () => {
     const settings: AutomationSettings = {
       ...base,
       preset: "custom",
@@ -89,7 +89,18 @@ describe("F0 automation guards", () => {
     assert.doesNotMatch(reminders, /instagram|graph\.facebook|publishReel/i);
     assert.doesNotMatch(evaluate, /WEEKLY_CYCLE_LIVE/);
     assert.doesNotMatch(reminders, /WEEKLY_CYCLE_LIVE/);
-    assert.match(evaluate, /dryRun:\s*true/);
+    const engine = readFileSync(
+      join(process.cwd(), "lib/automation/auto-approve-engine.ts"),
+      "utf8",
+    );
+    const deps = readFileSync(
+      join(process.cwd(), "lib/automation/auto-approve-deps.ts"),
+      "utf8",
+    );
+    for (const src of [engine, deps]) {
+      assert.doesNotMatch(src, /graph\.facebook|publishReel|WEEKLY_CYCLE_LIVE/i);
+      assert.doesNotMatch(src, /createVideoJob|startRender|heygen|kling/i);
+    }
   });
 
   it("cron route uses CRON_SECRET verifier", () => {

@@ -17,6 +17,7 @@ import {
 import { loadLatestStrategyRowWithApproval } from "@/lib/content-strategy/load-latest-strategy-row-with-approval";
 import { listUnreadHoyNotifications } from "@/lib/automation/events";
 import { buildHoyTimeline } from "@/lib/dashboard/build-hoy-timeline";
+import { listRecentAutomationDecisions } from "@/lib/automation/events";
 import {
   buildOwnerHomeNextAction,
   resolveOwnerHomeNextStepKey,
@@ -252,7 +253,13 @@ export async function loadHoyFeed(params: {
     });
   }
 
+  const automation = await listRecentAutomationDecisions({
+    clientId: params.user.id,
+    limit: 5,
+  }).catch(() => []);
+
   const timeline = buildHoyTimeline({
+    automation,
     approved,
     inProductionCount: inProduction.count,
     inProductionUpdatedAt: inProduction.updatedAt,

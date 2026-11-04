@@ -146,7 +146,9 @@
         "approvedVideo": "Approved “{title}”",
         "planApproved": "Approved this week’s plan",
         "generatedVideos": "Prepared {count} new videos for your OK",
-        "workingOnVideos": "Working on {count} videos"
+        "workingOnVideos": "Working on {count} videos",
+        "autoApproved": "Auto-approved “{title}” (Autopilot, not published)",
+        "autoApproveSkipped": "Did not auto-approve “{title}”; left it for your OK"
       }
     }
   },
@@ -2262,9 +2264,9 @@
     "reviewAll": "I review everything",
     "reviewAllHint": "Default. I notify you for every video OK.",
     "autoPilot": "Autopilot",
-    "autoPilotHint": "May auto-approve drafts within your caps (logged only in F0; no Instagram publish).",
+    "autoPilotHint": "I approve ready videos for you within your caps. I never publish to Instagram or spend on more generation.",
     "custom": "Custom by content type",
-    "customHint": "Advanced rules per type (F0 treats custom like review-everything until rules are set).",
+    "customHint": "Pick per video type: I approve it, or you review it.",
     "weeklyCap": "Weekly spend cap (cents)",
     "maxItem": "Max cost per item to auto-approve (cents)",
     "reminders": "Reminders",
@@ -2275,6 +2277,12 @@
     "saving": "Saving…",
     "success": "Automation settings saved.",
     "error": "Could not save. Try again.",
-    "centsHint": "Leave empty for no limit. Values are in US cents."
+    "centsHint": "Leave empty for no limit. Values are in US cents.",
+    "rulesTitle": "Rules per video type",
+    "ruleAuto": "I approve it",
+    "ruleReview": "You review it",
+    "typeOwnAvatar": "With your avatar",
+    "typeGenericAvatar": "With a generic avatar",
+    "typeFaceless": "Faceless"
   }
 }
