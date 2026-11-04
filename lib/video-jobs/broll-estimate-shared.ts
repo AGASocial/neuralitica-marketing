@@ -7,7 +7,6 @@ import {
   LTX_UNIT_COST_CENTS_PER_CLIP,
 } from "@/lib/contracts/ltx-broll-high";
 import {
-  clampWanClipCount,
   clampWanClipDurationSec,
   WAN_PROVIDER_KEY,
   WAN_UNIT_COST_CENTS_PER_CLIP,
@@ -22,8 +21,11 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
 
+import { computeBrollClipCount } from "./broll-clip-count";
 import type { ReelScriptForVideoJob } from "./load-reel-script-for-video-job";
 import { VIDEO_JOBS_TABLE } from "./video-job-row";
+
+export { computeBrollClipCount, resolveBeatTexts } from "./broll-clip-count";
 
 export const BROLL_BLOCKED_JOB_IN_FLIGHT = "scripts.broll.blocked.jobInFlight" as const;
 export const BROLL_BLOCKED_REFERENCE_STILL_MISSING =
@@ -43,35 +45,6 @@ export function isFacelessNeedsBroll(params: {
     params.visualMode === "faceless" ||
     params.brollBeatCount > 0
   );
-}
-
-export function resolveBeatTexts(params: {
-  needsBroll: boolean;
-  brollBeats: string[] | undefined;
-  hook: string;
-  body: string;
-}): string[] {
-  const beats = params.brollBeats ?? [];
-  if (beats.length > 0) {
-    return beats.slice(0, clampWanClipCount(beats.length));
-  }
-  if (params.needsBroll) {
-    return [`${params.hook} ${params.body}`.trim()];
-  }
-  return [];
-}
-
-export function computeBrollClipCount(params: {
-  needsBroll: boolean;
-  brollBeats: string[] | undefined;
-  hook: string;
-  body: string;
-}): number {
-  if (!params.needsBroll) {
-    return 0;
-  }
-  const beatTexts = resolveBeatTexts(params);
-  return clampWanClipCount(Math.max(1, beatTexts.length));
 }
 
 function blockedPreviewEstimate(
@@ -139,6 +112,8 @@ export async function estimateBrollVideoJobsPreview(params: {
     brollBeats: params.script.package.brollBeats,
     hook: params.script.package.hook,
     body: params.script.package.body,
+    targetDurationSec: params.script.package.targetDurationSec,
+    clipDurationSec: 5,
   });
 
   const providerResult = await resolveProviderForJob({

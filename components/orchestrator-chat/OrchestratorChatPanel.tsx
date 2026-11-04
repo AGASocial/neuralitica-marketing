@@ -45,6 +45,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { Locale } from "@/lib/i18n/locales";
+import { createOrchestratorConversation } from "@/lib/orchestrator-chat/actions/create-conversation";
 import { loadLatestOrchestratorConversation } from "@/lib/orchestrator-chat/actions/load-latest-conversation";
 import { prepareAvatarReferenceUpload } from "@/lib/media/prepare-avatar-reference-upload";
 import { uploadAvatarReferenceAsset } from "@/lib/media/upload-avatar-reference-asset";
@@ -286,7 +287,18 @@ export function OrchestratorChatPanel({
     };
   }, [open, hydrated]);
 
-  function startNewConversation() {
+  async function startNewConversation() {
+    try {
+      const result = await createOrchestratorConversation();
+      if (result.ok && result.conversation) {
+        setConversationId(result.conversation.id);
+        setSeedMessages([]);
+        setHydrated(true);
+        return;
+      }
+    } catch {
+      // fall through to local id
+    }
     setConversationId(newConversationId());
     setSeedMessages([]);
     setHydrated(true);

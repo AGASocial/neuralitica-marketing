@@ -1,7 +1,11 @@
-import { ReadyToPublishListView } from "@/components/ready-to-publish/ReadyToPublishListView";
-import { listApprovedApprovals } from "@/lib/approvals/actions/list-approved-approvals";
+import { MyVideosHubView } from "@/components/ready-to-publish/MyVideosHubView";
+import { listMyVideosHubForClientUser } from "@/lib/approvals/list-my-videos-hub";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import type { ApprovedListItemDto } from "@/lib/contracts/approval";
+import type {
+  MyVideosInProductionItem,
+  MyVideosPendingItem,
+} from "@/lib/approvals/list-my-videos-hub";
 import { getTranslations } from "@/lib/i18n/get-translations";
 import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 
@@ -19,24 +23,31 @@ function isNextNavigationError(error: unknown): boolean {
 }
 
 /**
- * Cliente approved Reels ready to publish (US-11.3).
- * Auth via `(app)` + ready-to-publish layout `requireActive("page")`.
- * Data: `listApprovedApprovals` Server Action (BE-owned).
+ * Owner “Mis videos” hub: in production, waiting for OK, ready to publish.
  */
 export default async function ReadyToPublishPage() {
   const user = await getCurrentUser();
   const locale = await resolveRequestLocale(user?.preferredLocale);
   const t = getTranslations(locale);
+  const hub = t.readyToPublish.hub;
 
-  let items: ApprovedListItemDto[] = [];
+  let inProduction: MyVideosInProductionItem[] = [];
+  let pending: MyVideosPendingItem[] = [];
+  let approved: ApprovedListItemDto[] = [];
   let loadFailed = false;
 
   try {
-    const result = await listApprovedApprovals();
-    if (result.ok) {
-      items = result.items;
-    } else {
+    if (!user) {
       loadFailed = true;
+    } else {
+      const result = await listMyVideosHubForClientUser({ user });
+      if (result.ok) {
+        inProduction = result.inProduction;
+        pending = result.pending;
+        approved = result.approved;
+      } else {
+        loadFailed = true;
+      }
     }
   } catch (error) {
     if (isNextNavigationError(error)) {
@@ -46,20 +57,33 @@ export default async function ReadyToPublishPage() {
   }
 
   return (
-    <ReadyToPublishListView
-      items={items}
+    <MyVideosHubView
+      inProduction={inProduction}
+      pending={pending}
+      approved={approved}
       loadFailed={loadFailed}
       locale={locale}
       copy={{
-        title: t.readyToPublish.list.title,
-        subtitle: t.readyToPublish.list.subtitle,
-        empty: t.readyToPublish.list.empty,
+        title: hub.title,
+        subtitle: hub.subtitle,
+        empty: hub.empty,
         loadError: t.readyToPublish.list.loadError,
         backDashboard: t.readyToPublish.list.backDashboard,
         viewCta: t.readyToPublish.list.viewCta,
         decidedAt: t.readyToPublish.list.decidedAt,
         disclosureChip: t.readyToPublish.list.disclosureChip,
         approvedStatus: t.readyToPublish.status.approved,
+        sectionInProduction: hub.sectionInProduction,
+        sectionPending: hub.sectionPending,
+        sectionReady: hub.sectionReady,
+        emptyInProduction: hub.emptyInProduction,
+        emptyPending: hub.emptyPending,
+        emptyReady: hub.emptyReady,
+        approveCta: hub.approveCta,
+        changeCta: hub.changeCta,
+        inProductionStatus: hub.inProductionStatus,
+        pendingStatus: hub.pendingStatus,
+        progressHint: hub.progressHint,
       }}
     />
   );

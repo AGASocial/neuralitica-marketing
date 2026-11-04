@@ -4,15 +4,18 @@ import { revalidatePath } from "next/cache";
 
 import { isAuthGuardError, requireOperator } from "@/lib/auth/require-user";
 import { confirmPaidGenerationFromChatInputSchema } from "@/lib/contracts/orchestrator-chat";
+import { estimateFacelessPipelineCost } from "@/lib/orchestrator-chat/estimate-faceless-pipeline-cost";
+import { loadReelScriptForVoiceover } from "@/lib/tts/load-reel-script-for-voiceover";
+import { synthesizeVoiceoverForReelScript } from "@/lib/tts/actions/synthesize-voiceover-for-reel-script";
 import { createBrollVideoJobs } from "@/lib/video-jobs/actions/create-broll-video-jobs";
 import {
   createHeygenTalkingHeadVideoJob,
   previewHeygenTalkingHeadEstimate,
 } from "@/lib/video-jobs/actions/create-heygen-talking-head-video-job";
-import { previewBrollVideoJobsEstimate } from "@/lib/video-jobs/actions/preview-broll-video-jobs-estimate";
 
 /**
  * Chat Approve boundary for paid video generation (KAN-93).
+ * Faceless (broll): TTS (if needed) + b-roll; assembly advances when clips complete.
  * Re-checks live estimate before spending; never trusts the model alone.
  */
 export async function confirmPaidGenerationFromChat(rawInput: unknown): Promise<{
@@ -42,28 +45,47 @@ export async function confirmPaidGenerationFromChat(rawInput: unknown): Promise<
       parsed.data;
 
     if (paidKind === "broll") {
-      const preview = await previewBrollVideoJobsEstimate({
+      const script = await loadReelScriptForVoiceover({
         reelScriptId,
         clientId: operator.id,
+        preferredLocale: operator.preferredLocale ?? "en",
       });
-      if (!preview.ok) {
+      if (!script) {
+        return { ok: false, error: "NOT_FOUND" };
+      }
+
+      const total = await estimateFacelessPipelineCost({
+        reelScriptId,
+        clientId: operator.id,
+        voiceoverTextLength: script.voiceoverText.length,
+      });
+      if (!total.ok) {
         return { ok: false, error: "ESTIMATE_FAILED" };
       }
-      if (
-        "blockedReasonKey" in preview &&
-        preview.blockedReasonKey !== undefined
-      ) {
+      if (total.blockedReasonKey !== undefined) {
         return { ok: false, error: "BLOCKED" };
       }
-      if (preview.estimatedCostCents !== confirmEstimateCents) {
+      if (total.estimatedCostCents !== confirmEstimateCents) {
         return { ok: false, error: "ESTIMATE_MISMATCH" };
       }
+
+      if (!total.voiceoverAlreadyExists) {
+        if (script.voiceoverText.length === 0) {
+          return { ok: false, error: "EMPTY_VOICEOVER_TEXT" };
+        }
+        const tts = await synthesizeVoiceoverForReelScript({ reelScriptId });
+        if (!tts.ok) {
+          return { ok: false, error: tts.error.code };
+        }
+      }
+
       const result = await createBrollVideoJobs({
         reelScriptId,
         clientId: operator.id,
       });
       if (result.ok) {
         revalidatePath("/operator/scripts");
+        revalidatePath("/ready-to-publish");
         return { ok: true };
       }
       return { ok: false, error: "CREATE_FAILED" };

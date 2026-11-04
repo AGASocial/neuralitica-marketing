@@ -103,6 +103,50 @@ export async function loadLatestConversationForClient(
 }
 
 /**
+ * Insert an empty conversation so “Nueva conversación” survives reload
+ * (latest by updated_at).
+ */
+export async function createEmptyConversationForClient(params: {
+  clientId: string;
+  conversationId: string;
+}): Promise<OrchestratorConversation> {
+  const conversationId = orchestratorConversationIdSchema.parse(
+    params.conversationId,
+  );
+  if (!isSupabaseConfigured()) {
+    const now = new Date().toISOString();
+    return {
+      id: conversationId,
+      title: "",
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
+
+  const supabase = createServerSupabaseClient();
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from(CONVERSATIONS_TABLE)
+    .insert({
+      id: conversationId,
+      client_id: params.clientId,
+      title: "",
+      updated_at: now,
+    })
+    .select("id, title, created_at, updated_at")
+    .single();
+
+  if (error || !data) {
+    console.error("[orchestrator-chat] create empty conversation failed", {
+      code: error?.code,
+    });
+    throw new Error("orchestrator_conversation_create_failed");
+  }
+
+  return mapConversation(data as ConversationRow);
+}
+
+/**
  * Ensure conversation row exists for this client, then insert any new
  * user/assistant messages (idempotent on conversation_id + ui_message_id).
  */

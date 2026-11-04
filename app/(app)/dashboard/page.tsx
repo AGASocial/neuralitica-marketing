@@ -55,21 +55,6 @@ function nextActionCopyFor(
   };
 }
 
-function formatLastUpdated(
-  template: string,
-  iso: string,
-  locale: string,
-): string {
-  const date = new Date(iso);
-  const time = Number.isNaN(date.getTime())
-    ? iso
-    : new Intl.DateTimeFormat(locale === "es" ? "es" : "en", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(date);
-  return template.replace("{time}", time);
-}
-
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   const locale = await resolveRequestLocale(user?.preferredLocale);
@@ -131,11 +116,9 @@ export default async function DashboardPage() {
     <DashboardView
       title={t.dashboard.title}
       subtitle={t.dashboard.subtitle}
-      lastUpdatedLabel={formatLastUpdated(
-        t.dashboard.lastUpdated,
-        data.lastUpdatedAt,
-        locale,
-      )}
+      lastUpdatedAt={data.lastUpdatedAt}
+      lastUpdatedTemplate={t.dashboard.lastUpdated}
+      locale={locale}
       setupBanner={supabaseReady ? undefined : t.dashboard.setupBanner}
       loadError={loadError}
       nextAction={data.nextAction}

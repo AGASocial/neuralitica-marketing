@@ -56,7 +56,6 @@ import {
   proposeRequestVideoChangesOutputSchema,
   type OrchestratorToolError,
 } from "@/lib/contracts/orchestrator-chat";
-import { previewBrollVideoJobsEstimate } from "@/lib/video-jobs/actions/preview-broll-video-jobs-estimate";
 import { previewHeygenTalkingHeadEstimate } from "@/lib/video-jobs/actions/create-heygen-talking-head-video-job";
 import { isFacelessNeedsBroll } from "@/lib/video-jobs/broll-estimate-shared";
 import type { Locale } from "@/lib/i18n/locales";
@@ -65,6 +64,7 @@ import {
   orchestratorForbidden,
   orchestratorValidationError,
 } from "@/lib/orchestrator-chat/authorize";
+import { estimateFacelessPipelineCost } from "@/lib/orchestrator-chat/estimate-faceless-pipeline-cost";
 import { estimateTtsCostCentsFromTextLength } from "@/lib/orchestrator-chat/estimate-tts-cost";
 import { proposalSummary } from "@/lib/orchestrator-chat/proposal-copy";
 import { resolveOrchestratorWeekStart } from "@/lib/orchestrator-chat/week";
@@ -482,7 +482,7 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
 
     getVideoPreview: tool({
       description:
-        "Show a playable preview of a video waiting for the owner (or a specific approval). Use when the user asks to see/watch a video.",
+        "Show a playable preview of the latest assembled video waiting for the owner (or a specific approval). Use when the user asks to see/watch a video.",
       inputSchema: getVideoPreviewInputSchema,
       execute: async (raw) => {
         const parsed = getVideoPreviewInputSchema.safeParse(raw);
@@ -491,6 +491,7 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
         }
         let approvalId = parsed.data.approvalId;
         if (!approvalId) {
+          // Batch-ensure brand-completed assemblies so pending packages exist.
           const pending = await listPendingApprovalsForClientUser({ user });
           if (!pending.ok || pending.items.length === 0) {
             return toolError({
@@ -887,28 +888,26 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
         });
 
         if (needsBroll) {
-          const preview = await previewBrollVideoJobsEstimate({
+          const total = await estimateFacelessPipelineCost({
             reelScriptId: item.scriptId,
             clientId: user.id,
+            voiceoverTextLength: item.package.voiceoverText?.length ?? 0,
           });
-          if (!preview.ok) {
+          if (!total.ok) {
             return toolError({
               ok: false,
               error: "INTERNAL",
               message: "Could not estimate the video cost.",
             });
           }
-          if (
-            "blockedReasonKey" in preview &&
-            preview.blockedReasonKey !== undefined
-          ) {
+          if (total.blockedReasonKey !== undefined) {
             return toolError({
               ok: false,
               error: "NOT_FOUND",
               message: "That video cannot be generated right now.",
             });
           }
-          const estimatedCostCents = preview.estimatedCostCents;
+          const estimatedCostCents = total.estimatedCostCents;
           const proposal = {
             kind: "confirm_paid_generation" as const,
             requiresConfirmation: true as const,
