@@ -55,6 +55,13 @@ right-side sheet (header **Chat** toggle always labeled + keyboard shortcut;
 mobile FAB bottom-right, safe-area aware, hidden while the sheet is open), and
 Home emphasizes chat.
 
+**Home dashboard (KAN-98):** `/dashboard` is an owner status home — single next
+action (open chat or deep link), this-week counts (scheduled / published /
+waiting for OK / in production), campaign progress “X of Y videos”, Results
+empty state until Instagram insights exist in-product (no Graph publish or new
+insights API from Home), recent videos strip, and compact **Atajos**. Server
+loaders use zod DTOs; Home never mutates, spends, or publishes.
+
 **Transcript scroll:** the message list uses stick-to-bottom (`useStickToBottom`):
 always scroll on send; keep sticking while streaming/new parts if within ~80px of
 the bottom; pause when the user scrolls up; resume when they return. A small
