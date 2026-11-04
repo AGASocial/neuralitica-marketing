@@ -67,6 +67,9 @@ export const HEYGEN_FORBIDDEN_ENGINE_TYPES = [
 export const HEYGEN_ALLOWED_OUTPUT_HOSTS: readonly string[] = [
   "files.heygen.com",
   "files.heygen.ai",
+  // v3 video_url CDN (observed in prod 2026-11-04).
+  "files2.heygen.com",
+  "files2.heygen.ai",
   "resource.heygen.com",
   "resource.heygen.ai",
 ];

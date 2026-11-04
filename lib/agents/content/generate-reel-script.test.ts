@@ -261,6 +261,23 @@ describe("reelScriptPackageSchema", () => {
     );
   });
 
+  it("agent parse path strips extra LLM keys like disclosure", async () => {
+    const { reelScriptPackageSchema } = await import(
+      "@/lib/contracts/reel-script"
+    );
+    const r = reelScriptPackageSchema.strip().safeParse({
+      hook: "Hook",
+      body: "Body",
+      cta: "CTA",
+      onScreenText: "Text",
+      voiceoverText: "VO",
+      targetDurationSec: 12,
+      disclosure: "AI presenter",
+    });
+    assert.equal(r.success, true);
+    assert.equal("disclosure" in (r.success ? r.data : {}), false);
+  });
+
   it("rejects more than 8 brollBeats", async () => {
     const { reelScriptPackageSchema } = await import(
       "@/lib/contracts/reel-script"
