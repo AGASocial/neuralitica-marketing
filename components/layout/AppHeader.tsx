@@ -129,6 +129,14 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
       statusCurrent: t.orchestratorChat.progress.statusCurrent,
       statusDone: t.orchestratorChat.progress.statusDone,
     },
+    interview: {
+      title: t.orchestratorChat.interview.title,
+      progress: t.orchestratorChat.interview.progress,
+      completed: t.orchestratorChat.interview.completed,
+      readyToSubmit: t.orchestratorChat.interview.readyToSubmit,
+      listHint: t.orchestratorChat.interview.listHint,
+      textHint: t.orchestratorChat.interview.textHint,
+    },
     download: {
       title: t.orchestratorChat.download.title,
       hint: t.orchestratorChat.download.hint,

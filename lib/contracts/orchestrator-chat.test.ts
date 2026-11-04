@@ -232,6 +232,62 @@ describe("orchestrator-chat contracts", () => {
     });
   });
 
+  it("interview chat tools are non-mutating proposals + status shape", async () => {
+    const {
+      getInterviewStatusOutputSchema: statusSchema,
+      proposeSaveInterviewAnswerOutputSchema: saveSchema,
+      proposeSubmitInterviewOutputSchema: submitSchema,
+    } = await import("./orchestrator-chat");
+
+    statusSchema.parse({
+      ok: true,
+      status: "in_progress",
+      currentStep: "services",
+      stepIndex: 1,
+      totalSteps: 7,
+      answeredCount: 0,
+      stepLabel: "Services",
+      question: "What services do you offer?",
+      helper: "List the services customers can hire you for.",
+      answerKind: "list",
+      canSubmit: false,
+      interviewHref: "/interview",
+      progressLabel: "1 / 7",
+    });
+
+    const save = saveSchema.parse({
+      ok: true,
+      proposal: {
+        kind: "save_interview_answer",
+        requiresConfirmation: true,
+        mutates: false,
+        incursSpend: false,
+        estimatedCostCents: null,
+        summary: "Save your Services answer.",
+        action: "persistInterviewDraft",
+        currentStep: "services",
+        stepLabel: "Services",
+        answerPreview: "Emergency plumbing",
+        items: ["Emergency plumbing"],
+      },
+    });
+    assertProposalIsNonMutating(save.proposal);
+
+    const submit = submitSchema.parse({
+      ok: true,
+      proposal: {
+        kind: "submit_interview",
+        requiresConfirmation: true,
+        mutates: false,
+        incursSpend: false,
+        estimatedCostCents: null,
+        summary: "Submit the finished interview.",
+        action: "submitInterview",
+      },
+    });
+    assertProposalIsNonMutating(submit.proposal);
+  });
+
   it("confirm_paid_generation requires a concrete estimate", async () => {
     const { proposeConfirmPaidGenerationOutputSchema: schema } = await import(
       "./orchestrator-chat"

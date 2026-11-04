@@ -22,6 +22,8 @@ import {
   proposeApproveStrategyOutputSchema,
   getGuidedProgressInputSchema,
   getGuidedProgressOutputSchema,
+  getInterviewStatusInputSchema,
+  getInterviewStatusOutputSchema,
   getPresenterSetupStatusInputSchema,
   getPresenterSetupStatusOutputSchema,
   getReadyVideoDownloadInputSchema,
@@ -30,8 +32,12 @@ import {
   proposeConfirmPaidGenerationOutputSchema,
   proposeGrantPresenterConsentInputSchema,
   proposeGrantPresenterConsentOutputSchema,
+  proposeSaveInterviewAnswerInputSchema,
+  proposeSaveInterviewAnswerOutputSchema,
   proposeSetPresenterVoiceInputSchema,
   proposeSetPresenterVoiceOutputSchema,
+  proposeSubmitInterviewInputSchema,
+  proposeSubmitInterviewOutputSchema,
   proposeGenerateScriptsInputSchema,
   proposeGenerateScriptsOutputSchema,
   proposeGenerateStrategyInputSchema,
@@ -64,7 +70,22 @@ import { loadLatestStrategyRowWithApproval } from "@/lib/content-strategy/load-l
 import { toContentStrategyView } from "@/lib/content-strategy/to-strategy-view";
 import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved-strategy-for-week";
 import { buildReelScriptListForStrategy } from "@/lib/reel-scripts/list-reel-scripts-for-week";
-import { summarizeInterviewSessionRow } from "@/lib/interview/merge-answers";
+import { INTERVIEW_STEP_ORDER } from "@/lib/contracts/interview";
+import { validateInterviewCompleteness } from "@/lib/interview/completeness";
+import {
+  summarizeInterviewSessionRow,
+  toInterviewDraftView,
+} from "@/lib/interview/merge-answers";
+import { isUniqueViolation } from "@/lib/interview/postgres-errors";
+import {
+  answeredInterviewSteps,
+  buildInterviewAnswerFragment,
+  formatInterviewAnswerPreview,
+  interviewStepIndex,
+  interviewStepQuestion,
+  interviewTotalSteps,
+  isInterviewTextStep,
+} from "@/lib/orchestrator-chat/interview-questions";
 import { getAvatarForClientId } from "@/lib/avatars/get-avatar-for-client";
 import { hasActiveAvatarConsent } from "@/lib/visual-preferences/has-active-avatar-consent";
 import {
@@ -1070,6 +1091,205 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
           ],
           nextStepKey,
           nextStepHint: guidedHint(locale, nextStepKey),
+        });
+      },
+    }),
+
+    getInterviewStatus: tool({
+      description:
+        "Load the owner’s business interview (ficha) progress from neuramark_interview_sessions — same as /interview. Returns the current question so you can ask ONE step at a time. Does not save answers.",
+      inputSchema: getInterviewStatusInputSchema,
+      execute: async (raw) => {
+        const parsed = getInterviewStatusInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        if (!isSupabaseConfigured()) {
+          return toolError({
+            ok: false,
+            error: "INTERNAL",
+            message: "Interview unavailable.",
+          });
+        }
+
+        const supabase = createServerSupabaseClient();
+        let row = (
+          await supabase
+            .from("neuramark_interview_sessions")
+            .select("current_step, answers, status")
+            .eq("client_id", user.id)
+            .maybeSingle()
+        ).data;
+
+        if (!row) {
+          const inserted = await supabase
+            .from("neuramark_interview_sessions")
+            .insert({
+              client_id: user.id,
+              status: "draft",
+              current_step: "services",
+              answers: {},
+            })
+            .select("current_step, answers, status")
+            .maybeSingle();
+          if (inserted.error && isUniqueViolation(inserted.error)) {
+            row = (
+              await supabase
+                .from("neuramark_interview_sessions")
+                .select("current_step, answers, status")
+                .eq("client_id", user.id)
+                .maybeSingle()
+            ).data;
+          } else if (inserted.data) {
+            row = inserted.data;
+          }
+        }
+
+        if (!row) {
+          return toolError({
+            ok: false,
+            error: "INTERNAL",
+            message: "Interview unavailable.",
+          });
+        }
+
+        const draft = toInterviewDraftView(row);
+        const summary = summarizeInterviewSessionRow(row);
+        let status: "not_started" | "in_progress" | "completed" = "not_started";
+        if (summary?.status === "completed") {
+          status = "completed";
+        } else if (summary != null) {
+          status = answeredInterviewSteps(draft.answers).length > 0
+            ? "in_progress"
+            : "not_started";
+        }
+
+        const currentStep =
+          status === "completed"
+            ? INTERVIEW_STEP_ORDER[INTERVIEW_STEP_ORDER.length - 1]!
+            : draft.currentStep;
+        const q = interviewStepQuestion(locale, currentStep);
+        const answeredCount = answeredInterviewSteps(draft.answers).length;
+        const canSubmit =
+          status !== "completed" &&
+          validateInterviewCompleteness(draft.answers).ok;
+        const stepIndex = interviewStepIndex(currentStep);
+        const totalSteps = interviewTotalSteps();
+        const progressLabel =
+          locale === "es"
+            ? `${stepIndex} / ${totalSteps}`
+            : `${stepIndex} / ${totalSteps}`;
+
+        return getInterviewStatusOutputSchema.parse({
+          ok: true,
+          status,
+          currentStep,
+          stepIndex,
+          totalSteps: 7 as const,
+          answeredCount,
+          stepLabel: q.label,
+          question: q.question,
+          helper: q.helper,
+          answerKind: isInterviewTextStep(currentStep) ? "text" : "list",
+          canSubmit,
+          interviewHref: "/interview",
+          progressLabel,
+        });
+      },
+    }),
+
+    proposeSaveInterviewAnswer: tool({
+      description:
+        "Propose saving one interview step answer (list items or text description) via persistInterviewDraft. Does NOT save until Approve. Ask only one step at a time.",
+      inputSchema: proposeSaveInterviewAnswerInputSchema,
+      execute: async (raw) => {
+        const parsed = proposeSaveInterviewAnswerInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const fragment = buildInterviewAnswerFragment(parsed.data);
+        if (!fragment) {
+          return toolError(orchestratorValidationError());
+        }
+        const q = interviewStepQuestion(locale, parsed.data.currentStep);
+        const answerPreview =
+          formatInterviewAnswerPreview(parsed.data.currentStep, fragment) ||
+          (locale === "es" ? "(ninguna)" : "(none)");
+        const proposal = {
+          kind: "save_interview_answer" as const,
+          requiresConfirmation: true as const,
+          mutates: false as const,
+          incursSpend: false as const,
+          estimatedCostCents: null,
+          summary: proposalSummary(locale, "save_interview_answer", {
+            stepLabel: q.label,
+          }),
+          action: "persistInterviewDraft" as const,
+          currentStep: parsed.data.currentStep,
+          stepLabel: q.label,
+          answerPreview: answerPreview.slice(0, 500),
+          ...(parsed.data.description != null
+            ? { description: parsed.data.description.trim() }
+            : {}),
+          ...(parsed.data.items != null
+            ? {
+                items: parsed.data.items
+                  .map((item) => item.trim())
+                  .filter(Boolean),
+              }
+            : {}),
+        };
+        assertProposalIsNonMutating(proposal);
+        return proposeSaveInterviewAnswerOutputSchema.parse({
+          ok: true,
+          proposal,
+        });
+      },
+    }),
+
+    proposeSubmitInterview: tool({
+      description:
+        "Propose finishing the business interview the same way /interview Submit does (profile upsert + completed). Call only when getInterviewStatus.canSubmit is true. Does NOT submit until Approve.",
+      inputSchema: proposeSubmitInterviewInputSchema,
+      execute: async (raw) => {
+        const parsed = proposeSubmitInterviewInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        if (isSupabaseConfigured()) {
+          const supabase = createServerSupabaseClient();
+          const { data } = await supabase
+            .from("neuramark_interview_sessions")
+            .select("current_step, answers, status")
+            .eq("client_id", user.id)
+            .maybeSingle();
+          if (!data) {
+            return toolError({
+              ok: false,
+              error: "NOT_FOUND",
+              message: "No interview to submit.",
+            });
+          }
+          const draft = toInterviewDraftView(data);
+          if (draft.status === "completed") {
+            // Soft allow — submitInterview handles already-completed.
+          } else if (!validateInterviewCompleteness(draft.answers).ok) {
+            return toolError(orchestratorValidationError());
+          }
+        }
+        const proposal = {
+          kind: "submit_interview" as const,
+          requiresConfirmation: true as const,
+          mutates: false as const,
+          incursSpend: false as const,
+          estimatedCostCents: null,
+          summary: proposalSummary(locale, "submit_interview"),
+          action: "submitInterview" as const,
+        };
+        assertProposalIsNonMutating(proposal);
+        return proposeSubmitInterviewOutputSchema.parse({
+          ok: true,
+          proposal,
         });
       },
     }),

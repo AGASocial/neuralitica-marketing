@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 
+import { interviewStepKeySchema } from "@/lib/contracts/interview";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
 
 /**
@@ -26,6 +27,8 @@ export const ORCHESTRATOR_PROPOSAL_KINDS = [
   "confirm_paid_generation",
   "grant_presenter_consent",
   "set_presenter_voice",
+  "save_interview_answer",
+  "submit_interview",
 ] as const;
 
 /** Owner-safe media preview path (same shape as approval packages). */
@@ -605,6 +608,92 @@ export const proposeSetPresenterVoiceOutputSchema = z
 
 export type ProposeSetPresenterVoiceOutput = z.infer<
   typeof proposeSetPresenterVoiceOutputSchema
+>;
+
+/** Chat-driven Entrevista (same neuramark_interview_sessions; no new tables). */
+export const getInterviewStatusInputSchema = z.object({}).strict();
+
+export type GetInterviewStatusInput = z.infer<
+  typeof getInterviewStatusInputSchema
+>;
+
+export const getInterviewStatusOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    status: z.enum(["not_started", "in_progress", "completed"]),
+    currentStep: interviewStepKeySchema,
+    stepIndex: z.number().int().min(1).max(7),
+    totalSteps: z.literal(7),
+    answeredCount: z.number().int().min(0).max(7),
+    stepLabel: z.string().min(1).max(80),
+    question: z.string().min(1).max(300),
+    helper: z.string().min(1).max(400),
+    answerKind: z.enum(["list", "text"]),
+    canSubmit: z.boolean(),
+    interviewHref: z.literal("/interview"),
+    progressLabel: z.string().min(1).max(40),
+  })
+  .strict();
+
+export type GetInterviewStatusOutput = z.infer<
+  typeof getInterviewStatusOutputSchema
+>;
+
+export const proposeSaveInterviewAnswerInputSchema = z
+  .object({
+    currentStep: interviewStepKeySchema,
+    /** Text steps: zone / tone / style */
+    description: z.string().trim().min(1).max(2000).optional(),
+    /** List steps: services / offers / objections / restrictions (empty OK for restrictions) */
+    items: z.array(z.string().trim().min(1).max(500)).max(20).optional(),
+  })
+  .strict();
+
+export type ProposeSaveInterviewAnswerInput = z.infer<
+  typeof proposeSaveInterviewAnswerInputSchema
+>;
+
+export const proposeSaveInterviewAnswerOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    proposal: orchestratorProposalMetaSchema.extend({
+      kind: z.literal("save_interview_answer"),
+      action: z.literal("persistInterviewDraft"),
+      currentStep: interviewStepKeySchema,
+      stepLabel: z.string().min(1).max(80),
+      answerPreview: z.string().min(0).max(500),
+      description: z.string().trim().min(1).max(2000).optional(),
+      items: z.array(z.string().trim().min(1).max(500)).max(20).optional(),
+      incursSpend: z.literal(false),
+      estimatedCostCents: z.null(),
+    }),
+  })
+  .strict();
+
+export type ProposeSaveInterviewAnswerOutput = z.infer<
+  typeof proposeSaveInterviewAnswerOutputSchema
+>;
+
+export const proposeSubmitInterviewInputSchema = z.object({}).strict();
+
+export type ProposeSubmitInterviewInput = z.infer<
+  typeof proposeSubmitInterviewInputSchema
+>;
+
+export const proposeSubmitInterviewOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    proposal: orchestratorProposalMetaSchema.extend({
+      kind: z.literal("submit_interview"),
+      action: z.literal("submitInterview"),
+      incursSpend: z.literal(false),
+      estimatedCostCents: z.null(),
+    }),
+  })
+  .strict();
+
+export type ProposeSubmitInterviewOutput = z.infer<
+  typeof proposeSubmitInterviewOutputSchema
 >;
 
 export const orchestratorToolErrorSchema = z

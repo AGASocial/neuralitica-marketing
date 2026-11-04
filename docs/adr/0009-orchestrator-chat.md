@@ -76,12 +76,21 @@ container is the transcript pane only (full-height sheet, safe-area insets).
 | `proposeRequestVideoChanges` | proposal | client + operator | **no** → `decideApproval` request_changes | “Apply these changes?” |
 | `proposeRegenerateScript` | proposal | operator | **no** → `regenerateReelScriptSlot` | “Rewrite this write-up?” |
 | `proposeConfirmPaidGeneration` | proposal | operator | **no** until Approve → `confirmPaidGenerationFromChat` (re-checks estimate, then b-roll/HeyGen) | “This costs about $X — approve?” |
+| `getInterviewStatus` | read | client + operator | no | Business interview progress + current question |
+| `proposeSaveInterviewAnswer` | proposal | client + operator | **no** → `persistInterviewDraft` | “Save this answer?” |
+| `proposeSubmitInterview` | proposal | client + operator | **no** → `submitInterview` | “Submit interview?” |
 
 Later: MCP-UI host (optional).
 
 **KAN-93:** Paid media never starts from chat without `confirm_paid_generation`
 (plain price from existing cost-policy previews). Approve re-validates the live
 estimate before calling create jobs.
+
+**Chat interview:** Same `neuramark_interview_sessions` as `/interview` (no new
+tables). Chat asks one step at a time via `getInterviewStatus`, saves through
+`proposeSaveInterviewAnswer` → Approve → `persistInterviewDraft`, finishes via
+`proposeSubmitInterview` → `submitInterview`. Assistant text renders as Markdown
+(bold/italic/code/lists).
 
 **Guided flow (KAN-84):** `getGuidedProgress` + progress card; style in plain
 words before paid confirm; `getReadyVideoDownload` for download only — chat

@@ -78,6 +78,7 @@ Neutral protocol (this AGENTS.md + docs/governance/)
 ## Architecture defaults (summary)
 
 - Single Next.js App Router app; Supabase only from server; `neuramark_` DB prefix; EN/ES i18n; Tailwind CSS v4 + shadcn/ui (Campaña); Vercel deploy; `getCurrentUser()` identity seam; operator/client role flag only.
+- Orchestrator chat (ADR-0009): company interview runs in-chat via existing `neuramark_interview_sessions` + `persistInterviewDraft` / `submitInterview` (no new tables); assistant text is Markdown-rendered.
 
 ## Supabase migrations (prod)
 

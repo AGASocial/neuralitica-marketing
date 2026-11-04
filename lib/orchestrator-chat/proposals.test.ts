@@ -45,6 +45,17 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(source, /getScriptPreview/);
     assert.match(source, /getGuidedProgress/);
     assert.match(source, /getReadyVideoDownload/);
+    assert.match(source, /getInterviewStatus/);
+    assert.match(source, /proposeSaveInterviewAnswer/);
+    assert.match(source, /proposeSubmitInterview/);
+    assert.doesNotMatch(
+      source,
+      /from\s+"@\/lib\/interview\/actions\/persist-interview-draft"/,
+    );
+    assert.doesNotMatch(
+      source,
+      /from\s+"@\/lib\/interview\/actions\/submit-interview"/,
+    );
     assert.doesNotMatch(source, /publishToInstagram|graph\.facebook|instagram\.com\/p\//i);
   });
 
@@ -66,6 +77,8 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(card, /confirmPaidGenerationFromChat/);
     assert.match(card, /grantAvatarConsent/);
     assert.match(card, /upsertAvatar/);
+    assert.match(card, /persistInterviewDraft/);
+    assert.match(card, /submitInterview/);
   });
 
   it("paid generation only runs from confirm action after Approve", () => {
