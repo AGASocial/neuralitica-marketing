@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { requireActive } from "@/lib/auth/require-user";
-import { resolveLocale } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ type AppLayoutProps = {
  */
 export default async function AppLayout({ children }: AppLayoutProps) {
   const user = await requireActive("page");
-  const locale = resolveLocale(user.preferredLocale);
+  const locale = await resolveRequestLocale(user.preferredLocale);
 
   return (
     <AppShell locale={locale} user={user}>

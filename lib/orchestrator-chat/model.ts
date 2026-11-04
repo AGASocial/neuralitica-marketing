@@ -6,8 +6,8 @@ import { ORCHESTRATOR_CHAT_DEFAULT_MODEL } from "@/lib/contracts/orchestrator-ch
 
 /**
  * Resolve orchestrator chat model via AI Gateway.
- * Override with ORCHESTRATOR_CHAT_MODEL (e.g. google/gemini-2.5-pro) when
- * flash-lite quality is insufficient for multi-step orchestration.
+ * Default is google/gemini-2.5-flash (ADR-0009). Override with
+ * ORCHESTRATOR_CHAT_MODEL (e.g. google/gemini-2.5-pro) when needed.
  */
 export function getOrchestratorChatModel() {
   const fromEnv = process.env.ORCHESTRATOR_CHAT_MODEL?.trim();

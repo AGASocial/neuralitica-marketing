@@ -16,15 +16,21 @@ import {
   proposeApprovePendingVideoOutputSchema,
   proposeApproveStrategyInputSchema,
   proposeApproveStrategyOutputSchema,
+  proposeGenerateScriptsInputSchema,
+  proposeGenerateScriptsOutputSchema,
   proposeGenerateStrategyInputSchema,
   proposeGenerateStrategyOutputSchema,
+  proposeGenerateVideosInputSchema,
+  proposeGenerateVideosOutputSchema,
   type OrchestratorToolError,
 } from "@/lib/contracts/orchestrator-chat";
+import type { Locale } from "@/lib/i18n/locales";
 import {
   isOperator,
   orchestratorForbidden,
   orchestratorValidationError,
 } from "@/lib/orchestrator-chat/authorize";
+import { proposalSummary } from "@/lib/orchestrator-chat/proposal-copy";
 import { resolveOrchestratorWeekStart } from "@/lib/orchestrator-chat/week";
 import { listApprovedApprovalsForClientUser } from "@/lib/approvals/list-get-approvals";
 import { listPendingApprovalsForClientUser } from "@/lib/approvals/list-get-approvals";
@@ -37,7 +43,7 @@ function toolError(error: OrchestratorToolError) {
   return orchestratorToolErrorSchema.parse(error);
 }
 
-export function createOrchestratorTools(user: CurrentUser) {
+export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
   return {
     listCampaignStatus: tool({
       description:
@@ -231,8 +237,7 @@ export function createOrchestratorTools(user: CurrentUser) {
           mutates: false as const,
           incursSpend: true,
           estimatedCostCents: null,
-          summary:
-            "Create this week’s content plan from your business profile. Uses a small AI writing charge; nothing runs until you approve.",
+          summary: proposalSummary(locale, "generate_strategy"),
           weekStart,
           action: "generateContentStrategy" as const,
         };
@@ -285,7 +290,9 @@ export function createOrchestratorTools(user: CurrentUser) {
           mutates: false as const,
           incursSpend: false,
           estimatedCostCents: null,
-          summary: `Approve this week’s plan (${view.brief.slots.length} videos). Nothing changes until you approve.`,
+          summary: proposalSummary(locale, "approve_strategy", {
+            slotCount: view.brief.slots.length,
+          }),
           weekStart,
           strategyId: view.id,
           action: "approveContentStrategy" as const,
@@ -334,8 +341,7 @@ export function createOrchestratorTools(user: CurrentUser) {
           mutates: false as const,
           incursSpend: false,
           estimatedCostCents: null,
-          summary:
-            "Approve this video so it can move to Ready to post. Nothing posts to Instagram until you publish separately.",
+          summary: proposalSummary(locale, "approve_pending_video"),
           approvalId: item.approvalId,
           action: "decideApproval" as const,
           decision: "approved" as const,
@@ -343,6 +349,113 @@ export function createOrchestratorTools(user: CurrentUser) {
         };
         assertProposalIsNonMutating(proposal);
         return proposeApprovePendingVideoOutputSchema.parse({
+          ok: true,
+          proposal,
+        });
+      },
+    }),
+
+    proposeGenerateScripts: tool({
+      description:
+        "Propose writing this week’s video texts (scripts). Does NOT generate until the user taps Approve on the card. Call this whenever you offer to write/create the texts.",
+      inputSchema: proposeGenerateScriptsInputSchema,
+      execute: async (raw) => {
+        if (!isOperator(user)) {
+          return toolError(orchestratorForbidden());
+        }
+        const parsed = proposeGenerateScriptsInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const weekStart = resolveOrchestratorWeekStart(parsed.data.weekStart);
+        const approved = await getApprovedStrategyForWeek({
+          clientId: user.id,
+          weekStart,
+        });
+        if (!approved || approved.status !== "approved") {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "Approve this week’s plan before writing the videos.",
+          });
+        }
+        const { items } = await buildReelScriptListForStrategy({
+          clientId: user.id,
+          weekStart,
+          strategyId: approved.id,
+          version: approved.version,
+          brief: approved.brief,
+        });
+        const pendingSlotCount = items.filter(
+          (i) => i.status === "pending",
+        ).length;
+        const proposal = {
+          kind: "generate_scripts" as const,
+          requiresConfirmation: true as const,
+          mutates: false as const,
+          incursSpend: true,
+          estimatedCostCents: null,
+          summary: proposalSummary(locale, "generate_scripts"),
+          weekStart,
+          action: "generateReelScripts" as const,
+          pendingSlotCount,
+        };
+        assertProposalIsNonMutating(proposal);
+        return proposeGenerateScriptsOutputSchema.parse({
+          ok: true,
+          proposal,
+        });
+      },
+    }),
+
+    proposeGenerateVideos: tool({
+      description:
+        "Propose preparing video generation for this week. Does NOT spend on paid video until a later cost-confirm card. Call this whenever you offer to generate/create the videos.",
+      inputSchema: proposeGenerateVideosInputSchema,
+      execute: async (raw) => {
+        if (!isOperator(user)) {
+          return toolError(orchestratorForbidden());
+        }
+        const parsed = proposeGenerateVideosInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const weekStart = resolveOrchestratorWeekStart(parsed.data.weekStart);
+        const approved = await getApprovedStrategyForWeek({
+          clientId: user.id,
+          weekStart,
+        });
+        if (!approved || approved.status !== "approved") {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "Approve this week’s plan before creating videos.",
+          });
+        }
+        const { items } = await buildReelScriptListForStrategy({
+          clientId: user.id,
+          weekStart,
+          strategyId: approved.id,
+          version: approved.version,
+          brief: approved.brief,
+        });
+        const readyScriptCount = items.filter(
+          (i) => i.status === "generated",
+        ).length;
+        const proposal = {
+          kind: "generate_videos" as const,
+          requiresConfirmation: true as const,
+          mutates: false as const,
+          incursSpend: true,
+          estimatedCostCents: null,
+          summary: proposalSummary(locale, "generate_videos"),
+          weekStart,
+          action: "generateReelScripts" as const,
+          readyScriptCount,
+          paidMediaRequiresCostConfirm: true as const,
+        };
+        assertProposalIsNonMutating(proposal);
+        return proposeGenerateVideosOutputSchema.parse({
           ok: true,
           proposal,
         });

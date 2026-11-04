@@ -6,13 +6,21 @@ import { z } from "zod";
 
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
 
+/**
+ * Default orchestration model via AI Gateway.
+ * flash-lite leaked chain-of-thought + tool names into owner-visible text in
+ * prod smoke; gemini-2.5-flash is the minimum reliable default (ADR-0009).
+ * Override with ORCHESTRATOR_CHAT_MODEL. KAN-97 may re-eval.
+ */
 export const ORCHESTRATOR_CHAT_DEFAULT_MODEL =
-  "google/gemini-2.5-flash-lite" as const;
+  "google/gemini-2.5-flash" as const;
 
 export const ORCHESTRATOR_PROPOSAL_KINDS = [
   "generate_strategy",
   "approve_strategy",
   "approve_pending_video",
+  "generate_scripts",
+  "generate_videos",
 ] as const;
 
 export const orchestratorProposalKindSchema = z.enum(ORCHESTRATOR_PROPOSAL_KINDS);
@@ -225,6 +233,60 @@ export const proposeApprovePendingVideoOutputSchema = z
 
 export type ProposeApprovePendingVideoOutput = z.infer<
   typeof proposeApprovePendingVideoOutputSchema
+>;
+
+export const proposeGenerateScriptsInputSchema = z
+  .object({
+    weekStart: trendWeekStartSchema.optional(),
+  })
+  .strict();
+
+export type ProposeGenerateScriptsInput = z.infer<
+  typeof proposeGenerateScriptsInputSchema
+>;
+
+export const proposeGenerateScriptsOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    proposal: orchestratorProposalMetaSchema.extend({
+      kind: z.literal("generate_scripts"),
+      weekStart: trendWeekStartSchema,
+      action: z.literal("generateReelScripts"),
+      pendingSlotCount: z.number().int().min(0).max(7),
+    }),
+  })
+  .strict();
+
+export type ProposeGenerateScriptsOutput = z.infer<
+  typeof proposeGenerateScriptsOutputSchema
+>;
+
+export const proposeGenerateVideosInputSchema = z
+  .object({
+    weekStart: trendWeekStartSchema.optional(),
+  })
+  .strict();
+
+export type ProposeGenerateVideosInput = z.infer<
+  typeof proposeGenerateVideosInputSchema
+>;
+
+export const proposeGenerateVideosOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    proposal: orchestratorProposalMetaSchema.extend({
+      kind: z.literal("generate_videos"),
+      weekStart: trendWeekStartSchema,
+      action: z.literal("generateReelScripts"),
+      readyScriptCount: z.number().int().min(0).max(7),
+      /** Paid media starts only after a later cost-confirm card (KAN-93). */
+      paidMediaRequiresCostConfirm: z.literal(true),
+    }),
+  })
+  .strict();
+
+export type ProposeGenerateVideosOutput = z.infer<
+  typeof proposeGenerateVideosOutputSchema
 >;
 
 export const orchestratorToolErrorSchema = z
