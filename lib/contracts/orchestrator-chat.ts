@@ -705,6 +705,7 @@ export type ProposeSubmitInterviewOutput = z.infer<
 /**
  * Enable on-camera (`own_avatar`) modality via Preferencias upsert only.
  * Never starts HeyGen / avatar video generation.
+ * If photo consent is missing, returns the grant_presenter_consent card instead.
  */
 export const proposeEnableOwnAvatarInputSchema = z.object({}).strict();
 
@@ -712,27 +713,64 @@ export type ProposeEnableOwnAvatarInput = z.infer<
   typeof proposeEnableOwnAvatarInputSchema
 >;
 
-export const proposeEnableOwnAvatarOutputSchema = z
-  .object({
-    ok: z.literal(true),
-    proposal: orchestratorProposalMetaSchema.extend({
-      kind: z.literal("enable_own_avatar"),
-      action: z.literal("upsertVisualPreferences"),
-      allowedModes: z.array(visualModalitySchema).min(1).max(3),
-      facelessStyle: facelessStyleSchema.nullable(),
-      incursSpend: z.literal(false),
-      estimatedCostCents: z.null(),
-    }),
-  })
-  .strict();
+const enableOwnAvatarProposalSchema = orchestratorProposalMetaSchema.extend({
+  kind: z.literal("enable_own_avatar"),
+  action: z.literal("upsertVisualPreferences"),
+  allowedModes: z.array(visualModalitySchema).min(1).max(3),
+  facelessStyle: facelessStyleSchema.nullable(),
+  incursSpend: z.literal(false),
+  estimatedCostCents: z.null(),
+});
+
+/** Consent redirect when owner asks for on-camera but has not granted photo consent. */
+const enableOwnAvatarConsentRedirectSchema = orchestratorProposalMetaSchema.extend({
+  kind: z.literal("grant_presenter_consent"),
+  action: z.literal("grantAvatarConsent"),
+  incursSpend: z.literal(false),
+  estimatedCostCents: z.null(),
+});
+
+export const proposeEnableOwnAvatarOutputSchema = z.union([
+  z
+    .object({
+      ok: z.literal(true),
+      proposal: enableOwnAvatarProposalSchema,
+    })
+    .strict(),
+  z
+    .object({
+      ok: z.literal(true),
+      redirectedToConsent: z.literal(true),
+      proposal: enableOwnAvatarConsentRedirectSchema,
+    })
+    .strict(),
+]);
 
 export type ProposeEnableOwnAvatarOutput = z.infer<
   typeof proposeEnableOwnAvatarOutputSchema
 >;
 
+/** Eligible write-up option for the TTS cost card video picker. */
+export const confirmTtsEligibleVideoSchema = z
+  .object({
+    reelScriptId: z.string().uuid(),
+    slotIndex: z.number().int().min(0).max(6),
+    tema: z.string().max(200),
+    estimatedCostCents: z.number().int().nonnegative(),
+    confirmEstimateCents: z.number().int().nonnegative(),
+    charCount: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export type ConfirmTtsEligibleVideo = z.infer<
+  typeof confirmTtsEligibleVideoSchema
+>;
+
 /**
  * Separate TTS/voice spend confirm (KAN-84.15) — not b-roll/HeyGen.
  * Estimate from ElevenLabs catalog constants; nothing runs until Approve.
+ * When no video is specified, defaults to the latest eligible script and
+ * includes `eligibleVideos` for an in-card picker.
  */
 export const proposeConfirmTtsGenerationInputSchema = z
   .object({
@@ -762,6 +800,8 @@ export const proposeConfirmTtsGenerationOutputSchema = z
       charCount: z.number().int().nonnegative(),
       incursSpend: z.literal(true),
       estimatedCostCents: z.number().int().nonnegative(),
+      /** Recent eligible write-ups for in-card picker (defaults to latest). */
+      eligibleVideos: z.array(confirmTtsEligibleVideoSchema).min(1).max(7),
     }),
   })
   .strict();

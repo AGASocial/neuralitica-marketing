@@ -17,11 +17,16 @@ const KNOWN_TOOL_NAMES = [
   "proposeRequestVideoChanges",
   "proposeRegenerateScript",
   "proposeConfirmPaidGeneration",
+  "proposeConfirmTtsGeneration",
+  "proposeEnableOwnAvatar",
   "getGuidedProgress",
   "getReadyVideoDownload",
   "getPresenterSetupStatus",
   "proposeGrantPresenterConsent",
   "proposeSetPresenterVoice",
+  "getInterviewStatus",
+  "proposeSaveInterviewAnswer",
+  "proposeSubmitInterview",
 ] as const;
 
 const TOOL_NAME_PATTERN = new RegExp(

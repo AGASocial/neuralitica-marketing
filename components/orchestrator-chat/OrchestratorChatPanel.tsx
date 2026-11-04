@@ -150,7 +150,9 @@ function asProposal(output: unknown): KnownProposal | null {
     typeof p.confirmEstimateCents === "number" &&
     typeof p.estimatedCostCents === "number" &&
     p.paidKind === "tts" &&
-    p.styleLabel === "voice"
+    p.styleLabel === "voice" &&
+    Array.isArray(p.eligibleVideos) &&
+    p.eligibleVideos.length > 0
   ) {
     return p as KnownProposal;
   }
@@ -204,8 +206,29 @@ export function OrchestratorChatToggle({
       className="border-edge bg-panel text-fog hover:bg-panel/80"
     >
       <MessageSquareIcon className="size-4" aria-hidden />
-      <span className="hidden sm:inline">{openLabel}</span>
+      <span>{openLabel}</span>
       <span className="sr-only">{shortcutHint}</span>
+    </Button>
+  );
+}
+
+/** Mobile-only FAB — hidden when the chat sheet is open. Safe-area aware. */
+export function OrchestratorChatFab({ openLabel }: { openLabel: string }) {
+  const { open, setOpen } = useOrchestratorChat();
+  if (open) {
+    return null;
+  }
+  return (
+    <Button
+      type="button"
+      onClick={() => setOpen(true)}
+      aria-controls="orchestrator-chat-panel"
+      aria-expanded={false}
+      aria-label={openLabel}
+      className="fixed z-50 flex size-14 items-center justify-center rounded-full bg-butter text-deep shadow-lg hover:bg-butter/90 md:hidden bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-[max(1.25rem,env(safe-area-inset-right))]"
+    >
+      <MessageSquareIcon className="size-6" aria-hidden />
+      <span className="sr-only">{openLabel}</span>
     </Button>
   );
 }

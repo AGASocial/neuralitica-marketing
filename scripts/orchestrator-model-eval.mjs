@@ -29,6 +29,10 @@ const KNOWN_TOOL_NAMES = [
   "proposeRequestVideoChanges",
   "proposeRegenerateScript",
   "proposeConfirmPaidGeneration",
+  "proposeConfirmTtsGeneration",
+  "proposeEnableOwnAvatar",
+  "proposeGrantPresenterConsent",
+  "getPresenterSetupStatus",
 ];
 
 const TOOL_NAME_PATTERN = new RegExp(
@@ -103,7 +107,97 @@ const FIXTURES = [
     id: "tool-name-inline",
     raw: "I'll use proposeGenerateVideos now. ¿Generamos tus videos?",
   },
+  {
+    id: "es-own-avatar-tool-leak",
+    raw: [
+      "I should call proposeEnableOwnAvatar for “Quiero usar mi propio avatar”.",
+      "",
+      "Te muestro la tarjeta para activar videos con tu cara.",
+    ].join("\n"),
+  },
+  {
+    id: "es-voice-cost-tool-leak",
+    raw: [
+      "First, I'm going to call proposeConfirmTtsGeneration for “¿Cuánto cuesta la voz para mi video?”.",
+      "",
+      "Aquí tienes el costo de la voz — aprueba si quieres continuar.",
+    ].join("\n"),
+  },
 ];
+
+/** Offline card-discipline cases: Spanish owner prompts must map to these tools. */
+const CARD_ROUTING_CASES = [
+  {
+    id: "es-own-avatar-mi-propio-avatar",
+    prompt: "Quiero usar mi propio avatar",
+    requiredTool: "proposeEnableOwnAvatar",
+    requiredLiterals: [
+      "Quiero usar mi propio avatar",
+      "quiero salir yo en los videos",
+      "activa videos con mi cara",
+    ],
+  },
+  {
+    id: "es-own-avatar-salir-yo",
+    prompt: "quiero salir yo en los videos",
+    requiredTool: "proposeEnableOwnAvatar",
+    requiredLiterals: ["proposeEnableOwnAvatar"],
+  },
+  {
+    id: "es-own-avatar-con-mi-cara",
+    prompt: "activa videos con mi cara",
+    requiredTool: "proposeEnableOwnAvatar",
+    requiredLiterals: ["proposeEnableOwnAvatar"],
+  },
+  {
+    id: "es-voice-cost",
+    prompt: "¿Cuánto cuesta la voz para mi video?",
+    requiredTool: "proposeConfirmTtsGeneration",
+    requiredLiterals: [
+      "¿Cuánto cuesta la voz para mi video?",
+      "confirm_tts_generation",
+    ],
+  },
+];
+
+function assertCardRoutingInPromptSource() {
+  const systemPrompt = readFileSync(
+    join(ROOT, "lib/orchestrator-chat/system-prompt.ts"),
+    "utf8",
+  );
+  const createTools = readFileSync(
+    join(ROOT, "lib/orchestrator-chat/create-tools.ts"),
+    "utf8",
+  );
+  let failures = 0;
+  for (const testCase of CARD_ROUTING_CASES) {
+    const inSystem = systemPrompt.includes(testCase.requiredTool);
+    const inTools = createTools.includes(testCase.requiredTool);
+    const literalsOk = testCase.requiredLiterals.every(
+      (literal) =>
+        systemPrompt.includes(literal) || createTools.includes(literal),
+    );
+    const ok = inSystem && inTools && literalsOk;
+    console.log(
+      `- ${testCase.id}: prompt="${testCase.prompt}" → ${testCase.requiredTool} ok=${ok}`,
+    );
+    if (!ok) failures += 1;
+  }
+  // Consent redirect + TTS picker guards (no paid calls).
+  if (!createTools.includes("redirectedToConsent")) {
+    console.log("- consent-redirect: MISSING redirectedToConsent");
+    failures += 1;
+  } else {
+    console.log("- consent-redirect: redirectedToConsent present");
+  }
+  if (!createTools.includes("eligibleVideos")) {
+    console.log("- tts-picker: MISSING eligibleVideos");
+    failures += 1;
+  } else {
+    console.log("- tts-picker: eligibleVideos present");
+  }
+  return failures;
+}
 
 function runOffline() {
   console.log("=== KAN-97 offline fixture leak scoring ===");
@@ -129,6 +223,9 @@ function runOffline() {
     );
     if (!cleanedOk) failures += 1;
   }
+
+  console.log("=== KAN-97 offline Spanish card-routing cases ===");
+  failures += assertCardRoutingInPromptSource();
   return failures;
 }
 

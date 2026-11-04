@@ -115,9 +115,51 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
       source.indexOf("getReadyVideoDownload:"),
     );
     assert.match(enableBlock, /action:\s*"upsertVisualPreferences"/);
+    assert.match(enableBlock, /redirectedToConsent:\s*true/);
+    assert.match(enableBlock, /grant_presenter_consent/);
     assert.doesNotMatch(enableBlock, /createHeygenTalkingHeadVideoJob/);
     assert.doesNotMatch(enableBlock, /createBrollVideoJobs/);
     assert.doesNotMatch(enableBlock, /upsertAvatar\(/);
+  });
+
+  it("system prompt requires Spanish own-avatar and voice-cost tool cards", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const prompt = readFileSync(join(here, "system-prompt.ts"), "utf8");
+    assert.match(prompt, /Quiero usar mi propio avatar/);
+    assert.match(prompt, /quiero salir yo en los videos/);
+    assert.match(prompt, /activa videos con mi cara/);
+    assert.match(prompt, /proposeEnableOwnAvatar/);
+    assert.match(prompt, /¿Cuánto cuesta la voz para mi video\?/);
+    assert.match(prompt, /proposeConfirmTtsGeneration/);
+    assert.match(prompt, /confirm_tts_generation/);
+  });
+
+  it("TTS confirm tool defaults to latest eligible and exposes picker list", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(join(here, "create-tools.ts"), "utf8");
+    const ttsBlock = source.slice(
+      source.indexOf("proposeConfirmTtsGeneration:"),
+      source.indexOf("getGuidedProgress:"),
+    );
+    assert.match(ttsBlock, /eligibleVideos/);
+    assert.match(ttsBlock, /latest/);
+    assert.match(ttsBlock, /¿Cuánto cuesta la voz para mi video\?/);
+  });
+
+  it("mobile chat FAB is safe-area aware and hidden when panel open", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const panel = readFileSync(
+      join(
+        here,
+        "../../components/orchestrator-chat/OrchestratorChatPanel.tsx",
+      ),
+      "utf8",
+    );
+    assert.match(panel, /OrchestratorChatFab/);
+    assert.match(panel, /safe-area-inset-bottom/);
+    assert.match(panel, /safe-area-inset-right/);
+    assert.match(panel, /md:hidden/);
+    assert.match(panel, /if \(open\) \{\s*return null;/);
   });
 
   it("paid generation only runs from confirm action after Approve", () => {
