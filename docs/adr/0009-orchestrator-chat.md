@@ -53,6 +53,12 @@ Old flat nav (5 client + 6 operator links) is replaced by this grouping. **All
 existing routes stay reachable**; nothing is deleted. Chat is a persistent
 right-side sheet (header toggle + keyboard shortcut), and Home emphasizes chat.
 
+**Transcript scroll:** the message list uses stick-to-bottom (`useStickToBottom`):
+always scroll on send; keep sticking while streaming/new parts if within ~80px of
+the bottom; pause when the user scrolls up; resume when they return. A small
+“↓ New messages” / “↓ Nuevos mensajes” control appears when not stuck. Scroll
+container is the transcript pane only (full-height sheet, safe-area insets).
+
 ### Tool catalog (phase 1+)
 
 | Tool | Kind | Role | Mutates? | Owner-facing card |

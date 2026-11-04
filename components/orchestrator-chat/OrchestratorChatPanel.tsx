@@ -6,6 +6,7 @@ import { ImagePlusIcon, MessageSquareIcon, SendIcon, XIcon } from "lucide-react"
 import { useMemo, useRef, useState, type FormEvent } from "react";
 
 import { useOrchestratorChat } from "@/components/orchestrator-chat/OrchestratorChatContext";
+import { useStickToBottom } from "@/components/orchestrator-chat/use-stick-to-bottom";
 import {
   ProposalActionCard,
   type KnownProposal,
@@ -51,6 +52,7 @@ export type OrchestratorChatCopy = {
   error: string;
   attachError: string;
   attachedNote: string;
+  newMessages: string;
   proposal: ProposalCardCopy;
   status: StatusCardCopy;
   preview: PreviewCardCopy;
@@ -188,6 +190,29 @@ export function OrchestratorChatPanel({
   const { messages, sendMessage, status, error } = useChat({ transport });
   const busy = status === "submitted" || status === "streaming" || attachPending;
 
+  const contentKey = useMemo(() => {
+    const last = messages[messages.length - 1];
+    const partsSig = last
+      ? last.parts
+          .map((part) =>
+            part.type === "text"
+              ? `t:${part.text.length}`
+              : `${part.type}:${"state" in part ? String(part.state) : ""}`,
+          )
+          .join("|")
+      : "";
+    return `${messages.length}:${partsSig}:${status}`;
+  }, [messages, status]);
+
+  const {
+    scrollRef,
+    contentRef,
+    isStuck,
+    onScroll,
+    scrollToBottom,
+    stickOnSend,
+  } = useStickToBottom({ contentKey });
+
   function focusChangeSomething() {
     inputRef.current?.focus();
   }
@@ -199,6 +224,7 @@ export function OrchestratorChatPanel({
       return;
     }
     setInput("");
+    stickOnSend();
     await sendMessage({ text });
   }
 
@@ -220,6 +246,7 @@ export function OrchestratorChatPanel({
       const note = copy.attachedNote
         .replace("{filename}", result.asset.metadata.originalFilename)
         .replace("{assetId}", result.asset.id);
+      stickOnSend();
       await sendMessage({ text: note });
     } catch {
       setAttachError(copy.attachError);
@@ -237,9 +264,9 @@ export function OrchestratorChatPanel({
         id="orchestrator-chat-panel"
         side="right"
         showCloseButton={false}
-        className="w-full border-edge bg-deep p-0 text-fog sm:max-w-md"
+        className="gap-0 overflow-hidden border-edge bg-deep p-0 text-fog h-dvh max-h-dvh w-full sm:max-w-md"
       >
-        <SheetHeader className="border-b border-edge px-4 py-3">
+        <SheetHeader className="shrink-0 border-b border-edge px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
           <div className="flex items-start justify-between gap-3">
             <div>
               <SheetTitle className="font-display text-2xl text-fog">
@@ -262,13 +289,17 @@ export function OrchestratorChatPanel({
           </div>
         </SheetHeader>
 
-        <div className="flex min-h-0 flex-1 flex-col">
-          <div
-            className="flex-1 space-y-3 overflow-y-auto px-4 py-4"
-            role="log"
-            aria-live="polite"
-            aria-relevant="additions"
-          >
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="relative min-h-0 flex-1">
+            <div
+              ref={scrollRef}
+              onScroll={onScroll}
+              className="absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4"
+              role="log"
+              aria-live="polite"
+              aria-relevant="additions"
+            >
+              <div ref={contentRef} className="space-y-3">
             {messages.length === 0 ? (
               <p className="text-sm text-dim">{copy.empty}</p>
             ) : null}
@@ -529,11 +560,26 @@ export function OrchestratorChatPanel({
             {attachError ? (
               <p className="text-sm text-rose">{attachError}</p>
             ) : null}
+              </div>
+            </div>
+            {!isStuck ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center px-4">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="pointer-events-auto border-edge bg-panel/95 text-fog shadow-sm backdrop-blur-sm"
+                  onClick={() => scrollToBottom()}
+                >
+                  {copy.newMessages}
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           <form
             onSubmit={onSubmit}
-            className="border-t border-edge bg-deep/95 p-3"
+            className="shrink-0 border-t border-edge bg-deep/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
           >
             <div className="flex items-end gap-2">
               <input
