@@ -109,9 +109,15 @@ describe("MediaThumbnail wiring", () => {
       join(here, "../../components/ready-to-publish/MyVideosHubView.tsx"),
       "utf8",
     );
+    const agentCard = readFileSync(
+      join(here, "../../components/agent-cards/AgentCard.tsx"),
+      "utf8",
+    );
     assert.match(previewCards, /<video/);
     assert.match(previewCards, /videoPreviewUrl/);
-    assert.match(hub, /<video/);
-    assert.match(hub, /videoPreviewUrl/);
+    assert.match(hub, /AgentCard/);
+    assert.match(hub, /videoPreviewUrl|mapMyVideosPendingToCard/);
+    assert.match(agentCard, /<video/);
+    assert.match(agentCard, /MediaThumbnail/);
   });
 });

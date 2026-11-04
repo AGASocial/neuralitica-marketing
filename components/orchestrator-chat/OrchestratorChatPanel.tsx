@@ -53,6 +53,8 @@ import {
   SuggestedPromptChips,
   type SuggestedPromptChipsCopy,
 } from "@/components/orchestrator-chat/SuggestedPromptChips";
+import { AgentCard } from "@/components/agent-cards/AgentCard";
+import { parseAgentCard } from "@/lib/agent-cards";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { Locale } from "@/lib/i18n/locales";
@@ -582,16 +584,30 @@ function OrchestratorChatSession({
                       actions?: Array<{ id: string; text: string }>;
                     };
                     if (output?.ok && Array.isArray(output.actions) && output.actions.length > 0) {
-                      return (
-                        <SuggestedPromptChips
-                          key={`${message.id}-sna-${index}`}
-                          chips={output.actions.map((action) => ({
-                            id: action.id as SuggestedPromptChip["id"],
+                      const chipCard = parseAgentCard({
+                        type: "next_step_chips",
+                        props: {
+                          chips: output.actions.map((action) => ({
+                            id: action.id,
                             text: action.text,
-                          }))}
-                          copy={copy.suggestedPrompts}
+                          })),
+                          ariaLabel: copy.suggestedPrompts.listAriaLabel,
+                        },
+                        actions: [],
+                      });
+                      return (
+                        <AgentCard
+                          key={`${message.id}-sna-${index}`}
+                          card={chipCard}
                           disabled={busy}
-                          onSelect={(text) => {
+                          onAction={(event) => {
+                            const text =
+                              typeof event.meta?.text === "string"
+                                ? event.meta.text
+                                : null;
+                            if (!text) {
+                              return;
+                            }
                             stickOnSend();
                             void sendMessage({ text });
                           }}

@@ -5,7 +5,7 @@ import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
 describe("ApprovalsListView card presentation", () => {
-  it("uses reel title, MediaThumbnail, summary, disclosure tooltip, ClientLocalDateTime", () => {
+  it("uses reel title, AgentCard/MediaThumbnail path, summary, disclosure tooltip, ClientLocalDateTime", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const view = readFileSync(join(here, "ApprovalsListView.tsx"), "utf8");
     const page = readFileSync(
@@ -17,15 +17,25 @@ describe("ApprovalsListView card presentation", () => {
       "utf8",
     );
     const detail = readFileSync(join(here, "ApprovalPackageView.tsx"), "utf8");
+    const agentCard = readFileSync(
+      join(here, "../agent-cards/AgentCard.tsx"),
+      "utf8",
+    );
+    const mapper = readFileSync(
+      join(here, "../../lib/agent-cards/map-to-card.ts"),
+      "utf8",
+    );
     const en = readFileSync(join(here, "../../messages/en.json"), "utf8");
     const es = readFileSync(join(here, "../../messages/es.json"), "utf8");
 
-    assert.match(view, /MediaThumbnail/);
-    assert.match(view, /ClientLocalDateTime/);
+    assert.match(view, /AgentCard/);
+    assert.match(view, /mapApprovalListItemToCard/);
     assert.match(view, /item\.title/);
     assert.match(view, /copy\.cardSummary/);
     assert.match(view, /copy\.disclosureTooltip/);
-    assert.match(view, /mediaPreviewUrl/);
+    assert.match(mapper, /mediaPreviewUrl/);
+    assert.match(agentCard, /MediaThumbnail/);
+    assert.match(agentCard, /ClientLocalDateTime/);
     assert.doesNotMatch(view, /:\s*"—"/);
 
     assert.match(page, /cardSummary/);

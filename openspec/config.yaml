@@ -22,6 +22,8 @@ context: |
   - 0008 UI Tailwind v4 + shadcn Campaña
   - 0009 Orchestrator chat (proposal cards, persistence, stick-to-bottom, TTS/own-avatar)
   - 0010 Onboarding chat vs wizard (hybrid: KAN-99 checklist spine; no multi-page wizard now)
+  - 0011 Agentic-first UI (C Hoy daily + A onboarding; shared AgentCard catalog KAN-103)
+  - 0012 A2UI later (defer; triggers in ADR; catalog prepares adapter)
 
   OpenSpec workflow: every change starts with openspec/changes/<id>/ (proposal, tasks, spec
   deltas), validate --strict, archive after merge. Main specs live under openspec/specs/.
