@@ -974,7 +974,7 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
 
     proposeConfirmTtsGeneration: tool({
       description:
-        "Propose paid spoken-voice (TTS) generation with a plain price from ElevenLabs catalog constants. DISTINCT from proposeConfirmPaidGeneration (video/images/on-camera). Does NOT synthesize until Approve. Operator only.",
+        "MUST call when the owner asks voice/spoken-audio cost or to create voice for a video (ES: “¿Cuánto cuesta la voz para mi video?”, “cuánto sale la voz”, “genera la voz”). Returns confirm_tts_generation card with plain ElevenLabs catalog price. If reelScriptId/slotIndex omitted, defaults to the latest eligible write-up and includes eligibleVideos for an in-card picker. DISTINCT from proposeConfirmPaidGeneration (video). Does NOT synthesize until Approve. Operator only.",
       inputSchema: proposeConfirmTtsGenerationInputSchema,
       execute: async (raw) => {
         if (!isOperator(user)) {
@@ -1004,50 +1004,71 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
           brief: approved.brief,
         });
         const generated = items.filter(
-          (i) => i.status === "generated" && i.scriptId && i.package,
+          (i) =>
+            i.status === "generated" &&
+            i.scriptId &&
+            i.package &&
+            (i.package.voiceoverText?.trim() ?? "").length > 0,
         );
-        const item =
-          parsed.data.reelScriptId !== undefined
-            ? generated.find((i) => i.scriptId === parsed.data.reelScriptId)
-            : parsed.data.slotIndex !== undefined
-              ? generated.find((i) => i.slotIndex === parsed.data.slotIndex)
-              : generated[0];
-        if (!item || !item.scriptId || !item.package) {
+        const eligibleVideos = generated.map((i) => {
+          const voiceoverText = i.package!.voiceoverText!.trim();
+          const estimatedCostCents = estimateTtsCostCentsFromTextLength(
+            voiceoverText.length,
+          );
+          return {
+            reelScriptId: i.scriptId!,
+            slotIndex: i.slotIndex,
+            tema: i.tema.slice(0, 200),
+            estimatedCostCents,
+            confirmEstimateCents: estimatedCostCents,
+            charCount: voiceoverText.length,
+          };
+        });
+        if (eligibleVideos.length === 0) {
           return toolError({
             ok: false,
             error: "NOT_FOUND",
             message: "Write the video texts first, then confirm the voice cost.",
           });
         }
-        const voiceoverText = item.package.voiceoverText?.trim() ?? "";
-        if (!voiceoverText) {
+        // Latest eligible = highest slotIndex (most recent in the weekly plan).
+        const latest = eligibleVideos.reduce((a, b) =>
+          b.slotIndex >= a.slotIndex ? b : a,
+        );
+        const selected =
+          parsed.data.reelScriptId !== undefined
+            ? eligibleVideos.find(
+                (v) => v.reelScriptId === parsed.data.reelScriptId,
+              )
+            : parsed.data.slotIndex !== undefined
+              ? eligibleVideos.find((v) => v.slotIndex === parsed.data.slotIndex)
+              : latest;
+        if (!selected) {
           return toolError({
             ok: false,
-            error: "VALIDATION_ERROR",
-            message: "This write-up has no spoken text yet.",
+            error: "NOT_FOUND",
+            message: "Write the video texts first, then confirm the voice cost.",
           });
         }
-        const estimatedCostCents = estimateTtsCostCentsFromTextLength(
-          voiceoverText.length,
-        );
         const proposal = {
           kind: "confirm_tts_generation" as const,
           requiresConfirmation: true as const,
           mutates: false as const,
           incursSpend: true as const,
-          estimatedCostCents,
-          confirmEstimateCents: estimatedCostCents,
+          estimatedCostCents: selected.estimatedCostCents,
+          confirmEstimateCents: selected.confirmEstimateCents,
           summary: proposalSummary(locale, "confirm_tts_generation", {
-            amountCents: estimatedCostCents,
+            amountCents: selected.estimatedCostCents,
           }),
           weekStart,
-          slotIndex: item.slotIndex,
-          reelScriptId: item.scriptId,
-          tema: item.tema,
+          slotIndex: selected.slotIndex,
+          reelScriptId: selected.reelScriptId,
+          tema: selected.tema,
           styleLabel: "voice" as const,
           paidKind: "tts" as const,
           action: "confirmTtsGenerationFromChat" as const,
-          charCount: voiceoverText.length,
+          charCount: selected.charCount,
+          eligibleVideos,
         };
         assertProposalIsNonMutating(proposal);
         return proposeConfirmTtsGenerationOutputSchema.parse({
@@ -1508,7 +1529,7 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
 
     proposeEnableOwnAvatar: tool({
       description:
-        "Propose enabling on-camera (“with your face”) style via Preferencias upsertVisualPreferences. Requires prior photo consent. Does NOT save until Approve. NEVER starts avatar video jobs, talking-head generation, or any paid generation.",
+        "MUST call when the owner wants on-camera / “with your face” / own avatar videos (ES: “Quiero usar mi propio avatar”, “quiero salir yo en los videos”, “activa videos con mi cara”). Returns enable_own_avatar Preferencias confirmation card (Aprobar / Cambiar algo). If photo consent is missing, returns the grant_presenter_consent card instead (redirectedToConsent). Does NOT save until Approve. NEVER starts avatar video jobs, talking-head, HeyGen, or any paid generation.",
       inputSchema: proposeEnableOwnAvatarInputSchema,
       execute: async (raw) => {
         const parsed = proposeEnableOwnAvatarInputSchema.safeParse(raw);
@@ -1517,13 +1538,20 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
         }
         const consentActive = await hasActiveAvatarConsent(user.id);
         if (!consentActive) {
-          return toolError({
-            ok: false,
-            error: "FORBIDDEN",
-            message:
-              locale === "es"
-                ? "Primero confirma el consentimiento de foto."
-                : "Confirm photo consent first.",
+          const consentProposal = {
+            kind: "grant_presenter_consent" as const,
+            requiresConfirmation: true as const,
+            mutates: false as const,
+            incursSpend: false as const,
+            estimatedCostCents: null,
+            summary: proposalSummary(locale, "grant_presenter_consent"),
+            action: "grantAvatarConsent" as const,
+          };
+          assertProposalIsNonMutating(consentProposal);
+          return proposeEnableOwnAvatarOutputSchema.parse({
+            ok: true,
+            redirectedToConsent: true,
+            proposal: consentProposal,
           });
         }
         if (!isSupabaseConfigured()) {

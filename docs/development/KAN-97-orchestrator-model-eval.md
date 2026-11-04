@@ -28,7 +28,10 @@ Scoring:
 2. **Locale** — when prompted for Spanish, reply should not be English-only CoT.
 3. **Card discipline** — reply should not offer paid actions as bare text without
    implying a confirm card (heuristic: no “¿genero los videos?” without tool use
-   in live multi-step runs).
+   in live multi-step runs). Offline harness also asserts Spanish routing:
+   - “Quiero usar mi propio avatar” / “quiero salir yo en los videos” /
+     “activa videos con mi cara” → `proposeEnableOwnAvatar` (consent redirect OK)
+   - “¿Cuánto cuesta la voz para mi video?” → `proposeConfirmTtsGeneration`
 
 ## Decision (current)
 

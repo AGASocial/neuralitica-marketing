@@ -51,7 +51,9 @@ MCP-UI (`@mcp-ui/*`) is optional later — same proposal/confirm semantics.
 
 Old flat nav (5 client + 6 operator links) is replaced by this grouping. **All
 existing routes stay reachable**; nothing is deleted. Chat is a persistent
-right-side sheet (header toggle + keyboard shortcut), and Home emphasizes chat.
+right-side sheet (header **Chat** toggle always labeled + keyboard shortcut;
+mobile FAB bottom-right, safe-area aware, hidden while the sheet is open), and
+Home emphasizes chat.
 
 **Transcript scroll:** the message list uses stick-to-bottom (`useStickToBottom`):
 always scroll on send; keep sticking while streaming/new parts if within ~80px of
@@ -76,11 +78,11 @@ container is the transcript pane only (full-height sheet, safe-area insets).
 | `proposeRequestVideoChanges` | proposal | client + operator | **no** → `decideApproval` request_changes | “Apply these changes?” |
 | `proposeRegenerateScript` | proposal | operator | **no** → `regenerateReelScriptSlot` | “Rewrite this write-up?” |
 | `proposeConfirmPaidGeneration` | proposal | operator | **no** until Approve → `confirmPaidGenerationFromChat` (re-checks estimate, then b-roll/HeyGen) | “This costs about $X — approve?” (video) |
-| `proposeConfirmTtsGeneration` | proposal | operator | **no** until Approve → `confirmTtsGenerationFromChat` (re-checks ElevenLabs estimate, then TTS) | “Voice costs about $X — approve?” — **separate** from video cost card |
+| `proposeConfirmTtsGeneration` | proposal | operator | **no** until Approve → `confirmTtsGenerationFromChat` (re-checks ElevenLabs estimate, then TTS) | “Voice costs about $X — approve?” — **separate** from video cost card; defaults to latest eligible write-up + in-card video picker |
 | `getInterviewStatus` | read | client + operator | no | Business interview progress + current question |
 | `proposeSaveInterviewAnswer` | proposal | client + operator | **no** → `persistInterviewDraft` | “Save this answer?” |
 | `proposeSubmitInterview` | proposal | client + operator | **no** → `submitInterview` | “Submit interview?” |
-| `proposeEnableOwnAvatar` | proposal | client + operator | **no** → `upsertVisualPreferences` (add `own_avatar`) | “Enable videos with your face?” — **never** starts HeyGen/avatar generation |
+| `proposeEnableOwnAvatar` | proposal | client + operator | **no** → `upsertVisualPreferences` (add `own_avatar`); if consent missing → `grant_presenter_consent` card | “Enable videos with your face?” — **never** starts HeyGen/avatar generation |
 
 Later: MCP-UI host (optional).
 
@@ -90,8 +92,17 @@ estimate before calling create jobs.
 
 **TTS voice spend:** `confirm_tts_generation` is a separate card from b-roll/HeyGen;
 estimate uses `ELEVENLABS_UNIT_COST_CENTS_PER_1M_CHARS` (no paid calls in the
-proposal tool). Approve → `confirmTtsGenerationFromChat` →
+proposal tool). Spanish prompts like “¿Cuánto cuesta la voz para mi video?”
+**must** call `proposeConfirmTtsGeneration` (card, not bare text). If no video is
+named, default to the latest eligible write-up and show an in-card picker
+(`eligibleVideos`). Approve → `confirmTtsGenerationFromChat` →
 `synthesizeVoiceoverForReelScript`.
+
+**Own-avatar enable:** Spanish prompts like “Quiero usar mi propio avatar”,
+“quiero salir yo en los videos”, “activa videos con mi cara” **must** call
+`proposeEnableOwnAvatar`. If photo consent is missing, the tool returns the
+`grant_presenter_consent` card (`redirectedToConsent`) instead of an error.
+Never starts HeyGen/avatar video generation from this path.
 
 **Chat interview:** Same `neuramark_interview_sessions` as `/interview` (no new
 tables). Chat asks one step at a time via `getInterviewStatus`, saves through

@@ -7,6 +7,7 @@ import {
   type AppNavLink,
 } from "@/components/layout/AppNavMenu";
 import {
+  OrchestratorChatFab,
   OrchestratorChatPanel,
   OrchestratorChatToggle,
 } from "@/components/orchestrator-chat/OrchestratorChatPanel";
@@ -87,6 +88,8 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
       stylePresenter: t.orchestratorChat.proposal.stylePresenter,
       styleImages: t.orchestratorChat.proposal.styleImages,
       styleVoice: t.orchestratorChat.proposal.styleVoice,
+      pickVideo: t.orchestratorChat.proposal.pickVideo,
+      videoOption: t.orchestratorChat.proposal.videoOption,
     },
     status: {
       campaignTitle: t.orchestratorChat.status.campaignTitle,
@@ -210,6 +213,7 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
         />
       </header>
       <OrchestratorChatPanel copy={chatCopy} locale={locale} />
+      <OrchestratorChatFab openLabel={t.orchestratorChat.openLabel} />
     </OrchestratorChatProvider>
   );
 }

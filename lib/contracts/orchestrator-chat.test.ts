@@ -236,6 +236,7 @@ describe("orchestrator-chat contracts", () => {
     const { proposeConfirmTtsGenerationOutputSchema: schema } = await import(
       "./orchestrator-chat"
     );
+    const reelScriptId = "44444444-4444-4444-8444-444444444444";
     const parsed = schema.parse({
       ok: true,
       proposal: {
@@ -248,16 +249,35 @@ describe("orchestrator-chat contracts", () => {
         summary: "Creating the voice costs about $0.01.",
         weekStart: WEEK,
         slotIndex: 0,
-        reelScriptId: "44444444-4444-4444-8444-444444444444",
+        reelScriptId,
         styleLabel: "voice",
         paidKind: "tts",
         action: "confirmTtsGenerationFromChat",
         charCount: 120,
+        eligibleVideos: [
+          {
+            reelScriptId,
+            slotIndex: 0,
+            tema: "Promo",
+            estimatedCostCents: 1,
+            confirmEstimateCents: 1,
+            charCount: 120,
+          },
+          {
+            reelScriptId: "55555555-5555-4555-8555-555555555555",
+            slotIndex: 1,
+            tema: "Tips",
+            estimatedCostCents: 2,
+            confirmEstimateCents: 2,
+            charCount: 200,
+          },
+        ],
       },
     });
     assertProposalIsNonMutating(parsed.proposal);
     assert.equal(parsed.proposal.paidKind, "tts");
     assert.equal(parsed.proposal.styleLabel, "voice");
+    assert.equal(parsed.proposal.eligibleVideos.length, 2);
   });
 
   it("enable_own_avatar is non-mutating Preferencias proposal", async () => {
@@ -284,6 +304,28 @@ describe("orchestrator-chat contracts", () => {
     });
     assertProposalIsNonMutating(parsed.proposal);
     assert.equal(parsed.proposal.action, "upsertVisualPreferences");
+  });
+
+  it("enable_own_avatar redirects to consent card when consent missing", async () => {
+    const { proposeEnableOwnAvatarOutputSchema: schema } = await import(
+      "./orchestrator-chat"
+    );
+    const parsed = schema.parse({
+      ok: true,
+      redirectedToConsent: true,
+      proposal: {
+        kind: "grant_presenter_consent",
+        requiresConfirmation: true,
+        mutates: false,
+        incursSpend: false,
+        estimatedCostCents: null,
+        summary: "Confirm photo consent.",
+        action: "grantAvatarConsent",
+      },
+    });
+    assertProposalIsNonMutating(parsed.proposal);
+    assert.equal(parsed.proposal.kind, "grant_presenter_consent");
+    assert.ok("redirectedToConsent" in parsed && parsed.redirectedToConsent === true);
   });
 
   it("interview chat tools are non-mutating proposals + status shape", async () => {

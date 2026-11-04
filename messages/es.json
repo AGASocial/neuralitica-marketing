@@ -101,7 +101,9 @@
       "spendUnknown": "Esto puede usar un cargo pequeño de escritura con IA. No corre nada hasta que apruebes.",
       "stylePresenter": "Con tu cara / presentador",
       "styleImages": "Solo imágenes y texto",
-      "styleVoice": "Voz hablada de este video (aparte del costo de video)"
+      "styleVoice": "Voz hablada de este video (aparte del costo de video)",
+      "pickVideo": "Elige de qué video quieres la voz",
+      "videoOption": "Video {n}"
     },
     "status": {
       "campaignTitle": "Cómo van las cosas",
