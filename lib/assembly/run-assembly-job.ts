@@ -565,6 +565,11 @@ async function finishFfmpegUpload(params: {
 
   const ffmpegResult = await ffmpegRunner(ffmpegArgs);
   if (ffmpegResult.exitCode !== 0) {
+    console.error("[assembly] ffmpeg failed", {
+      assemblyJobId: activeJob.id,
+      exitCode: ffmpegResult.exitCode,
+      stderrTail: ffmpegResult.stderr.slice(-800),
+    });
     await failAssemblyJob(activeJob.id, ASSEMBLY_FAILURE_FFMPEG);
     return;
   }
