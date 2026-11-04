@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "primereact/button";
-import { Message } from "primereact/message";
-import { Tag } from "primereact/tag";
 
+import { RefreshCwIcon, Volume2Icon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { StatusBadge } from "@/components/ui/status-badge";
 import type {
   SynthesizeVoiceoverForReelScriptSuccess,
   TtsVoiceoverErrorCode,
@@ -155,55 +158,40 @@ export function OperatorVoiceoverPanel({
 
   return (
     <section
-      style={{
-        background: "#ffffff",
-        border: "1px solid #e5e7eb",
-        borderRadius: "8px",
-        padding: "1rem 1.25rem",
-        marginBottom: "1rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "0.75rem",
-      }}
+      className="bg-panel border border-edge rounded-lg py-4 px-5 mb-4 flex flex-col gap-3"
     >
       <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: "0.75rem",
-          flexWrap: "wrap",
-        }}
+        className="flex justify-between items-start gap-3 flex-wrap"
       >
         <div>
-          <h3 style={{ margin: "0 0 0.35rem", fontSize: "1rem" }}>{copy.title}</h3>
-          <p style={{ margin: 0, color: "#6b7280", fontSize: "0.875rem" }}>
+          <h3 className="mt-0 mx-0 mb-[0.35rem] font-display text-fog text-base">{copy.title}</h3>
+          <p className="m-0 text-dim text-sm">
             {copy.aiOnlyNote}
           </p>
         </div>
-        <Tag
+        <StatusBadge
           value={ready ? copy.status.ready : copy.status.missing}
           severity={ready ? "success" : "warning"}
         />
       </div>
 
       {banner ? (
-        <Message severity="error" text={banner} style={{ width: "100%" }} />
+        <StatusAlert severity="error" text={banner} className="w-full" />
       ) : null}
 
       {ready && summary.voiceoverAssetId ? (
-        <div style={{ display: "grid", gap: "0.5rem" }}>
+        <div className="grid gap-2">
           <audio
             controls
             preload="none"
             src={`/api/media/assets/${summary.voiceoverAssetId}`}
-            style={{ width: "100%", maxWidth: "420px", height: "32px" }}
+            className="w-full max-w-[420px] h-8"
           />
-          <p style={{ margin: 0, color: "#6b7280", fontSize: "0.8125rem" }}>
+          <p className="m-0 text-dim text-[0.8125rem]">
             {copy.assetIdLabel}: {summary.voiceoverAssetId}
           </p>
           {summary.voiceId ? (
-            <p style={{ margin: 0, color: "#6b7280", fontSize: "0.8125rem" }}>
+            <p className="m-0 text-dim text-[0.8125rem]">
               {copy.voiceLabel}: {copy.voiceNames[summary.voiceId] ?? summary.voiceId}
             </p>
           ) : null}
@@ -211,28 +199,27 @@ export function OperatorVoiceoverPanel({
       ) : null}
 
       {canGenerate || canRegenerate ? (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+        <div className="flex flex-wrap gap-2">
           {canGenerate ? (
             <Button
               type="button"
-              label={pending ? copy.generating : copy.generate}
-              icon="pi pi-volume-up"
-              loading={pending}
-              disabled={disabled || pending}
               onClick={() => void handleSynthesize()}
-            />
+              disabled={disabled || pending}
+            >
+              {pending ? <Spinner className="size-4 text-current" /> : <Volume2Icon />}
+              {pending ? copy.generating : copy.generate}
+            </Button>
           ) : null}
           {canRegenerate ? (
             <Button
               type="button"
-              label={pending ? copy.generating : copy.regenerate}
-              icon="pi pi-refresh"
-              severity="secondary"
-              outlined
-              loading={pending}
-              disabled={disabled || pending}
               onClick={() => void handleSynthesize()}
-            />
+              variant="outline"
+              disabled={disabled || pending}
+            >
+              {pending ? <Spinner className="size-4 text-current" /> : <RefreshCwIcon />}
+              {pending ? copy.generating : copy.regenerate}
+            </Button>
           ) : null}
         </div>
       ) : null}

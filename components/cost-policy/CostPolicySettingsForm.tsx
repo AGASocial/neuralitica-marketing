@@ -1,13 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import { Button } from "primereact/button";
-import { Checkbox } from "primereact/checkbox";
-import { Dropdown } from "primereact/dropdown";
-import { InputNumber } from "primereact/inputnumber";
-import { Message } from "primereact/message";
-import { Toast } from "primereact/toast";
+import { useState } from "react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { Label } from "@/components/ui/label";
+import { SimpleSelect } from "@/components/ui/simple-select";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
 
 import type { OperatorCostSettingsDto } from "@/lib/contracts/cost-policy";
 import { MAX_COST_CENTS_CEILING } from "@/lib/contracts/cost-policy";
@@ -65,7 +68,6 @@ export function CostPolicySettingsForm({
   copy,
 }: CostPolicySettingsFormProps) {
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
 
   const [settings, setSettings] = useState(initialSettings);
   const [globalMaxDollars, setGlobalMaxDollars] = useState(
@@ -130,11 +132,7 @@ export function CostPolicySettingsForm({
 
       if (result.ok) {
         setSettings(result.settings);
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastGlobalSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastGlobalSuccess, { duration: 4000 });
         router.refresh();
         return;
       }
@@ -169,11 +167,7 @@ export function CostPolicySettingsForm({
       if (result.ok) {
         setSettings(result.settings);
         setClientOverrideEnabled(result.settings.clientOverride !== null);
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastClientSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastClientSuccess, { duration: 4000 });
         router.refresh();
         return;
       }
@@ -192,61 +186,40 @@ export function CostPolicySettingsForm({
       : copy.effectiveGlobal;
 
   return (
-    <div style={{ maxWidth: "720px", margin: "0 auto" }}>
-      <Toast ref={toastRef} position="top-right" />
-
-      <header style={{ marginBottom: "1.5rem" }}>
-        <h1 style={{ margin: "0 0 0.35rem", fontSize: "1.5rem" }}>{copy.title}</h1>
-        <p style={{ margin: 0, color: "#6b7280" }}>{copy.subtitle}</p>
+    <div className="mx-auto max-w-[720px]">
+      <header className="mb-6">
+        <h1 className="mb-1.5 font-display text-4xl text-fog">{copy.title}</h1>
+        <p className="text-dim">{copy.subtitle}</p>
       </header>
 
       {settings.highTierWarningKey ? (
-        <Message
+        <StatusAlert
           severity="warn"
           text={copy.highTierInactiveWarning}
-          style={{ width: "100%", marginBottom: "1rem" }}
+          className="mb-4 w-full"
         />
       ) : null}
 
       {banner ? (
-        <Message severity="error" text={banner} style={{ width: "100%", marginBottom: "1rem" }} />
+        <StatusAlert severity="error" text={banner} className="mb-4 w-full" />
       ) : null}
 
-      <section
-        style={{
-          background: "#ffffff",
-          border: "1px solid #e5e7eb",
-          borderRadius: "8px",
-          padding: "1.25rem",
-          marginBottom: "1.25rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-        }}
-      >
-        <h2 style={{ margin: 0, fontSize: "1.1rem" }}>{copy.globalSectionTitle}</h2>
+      <section className="mb-5 flex flex-col gap-4 rounded-xl border border-edge bg-panel p-5">
+        <h2 className="font-display text-xl text-fog">{copy.globalSectionTitle}</h2>
 
         <div>
-          <label htmlFor="global-max-cost" style={{ display: "block", fontWeight: 600, marginBottom: "0.35rem" }}>
+          <Label htmlFor="global-max-cost" className="mb-1.5 block font-semibold text-fog">
             {copy.maxCostLabel}
-          </label>
-          <InputNumber
-            inputId="global-max-cost"
+          </Label>
+          <CurrencyInput
+            id="global-max-cost"
             value={globalMaxDollars}
-            onValueChange={(event) => {
-              if (typeof event.value === "number") {
-                setGlobalMaxDollars(event.value);
-              }
-            }}
-            mode="currency"
-            currency="USD"
-            locale={locale}
+            onValueChange={setGlobalMaxDollars}
             min={0.01}
             max={maxDollarsCeiling}
             disabled={globalPending || clientPending}
-            style={{ width: "100%" }}
           />
-          <p style={{ margin: "0.35rem 0 0", color: "#6b7280", fontSize: "0.875rem" }}>
+          <p className="mt-1.5 text-sm text-dim">
             {copy.maxCostHint.replace(
               "{max}",
               formatCentsForDisplay(MAX_COST_CENTS_CEILING, locale),
@@ -255,87 +228,79 @@ export function CostPolicySettingsForm({
         </div>
 
         <div>
-          <label htmlFor="global-provider-tier" style={{ display: "block", fontWeight: 600, marginBottom: "0.35rem" }}>
+          <Label
+            htmlFor="global-provider-tier"
+            className="mb-1.5 block font-semibold text-fog"
+          >
             {copy.providerTierLabel}
-          </label>
-          <Dropdown
-            inputId="global-provider-tier"
+          </Label>
+          <SimpleSelect
+            id="global-provider-tier"
             value={globalTier}
             options={tierDropdownOptions}
-            onChange={(event) => setGlobalTier(event.value as ProviderTier)}
+            onChange={setGlobalTier}
             disabled={globalPending || clientPending}
-            style={{ width: "100%" }}
           />
         </div>
 
         <Button
           type="button"
-          label={globalPending ? copy.saving : copy.saveGlobal}
-          loading={globalPending}
-          disabled={clientPending}
+          disabled={globalPending || clientPending}
           onClick={() => void handleSaveGlobal()}
-        />
+          className="w-full"
+        >
+          {globalPending ? <Spinner className="size-4 text-current" /> : null}
+          {globalPending ? copy.saving : copy.saveGlobal}
+        </Button>
       </section>
 
-      <section
-        style={{
-          background: "#ffffff",
-          border: "1px solid #e5e7eb",
-          borderRadius: "8px",
-          padding: "1.25rem",
-          marginBottom: "1.25rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-        }}
-      >
-        <h2 style={{ margin: 0, fontSize: "1.1rem" }}>{copy.clientSectionTitle}</h2>
+      <section className="mb-5 flex flex-col gap-4 rounded-xl border border-edge bg-panel p-5">
+        <h2 className="font-display text-xl text-fog">{copy.clientSectionTitle}</h2>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <div className="flex items-center gap-2">
           <Checkbox
-            inputId="client-override-enabled"
+            id="client-override-enabled"
             checked={clientOverrideEnabled}
-            onChange={(event) => setClientOverrideEnabled(event.checked === true)}
+            onCheckedChange={(checked) => setClientOverrideEnabled(checked === true)}
             disabled={globalPending || clientPending}
           />
-          <label htmlFor="client-override-enabled">{copy.clientOverrideToggle}</label>
+          <Label htmlFor="client-override-enabled" className="text-fog">
+            {copy.clientOverrideToggle}
+          </Label>
         </div>
 
         {clientOverrideEnabled ? (
           <>
             <div>
-              <label htmlFor="client-max-cost" style={{ display: "block", fontWeight: 600, marginBottom: "0.35rem" }}>
+              <Label
+                htmlFor="client-max-cost"
+                className="mb-1.5 block font-semibold text-fog"
+              >
                 {copy.maxCostLabel}
-              </label>
-              <InputNumber
-                inputId="client-max-cost"
+              </Label>
+              <CurrencyInput
+                id="client-max-cost"
                 value={clientMaxDollars}
-                onValueChange={(event) => {
-                  if (typeof event.value === "number") {
-                    setClientMaxDollars(event.value);
-                  }
-                }}
-                mode="currency"
-                currency="USD"
-                locale={locale}
+                onValueChange={setClientMaxDollars}
                 min={0.01}
                 max={maxDollarsCeiling}
                 disabled={globalPending || clientPending}
-                style={{ width: "100%" }}
               />
             </div>
 
             <div>
-              <label htmlFor="client-provider-tier" style={{ display: "block", fontWeight: 600, marginBottom: "0.35rem" }}>
+              <Label
+                htmlFor="client-provider-tier"
+                className="mb-1.5 block font-semibold text-fog"
+              >
                 {copy.providerTierLabel}
-              </label>
-              <Dropdown
-                inputId="client-provider-tier"
+              </Label>
+              <SimpleSelect
+                id="client-provider-tier"
                 value={clientTier}
                 options={tierDropdownOptions}
-                onChange={(event) => setClientTier(event.value as ProviderTier)}
+                onChange={setClientTier}
                 disabled={globalPending || clientPending}
-                style={{ width: "100%" }}
               />
             </div>
           </>
@@ -343,45 +308,36 @@ export function CostPolicySettingsForm({
 
         <Button
           type="button"
-          label={clientPending ? copy.saving : copy.saveClient}
-          loading={clientPending}
-          disabled={globalPending}
+          disabled={globalPending || clientPending}
           onClick={() => void handleSaveClientOverride()}
-        />
+          className="w-full"
+        >
+          {clientPending ? <Spinner className="size-4 text-current" /> : null}
+          {clientPending ? copy.saving : copy.saveClient}
+        </Button>
       </section>
 
-      <section
-        style={{
-          background: "#f9fafb",
-          border: "1px solid #e5e7eb",
-          borderRadius: "8px",
-          padding: "1rem 1.25rem",
-          marginBottom: "1.25rem",
-        }}
-      >
-        <h2 style={{ margin: "0 0 0.75rem", fontSize: "1rem" }}>{copy.effectiveTitle}</h2>
-        <p style={{ margin: "0 0 0.35rem" }}>
+      <section className="mb-5 rounded-xl border border-edge bg-deep/60 px-5 py-4">
+        <h2 className="mb-3 font-display text-lg text-fog">{copy.effectiveTitle}</h2>
+        <p className="mb-1.5 text-fog">
           <strong>{effectiveLabel}</strong>
         </p>
-        <p style={{ margin: "0 0 0.35rem", color: "#374151" }}>
+        <p className="mb-1.5 text-fog">
           {copy.maxCostLabel}:{" "}
           {formatCentsForDisplay(settings.effective.maxCostCents, locale)}
         </p>
-        <p style={{ margin: "0 0 0.35rem", color: "#374151" }}>
+        <p className="mb-1.5 text-fog">
           {copy.providerTierLabel}:{" "}
           {copy.providerTierOptions[settings.effective.providerTier]}
         </p>
-        <p style={{ margin: 0, color: "#6b7280", fontSize: "0.875rem" }}>
+        <p className="text-sm text-dim">
           {copy.resolvedProviderLabel}: {settings.resolvedLlmProviderLabel}
         </p>
       </section>
 
-      <Button
-        type="button"
-        label={copy.backDashboard}
-        className="p-button-text"
-        onClick={() => router.push("/dashboard")}
-      />
+      <Button type="button" variant="ghost" onClick={() => router.push("/dashboard")}>
+        {copy.backDashboard}
+      </Button>
     </div>
   );
 }

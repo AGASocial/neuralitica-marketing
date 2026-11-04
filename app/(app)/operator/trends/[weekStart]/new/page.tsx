@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Button } from "primereact/button";
-import { Message } from "primereact/message";
 
 import { TrendEntryForm } from "@/components/trend/TrendEntryForm";
+import { Button } from "@/components/ui/button";
+import { StatusAlert } from "@/components/ui/status-alert";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
 import { loadPlaybookListForOperator } from "@/lib/playbook/load-playbook-list-for-operator";
@@ -102,18 +102,18 @@ export default async function TrendNewEntryPage({ params }: TrendNewEntryPagePro
 
   if (!snapshotResult.ok) {
     return (
-      <div style={{ maxWidth: "820px", margin: "0 auto" }}>
-        <h1 style={{ margin: "0 0 1rem", fontSize: "2rem" }}>
+      <div className="mx-auto max-w-[820px]">
+        <h1 className="mb-4 font-display text-4xl text-fog">
           {t.trend.form.createTitle}
         </h1>
-        <Message
+        <StatusAlert
           severity="error"
           text={t.trend.errors.weekNotFound}
-          style={{ width: "100%", marginBottom: "1rem" }}
+          className="mb-4 w-full"
         />
-        <Link href="/operator/trends" style={{ textDecoration: "none" }}>
-          <Button type="button" label={t.trend.week.backList} />
-        </Link>
+        <Button asChild>
+          <Link href="/operator/trends">{t.trend.week.backList}</Link>
+        </Button>
       </div>
     );
   }

@@ -28,40 +28,27 @@ export function PendingActivationView({
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+    <div className="flex flex-col gap-4">
       <div>
-        <h1 style={{ margin: "0 0 0.5rem", fontSize: "1.5rem" }}>{title}</h1>
-        <p style={{ margin: 0, color: "#4b5563", lineHeight: 1.5 }}>{body}</p>
+        <h1 className="mb-2 font-display text-3xl text-fog">{title}</h1>
+        <p className="leading-relaxed text-dim">{body}</p>
       </div>
 
       {showIdentity ? (
-        <div
-          style={{
-            padding: "0.75rem 1rem",
-            borderRadius: "8px",
-            background: "#f9fafb",
-            border: "1px solid #e5e7eb",
-            fontSize: "0.95rem",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.25rem",
-          }}
-        >
+        <div className="flex flex-col gap-1 rounded-lg border border-edge bg-deep/60 px-4 py-3 text-[0.95rem]">
           {showDisplayName ? (
-            <strong style={{ color: "#111827" }}>{displayName}</strong>
+            <strong className="text-fog">{displayName}</strong>
           ) : null}
           {email ? (
             <div>
-              <span style={{ color: "#6b7280" }}>{emailLabel}: </span>
-              <strong style={{ color: "#111827" }}>{email}</strong>
+              <span className="text-dim">{emailLabel}: </span>
+              <strong className="text-fog">{email}</strong>
             </div>
           ) : null}
         </div>
       ) : null}
 
-      <p style={{ margin: 0, fontSize: "0.875rem", color: "#6b7280" }}>
-        {logoutHint}
-      </p>
+      <p className="text-sm text-dim">{logoutHint}</p>
 
       <LogoutButton appearance="pending" copy={logoutCopy} />
     </div>

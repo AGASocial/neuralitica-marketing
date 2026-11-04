@@ -1,11 +1,15 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
-import { Button } from "primereact/button";
-import { Checkbox } from "primereact/checkbox";
-import { Dropdown } from "primereact/dropdown";
-import { Message } from "primereact/message";
-import { Toast } from "primereact/toast";
+import { useState, type ReactNode } from "react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { SimpleSelect } from "@/components/ui/simple-select";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { cn } from "@/lib/utils";
 
 import {
   AvatarConsentSection,
@@ -171,7 +175,6 @@ export function PreferencesEditor({
   referencesCopy,
   avatarSetupCopy,
 }: PreferencesEditorProps) {
-  const toastRef = useRef<Toast>(null);
   const [server, setServer] = useState(() => snapshotFromInitial(initial));
   const [draftModes, setDraftModes] = useState(() =>
     cloneModes(initial.allowedModes),
@@ -327,11 +330,7 @@ export function PreferencesEditor({
         setDraftModes(cloneModes(result.allowedModes));
         setDraftStyle(cloneStyle(result.facelessStyle));
         setDraftVoiceId(result.voiceId);
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastSuccess,
-          life: 5000,
-        });
+        toast.success(copy.toastSuccess, { duration: 5000 });
         return;
       }
 
@@ -369,33 +368,32 @@ export function PreferencesEditor({
       title={title}
       subtitle={updatedLabel ?? subtitle}
       actions={
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+        <div className="flex flex-wrap gap-2">
           <Button
             type="button"
-            label={pending ? copy.saving : copy.save}
             onClick={() => void handleSave()}
             disabled={pending || !dirty}
-            loading={pending}
-          />
+          >
+            {pending ? <Spinner className="size-4 text-current" /> : null}
+            {pending ? copy.saving : copy.save}
+          </Button>
           <Button
             type="button"
-            label={copy.cancel}
-            severity="secondary"
-            outlined
+            variant="outline"
             onClick={cancelEdit}
             disabled={pending || !dirty}
-          />
+          >
+            {copy.cancel}
+          </Button>
         </div>
       }
     >
-      <Toast ref={toastRef} position="top-right" />
-
       {banner ? (
-        <Message severity="error" text={banner} style={{ width: "100%" }} />
+        <StatusAlert severity="error" text={banner} className="w-full" />
       ) : null}
 
       {server.allowedModes.length === 0 && !dirty ? (
-        <Message severity="info" text={copy.emptyHint} style={{ width: "100%" }} />
+        <StatusAlert severity="info" text={copy.emptyHint} className="w-full" />
       ) : null}
 
       <AvatarConsentSection
@@ -419,13 +417,7 @@ export function PreferencesEditor({
         preferencesPending={pending}
       />
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-        }}
-      >
+      <div className="flex flex-col gap-4">
         {MODALITY_ORDER.map((mode) => {
           const modeCopy = copy.modes[mode];
           const checked = draftModes.includes(mode);
@@ -435,69 +427,42 @@ export function PreferencesEditor({
           return (
             <section
               key={mode}
-              style={{
-                background: "#ffffff",
-                border: "1px solid #e5e7eb",
-                borderRadius: "8px",
-                padding: "1rem 1.25rem",
-                opacity: ownDisabled ? 0.85 : 1,
-              }}
+              className={cn(
+                "rounded-xl border border-edge bg-panel px-5 py-4",
+                ownDisabled && "opacity-85",
+              )}
             >
-              <div
-                style={{
-                  display: "flex",
-                  gap: "0.75rem",
-                  alignItems: "flex-start",
-                }}
-              >
+              <div className="flex items-start gap-3">
                 <Checkbox
-                  inputId={inputId}
+                  id={inputId}
                   checked={checked && !ownDisabled}
                   disabled={pending || ownDisabled}
-                  onChange={(e) => toggleMode(mode, Boolean(e.checked))}
+                  onCheckedChange={(value) => toggleMode(mode, value === true)}
+                  className="mt-1"
                 />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <label
+                <div className="min-w-0 flex-1">
+                  <Label
                     htmlFor={inputId}
-                    style={{
-                      display: "block",
-                      fontWeight: 600,
-                      fontSize: "1.05rem",
-                      marginBottom: "0.35rem",
-                      cursor: ownDisabled || pending ? "default" : "pointer",
-                    }}
+                    className={cn(
+                      "mb-1.5 block text-[1.05rem] font-semibold text-fog",
+                      ownDisabled || pending ? "cursor-default" : "cursor-pointer",
+                    )}
                   >
                     {modeCopy.label}
-                  </label>
-                  <p style={{ margin: "0 0 0.5rem", color: "#4b5563" }}>
-                    {modeCopy.description}
-                  </p>
-                  <p
-                    style={{
-                      margin: 0,
-                      color: "#6b7280",
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    {modeCopy.example}
-                  </p>
+                  </Label>
+                  <p className="mb-2 text-dim">{modeCopy.description}</p>
+                  <p className="text-sm text-dim">{modeCopy.example}</p>
 
                   {ownDisabled ? (
-                    <Message
+                    <StatusAlert
                       severity="warn"
                       text={copy.ownAvatarDisabledConsent}
-                      style={{ width: "100%", marginTop: "0.75rem" }}
+                      className="mt-3 w-full"
                     />
                   ) : null}
 
                   {mode === "own_avatar" && !ownDisabled ? (
-                    <p
-                      style={{
-                        margin: "0.75rem 0 0",
-                        color: "#6b7280",
-                        fontSize: "0.875rem",
-                      }}
-                    >
+                    <p className="mt-3 text-sm text-dim">
                       {copy.ownAvatarAssetsNote}
                     </p>
                   ) : null}
@@ -509,64 +474,49 @@ export function PreferencesEditor({
       </div>
 
       {hasFaceless ? (
-        <section
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e5e7eb",
-            borderRadius: "8px",
-            padding: "1rem 1.25rem",
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
-          }}
-        >
-          <h2 style={{ margin: 0, fontSize: "1.1rem" }}>
+        <section className="flex flex-col gap-4 rounded-xl border border-edge bg-panel px-5 py-4">
+          <h2 className="font-display text-xl text-fog">
             {copy.facelessStyle.title}
           </h2>
 
-          <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-            <span style={{ fontWeight: 500 }}>{copy.facelessStyle.voice}</span>
-            <Dropdown
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="pref-faceless-voice" className="font-medium text-fog">
+              {copy.facelessStyle.voice}
+            </Label>
+            <SimpleSelect
+              id="pref-faceless-voice"
               value={(draftStyle ?? FACELESS_STYLE_DEFAULT).voice}
               options={voiceOptions}
-              onChange={(e) =>
-                setStyleField("voice", e.value as FacelessStyle["voice"])
-              }
+              onChange={(value) => setStyleField("voice", value)}
               disabled={pending}
-              style={{ width: "100%" }}
             />
-          </label>
+          </div>
 
-          <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-            <span style={{ fontWeight: 500 }}>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="pref-faceless-text" className="font-medium text-fog">
               {copy.facelessStyle.onScreenText}
-            </span>
-            <Dropdown
+            </Label>
+            <SimpleSelect
+              id="pref-faceless-text"
               value={(draftStyle ?? FACELESS_STYLE_DEFAULT).onScreenText}
               options={onScreenTextOptions}
-              onChange={(e) =>
-                setStyleField(
-                  "onScreenText",
-                  e.value as FacelessStyle["onScreenText"],
-                )
-              }
+              onChange={(value) => setStyleField("onScreenText", value)}
               disabled={pending}
-              style={{ width: "100%" }}
             />
-          </label>
+          </div>
 
-          <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-            <span style={{ fontWeight: 500 }}>{copy.facelessStyle.broll}</span>
-            <Dropdown
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="pref-faceless-broll" className="font-medium text-fog">
+              {copy.facelessStyle.broll}
+            </Label>
+            <SimpleSelect
+              id="pref-faceless-broll"
               value={(draftStyle ?? FACELESS_STYLE_DEFAULT).broll}
               options={brollOptions}
-              onChange={(e) =>
-                setStyleField("broll", e.value as FacelessStyle["broll"])
-              }
+              onChange={(value) => setStyleField("broll", value)}
               disabled={pending}
-              style={{ width: "100%" }}
             />
-          </label>
+          </div>
         </section>
       ) : null}
 
@@ -583,10 +533,10 @@ export function PreferencesEditor({
       />
 
       {showGenericDisclosure ? (
-        <Message
+        <StatusAlert
           severity={disclosureSeverity}
           text={copy.disclosureNote}
-          style={{ width: "100%" }}
+          className="w-full"
         />
       ) : null}
 
@@ -612,31 +562,11 @@ function PreferencesShell({
   children: ReactNode;
 }) {
   return (
-    <div
-      style={{
-        maxWidth: 760,
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.25rem",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: "1rem",
-          flexWrap: "wrap",
-        }}
-      >
+    <div className="mx-auto flex max-w-[760px] flex-col gap-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem" }}>{title}</h1>
-          {subtitle ? (
-            <p style={{ margin: 0, color: "#6b7280", fontSize: "0.875rem" }}>
-              {subtitle}
-            </p>
-          ) : null}
+          <h1 className="mb-2 font-display text-4xl text-fog">{title}</h1>
+          {subtitle ? <p className="text-sm text-dim">{subtitle}</p> : null}
         </div>
         {actions}
       </div>

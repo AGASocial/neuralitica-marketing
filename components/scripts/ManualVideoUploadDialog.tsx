@@ -1,9 +1,18 @@
 "use client";
 
 import { useRef, useState, type ChangeEvent } from "react";
-import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
-import { Message } from "primereact/message";
+import { UploadIcon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
 
 import type { OperatorVideoJobSummaryDto } from "@/lib/contracts/video-job";
 import type { UploadManualVideoJobErrorCode } from "@/lib/contracts/manual-video-upload";
@@ -175,64 +184,61 @@ export function ManualVideoUploadDialog({
     }
   }
 
-  const footer = (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "flex-end" }}>
-      <Button
-        type="button"
-        label={copy.cancel}
-        severity="secondary"
-        outlined
-        disabled={pending}
-        onClick={handleHide}
-      />
-      <Button
-        type="button"
-        label={copy.submit}
-        icon="pi pi-upload"
-        loading={pending}
-        disabled={pending || disabled || !selectedFile}
-        onClick={() => void handleSubmit()}
-      />
-    </div>
-  );
-
   return (
     <Dialog
-      header={copy.title}
-      visible={visible}
-      onHide={handleHide}
-      footer={footer}
-      style={{ width: "min(100%, 32rem)" }}
-      modal
-      closable={!pending}
-      dismissableMask={!pending}
+      open={visible}
+      onOpenChange={(open) => {
+        if (!open) {
+          handleHide();
+        }
+      }}
     >
-      <p style={{ margin: "0 0 1rem", fontSize: "0.875rem", color: "#6b7280" }}>
-        {hintText}
-      </p>
+      <DialogContent
+        className="w-[min(100%,32rem)] border-edge bg-panel text-fog sm:max-w-[32rem]"
+        showCloseButton={!pending}
+        aria-describedby={undefined}
+        onInteractOutside={(event) => {
+          if (pending) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle className="font-display text-2xl">{copy.title}</DialogTitle>
+        </DialogHeader>
+        <p className="m-0 text-sm text-dim">{hintText}</p>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".mp4,.mov,video/mp4,video/quicktime"
-        disabled={pending || disabled}
-        onChange={handleFileChange}
-        style={{ width: "100%", fontSize: "0.875rem" }}
-      />
-
-      {selectedFile ? (
-        <p style={{ margin: "0.75rem 0 0", fontSize: "0.8125rem", color: "#374151" }}>
-          {selectedFile.name}
-        </p>
-      ) : null}
-
-      {errorMessage ? (
-        <Message
-          severity="error"
-          text={errorMessage}
-          style={{ width: "100%", marginTop: "1rem" }}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".mp4,.mov,video/mp4,video/quicktime"
+          disabled={pending || disabled}
+          onChange={handleFileChange}
+          className="w-full text-sm text-fog file:mr-3 file:rounded-md file:border file:border-edge file:bg-deep file:px-3 file:py-1.5 file:text-sm file:text-fog"
         />
-      ) : null}
+
+        {selectedFile ? (
+          <p className="m-0 text-[0.8125rem] text-fog">{selectedFile.name}</p>
+        ) : null}
+
+        {errorMessage ? (
+          <StatusAlert severity="error" text={errorMessage} className="w-full" />
+        ) : null}
+
+        <DialogFooter className="flex-wrap gap-2">
+          <Button type="button" variant="outline" disabled={pending} onClick={handleHide}>
+            {copy.cancel}
+          </Button>
+          <Button
+            type="button"
+            disabled={pending || disabled || !selectedFile}
+            onClick={() => void handleSubmit()}
+          >
+            {pending ? <Spinner className="size-4 text-current" /> : <UploadIcon />}
+            {copy.submit}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }
@@ -301,17 +307,17 @@ export function ManualVideoUploadControl({
       : null;
 
   return (
-    <div style={{ marginBottom: "0.75rem" }}>
+    <div className="mb-3">
       <Button
         type="button"
-        label={copy.button}
-        icon="pi pi-upload"
-        size="small"
-        severity={primary ? undefined : "secondary"}
-        outlined={!primary}
+        size="sm"
+        variant={primary ? "default" : "outline"}
         disabled={disabled}
         onClick={() => setDialogVisible(true)}
-      />
+      >
+        <UploadIcon />
+        {copy.button}
+      </Button>
       <ManualVideoUploadDialog
         reelScriptId={reelScriptId}
         clientId={clientId}

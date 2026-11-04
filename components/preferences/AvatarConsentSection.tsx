@@ -1,12 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import { Button } from "primereact/button";
-import { Checkbox } from "primereact/checkbox";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { Message } from "primereact/message";
-import { Toast } from "primereact/toast";
+import { useState } from "react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
 
 import type {
   AvatarConsentForClientResult,
@@ -138,10 +141,10 @@ export function AvatarConsentSection({
   preferencesPending = false,
 }: AvatarConsentSectionProps) {
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
   const [affirmed, setAffirmed] = useState(false);
   const [pending, setPending] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
+  const [confirmRevokeOpen, setConfirmRevokeOpen] = useState(false);
 
   const controlsDisabled = pending || preferencesPending;
   const showStaleAllowlistWarning =
@@ -176,21 +179,13 @@ export function AvatarConsentSection({
 
       if (result.ok) {
         setAffirmed(false);
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastGrantSuccess,
-          life: 5000,
-        });
+        toast.success(copy.toastGrantSuccess, { duration: 5000 });
         router.refresh();
         return;
       }
 
       if (result.error.code === "ALREADY_ACTIVE") {
-        toastRef.current?.show({
-          severity: "info",
-          summary: copy.toastAlreadyActive,
-          life: 5000,
-        });
+        toast.info(copy.toastAlreadyActive, { duration: 5000 });
         router.refresh();
         return;
       }
@@ -218,11 +213,7 @@ export function AvatarConsentSection({
 
       if (result.ok) {
         setAffirmed(false);
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastRevokeSuccess,
-          life: 5000,
-        });
+        toast.success(copy.toastRevokeSuccess, { duration: 5000 });
         router.refresh();
         return;
       }
@@ -242,142 +233,108 @@ export function AvatarConsentSection({
       return;
     }
 
-    confirmDialog({
-      header: copy.confirmRevoke.header,
-      message: copy.confirmRevoke.message,
-      acceptLabel: copy.confirmRevoke.accept,
-      rejectLabel: copy.confirmRevoke.reject,
-      acceptClassName: "p-button-danger",
-      accept: () => void performRevoke(),
-    });
+    setConfirmRevokeOpen(true);
   }
 
   return (
-    <section
-      style={{
-        background: "#ffffff",
-        border: "1px solid #e5e7eb",
-        borderRadius: "8px",
-        padding: "1rem 1.25rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem",
-      }}
-    >
-      <ConfirmDialog />
-      <Toast ref={toastRef} position="top-right" />
+    <section className="flex flex-col gap-4 rounded-xl border border-edge bg-panel px-5 py-4">
+      <ConfirmDialog
+        open={confirmRevokeOpen}
+        onOpenChange={setConfirmRevokeOpen}
+        header={copy.confirmRevoke.header}
+        message={copy.confirmRevoke.message}
+        acceptLabel={copy.confirmRevoke.accept}
+        rejectLabel={copy.confirmRevoke.reject}
+        destructive
+        onAccept={() => void performRevoke()}
+      />
 
       <div>
-        <h2 style={{ margin: "0 0 0.35rem", fontSize: "1.1rem" }}>
-          {copy.title}
-        </h2>
-        <p
-          style={{
-            margin: 0,
-            color: "#6b7280",
-            fontSize: "0.875rem",
-          }}
-        >
-          {copy.versionLabel.replace(
-            "{version}",
-            consent.currentConsentVersion,
-          )}
+        <h2 className="mb-1.5 font-display text-xl text-fog">{copy.title}</h2>
+        <p className="text-sm text-dim">
+          {copy.versionLabel.replace("{version}", consent.currentConsentVersion)}
         </p>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.75rem",
-          color: "#374151",
-          fontSize: "0.9375rem",
-          lineHeight: 1.55,
-        }}
-      >
+      <div className="flex flex-col gap-3 text-[0.9375rem] leading-[1.55] text-fog">
         {copy.disclosureV1.map((paragraph) => (
-          <p key={paragraph.slice(0, 48)} style={{ margin: 0 }}>
-            {paragraph}
-          </p>
+          <p key={paragraph.slice(0, 48)}>{paragraph}</p>
         ))}
       </div>
 
       {banner ? (
-        <Message severity="error" text={banner} style={{ width: "100%" }} />
+        <StatusAlert severity="error" text={banner} className="w-full" />
       ) : null}
 
       {inactiveReason && !consent.active ? (
-        <Message severity="info" text={inactiveReason} style={{ width: "100%" }} />
+        <StatusAlert severity="info" text={inactiveReason} className="w-full" />
       ) : null}
 
       {consent.active ? (
-        <Message
+        <StatusAlert
           severity="success"
           text={copy.consentedAt.replace(
             "{date}",
             formatTimestamp(consent.consentedAt, locale),
           )}
-          style={{ width: "100%" }}
+          className="w-full"
         />
       ) : null}
 
       {showStaleAllowlistWarning ? (
-        <Message
+        <StatusAlert
           severity="warn"
           text={copy.staleAllowlistWarning}
-          style={{ width: "100%" }}
+          className="w-full"
         />
       ) : null}
 
       {!consent.active ? (
-        <div
-          style={{
-            display: "flex",
-            gap: "0.75rem",
-            alignItems: "flex-start",
-          }}
-        >
+        <div className="flex items-start gap-3">
           <Checkbox
-            inputId="avatar-consent-affirmed"
+            id="avatar-consent-affirmed"
             checked={affirmed}
             disabled={controlsDisabled}
-            onChange={(e) => {
+            onCheckedChange={(value) => {
               clearFeedback();
-              setAffirmed(Boolean(e.checked));
+              setAffirmed(value === true);
             }}
+            className="mt-1"
           />
-          <label
+          <Label
             htmlFor="avatar-consent-affirmed"
-            style={{
-              flex: 1,
-              cursor: controlsDisabled ? "default" : "pointer",
-              lineHeight: 1.45,
-            }}
+            className={
+              controlsDisabled
+                ? "flex-1 cursor-default leading-[1.45] text-fog"
+                : "flex-1 cursor-pointer leading-[1.45] text-fog"
+            }
           >
             {copy.affirmationLabel}
-          </label>
+          </Label>
         </div>
       ) : null}
 
-      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+      <div className="flex flex-wrap gap-2">
         {!consent.active ? (
           <Button
             type="button"
-            label={pending ? copy.granting : copy.grant}
             onClick={() => void handleGrant()}
             disabled={controlsDisabled || !affirmed}
-            loading={pending}
-          />
+          >
+            {pending ? <Spinner className="size-4 text-current" /> : null}
+            {pending ? copy.granting : copy.grant}
+          </Button>
         ) : (
           <Button
             type="button"
-            label={pending ? copy.revoking : copy.revoke}
-            severity="danger"
-            outlined
+            variant="outline"
+            className="border-rose/60 text-rose hover:bg-rose/10 hover:text-rose"
             onClick={requestRevoke}
             disabled={controlsDisabled}
-            loading={pending}
-          />
+          >
+            {pending ? <Spinner className="size-4 text-current" /> : null}
+            {pending ? copy.revoking : copy.revoke}
+          </Button>
         )}
       </div>
     </section>

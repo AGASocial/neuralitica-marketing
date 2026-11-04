@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "primereact/button";
-import { Message } from "primereact/message";
+
+import { DownloadIcon, FileIcon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { StatusAlert } from "@/components/ui/status-alert";
 
 import { buildReadyToPublishDownloadUrls } from "@/lib/contracts/approval";
 
@@ -36,76 +39,63 @@ export function ReadyToPublishDownloadPanel({
   return (
     <section
       aria-label={copy.title}
-      style={{
-        marginTop: "1.5rem",
-        padding: "1rem 1.1rem",
-        borderRadius: "8px",
-        border: "1px solid #bbf7d0",
-        background: "#f0fdf4",
-      }}
+      className="mt-6 py-4 px-[1.1rem] rounded-lg border border-success/40 bg-success/10"
     >
       <h2
-        style={{
-          margin: "0 0 0.35rem",
-          fontSize: "1.05rem",
-          color: "#14532d",
-        }}
+        className="font-display text-fog mt-0 mx-0 mb-[0.35rem] text-[1.05rem] text-success"
       >
         {copy.title}
       </h2>
-      <p style={{ margin: "0 0 1rem", color: "#166534", lineHeight: 1.45 }}>
+      <p className="mt-0 mx-0 mb-4 text-success leading-[1.45]">
         {copy.subtitle}
       </p>
-      <Message
+      <StatusAlert
         severity="info"
         text={copy.downloadHint}
-        style={{ width: "100%", marginBottom: "1rem" }}
+        className="w-full mb-4"
       />
       <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "0.65rem",
-          alignItems: "center",
-        }}
+        className="flex flex-wrap gap-[0.65rem] items-center"
       >
         <a
           href={downloads.videoDownloadUrl}
           download
-          style={{ textDecoration: "none" }}
+          className="no-underline"
         >
           <Button
             type="button"
-            label={copy.downloadVideo}
-            icon="pi pi-download"
-            style={{ minHeight: "2.75rem" }}
-          />
+            className="min-h-[2.75rem]"
+          >
+            <DownloadIcon />
+            {copy.downloadVideo}
+          </Button>
         </a>
         <a
           href={downloads.captionDownloadUrl}
           download
-          style={{ textDecoration: "none" }}
+          className="no-underline"
         >
           <Button
             type="button"
-            label={copy.downloadCaption}
-            icon="pi pi-file"
-            severity="secondary"
-            outlined
-            style={{ minHeight: "2.75rem" }}
-          />
+            variant="outline"
+            className="min-h-[2.75rem]"
+          >
+            <FileIcon />
+            {copy.downloadCaption}
+          </Button>
         </a>
         {showDetailLink ? (
           <Link
             href={`/ready-to-publish/${approvalId}`}
-            style={{ textDecoration: "none" }}
+            className="no-underline"
           >
             <Button
               type="button"
-              label={copy.viewDetail}
-              text
-              style={{ minHeight: "2.75rem" }}
-            />
+              variant="ghost"
+              className="min-h-[2.75rem]"
+            >
+              {copy.viewDetail}
+            </Button>
           </Link>
         ) : null}
       </div>

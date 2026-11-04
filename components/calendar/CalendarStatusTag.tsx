@@ -1,9 +1,14 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { Tag } from "primereact/tag";
+import { RefreshCw } from "lucide-react";
 
+import {
+  CAMPANA_BADGE_CLASS,
+  mapPipelineStatusToReelBadge,
+} from "@/components/campana/pipeline-badge";
+import { Badge } from "@/components/ui/badge";
 import type { CalendarPipelineStatus } from "@/lib/contracts/calendar";
+import { cn } from "@/lib/utils";
 
 type CalendarStatusTagProps = {
   status: CalendarPipelineStatus;
@@ -12,46 +17,30 @@ type CalendarStatusTagProps = {
   changesRequestedLabel?: string;
 };
 
-const STATUS_STYLE: Record<
-  CalendarPipelineStatus,
-  { severity?: "success" | "info" | "warning" | "secondary"; style?: CSSProperties }
-> = {
-  draft: { severity: "secondary" },
-  generating: { severity: "info" },
-  qa: { severity: "warning" },
-  pending: {
-    style: {
-      background: "#ea580c",
-      color: "#ffffff",
-    },
-  },
-  approved: { severity: "success" },
-  published: {
-    style: {
-      background: "#7c3aed",
-      color: "#ffffff",
-    },
-  },
-};
-
 export function CalendarStatusTag({
   status,
   label,
   changesRequested = false,
   changesRequestedLabel,
 }: CalendarStatusTagProps) {
-  const config = STATUS_STYLE[status];
+  const badge = mapPipelineStatusToReelBadge(status);
 
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", alignItems: "center" }}>
-      <Tag value={label} severity={config.severity} style={config.style} />
+    <div className="flex flex-wrap items-center gap-1.5">
+      <Badge
+        data-status={status}
+        className={cn("font-bold", CAMPANA_BADGE_CLASS[badge])}
+      >
+        {label}
+      </Badge>
       {status === "pending" && changesRequested && changesRequestedLabel ? (
-        <Tag
-          value={changesRequestedLabel}
-          severity="warning"
-          icon="pi pi-refresh"
-          style={{ fontSize: "0.75rem" }}
-        />
+        <Badge
+          variant="outline"
+          className="border-butter/50 bg-butter/15 text-[11px] text-butter"
+        >
+          <RefreshCw aria-hidden />
+          {changesRequestedLabel}
+        </Badge>
       ) : null}
     </div>
   );

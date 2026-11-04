@@ -63,7 +63,9 @@
       "scripts": "Scripts",
       "calendar": "Content calendar",
       "costPolicy": "Cost policy"
-    }
+    },
+    "navAriaLabel": "Main navigation",
+    "mobileNavAriaLabel": "Mobile navigation"
   },
   "auth": {
     "localeSwitcher": {
@@ -110,7 +112,9 @@
         "displayName": {
           "too_small": "Display name is required."
         }
-      }
+      },
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
     },
     "login": {
       "title": "Log in",
@@ -134,7 +138,9 @@
         "password": {
           "too_small": "Enter your password."
         }
-      }
+      },
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
     },
     "reset": {
       "title": "Reset your password",
@@ -167,7 +173,9 @@
         "password": {
           "too_small": "Enter a new password."
         }
-      }
+      },
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
     },
     "pending": {
       "title": "Account pending activation",
@@ -176,7 +184,8 @@
       "logoutHint": "You can log out and return later.",
       "logout": "Log out",
       "logoutPending": "Logging out…"
-    }
+    },
+    "shellTagline": "Content production for local service businesses."
   },
   "interview": {
     "title": "Initial interview",
@@ -1948,5 +1957,36 @@
         "runNotResumable": "This run cannot be resumed right now."
       }
     }
+  },
+  "campana": {
+    "weeksAriaLabel": "Campaign weeks",
+    "reelsHeading": "Reels for this week",
+    "viewCalendar": "View calendar",
+    "scriptsHeading": "Scripts",
+    "scriptsTotal": "{count} total",
+    "strategyHeading": "Strategy",
+    "newReel": "New reel",
+    "newReelHint": "from a script",
+    "rendering": "Rendering",
+    "status": {
+      "published": "Published",
+      "scheduled": "Scheduled",
+      "review": "Review",
+      "rendering": "Rendering",
+      "draft": "Draft",
+      "approved": "Approved",
+      "inProgress": "In progress",
+      "ready": "Scripts ready",
+      "planned": "To plan"
+    },
+    "weekLabel": "Week {n}",
+    "weekMeta": "{client} · week of {range}",
+    "slotsCount": "{count} reels",
+    "slotsProgress": "{done} of {total}",
+    "openScript": "Open script",
+    "createVideo": "Create video",
+    "editScript": "Edit",
+    "insightsHeading": "Performance",
+    "editBrief": "Edit brief"
   }
 }

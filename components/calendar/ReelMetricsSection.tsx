@@ -2,14 +2,17 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
-import { InputNumber } from "primereact/inputnumber";
-import { Message } from "primereact/message";
+import { SaveIcon } from "lucide-react";
 
 import {
   mapReelMetricsError,
   type ReelMetricsErrorCopy,
 } from "@/components/calendar/map-reel-metrics-error";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
 import type { CalendarSlotDetailDto } from "@/lib/contracts/calendar";
 import { REEL_METRICS_MAX_VALUE, type ReelMetricsDto } from "@/lib/contracts/reel-metrics";
 import { upsertReelMetrics } from "@/lib/metrics/actions/upsert-reel-metrics";
@@ -143,55 +146,65 @@ export function ReelMetricsSection({
 
   return (
     <div
-      style={{
-        display: "grid",
-        gap: "0.75rem",
-        paddingTop: "0.25rem",
-        borderTop: "1px solid #e5e7eb",
-      }}
+      className="grid gap-3 pt-1 border-t border-edge"
     >
-      <div style={{ fontWeight: 600, fontSize: "0.9375rem" }}>{copy.title}</div>
+      <div className="font-display text-lg font-semibold text-fog">{copy.title}</div>
 
       {metrics?.recordedAt ? (
-        <div style={{ fontSize: "0.8125rem", color: "#6b7280" }}>
+        <div className="text-[0.8125rem] text-dim">
           {copy.recordedAtLabel}: {formatRecordedAt(metrics.recordedAt, locale)}
         </div>
       ) : null}
 
       {!editable ? (
-        <Message severity="info" text={copy.editWindowExpired} style={{ width: "100%" }} />
+        <StatusAlert severity="info" text={copy.editWindowExpired} className="w-full" />
       ) : null}
 
       {serverError ? (
-        <Message severity="error" text={serverError} style={{ width: "100%" }} />
+        <StatusAlert severity="error" text={serverError} className="w-full" />
       ) : null}
 
       {successMessage ? (
-        <Message severity="success" text={successMessage} style={{ width: "100%" }} />
+        <StatusAlert severity="success" text={successMessage} className="w-full" />
       ) : null}
 
       {fieldConfig.map(({ field, label }) => (
         <div key={field}>
-          <label
+          <Label
             htmlFor={`reel-metrics-${field}`}
-            style={{ display: "block", fontWeight: 600, marginBottom: "0.5rem", fontSize: "0.875rem" }}
+            className="mb-2 block text-sm font-semibold"
           >
             {label}
-          </label>
-          <InputNumber
-            inputId={`reel-metrics-${field}`}
-            value={values[field]}
-            onValueChange={(event) => updateField(field, event.value ?? null)}
-            useGrouping={false}
+          </Label>
+          <Input
+            id={`reel-metrics-${field}`}
+            type="number"
+            inputMode="numeric"
+            step={1}
+            value={values[field] ?? ""}
+            onChange={(event) => {
+              const raw = event.target.value;
+              if (raw === "") {
+                updateField(field, null);
+                return;
+              }
+              const parsed = Math.trunc(Number(raw));
+              if (Number.isNaN(parsed)) {
+                return;
+              }
+              updateField(
+                field,
+                Math.min(REEL_METRICS_MAX_VALUE, Math.max(0, parsed)),
+              );
+            }}
             min={0}
             max={REEL_METRICS_MAX_VALUE}
             disabled={pending || !editable}
-            style={{ width: "100%" }}
-            inputStyle={{ width: "100%" }}
-            invalid={Boolean(fieldErrors[field])}
+            aria-invalid={Boolean(fieldErrors[field])}
+            className="w-full"
           />
           {fieldErrors[field] ? (
-            <small style={{ color: "#dc2626", display: "block", marginTop: "0.35rem" }}>
+            <small className="text-rose block mt-[0.35rem]">
               {fieldErrors[field]}
             </small>
           ) : null}
@@ -201,12 +214,13 @@ export function ReelMetricsSection({
       {editable ? (
         <Button
           type="button"
-          label={pending ? copy.savePending : copy.save}
-          icon={pending ? "pi pi-spin pi-spinner" : "pi pi-save"}
           disabled={pending}
-          style={{ width: "100%" }}
+          className="w-full"
           onClick={handleSave}
-        />
+        >
+          {pending ? <Spinner className="size-4 text-current" /> : <SaveIcon />}
+          {pending ? copy.savePending : copy.save}
+        </Button>
       ) : null}
     </div>
   );

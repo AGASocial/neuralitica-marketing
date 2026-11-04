@@ -1,8 +1,8 @@
 "use client";
 
-import { RadioButton } from "primereact/radiobutton";
-import { Message } from "primereact/message";
-
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { StatusAlert } from "@/components/ui/status-alert";
 import type { TtsVoiceId, TtsVoiceOptionDto } from "@/lib/contracts/visual-preferences";
 
 export type VoicePickerCopy = {
@@ -43,11 +43,7 @@ export function VoicePickerSection({
 }: VoicePickerSectionProps) {
   if (!visible) {
     return (
-      <Message
-        severity="info"
-        text={copy.hiddenNoAiVoice}
-        style={{ width: "100%" }}
-      />
+      <StatusAlert severity="info" text={copy.hiddenNoAiVoice} className="w-full" />
     );
   }
 
@@ -59,78 +55,54 @@ export function VoicePickerSection({
   const esVoices = availableVoices.filter((voice) => voice.locale === "es");
 
   return (
-    <section
-      style={{
-        background: "#ffffff",
-        border: "1px solid #e5e7eb",
-        borderRadius: "8px",
-        padding: "1rem 1.25rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem",
-      }}
-    >
+    <section className="flex flex-col gap-4 rounded-xl border border-edge bg-panel px-5 py-4">
       <div>
-        <h2 style={{ margin: "0 0 0.35rem", fontSize: "1.1rem" }}>{copy.title}</h2>
-        <p style={{ margin: 0, color: "#6b7280", fontSize: "0.875rem" }}>
-          {copy.aiOnlyNote}
-        </p>
+        <h2 className="mb-1.5 font-display text-xl text-fog">{copy.title}</h2>
+        <p className="text-sm text-dim">{copy.aiOnlyNote}</p>
       </div>
 
-      {[enVoices, esVoices].map((group) =>
-        group.length === 0 ? null : (
-          <div
-            key={group[0]!.locale}
-            style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
-          >
-            {group.map((voice) => {
-              const inputId = `pref-voice-${voice.id}`;
-              const checked = selectedVoiceId === voice.id;
+      <RadioGroup
+        name="pref-voice"
+        value={selectedVoiceId ?? ""}
+        onValueChange={(value) => onSelect(value as TtsVoiceId)}
+        disabled={pending}
+        className="gap-4"
+      >
+        {[enVoices, esVoices].map((group) =>
+          group.length === 0 ? null : (
+            <div key={group[0]!.locale} className="flex flex-col gap-3">
+              {group.map((voice) => {
+                const inputId = `pref-voice-${voice.id}`;
 
-              return (
-                <div
-                  key={voice.id}
-                  style={{
-                    display: "flex",
-                    gap: "0.75rem",
-                    alignItems: "flex-start",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <RadioButton
-                    inputId={inputId}
-                    name="pref-voice"
-                    value={voice.id}
-                    checked={checked}
-                    disabled={pending}
-                    onChange={() => onSelect(voice.id)}
-                  />
-                  <div style={{ flex: 1, minWidth: "12rem" }}>
-                    <label
-                      htmlFor={inputId}
-                      style={{
-                        display: "block",
-                        fontWeight: 500,
-                        marginBottom: "0.35rem",
-                        cursor: pending ? "default" : "pointer",
-                      }}
-                    >
-                      {resolveVoiceLabel(voice, copy)}
-                    </label>
-                    <audio
-                      controls
-                      preload="none"
-                      src={voice.sampleUrl}
-                      aria-label={`${copy.sampleLabel}: ${resolveVoiceLabel(voice, copy)}`}
-                      style={{ width: "100%", maxWidth: "320px", height: "32px" }}
-                    />
+                return (
+                  <div key={voice.id} className="flex flex-wrap items-start gap-3">
+                    <RadioGroupItem value={voice.id} id={inputId} className="mt-1" />
+                    <div className="min-w-48 flex-1">
+                      <Label
+                        htmlFor={inputId}
+                        className={
+                          pending
+                            ? "mb-1.5 block cursor-default font-medium text-fog"
+                            : "mb-1.5 block cursor-pointer font-medium text-fog"
+                        }
+                      >
+                        {resolveVoiceLabel(voice, copy)}
+                      </Label>
+                      <audio
+                        controls
+                        preload="none"
+                        src={voice.sampleUrl}
+                        aria-label={`${copy.sampleLabel}: ${resolveVoiceLabel(voice, copy)}`}
+                        className="h-8 w-full max-w-80"
+                      />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        ),
-      )}
+                );
+              })}
+            </div>
+          ),
+        )}
+      </RadioGroup>
     </section>
   );
 }

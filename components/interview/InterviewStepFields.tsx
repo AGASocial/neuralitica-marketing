@@ -1,10 +1,12 @@
 "use client";
 
-import { Button } from "primereact/button";
-import { InputText } from "primereact/inputtext";
-import { InputTextarea } from "primereact/inputtextarea";
+import { XIcon } from "lucide-react";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import type { InterviewStepKey } from "@/lib/contracts/interview";
 
 import {
@@ -55,14 +57,12 @@ export function InterviewStepFields({
 
   if (isTextStep(step)) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        <label htmlFor={`interview-${step}`} style={{ fontWeight: 600 }}>
+      <div className="flex flex-col gap-3">
+        <Label htmlFor={`interview-${step}`} className="font-semibold text-fog">
           {stepCopy.question}
-        </label>
-        <p style={{ margin: 0, color: "#4b5563", fontSize: "0.9rem" }}>
-          {stepCopy.helper}
-        </p>
-        <InputTextarea
+        </Label>
+        <p className="text-[0.9rem] text-dim">{stepCopy.helper}</p>
+        <Textarea
           id={`interview-${step}`}
           value={description}
           onChange={(event) => {
@@ -71,10 +71,9 @@ export function InterviewStepFields({
           }}
           placeholder={stepCopy.placeholder}
           rows={6}
-          autoResize
           disabled={pending}
           maxLength={MAX_DESCRIPTION_LENGTH}
-          style={{ width: "100%" }}
+          className="w-full"
         />
       </div>
     );
@@ -111,59 +110,44 @@ export function InterviewStepFields({
     draftItem.trim().length > MAX_ITEM_LENGTH;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-      <span id={`interview-${step}-label`} style={{ fontWeight: 600 }}>
+    <div className="flex flex-col gap-3">
+      <span id={`interview-${step}-label`} className="font-semibold text-fog">
         {stepCopy.question}
       </span>
-      <p style={{ margin: 0, color: "#4b5563", fontSize: "0.9rem" }}>
-        {stepCopy.helper}
-      </p>
-      <p style={{ margin: 0, color: "#6b7280", fontSize: "0.85rem" }}>
+      <p className="text-[0.9rem] text-dim">{stepCopy.helper}</p>
+      <p className="text-[0.85rem] text-dim">
         {optional ? copy.chipsHintOptional : copy.chipsHintRequired}
       </p>
 
       {items.length > 0 ? (
         <ul
           aria-labelledby={`interview-${step}-label`}
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "0.5rem",
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-          }}
+          className="m-0 flex list-none flex-wrap gap-2 p-0"
         >
           {items.map((item, index) => (
             <li
               key={`${index}-${item}`}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.15rem",
-                padding: "0.2rem 0.35rem 0.2rem 0.75rem",
-                background: "#eef2ff",
-                borderRadius: "999px",
-                fontSize: "0.875rem",
-              }}
+              className="inline-flex items-center gap-1 rounded-full border border-edge bg-deep/60 py-1 pr-1 pl-3 text-sm text-fog"
             >
               {item}
               <Button
                 type="button"
-                icon="pi pi-times"
-                rounded
-                text
+                variant="ghost"
+                size="icon-xs"
+                className="rounded-full"
                 aria-label={copy.removeItem}
                 onClick={() => removeItem(index)}
                 disabled={pending}
-              />
+              >
+                <XIcon />
+              </Button>
             </li>
           ))}
         </ul>
       ) : null}
 
-      <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
-        <InputText
+      <div className="flex items-start gap-2">
+        <Input
           id={`interview-${step}-item`}
           value={draftItem}
           onChange={(event) => setDraftItem(event.target.value)}
@@ -176,15 +160,12 @@ export function InterviewStepFields({
           placeholder={stepCopy.placeholder || copy.itemPlaceholder}
           disabled={pending || items.length >= MAX_LIST_ITEMS}
           maxLength={MAX_ITEM_LENGTH}
-          style={{ flex: 1 }}
+          className="flex-1"
           aria-labelledby={`interview-${step}-label`}
         />
-        <Button
-          type="button"
-          label={copy.addItem}
-          onClick={addItem}
-          disabled={addBlocked}
-        />
+        <Button type="button" onClick={addItem} disabled={addBlocked}>
+          {copy.addItem}
+        </Button>
       </div>
     </div>
   );

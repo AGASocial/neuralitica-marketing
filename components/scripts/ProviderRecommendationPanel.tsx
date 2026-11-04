@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Message } from "primereact/message";
-import { Skeleton } from "primereact/skeleton";
-import { Tag } from "primereact/tag";
+
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 import type { AssetRole } from "@/lib/contracts/providers";
 import type {
@@ -120,34 +121,28 @@ export function ProviderRecommendationPanel({
 
   return (
     <section
-      style={{
-        marginBottom: "1rem",
-        padding: "0.75rem 1rem",
-        border: "1px solid #e5e7eb",
-        borderRadius: "6px",
-        background: "#f9fafb",
-      }}
+      className="mb-4 py-3 px-4 border border-edge rounded-md bg-panel"
       aria-label={copy.title}
     >
-      <h3 style={{ margin: "0 0 0.75rem", fontSize: "0.95rem", fontWeight: 600 }}>
+      <h3 className="font-display text-fog mt-0 mx-0 mb-3 text-[0.95rem] font-semibold">
         {copy.title}
       </h3>
 
       {state.status === "loading" || state.status === "idle" ? (
-        <div style={{ display: "grid", gap: "0.5rem" }}>
-          <Skeleton height="1.25rem" />
-          <Skeleton height="3rem" />
+        <div className="grid gap-2">
+          <Skeleton className="h-5 bg-edge" />
+          <Skeleton className="h-12 bg-edge" />
         </div>
       ) : null}
 
       {state.status === "loading" ? (
-        <p style={{ margin: "0.5rem 0 0", color: "#6b7280", fontSize: "0.875rem" }}>
+        <p className="mt-2 mx-0 mb-0 text-dim text-sm">
           {copy.loading}
         </p>
       ) : null}
 
       {state.status === "error" ? (
-        <Message severity="warn" text={state.message} style={{ width: "100%" }} />
+        <StatusAlert severity="warn" text={state.message} className="w-full" />
       ) : null}
 
       {state.status === "success" ? (
@@ -171,39 +166,22 @@ function ProviderRecommendationContent({
   copy: ProviderRecommendationCopy;
 }) {
   return (
-    <div style={{ display: "grid", gap: "0.75rem" }}>
+    <div className="grid gap-3">
       <ul
-        style={{
-          margin: 0,
-          padding: 0,
-          listStyle: "none",
-          display: "grid",
-          gap: "0.5rem",
-        }}
+        className="m-0 p-0 list-none grid gap-2"
       >
         {recommendation.components.map((component) => (
           <li
             key={component.assetRole}
-            style={{
-              padding: "0.5rem 0.75rem",
-              border: "1px solid #e5e7eb",
-              borderRadius: "4px",
-              background: "#ffffff",
-            }}
+            className="py-2 px-3 border border-edge rounded bg-panel"
           >
             <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "0.5rem",
-                alignItems: "center",
-                marginBottom: "0.35rem",
-              }}
+              className="flex flex-wrap gap-2 items-center mb-[0.35rem]"
             >
-              <span style={{ fontWeight: 600, fontSize: "0.875rem" }}>
+              <span className="font-semibold text-sm">
                 {copy.assetRoles[component.assetRole]}
               </span>
-              <Tag
+              <StatusBadge
                 value={copy.tierBadge.replace(
                   "{tier}",
                   copy.providerTierOptions[component.providerTier],
@@ -212,32 +190,27 @@ function ProviderRecommendationContent({
               />
             </div>
             <dl
-              style={{
-                margin: 0,
-                display: "grid",
-                gap: "0.2rem",
-                fontSize: "0.875rem",
-              }}
+              className="m-0 grid gap-[0.2rem] text-sm"
             >
               <div>
-                <dt style={{ display: "inline", color: "#6b7280" }}>
+                <dt className="inline text-dim">
                   {copy.providerLabel}:{" "}
                 </dt>
-                <dd style={{ display: "inline", margin: 0 }}>{component.displayLabel}</dd>
+                <dd className="inline m-0">{component.displayLabel}</dd>
               </div>
               <div>
-                <dt style={{ display: "inline", color: "#6b7280" }}>
+                <dt className="inline text-dim">
                   {copy.costLabel}:{" "}
                 </dt>
-                <dd style={{ display: "inline", margin: 0 }}>
+                <dd className="inline m-0">
                   {formatCentsForDisplay(component.estimatedCostCents, locale)}
                 </dd>
               </div>
               <div>
-                <dt style={{ display: "inline", color: "#6b7280" }}>
+                <dt className="inline text-dim">
                   {copy.rationaleLabel}:{" "}
                 </dt>
-                <dd style={{ display: "inline", margin: 0 }}>
+                <dd className="inline m-0">
                   {copy.rationale[component.rationaleKey]}
                 </dd>
               </div>
@@ -246,14 +219,14 @@ function ProviderRecommendationContent({
         ))}
       </ul>
 
-      <p style={{ margin: 0, fontWeight: 600, fontSize: "0.875rem" }}>
+      <p className="m-0 font-semibold text-sm">
         {copy.projectedTotal.replace(
           "{amount}",
           formatCentsForDisplay(recommendation.projectedTotalCents, locale),
         )}
       </p>
 
-      <p style={{ margin: 0, color: "#6b7280", fontSize: "0.8125rem" }}>
+      <p className="m-0 text-dim text-[0.8125rem]">
         {copy.manualFallbackNote}
       </p>
     </div>

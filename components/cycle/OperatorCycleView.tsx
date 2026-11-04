@@ -1,14 +1,32 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
-import { Dropdown } from "primereact/dropdown";
-import { Message } from "primereact/message";
-import { Tag } from "primereact/tag";
-import { Toast } from "primereact/toast";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { StatusAlert } from "@/components/ui/status-alert";
+import {
+  StatusBadge,
+  type StatusBadgeSeverity,
+} from "@/components/ui/status-badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 import type { WeeklyCycleRunMode, WeeklyCycleStepKey } from "@/lib/contracts/weekly-cycle";
 import type { OperatorClientOption } from "@/lib/content-strategy/load-operator-clients-for-strategy";
@@ -32,6 +50,7 @@ import { previewWeeklyCycleForClient } from "@/lib/orchestration/actions/preview
 import { resumeWeeklyCycleRun } from "@/lib/orchestration/actions/resume-weekly-cycle-run";
 import { triggerWeeklyCycleForClient } from "@/lib/orchestration/actions/trigger-weekly-cycle-for-client";
 import { formatWeekRange } from "@/lib/trend/normalize-week-start";
+import { cn } from "@/lib/utils";
 
 export type OperatorCycleClientOption = OperatorClientOption;
 
@@ -144,7 +163,7 @@ function shiftWeek(weekStart: string, deltaDays: number): string {
 
 function statusSeverity(
   status: OperatorWeeklyCycleRunDto["status"],
-): "success" | "info" | "warning" | "danger" | "secondary" {
+): NonNullable<StatusBadgeSeverity> {
   switch (status) {
     case "completed":
       return "success";
@@ -163,7 +182,7 @@ function statusSeverity(
 
 function slotSeverity(
   status: OperatorWeeklyCycleRunDto["slots"][number]["status"],
-): "success" | "info" | "warning" | "danger" | "secondary" {
+): NonNullable<StatusBadgeSeverity> {
   switch (status) {
     case "ready_for_approval":
       return "success";
@@ -179,11 +198,9 @@ function slotSeverity(
 
 function PageHeader({ copy }: { copy: OperatorCycleCopy }) {
   return (
-    <div style={{ marginBottom: "1.5rem" }}>
-      <h1 style={{ margin: "0 0 0.35rem", fontSize: "1.75rem", fontWeight: 700 }}>
-        {copy.title}
-      </h1>
-      <p style={{ margin: 0, color: "#6b7280", maxWidth: "48rem" }}>{copy.subtitle}</p>
+    <div className="mb-8">
+      <h1 className="font-display text-4xl text-fog sm:text-5xl">{copy.title}</h1>
+      <p className="mt-2 max-w-3xl text-dim">{copy.subtitle}</p>
     </div>
   );
 }
@@ -197,7 +214,6 @@ export function OperatorCycleView({
   copy,
 }: OperatorCycleViewProps) {
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
 
   const [selectedClientId, setSelectedClientId] = useState<string | null>(
     clients[0]?.id ?? null,
@@ -327,11 +343,7 @@ export function OperatorCycleView({
       });
 
       if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastDryRunSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastDryRunSuccess, { duration: 4000 });
         router.refresh();
         return;
       }
@@ -368,11 +380,11 @@ export function OperatorCycleView({
             : result.outcome === "ALREADY_COMPLETED"
               ? copy.toastAlreadyCompleted
               : copy.toastRunStarted;
-        toastRef.current?.show({
-          severity: result.outcome === "STARTED" ? "success" : "info",
-          summary,
-          life: 4000,
-        });
+        if (result.outcome === "STARTED") {
+          toast.success(summary, { duration: 4000 });
+        } else {
+          toast.info(summary, { duration: 4000 });
+        }
         router.refresh();
         return;
       }
@@ -397,11 +409,7 @@ export function OperatorCycleView({
       const result = await resumeWeeklyCycleRun({ runId });
 
       if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastResumeSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastResumeSuccess, { duration: 4000 });
         router.refresh();
         return;
       }
@@ -416,16 +424,17 @@ export function OperatorCycleView({
 
   if (loadFailed) {
     return (
-      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+      <div className="mx-auto max-w-6xl space-y-4">
         <PageHeader copy={copy} />
-        <Message severity="error" text={copy.loadError} style={{ width: "100%" }} />
+        <StatusAlert severity="error" text={copy.loadError} />
         <Button
           type="button"
-          label={copy.backDashboard}
-          className="p-button-text"
-          style={{ marginTop: "1rem" }}
+          variant="ghost"
+          className="text-butter hover:text-butter"
           onClick={() => router.push("/dashboard")}
-        />
+        >
+          {copy.backDashboard}
+        </Button>
       </div>
     );
   }
@@ -435,177 +444,206 @@ export function OperatorCycleView({
   const anyPending = pending !== null;
 
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-      <Toast ref={toastRef} position="top-right" />
+    <div className="mx-auto max-w-6xl">
       <PageHeader copy={copy} />
 
-      {banner ? (
-        <Message
-          severity="error"
-          text={banner}
-          style={{ width: "100%", marginBottom: "1rem" }}
-        />
-      ) : null}
+      {banner ? <StatusAlert severity="error" className="mb-4" text={banner} /> : null}
 
       {clients.length === 0 ? (
-        <Message
-          severity="info"
-          text={copy.emptyClients}
-          style={{ width: "100%", marginBottom: "1.5rem" }}
-        />
+        <StatusAlert severity="info" className="mb-6" text={copy.emptyClients} />
       ) : (
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "1rem",
-            alignItems: "flex-end",
-            marginBottom: "1.5rem",
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-            <label htmlFor="cycle-client-select" style={{ fontWeight: 600, fontSize: "0.9rem" }}>
+        <div className="mb-6 flex flex-wrap items-end gap-4">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="cycle-client-select" className="text-fog">
               {copy.clientLabel}
-            </label>
-            <Dropdown
-              inputId="cycle-client-select"
-              value={selectedClientId}
-              options={clientDropdownOptions}
-              onChange={(event) => setSelectedClientId(event.value as string)}
-              placeholder={copy.clientPlaceholder}
+            </Label>
+            <Select
+              value={selectedClientId ?? ""}
               disabled={anyPending}
-              style={{ minWidth: "240px" }}
-            />
+              onValueChange={(value) => setSelectedClientId(value)}
+            >
+              <SelectTrigger
+                id="cycle-client-select"
+                className="min-w-60 border-edge bg-panel text-fog"
+              >
+                <SelectValue placeholder={copy.clientPlaceholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {clientDropdownOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-            <label htmlFor="cycle-week-select" style={{ fontWeight: 600, fontSize: "0.9rem" }}>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="cycle-week-select" className="text-fog">
               {copy.weekLabel}
-            </label>
-            <Dropdown
-              inputId="cycle-week-select"
+            </Label>
+            <Select
               value={selectedWeekStart}
-              options={weekOptions}
-              onChange={(event) => setSelectedWeekStart(event.value as string)}
               disabled={anyPending}
-              style={{ minWidth: "260px" }}
-            />
+              onValueChange={(value) => setSelectedWeekStart(value)}
+            >
+              <SelectTrigger
+                id="cycle-week-select"
+                className="min-w-64 border-edge bg-panel text-fog"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {weekOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <Button
             type="button"
-            label={dryRunPending ? copy.dryRunPending : copy.dryRunCta}
-            className="p-button-outlined"
-            loading={dryRunPending}
+            variant="outline"
+            className="rounded-full border-edge bg-transparent text-fog hover:bg-panel hover:text-fog"
             disabled={anyPending || !selectedClientId}
             onClick={() => void handleDryRun()}
-          />
+          >
+            {dryRunPending ? (
+              <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden />
+            ) : null}
+            {dryRunPending ? copy.dryRunPending : copy.dryRunCta}
+          </Button>
           <Button
             type="button"
-            label={runPending ? copy.runPending : copy.runCta}
-            loading={runPending}
+            className="rounded-full"
             disabled={anyPending || !selectedClientId}
             onClick={() => void handleRunCycle()}
-          />
+          >
+            {runPending ? (
+              <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden />
+            ) : null}
+            {runPending ? copy.runPending : copy.runCta}
+          </Button>
         </div>
       )}
 
       {runs.length === 0 ? (
-        <Message severity="info" text={copy.emptyRuns} style={{ width: "100%" }} />
+        <StatusAlert severity="info" text={copy.emptyRuns} />
       ) : (
-        <DataTable value={runs} dataKey="runId" stripedRows loading={anyPending}>
-          <Column
-            field="clientDisplayName"
-            header={copy.columns.client}
-            body={(row: OperatorWeeklyCycleRunDto) => row.clientDisplayName}
-          />
-          <Column
-            field="weekStart"
-            header={copy.columns.week}
-            body={(row: OperatorWeeklyCycleRunDto) => formatWeekRange(row.weekStart, locale)}
-          />
-          <Column
-            field="mode"
-            header={copy.columns.mode}
-            body={(row: OperatorWeeklyCycleRunDto) => (
-              <Tag value={copy.mode[row.mode]} severity="secondary" />
-            )}
-          />
-          <Column
-            field="status"
-            header={copy.columns.status}
-            body={(row: OperatorWeeklyCycleRunDto) => (
-              <Tag value={copy.status[row.status]} severity={statusSeverity(row.status)} />
-            )}
-          />
-          <Column
-            header={copy.columns.slots}
-            body={(row: OperatorWeeklyCycleRunDto) => (
-              <div style={{ display: "flex", gap: "0.35rem" }}>
-                {row.slots.map((slot) => {
-                  const stepLabel = slot.currentStep ? copy.steps[slot.currentStep] : null;
-                  const errorLabel = messageForSlotError(slot.errorCode);
-                  const title = [
-                    copy.slotLabel.replace("{index}", String(slot.slotIndex + 1)),
-                    stepLabel,
-                    errorLabel,
-                  ]
-                    .filter(Boolean)
-                    .join(" — ");
-                  return (
-                    <Tag
-                      key={slot.slotIndex}
-                      value={String(slot.slotIndex + 1)}
-                      severity={slotSeverity(slot.status)}
-                      title={title}
-                    />
-                  );
-                })}
-              </div>
-            )}
-          />
-          <Column
-            header={copy.columns.started}
-            body={(row: OperatorWeeklyCycleRunDto) =>
-              row.startedAt
-                ? new Intl.DateTimeFormat(locale, {
-                    dateStyle: "short",
-                    timeStyle: "short",
-                  }).format(new Date(row.startedAt))
-                : copy.notStarted
-            }
-          />
-          <Column
-            header={copy.columns.finished}
-            body={(row: OperatorWeeklyCycleRunDto) =>
-              row.finishedAt
-                ? new Intl.DateTimeFormat(locale, {
-                    dateStyle: "short",
-                    timeStyle: "short",
-                  }).format(new Date(row.finishedAt))
-                : copy.notStarted
-            }
-          />
-          <Column
-            header={copy.columns.actions}
-            body={(row: OperatorWeeklyCycleRunDto) =>
-              row.canResume ? (
-                <Button
-                  type="button"
-                  label={
-                    pending?.kind === "resume" && pending.runId === row.runId
-                      ? copy.resumePending
-                      : copy.resumeCta
-                  }
-                  className="p-button-sm p-button-outlined"
-                  loading={pending?.kind === "resume" && pending.runId === row.runId}
-                  disabled={anyPending}
-                  onClick={() => void handleResume(row.runId)}
-                />
-              ) : null
-            }
-          />
-        </DataTable>
+        <div
+          className={cn(
+            "rounded-xl border border-edge bg-panel/60 p-2 transition-opacity",
+            anyPending && "opacity-70",
+          )}
+          aria-busy={anyPending}
+        >
+          <Table>
+            <TableHeader>
+              <TableRow className="border-edge hover:bg-transparent">
+                <TableHead className="text-dim">{copy.columns.client}</TableHead>
+                <TableHead className="text-dim">{copy.columns.week}</TableHead>
+                <TableHead className="text-dim">{copy.columns.mode}</TableHead>
+                <TableHead className="text-dim">{copy.columns.status}</TableHead>
+                <TableHead className="text-dim">{copy.columns.slots}</TableHead>
+                <TableHead className="text-dim">{copy.columns.started}</TableHead>
+                <TableHead className="text-dim">{copy.columns.finished}</TableHead>
+                <TableHead className="text-dim">{copy.columns.actions}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {runs.map((row) => {
+                const resumeLoading =
+                  pending?.kind === "resume" && pending.runId === row.runId;
+                return (
+                  <TableRow
+                    key={row.runId}
+                    className="border-edge even:bg-deep/40 hover:bg-deep/70"
+                  >
+                    <TableCell className="font-medium text-fog">
+                      {row.clientDisplayName}
+                    </TableCell>
+                    <TableCell>{formatWeekRange(row.weekStart, locale)}</TableCell>
+                    <TableCell>
+                      <StatusBadge severity="secondary" value={copy.mode[row.mode]} />
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge
+                        severity={statusSeverity(row.status)}
+                        value={copy.status[row.status]}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1.5">
+                        {row.slots.map((slot) => {
+                          const stepLabel = slot.currentStep
+                            ? copy.steps[slot.currentStep]
+                            : null;
+                          const errorLabel = messageForSlotError(slot.errorCode);
+                          const title = [
+                            copy.slotLabel.replace(
+                              "{index}",
+                              String(slot.slotIndex + 1),
+                            ),
+                            stepLabel,
+                            errorLabel,
+                          ]
+                            .filter(Boolean)
+                            .join(" — ");
+                          return (
+                            <StatusBadge
+                              key={slot.slotIndex}
+                              value={String(slot.slotIndex + 1)}
+                              severity={slotSeverity(slot.status)}
+                              title={title}
+                            />
+                          );
+                        })}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {row.startedAt
+                        ? new Intl.DateTimeFormat(locale, {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          }).format(new Date(row.startedAt))
+                        : copy.notStarted}
+                    </TableCell>
+                    <TableCell>
+                      {row.finishedAt
+                        ? new Intl.DateTimeFormat(locale, {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          }).format(new Date(row.finishedAt))
+                        : copy.notStarted}
+                    </TableCell>
+                    <TableCell>
+                      {row.canResume ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="rounded-full border-edge bg-transparent text-fog hover:bg-panel hover:text-fog"
+                          disabled={anyPending}
+                          onClick={() => void handleResume(row.runId)}
+                        >
+                          {resumeLoading ? (
+                            <Loader2
+                              className="animate-spin motion-reduce:animate-none"
+                              aria-hidden
+                            />
+                          ) : null}
+                          {resumeLoading ? copy.resumePending : copy.resumeCta}
+                        </Button>
+                      ) : null}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

@@ -1,16 +1,27 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Button } from "primereact/button";
-import { Calendar } from "primereact/calendar";
-import { Dialog } from "primereact/dialog";
-import { InputText } from "primereact/inputtext";
-import { Message } from "primereact/message";
+import { CalendarIcon } from "lucide-react";
 
 import {
   mapMarkPublishedError,
   type MarkPublishedErrorCopy,
 } from "@/components/calendar/map-mark-published-error";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
+
 import type { CalendarSlotDetailDto } from "@/lib/contracts/calendar";
 import { markCalendarSlotPublished } from "@/lib/calendar/actions/mark-calendar-slot-published";
 
@@ -124,85 +135,93 @@ export function MarkPublishedDialog({
 
   return (
     <Dialog
-      visible={visible}
-      header={dialogTitle}
-      onHide={handleHide}
-      style={{ width: "min(420px, 100vw)" }}
-      footer={
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-          <Button
-            type="button"
-            label={copy.cancel}
-            className="p-button-text"
-            disabled={pending}
-            onClick={handleHide}
-          />
-          <Button
-            type="button"
-            label={pending ? copy.submitPending : copy.submit}
-            icon={pending ? "pi pi-spin pi-spinner" : undefined}
-            disabled={pending}
-            onClick={handleSubmit}
-          />
-        </div>
-      }
+      open={visible}
+      onOpenChange={(open) => {
+        if (!open) {
+          handleHide();
+        }
+      }}
     >
-      <div style={{ display: "grid", gap: "1rem" }}>
-        {serverError ? (
-          <Message severity="error" text={serverError} style={{ width: "100%" }} />
-        ) : null}
-
-        <div>
-          <label
-            htmlFor="mark-published-date"
-            style={{ display: "block", fontWeight: 600, marginBottom: "0.5rem" }}
-          >
-            {copy.publishedDateLabel}
-          </label>
-          <Calendar
-            inputId="mark-published-date"
-            value={publishedDate}
-            onChange={(event) => {
-              if (event.value instanceof Date) {
-                setPublishedDate(event.value);
-              }
-            }}
-            dateFormat="yy-mm-dd"
-            showIcon
-            disabled={pending}
-            style={{ width: "100%" }}
-            invalid={Boolean(fieldErrors.publishedAt)}
-          />
-          {fieldErrors.publishedAt ? (
-            <small style={{ color: "#dc2626", display: "block", marginTop: "0.35rem" }}>
-              {fieldErrors.publishedAt}
-            </small>
+      <DialogContent
+        className="w-[min(420px,100vw)] border-edge bg-panel text-fog sm:max-w-[420px]"
+        aria-describedby={undefined}
+      >
+        <DialogHeader>
+          <DialogTitle className="font-display text-2xl">{dialogTitle}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4">
+          {serverError ? (
+            <StatusAlert severity="error" text={serverError} className="w-full" />
           ) : null}
-        </div>
 
-        <div>
-          <label
-            htmlFor="mark-published-ig-url"
-            style={{ display: "block", fontWeight: 600, marginBottom: "0.5rem" }}
-          >
-            {copy.instagramUrlLabel}
-          </label>
-          <InputText
-            id="mark-published-ig-url"
-            value={instagramPostUrl}
-            onChange={(event) => setInstagramPostUrl(event.target.value)}
-            placeholder={copy.instagramUrlHint}
-            disabled={pending}
-            style={{ width: "100%" }}
-            invalid={Boolean(fieldErrors.instagramPostUrl)}
-          />
-          {fieldErrors.instagramPostUrl ? (
-            <small style={{ color: "#dc2626", display: "block", marginTop: "0.35rem" }}>
-              {fieldErrors.instagramPostUrl}
-            </small>
-          ) : null}
+          <div>
+            <Label htmlFor="mark-published-date" className="mb-2 block font-semibold">
+              {copy.publishedDateLabel}
+            </Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="mark-published-date"
+                  type="button"
+                  variant="outline"
+                  disabled={pending}
+                  aria-invalid={Boolean(fieldErrors.publishedAt)}
+                  className="w-full justify-between font-normal"
+                >
+                  {toDateInputValue(publishedDate)}
+                  <CalendarIcon />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto border-edge bg-panel p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={publishedDate}
+                  defaultMonth={publishedDate}
+                  onSelect={(date) => {
+                    if (date instanceof Date) {
+                      setPublishedDate(date);
+                    }
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+            {fieldErrors.publishedAt ? (
+              <small className="mt-[0.35rem] block text-rose">
+                {fieldErrors.publishedAt}
+              </small>
+            ) : null}
+          </div>
+
+          <div>
+            <Label htmlFor="mark-published-ig-url" className="mb-2 block font-semibold">
+              {copy.instagramUrlLabel}
+            </Label>
+            <Input
+              id="mark-published-ig-url"
+              value={instagramPostUrl}
+              onChange={(event) => setInstagramPostUrl(event.target.value)}
+              placeholder={copy.instagramUrlHint}
+              disabled={pending}
+              aria-invalid={Boolean(fieldErrors.instagramPostUrl)}
+              className="w-full"
+            />
+            {fieldErrors.instagramPostUrl ? (
+              <small className="mt-[0.35rem] block text-rose">
+                {fieldErrors.instagramPostUrl}
+              </small>
+            ) : null}
+          </div>
         </div>
-      </div>
+        <DialogFooter className="gap-2">
+          <Button type="button" variant="ghost" disabled={pending} onClick={handleHide}>
+            {copy.cancel}
+          </Button>
+          <Button type="button" disabled={pending} onClick={handleSubmit}>
+            {pending ? <Spinner className="size-4 text-current" /> : null}
+            {pending ? copy.submitPending : copy.submit}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }

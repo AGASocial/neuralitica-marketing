@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
-import { Button } from "primereact/button";
-import { Message } from "primereact/message";
-import { Toast } from "primereact/toast";
+import { useState, type ReactNode } from "react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
 
 import { InterviewStepFields } from "@/components/interview/InterviewStepFields";
 import {
@@ -140,7 +142,6 @@ export function LivingProfileEditor({
   copy,
   title,
 }: LivingProfileEditorProps) {
-  const toastRef = useRef<Toast>(null);
   const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState(false);
   const [serverFields, setServerFields] = useState(() =>
@@ -322,11 +323,7 @@ export function LivingProfileEditor({
         setDraftFields(cloneFields(result.fields));
         setUpdatedAt(result.updatedAt);
         setEditing(false);
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastSuccess,
-          life: 5000,
-        });
+        toast.success(copy.toastSuccess, { duration: 5000 });
         return;
       }
 
@@ -349,43 +346,39 @@ export function LivingProfileEditor({
       subtitle={updatedLabel}
       actions={
         editing ? (
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+          <div className="flex flex-wrap gap-2">
             <Button
               type="button"
-              label={pending ? copy.saving : copy.save}
               onClick={() => void handleSave()}
               disabled={pending}
-              loading={pending}
-            />
+            >
+              {pending ? <Spinner className="size-4 text-current" /> : null}
+              {pending ? copy.saving : copy.save}
+            </Button>
             <Button
               type="button"
-              label={copy.cancel}
-              severity="secondary"
-              outlined
+              variant="outline"
               onClick={cancelEdit}
               disabled={pending}
-            />
+            >
+              {copy.cancel}
+            </Button>
           </div>
         ) : (
-          <Button type="button" label={copy.edit} outlined onClick={startEdit} />
+          <Button type="button" variant="outline" onClick={startEdit}>
+            {copy.edit}
+          </Button>
         )
       }
     >
-      <Toast ref={toastRef} position="top-right" />
-
       {banner ? (
-        <Message severity="error" text={banner} style={{ width: "100%" }} />
+        <StatusAlert severity="error" text={banner} className="w-full" />
       ) : null}
 
       {INTERVIEW_STEP_ORDER.map((step) => (
         <section
           key={step}
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e5e7eb",
-            borderRadius: "8px",
-            padding: "1rem 1.25rem",
-          }}
+          className="rounded-xl border border-edge bg-panel px-5 py-4"
         >
           {editing ? (
             <>
@@ -413,16 +406,16 @@ export function LivingProfileEditor({
                 onClearMessage={clearFeedback}
               />
               {fieldErrors[step] ? (
-                <Message
+                <StatusAlert
                   severity="error"
                   text={fieldErrors[step]}
-                  style={{ width: "100%", marginTop: "0.75rem" }}
+                  className="mt-3 w-full"
                 />
               ) : null}
             </>
           ) : (
             <>
-              <h2 style={{ margin: "0 0 0.75rem", fontSize: "1.1rem" }}>
+              <h2 className="mb-3 font-display text-xl text-fog">
                 {copy.sections[step]}
               </h2>
               <SectionBody
@@ -450,31 +443,11 @@ function ProfileShell({
   children: ReactNode;
 }) {
   return (
-    <div
-      style={{
-        maxWidth: 760,
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.25rem",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: "1rem",
-          flexWrap: "wrap",
-        }}
-      >
+    <div className="mx-auto flex max-w-[760px] flex-col gap-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem" }}>{title}</h1>
-          {subtitle ? (
-            <p style={{ margin: 0, color: "#6b7280", fontSize: "0.875rem" }}>
-              {subtitle}
-            </p>
-          ) : null}
+          <h1 className="mb-2 font-display text-4xl text-fog">{title}</h1>
+          {subtitle ? <p className="text-sm text-dim">{subtitle}</p> : null}
         </div>
         {actions}
       </div>
@@ -495,19 +468,17 @@ function SectionBody({
   if (isTextStep(step)) {
     const description = getDescription(fields, step);
     return (
-      <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-        {description || emptyLabel}
-      </p>
+      <p className="whitespace-pre-wrap text-fog">{description || emptyLabel}</p>
     );
   }
 
   const items = getListItems(fields, step);
   if (items.length === 0) {
-    return <p style={{ margin: 0 }}>{emptyLabel}</p>;
+    return <p className="text-fog">{emptyLabel}</p>;
   }
 
   return (
-    <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+    <ul className="list-disc pl-5 text-fog">
       {items.map((item, index) => (
         <li key={`${index}-${item}`}>{item}</li>
       ))}

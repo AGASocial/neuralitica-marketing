@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
-import { Message } from "primereact/message";
-import { Tag } from "primereact/tag";
+import { PlusIcon } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import type {
   PlaybookListForOperatorResult,
   PlaybookListItem,
@@ -61,16 +69,17 @@ export function PlaybookListView({
 
   if (!result.ok) {
     return (
-      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+      <div className="mx-auto max-w-[1100px]">
         <PageHeader copy={copy} />
-        <Message severity="error" text={copy.loadError} style={{ width: "100%" }} />
+        <StatusAlert severity="error" text={copy.loadError} className="w-full" />
         <Button
           type="button"
-          label={copy.backDashboard}
-          className="p-button-text"
-          style={{ marginTop: "1rem" }}
+          variant="ghost"
+          className="mt-4"
           onClick={() => router.push("/dashboard")}
-        />
+        >
+          {copy.backDashboard}
+        </Button>
       </div>
     );
   }
@@ -78,47 +87,69 @@ export function PlaybookListView({
   const formatos = result.formatos;
 
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+    <div className="mx-auto max-w-[1100px]">
       <PageHeader copy={copy} showCreate />
 
       {formatos.length === 0 ? (
-        <Message severity="info" text={copy.empty} style={{ width: "100%" }} />
+        <StatusAlert severity="info" text={copy.empty} className="w-full" />
       ) : (
-        <DataTable
-          value={formatos}
-          stripedRows
-          rowClassName={(row: PlaybookListItem) =>
-            row.active ? "" : "playbook-row-archived"
-          }
-          emptyMessage={copy.empty}
-        >
-          <Column field="slug" header={copy.columns.slug} />
-          <Column field="titulo" header={copy.columns.titulo} />
-          <Column
-            header={copy.columns.status}
-            body={(row: PlaybookListItem) => (
-              <Tag
-                severity={row.active ? "success" : "secondary"}
-                value={row.active ? copy.status.active : copy.status.archived}
-              />
-            )}
-          />
-          <Column field="version" header={copy.columns.version} />
-          <Column
-            header={copy.columns.updatedAt}
-            body={(row: PlaybookListItem) =>
-              formatDate(row.updatedAt, locale)
-            }
-          />
-          <Column
-            header={copy.columns.actions}
-            body={(row: PlaybookListItem) => (
-              <Link href={`/operator/playbook/${row.slug}`}>
-                <Button type="button" label={copy.edit} size="small" />
-              </Link>
-            )}
-          />
-        </DataTable>
+        <div className="rounded-xl border border-edge bg-panel">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-edge hover:bg-transparent">
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.slug}
+                </TableHead>
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.titulo}
+                </TableHead>
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.status}
+                </TableHead>
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.version}
+                </TableHead>
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.updatedAt}
+                </TableHead>
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.actions}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {formatos.map((row: PlaybookListItem) => (
+                <TableRow
+                  key={row.slug}
+                  className={cn(
+                    "border-edge hover:bg-edge/20",
+                    !row.active && "opacity-60",
+                  )}
+                >
+                  <TableCell className="px-4 py-3 text-fog">{row.slug}</TableCell>
+                  <TableCell className="px-4 py-3 whitespace-normal text-fog">
+                    {row.titulo}
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <StatusBadge
+                      severity={row.active ? "success" : "secondary"}
+                      value={row.active ? copy.status.active : copy.status.archived}
+                    />
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-fog">{row.version}</TableCell>
+                  <TableCell className="px-4 py-3 text-fog">
+                    {formatDate(row.updatedAt, locale)}
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Button asChild size="sm">
+                      <Link href={`/operator/playbook/${row.slug}`}>{copy.edit}</Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );
@@ -132,24 +163,18 @@ function PageHeader({
   showCreate?: boolean;
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        gap: "1rem",
-        marginBottom: "1.5rem",
-        flexWrap: "wrap",
-      }}
-    >
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem" }}>{copy.title}</h1>
-        <p style={{ margin: 0, color: "#4b5563" }}>{copy.subtitle}</p>
+        <h1 className="mb-2 font-display text-4xl text-fog">{copy.title}</h1>
+        <p className="text-dim">{copy.subtitle}</p>
       </div>
       {showCreate ? (
-        <Link href="/operator/playbook/new" style={{ textDecoration: "none" }}>
-          <Button type="button" label={copy.create} icon="pi pi-plus" />
-        </Link>
+        <Button asChild>
+          <Link href="/operator/playbook/new">
+            <PlusIcon />
+            {copy.create}
+          </Link>
+        </Button>
       ) : null}
     </div>
   );

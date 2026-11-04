@@ -1,20 +1,155 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+  Campaña design tokens (concept2-campana):
+  deep teal field, butter + rose accents, fog text, Manrope + Instrument Serif.
+*/
 :root {
-  --page-bg: #f4f6fb;
-  --page-text: #1f2937;
+  --radius: 0.75rem;
+
+  /* Brand palette */
+  --deep: #0e2226;
+  --panel: #15323a;
+  --edge: #24474f;
+  --fog: #eaf2ee;
+  --dim: #8faaa8;
+  --butter: #f2c94c;
+  --rose: #e86a8f;
+
+  /* Semantic (mapped to Campaña dark-first UI) */
+  --background: var(--deep);
+  --foreground: var(--fog);
+  --card: var(--panel);
+  --card-foreground: var(--fog);
+  --popover: var(--panel);
+  --popover-foreground: var(--fog);
+  --primary: var(--butter);
+  --primary-foreground: var(--deep);
+  --secondary: color-mix(in srgb, var(--panel) 80%, var(--edge));
+  --secondary-foreground: var(--fog);
+  --muted: color-mix(in srgb, var(--deep) 55%, var(--panel));
+  --muted-foreground: var(--dim);
+  --accent: var(--rose);
+  --accent-foreground: var(--deep);
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+  --border: var(--edge);
+  --input: var(--edge);
+  --ring: var(--butter);
+  --success: #6bcf8e;
+  --warning: var(--butter);
+  --info: #7eb8c9;
+
+  --sidebar: var(--panel);
+  --sidebar-foreground: var(--fog);
+  --sidebar-primary: var(--butter);
+  --sidebar-primary-foreground: var(--deep);
+  --sidebar-accent: color-mix(in srgb, var(--panel) 70%, var(--edge));
+  --sidebar-accent-foreground: var(--fog);
+  --sidebar-border: var(--edge);
+  --sidebar-ring: var(--butter);
+
+  --chart-1: var(--butter);
+  --chart-2: var(--rose);
+  --chart-3: var(--info);
+  --chart-4: var(--success);
+  --chart-5: var(--dim);
+
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
 }
 
-html,
-body {
-  margin: 0;
-  min-height: 100%;
-  background: var(--page-bg);
-  color: var(--page-text);
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-deep: var(--deep);
+  --color-panel: var(--panel);
+  --color-edge: var(--edge);
+  --color-fog: var(--fog);
+  --color-dim: var(--dim);
+  --color-butter: var(--butter);
+  --color-rose: var(--rose);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
 }
 
-* {
-  box-sizing: border-box;
-}
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
 
-a {
-  color: inherit;
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply min-h-full bg-background font-sans text-foreground;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-serif);
+  }
+
+  a {
+    @apply text-inherit;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }

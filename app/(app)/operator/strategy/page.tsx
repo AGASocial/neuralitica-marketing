@@ -1,7 +1,11 @@
 import { StrategyPageView } from "@/components/strategy/StrategyPageView";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import type { CalendarSlotDetailDto } from "@/lib/contracts/calendar";
 import type { ContentStrategyView } from "@/lib/contracts/content-strategy";
+import type { ReelScriptListItem } from "@/lib/contracts/reel-script";
 import { agentClientIdSchema } from "@/lib/contracts/profile";
+import { getOperatorCalendarForWeek } from "@/lib/calendar/actions/get-operator-calendar-for-week";
+import { getReelScriptsForWeek } from "@/lib/reel-scripts/actions/get-reel-scripts-for-week";
 import { getLatestContentStrategy } from "@/lib/content-strategy/actions/get-latest-content-strategy";
 import { loadOperatorClientsForStrategy } from "@/lib/content-strategy/load-operator-clients-for-strategy";
 import type { OperatorClientOption } from "@/lib/content-strategy/load-operator-clients-for-strategy";
@@ -73,11 +77,62 @@ export default async function StrategyPage({ searchParams }: StrategyPageProps) 
     | { loadFailed: true };
   let clients: Awaited<ReturnType<typeof loadOperatorClientsForStrategy>> = [];
 
+  let clientsLoadFailed = false;
+
+  // Clients resolve the selected client before the strategy is loaded for it.
   try {
-    [strategyResult, clients] = await Promise.all([
-      getLatestContentStrategy({ weekStart }),
-      loadOperatorClientsForStrategy(),
+    clients = await loadOperatorClientsForStrategy();
+  } catch (error) {
+    if (isNextNavigationError(error)) {
+      throw error;
+    }
+    clientsLoadFailed = true;
+  }
+
+  const selectedClientId = resolveSelectedClientId(
+    rawClientId,
+    user?.id ?? "",
+    clients,
+  );
+
+  const selectedClientIsActive = clients.some(
+    (client) => client.id === selectedClientId,
+  );
+
+  let calendarSlots: CalendarSlotDetailDto[] | undefined;
+  let scriptItems: ReelScriptListItem[] | undefined;
+
+  try {
+    if (clientsLoadFailed) {
+      throw new Error("operator clients load failed");
+    }
+
+    const [latest, calendarResult, scriptsResult] = await Promise.all([
+      getLatestContentStrategy({
+        weekStart,
+        // Only active clients validate server-side; otherwise fall back to the session client.
+        clientId: selectedClientIsActive ? selectedClientId : undefined,
+      }),
+      getOperatorCalendarForWeek({ weekStart }).catch((error: unknown) => {
+        if (isNextNavigationError(error)) {
+          throw error;
+        }
+        return null;
+      }),
+      getReelScriptsForWeek({ weekStart }).catch((error: unknown) => {
+        if (isNextNavigationError(error)) {
+          throw error;
+        }
+        return null;
+      }),
     ]);
+    strategyResult = latest;
+    if (calendarResult?.ok) {
+      calendarSlots = calendarResult.slots;
+    }
+    if (scriptsResult?.ok) {
+      scriptItems = scriptsResult.items;
+    }
   } catch (error) {
     if (isNextNavigationError(error)) {
       throw error;
@@ -97,12 +152,6 @@ export default async function StrategyPage({ searchParams }: StrategyPageProps) 
     strategy = strategyResult.strategy;
     playbookLabels = strategyResult.playbookLabels;
   }
-
-  const selectedClientId = resolveSelectedClientId(
-    rawClientId,
-    user?.id ?? "",
-    clients,
-  );
 
   let initialInsights: Awaited<ReturnType<typeof aggregateReelMetricsByTema>> =
     null;
@@ -130,6 +179,9 @@ export default async function StrategyPage({ searchParams }: StrategyPageProps) 
       playbookLabels={playbookLabels}
       loadFailed={loadFailed}
       locale={locale}
+      calendarSlots={calendarSlots}
+      scriptItems={scriptItems}
+      campanaCopy={t.campana}
       copy={{
         title: t.strategy.page.title,
         subtitle: t.strategy.page.subtitle,

@@ -2,17 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { RadioButton } from "primereact/radiobutton";
-import { Button } from "primereact/button";
-import { Calendar } from "primereact/calendar";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
-import { Message } from "primereact/message";
-import { Skeleton } from "primereact/skeleton";
-import { TabPanel, TabView } from "primereact/tabview";
-import { Tag } from "primereact/tag";
-import { Toast } from "primereact/toast";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import {
   ReelBudgetConfirmDialog,
@@ -73,6 +64,37 @@ import {
   VideoJobRetryLimitOverrideDialog,
   type VideoJobRetryLimitOverrideCopy,
 } from "@/components/scripts/VideoJobRetryLimitOverrideDialog";
+import {
+  CalendarIcon,
+  CameraIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  CopyIcon,
+  RefreshCwIcon,
+  SparklesIcon,
+  TriangleAlertIcon,
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+
 import type {
   ActualCostUnavailableReason,
   ReelCostRollupsMap,
@@ -316,6 +338,13 @@ function weekStartToDate(weekStart: string): Date {
   return new Date(`${weekStart}T12:00:00.000Z`);
 }
 
+function formatDateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function messageForCode(
   code: ReelScriptErrorCode,
   messageKey: string | undefined,
@@ -516,7 +545,6 @@ export function ScriptsPageView({
   copy,
 }: ScriptsPageViewProps) {
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
   const [batchPending, setBatchPending] = useState(false);
   const [captionBatchPending, setCaptionBatchPending] = useState(false);
   const [regeneratingSlot, setRegeneratingSlot] = useState<number | null>(null);
@@ -745,11 +773,7 @@ export function ScriptsPageView({
       const result = await generateReelScripts({ weekStart, ...override });
 
       if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastGenerateSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastGenerateSuccess, { duration: 4000 });
         router.refresh();
         return;
       }
@@ -782,11 +806,7 @@ export function ScriptsPageView({
       const result = await regenerateReelScriptSlot({ weekStart, slotIndex, ...override });
 
       if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastRegenerateSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastRegenerateSuccess, { duration: 4000 });
         router.refresh();
         return;
       }
@@ -807,11 +827,7 @@ export function ScriptsPageView({
       const result = await generateReelCaptions({ weekStart, ...override });
 
       if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.caption.toastGenerateSuccess,
-          life: 4000,
-        });
+        toast.success(copy.caption.toastGenerateSuccess, { duration: 4000 });
         router.refresh();
         return;
       }
@@ -835,12 +851,7 @@ export function ScriptsPageView({
       const result = await regenerateReelCaption({ weekStart, slotIndex, ...override });
 
       if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.caption.toastRegenerateSuccess,
-          detail: copy.caption.ctaSelect.clearedOnRegen,
-          life: 5000,
-        });
+        toast.success(copy.caption.toastRegenerateSuccess, { description: copy.caption.ctaSelect.clearedOnRegen, duration: 5000 });
         router.refresh();
         return;
       }
@@ -929,11 +940,7 @@ export function ScriptsPageView({
       });
 
       if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.caption.ctaSelect.selectionSaved,
-          life: 4000,
-        });
+        toast.success(copy.caption.ctaSelect.selectionSaved, { duration: 4000 });
         router.refresh();
         return;
       }
@@ -981,58 +988,29 @@ export function ScriptsPageView({
   }
 
   function handleVideoJobRetrySuccess() {
-    toastRef.current?.show({
-      severity: "success",
-      summary: copy.videoJob.toastRetrySuccess,
-      life: 4000,
-    });
+    toast.success(copy.videoJob.toastRetrySuccess, { duration: 4000 });
     router.refresh();
   }
 
   function handleHeygenGenerateSuccess() {
-    toastRef.current?.show({
-      severity: "success",
-      summary: copy.heygen.toastSuccess,
-      life: 4000,
-    });
+    toast.success(copy.heygen.toastSuccess, { duration: 4000 });
     router.refresh();
   }
 
   function handleBrollGenerateSuccess(outcome: BrollGenerateOutcome) {
     if (outcome.kind === "full") {
-      toastRef.current?.show({
-        severity: "success",
-        summary: formatBrollGenerateTemplate(copy.broll.toastSuccess, {
-          count: outcome.createdCount,
-        }),
-        life: 4000,
-      });
+      toast.success(formatBrollGenerateTemplate(copy.broll.toastSuccess, { count: outcome.createdCount }), { duration: 4000 });
     } else {
-      toastRef.current?.show({
-        severity: "success",
-        summary: formatBrollGenerateTemplate(copy.broll.toastPartial, {
-          created: outcome.createdCount,
-          skipped: outcome.skippedCount,
-        }),
-        life: 5000,
-      });
+      toast.success(formatBrollGenerateTemplate(copy.broll.toastPartial, { created: outcome.createdCount, skipped: outcome.skippedCount }), { duration: 5000 });
       if (outcome.skipMessages.length > 0) {
-        toastRef.current?.show({
-          severity: "warn",
-          summary: outcome.skipMessages.join(" "),
-          life: 6000,
-        });
+        toast.warning(outcome.skipMessages.join(" "), { duration: 6000 });
       }
     }
     router.refresh();
   }
 
   function handleVideoJobOverrideSuccess() {
-    toastRef.current?.show({
-      severity: "success",
-      summary: copy.videoJob.toastOverrideSuccess,
-      life: 4000,
-    });
+    toast.success(copy.videoJob.toastOverrideSuccess, { duration: 4000 });
     router.refresh();
   }
 
@@ -1044,11 +1022,7 @@ export function ScriptsPageView({
       ...prev,
       [reelScriptId]: job,
     }));
-    toastRef.current?.show({
-      severity: "success",
-      summary: copy.videoJob.manualUpload.success,
-      life: 4000,
-    });
+    toast.success(copy.videoJob.manualUpload.success, { duration: 4000 });
     router.refresh();
   }
 
@@ -1071,19 +1045,11 @@ export function ScriptsPageView({
   }
 
   function handleVoiceoverToastSuccess(summary: string) {
-    toastRef.current?.show({
-      severity: "success",
-      summary,
-      life: 4000,
-    });
+    toast.success(summary, { duration: 4000 });
   }
 
   function handleVoiceoverError(message: string) {
-    toastRef.current?.show({
-      severity: "error",
-      summary: message,
-      life: 6000,
-    });
+    toast.error(message, { duration: 6000 });
   }
 
   function openReassembleDialog(reelScriptId: string) {
@@ -1220,19 +1186,11 @@ export function ScriptsPageView({
   }
 
   function handleAssemblyToastSuccess(summary: string) {
-    toastRef.current?.show({
-      severity: "success",
-      summary,
-      life: 4000,
-    });
+    toast.success(summary, { duration: 4000 });
   }
 
   function handleAssemblyError(message: string) {
-    toastRef.current?.show({
-      severity: "error",
-      summary: message,
-      life: 6000,
-    });
+    toast.error(message, { duration: 6000 });
   }
 
   function buildQaOverrideFromSuccess(
@@ -1269,19 +1227,11 @@ export function ScriptsPageView({
   }
 
   function handleQaToastSuccess(summary: string) {
-    toastRef.current?.show({
-      severity: "success",
-      summary,
-      life: 4000,
-    });
+    toast.success(summary, { duration: 4000 });
   }
 
   function handleQaError(message: string) {
-    toastRef.current?.show({
-      severity: "error",
-      summary: message,
-      life: 6000,
-    });
+    toast.error(message, { duration: 6000 });
   }
 
   function handleVideoJobMutationError(message: string) {
@@ -1290,26 +1240,23 @@ export function ScriptsPageView({
 
   function copyToClipboard(text: string) {
     void navigator.clipboard.writeText(text).then(() => {
-      toastRef.current?.show({
-        severity: "success",
-        summary: copy.toastCopySuccess,
-        life: 2500,
-      });
+      toast.success(copy.toastCopySuccess, { duration: 2500 });
     });
   }
 
   if (loadFailed) {
     return (
-      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+      <div className="max-w-[1100px] my-0 mx-auto">
         <PageHeader copy={copy} />
-        <Message severity="error" text={copy.loadError} style={{ width: "100%" }} />
+        <StatusAlert severity="error" text={copy.loadError} className="w-full" />
         <Button
           type="button"
-          label={copy.backDashboard}
-          className="p-button-text"
-          style={{ marginTop: "1rem" }}
           onClick={() => router.push("/dashboard")}
-        />
+          variant="ghost"
+          className="mt-4"
+        >
+          {copy.backDashboard}
+        </Button>
       </div>
     );
   }
@@ -1319,8 +1266,7 @@ export function ScriptsPageView({
     : null;
 
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-      <Toast ref={toastRef} />
+    <div className="max-w-[1100px] my-0 mx-auto">
       <VideoJobRetryConfirmDialog
         visible={retryDialogVisible}
         failedJobId={retryFailedJobId}
@@ -1407,79 +1353,85 @@ export function ScriptsPageView({
       />
       <PageHeader copy={copy} />
 
-      <div style={{ marginBottom: "1.5rem", maxWidth: "320px" }}>
-        <label
+      <div className="mb-6 max-w-[320px]">
+        <Label
           htmlFor="scripts-week-picker"
-          style={{ display: "block", fontWeight: 600, marginBottom: "0.5rem" }}
+          className="mb-2 block font-semibold"
         >
           {copy.weekLabel}
-        </label>
-        <Calendar
-          inputId="scripts-week-picker"
-          value={weekDate}
-          onChange={(event) => {
-            if (!event.value || isBusy) {
-              return;
-            }
-            navigateWeek(normalizeToIsoMonday(event.value));
-          }}
-          dateFormat="yy-mm-dd"
-          showIcon
-          disabled={isBusy}
-          style={{ width: "100%" }}
-        />
-        <p style={{ margin: "0.5rem 0 0", color: "#6b7280", fontSize: "0.875rem" }}>
+        </Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              id="scripts-week-picker"
+              type="button"
+              variant="outline"
+              disabled={isBusy}
+              className="w-full justify-between font-normal"
+            >
+              {formatDateInputValue(weekDate)}
+              <CalendarIcon />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto border-edge bg-panel p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={weekDate}
+              defaultMonth={weekDate}
+              onSelect={(date) => {
+                if (!date || isBusy) {
+                  return;
+                }
+                navigateWeek(normalizeToIsoMonday(date));
+              }}
+            />
+          </PopoverContent>
+        </Popover>
+        <p className="mt-2 mx-0 mb-0 text-dim text-sm">
           {weekRangeLabel}
         </p>
       </div>
 
       {hasApprovedStrategy ? (
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "1rem",
-            flexWrap: "wrap",
-            marginBottom: "1rem",
-          }}
+          className="flex items-center justify-between gap-4 flex-wrap mb-4"
         >
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
+          <div className="flex flex-wrap gap-2 items-center">
             {versionLabel ? <TagLine text={versionLabel} /> : null}
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+          <div className="flex flex-wrap gap-2">
             <Button
               type="button"
-              label={batchPending ? copy.generating : copy.generate}
-              icon="pi pi-sparkles"
-              loading={batchPending}
-              disabled={isBusy}
               onClick={() => void handleGenerate()}
-            />
+              disabled={(isBusy) || (batchPending)}
+            >
+              {batchPending ? <Spinner className="size-4 text-current" /> : <SparklesIcon />}
+              {batchPending ? copy.generating : copy.generate}
+            </Button>
             {hasAnyGenerated ? (
               <Button
                 type="button"
-                label={captionBatchPending ? copy.caption.generating : copy.caption.generate}
-                icon="pi pi-instagram"
-                loading={captionBatchPending}
-                disabled={isBusy}
                 onClick={() => void handleGenerateCaptions()}
-              />
+                disabled={(isBusy) || (captionBatchPending)}
+              >
+                {captionBatchPending ? <Spinner className="size-4 text-current" /> : <CameraIcon />}
+                {captionBatchPending ? copy.caption.generating : copy.caption.generate}
+              </Button>
             ) : null}
           </div>
         </div>
       ) : null}
 
       {data.strategyVersionChanged ? (
-        <Message
+        <StatusAlert
           severity="warn"
           text={copy.strategyVersionWarning}
-          style={{ width: "100%", marginBottom: "1rem" }}
+          className="w-full mb-4"
         />
       ) : null}
 
       {banner ? (
-        <Message severity="error" text={banner} style={{ width: "100%", marginBottom: "1rem" }} />
+        <StatusAlert severity="error" text={banner} className="w-full mb-4" />
       ) : null}
 
       {batchPending || captionBatchPending ? (
@@ -1489,218 +1441,255 @@ export function ScriptsPageView({
         />
       ) : !hasApprovedStrategy ? (
         <div>
-          <Message severity="info" text={copy.emptyNoStrategy} style={{ width: "100%" }} />
+          <StatusAlert severity="info" text={copy.emptyNoStrategy} className="w-full" />
           <Link href={`/operator/strategy?weekStart=${weekStart}`}>
             <Button
               type="button"
-              label={copy.emptyNoStrategyCta}
-              className="p-button-outlined"
-              style={{ marginTop: "1rem" }}
-            />
+              variant="outline"
+              className="mt-4"
+            >
+              {copy.emptyNoStrategyCta}
+            </Button>
           </Link>
         </div>
       ) : (
         <>
           {allPending ? (
-            <Message
+            <StatusAlert
               severity="info"
               text={copy.emptyNoScripts}
-              style={{ width: "100%", marginBottom: "1rem" }}
+              className="w-full mb-4"
             />
           ) : null}
           {allCaptionsPending ? (
-            <Message
+            <StatusAlert
               severity="info"
               text={copy.caption.emptyPending}
-              style={{ width: "100%", marginBottom: "1rem" }}
+              className="w-full mb-4"
             />
           ) : null}
-          <DataTable
-            value={data.items}
-            dataKey="slotIndex"
-            stripedRows
-            expandedRows={expandedRows}
-            onRowToggle={(event) => setExpandedRows(event.data as ReelScriptListItem[])}
-            rowExpansionTemplate={(row: ReelScriptListItem) => (
-              <ReelDetailPanel
-                row={row}
-                weekStart={weekStart}
-                locale={locale}
-                clientId={clientId}
-                copy={copy}
-                reelCostRollups={reelCostRollups}
-                videoJobsByReelScriptId={videoJobsByReelScriptId}
-                brollJobsByReelScriptId={data.brollJobsByReelScriptId}
-                voiceoverByReelScriptId={voiceoverByReelScriptId}
-                assemblyByReelScriptId={assemblyByReelScriptId}
-                qaByAssembledReelId={qaByAssembledReelId}
-                showCostRollup={showCostSummary}
-                onCopy={copyToClipboard}
-                onRegenerateCaption={(slotIndex) => void handleRegenerateCaption(slotIndex)}
-                onSelectCaptionCta={(slotIndex, selectedCtaIndex) =>
-                  void handleSelectCaptionCta(slotIndex, selectedCtaIndex)
-                }
-                onRequestVideoJobRetry={openRetryDialog}
-                onRequestVideoJobOverride={openOverrideDialog}
-                onHeygenGenerateSuccess={handleHeygenGenerateSuccess}
-                onHeygenGenerateError={handleVideoJobMutationError}
-                onBrollGenerateSuccess={handleBrollGenerateSuccess}
-                onBrollGenerateError={handleVideoJobMutationError}
-                onManualUploadSuccess={(job) => {
-                  if (row.scriptId) {
-                    handleManualUploadSuccess(row.scriptId, job);
-                  }
-                }}
-                onVoiceoverSuccess={(result) => {
-                  if (row.scriptId) {
-                    handleVoiceoverSuccess(row.scriptId, result);
-                  }
-                }}
-                onVoiceoverToastSuccess={handleVoiceoverToastSuccess}
-                onVoiceoverError={handleVoiceoverError}
-                onRequestAssemblyReassemble={openReassembleDialog}
-                onAssemblySuccess={(result) => {
-                  if (row.scriptId) {
-                    handleAssemblySuccess(
-                      row.scriptId,
-                      result,
-                      row.targetDurationSec,
-                    );
-                  }
-                }}
-                onAssemblyToastSuccess={handleAssemblyToastSuccess}
-                onAssemblyError={handleAssemblyError}
-                onQaSuccess={handleQaSuccess}
-                onQaOverrideSuccess={handleQaOverrideSuccess}
-                onQaToastSuccess={handleQaToastSuccess}
-                onQaError={handleQaError}
-                onRequestBrandingRebrand={openRebrandDialog}
-                onBrandingSuccess={(result) => {
-                  if (row.scriptId) {
-                    handleBrandingSuccess(row.scriptId, result);
-                  }
-                }}
-                captionRegeneratingSlot={captionRegeneratingSlot}
-                captionSelectingSlot={captionSelectingSlot}
-                isBusy={isBusy}
-              />
-            )}
-          >
-            <Column expander style={{ width: "3rem" }} />
-            <Column
-              field="tema"
-              header={copy.columns.tema}
-              body={(row: ReelScriptListItem) => (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
-                  <span style={{ fontWeight: 600 }}>{row.tema}</span>
-                  {row.readability?.hasWarnings ? (
-                    <Tag
-                      value={copy.readability.rowBadge}
-                      severity="warning"
-                      icon="pi pi-exclamation-triangle"
-                    />
-                  ) : null}
-                </div>
-              )}
-            />
-            <Column
-              header={copy.columns.day}
-              body={(row: ReelScriptListItem) =>
-                row.dayOfWeek ? copy.days[row.dayOfWeek as ContentStrategyDayOfWeek] ?? row.dayOfWeek : "—"
-              }
-            />
-            <Column
-              header={copy.columns.duration}
-              body={(row: ReelScriptListItem) =>
-                formatDuration(row.targetDurationSec, copy.durationSeconds)
-              }
-            />
-            <Column
-              header={copy.columns.status}
-              body={(row: ReelScriptListItem) => (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
-                  <Tag
-                    value={
-                      row.status === "generated"
-                        ? copy.status.generated
-                        : copy.status.pending
-                    }
-                    severity={row.status === "generated" ? "success" : "warning"}
-                  />
-                  {row.status === "generated" ? (
-                    <Tag
-                      value={
-                        row.caption.status === "generated"
-                          ? copy.caption.status.generated
-                          : copy.caption.status.pending
-                      }
-                      severity={
-                        row.caption.status === "generated" ? "info" : "warning"
-                      }
-                    />
-                  ) : null}
-                  {row.caption.stale ? (
-                    <Tag
-                      value={copy.caption.staleBadge}
-                      severity="warning"
-                      icon="pi pi-exclamation-triangle"
-                    />
-                  ) : null}
-                  {row.scriptId &&
-                  videoJobsByReelScriptId[row.scriptId] ? (
-                    <VideoJobStatusTag
-                      status={videoJobsByReelScriptId[row.scriptId]!.status}
-                      copy={copy.videoJob}
-                    />
-                  ) : null}
-                </div>
-              )}
-            />
-            {showCostSummary ? (
-              <Column
-                header={copy.cost.actual.columnHeader}
-                body={(row: ReelScriptListItem) => {
-                  const slotCost = findSlotCostSummary(costSummary, row.slotIndex);
-                  const actual = renderActualCostValue(slotCost, locale, copy.cost.actual);
+          <Table>
+            <TableHeader>
+              <TableRow className="border-edge hover:bg-transparent">
+                <TableHead className="w-12" />
+                <TableHead className="text-dim">{copy.columns.tema}</TableHead>
+                <TableHead className="text-dim">{copy.columns.day}</TableHead>
+                <TableHead className="text-dim">{copy.columns.duration}</TableHead>
+                <TableHead className="text-dim">{copy.columns.status}</TableHead>
+                {showCostSummary ? (
+                  <TableHead className="text-dim">
+                    {copy.cost.actual.columnHeader}
+                  </TableHead>
+                ) : null}
+                <TableHead className="text-dim">{copy.columns.actions}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.items.map((row: ReelScriptListItem) => {
+                const isExpanded = expandedRows.some(
+                  (expanded) => expanded.slotIndex === row.slotIndex,
+                );
+                const slotCost = showCostSummary
+                  ? findSlotCostSummary(costSummary, row.slotIndex)
+                  : undefined;
+                const actual = showCostSummary
+                  ? renderActualCostValue(slotCost, locale, copy.cost.actual)
+                  : null;
 
-                  return (
-                    <div style={{ display: "grid", gap: "0.2rem", fontSize: "0.875rem" }}>
-                      <div style={{ color: "#374151" }}>
-                        <span style={{ color: "#6b7280", marginRight: "0.35rem" }}>
-                          {copy.cost.actual.estimated}
-                        </span>
-                        {renderEstimatedCostValue(slotCost, locale)}
-                      </div>
-                      <div style={{ color: actual.subdued ? "#6b7280" : "#374151" }}>
-                        <span style={{ color: "#6b7280", marginRight: "0.35rem" }}>
-                          {copy.cost.actual.actual}
-                        </span>
-                        {actual.text}
-                      </div>
-                    </div>
-                  );
-                }}
-              />
-            ) : null}
-            <Column
-              header={copy.columns.actions}
-              body={(row: ReelScriptListItem) => (
-                <Button
-                  type="button"
-                  label={
-                    regeneratingSlot === row.slotIndex
-                      ? copy.regenerating
-                      : copy.regenerate
-                  }
-                  size="small"
-                  severity="secondary"
-                  loading={regeneratingSlot === row.slotIndex}
-                  disabled={isBusy}
-                  onClick={() => void handleRegenerate(row.slotIndex)}
-                />
-              )}
-            />
-          </DataTable>
+                return (
+                  <Fragment key={row.slotIndex}>
+                    <TableRow className="border-edge odd:bg-panel/40 hover:bg-panel/70 data-[state=expanded]:bg-panel/70" data-state={isExpanded ? "expanded" : undefined}>
+                      <TableCell className="w-12">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-expanded={isExpanded}
+                          aria-label={row.tema}
+                          onClick={() =>
+                            setExpandedRows((current) =>
+                              current.some(
+                                (expanded) => expanded.slotIndex === row.slotIndex,
+                              )
+                                ? current.filter(
+                                    (expanded) => expanded.slotIndex !== row.slotIndex,
+                                  )
+                                : [...current, row],
+                            )
+                          }
+                        >
+                          {isExpanded ? <ChevronDownIcon /> : <ChevronRightIcon />}
+                        </Button>
+                      </TableCell>
+                      <TableCell className="whitespace-normal">
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <span className="font-semibold">{row.tema}</span>
+                          {row.readability?.hasWarnings ? (
+                            <StatusBadge
+                              value={copy.readability.rowBadge}
+                              severity="warning"
+                              icon={<TriangleAlertIcon />}
+                            />
+                          ) : null}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {row.dayOfWeek
+                          ? copy.days[row.dayOfWeek as ContentStrategyDayOfWeek] ?? row.dayOfWeek
+                          : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {formatDuration(row.targetDurationSec, copy.durationSeconds)}
+                      </TableCell>
+                      <TableCell className="whitespace-normal">
+                        <div className="flex flex-wrap gap-[0.35rem]">
+                          <StatusBadge
+                            value={
+                              row.status === "generated"
+                                ? copy.status.generated
+                                : copy.status.pending
+                            }
+                            severity={row.status === "generated" ? "success" : "warning"}
+                          />
+                          {row.status === "generated" ? (
+                            <StatusBadge
+                              value={
+                                row.caption.status === "generated"
+                                  ? copy.caption.status.generated
+                                  : copy.caption.status.pending
+                              }
+                              severity={
+                                row.caption.status === "generated" ? "info" : "warning"
+                              }
+                            />
+                          ) : null}
+                          {row.caption.stale ? (
+                            <StatusBadge
+                              value={copy.caption.staleBadge}
+                              severity="warning"
+                              icon={<TriangleAlertIcon />}
+                            />
+                          ) : null}
+                          {row.scriptId &&
+                          videoJobsByReelScriptId[row.scriptId] ? (
+                            <VideoJobStatusTag
+                              status={videoJobsByReelScriptId[row.scriptId]!.status}
+                              copy={copy.videoJob}
+                            />
+                          ) : null}
+                        </div>
+                      </TableCell>
+                      {showCostSummary && actual ? (
+                        <TableCell>
+                          <div className="grid gap-[0.2rem] text-sm">
+                            <div className="text-fog">
+                              <span className="text-dim mr-[0.35rem]">
+                                {copy.cost.actual.estimated}
+                              </span>
+                              {renderEstimatedCostValue(slotCost, locale)}
+                            </div>
+                            <div className={actual.subdued ? "text-dim" : "text-fog"}>
+                              <span className="text-dim mr-[0.35rem]">
+                                {copy.cost.actual.actual}
+                              </span>
+                              {actual.text}
+                            </div>
+                          </div>
+                        </TableCell>
+                      ) : null}
+                      <TableCell>
+                        <Button
+                          type="button"
+                          onClick={() => void handleRegenerate(row.slotIndex)}
+                          variant="secondary"
+                          size="sm"
+                          disabled={isBusy || regeneratingSlot === row.slotIndex}
+                        >
+                          {regeneratingSlot === row.slotIndex ? (
+                            <Spinner className="size-4 text-current" />
+                          ) : null}
+                          {regeneratingSlot === row.slotIndex
+                            ? copy.regenerating
+                            : copy.regenerate}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                    {isExpanded ? (
+                      <TableRow className="border-edge hover:bg-transparent">
+                        <TableCell
+                          colSpan={showCostSummary ? 7 : 6}
+                          className="whitespace-normal"
+                        >
+                      <ReelDetailPanel
+                        row={row}
+                        weekStart={weekStart}
+                        locale={locale}
+                        clientId={clientId}
+                        copy={copy}
+                        reelCostRollups={reelCostRollups}
+                        videoJobsByReelScriptId={videoJobsByReelScriptId}
+                        brollJobsByReelScriptId={data.brollJobsByReelScriptId}
+                        voiceoverByReelScriptId={voiceoverByReelScriptId}
+                        assemblyByReelScriptId={assemblyByReelScriptId}
+                        qaByAssembledReelId={qaByAssembledReelId}
+                        showCostRollup={showCostSummary}
+                        onCopy={copyToClipboard}
+                        onRegenerateCaption={(slotIndex) => void handleRegenerateCaption(slotIndex)}
+                        onSelectCaptionCta={(slotIndex, selectedCtaIndex) =>
+                          void handleSelectCaptionCta(slotIndex, selectedCtaIndex)
+                        }
+                        onRequestVideoJobRetry={openRetryDialog}
+                        onRequestVideoJobOverride={openOverrideDialog}
+                        onHeygenGenerateSuccess={handleHeygenGenerateSuccess}
+                        onHeygenGenerateError={handleVideoJobMutationError}
+                        onBrollGenerateSuccess={handleBrollGenerateSuccess}
+                        onBrollGenerateError={handleVideoJobMutationError}
+                        onManualUploadSuccess={(job) => {
+                          if (row.scriptId) {
+                            handleManualUploadSuccess(row.scriptId, job);
+                          }
+                        }}
+                        onVoiceoverSuccess={(result) => {
+                          if (row.scriptId) {
+                            handleVoiceoverSuccess(row.scriptId, result);
+                          }
+                        }}
+                        onVoiceoverToastSuccess={handleVoiceoverToastSuccess}
+                        onVoiceoverError={handleVoiceoverError}
+                        onRequestAssemblyReassemble={openReassembleDialog}
+                        onAssemblySuccess={(result) => {
+                          if (row.scriptId) {
+                            handleAssemblySuccess(
+                              row.scriptId,
+                              result,
+                              row.targetDurationSec,
+                            );
+                          }
+                        }}
+                        onAssemblyToastSuccess={handleAssemblyToastSuccess}
+                        onAssemblyError={handleAssemblyError}
+                        onQaSuccess={handleQaSuccess}
+                        onQaOverrideSuccess={handleQaOverrideSuccess}
+                        onQaToastSuccess={handleQaToastSuccess}
+                        onQaError={handleQaError}
+                        onRequestBrandingRebrand={openRebrandDialog}
+                        onBrandingSuccess={(result) => {
+                          if (row.scriptId) {
+                            handleBrandingSuccess(row.scriptId, result);
+                          }
+                        }}
+                        captionRegeneratingSlot={captionRegeneratingSlot}
+                        captionSelectingSlot={captionSelectingSlot}
+                        isBusy={isBusy}
+                      />
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+                  </Fragment>
+                );
+              })}
+            </TableBody>
+          </Table>
           {showCostSummary ? (
             <WeeklyCostFooter
               costSummary={costSummary}
@@ -1919,11 +1908,33 @@ function ReelDetailPanel({
           onToastSuccess={onQaToastSuccess}
         />
       ) : null}
-      <TabView>
-      <TabPanel header={copy.caption.tabs.script}>
-        <ScriptDetailPanel row={row} copy={copy} onCopy={onCopy} />
-      </TabPanel>
-      <TabPanel header={copy.caption.tabs.caption}>
+      <Tabs defaultValue="script">
+        <TabsList variant="line" className="border-b border-edge">
+          <TabsTrigger
+            value="script"
+            className="text-dim data-[state=active]:text-fog"
+          >
+            {copy.caption.tabs.script}
+          </TabsTrigger>
+          <TabsTrigger
+            value="caption"
+            className="text-dim data-[state=active]:text-fog"
+          >
+            {copy.caption.tabs.caption}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent
+          value="script"
+          forceMount
+          className="pt-3 data-[state=inactive]:hidden"
+        >
+          <ScriptDetailPanel row={row} copy={copy} onCopy={onCopy} />
+        </TabsContent>
+        <TabsContent
+          value="caption"
+          forceMount
+          className="pt-3 data-[state=inactive]:hidden"
+        >
         <CaptionDetailPanel
           row={row}
           copy={copy}
@@ -1936,8 +1947,8 @@ function ReelDetailPanel({
           isSelecting={captionSelectingSlot === row.slotIndex}
           isBusy={isBusy}
         />
-      </TabPanel>
-    </TabView>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -1951,7 +1962,7 @@ type ScriptDetailPanelProps = {
 function ScriptDetailPanel({ row, copy, onCopy }: ScriptDetailPanelProps) {
   if (!row.package) {
     return (
-      <p style={{ margin: 0, color: "#6b7280", fontStyle: "italic" }}>
+      <p className="m-0 text-dim italic">
         {copy.status.pending}
       </p>
     );
@@ -1960,7 +1971,7 @@ function ScriptDetailPanel({ row, copy, onCopy }: ScriptDetailPanelProps) {
   const pkg = row.package;
 
   return (
-    <div style={{ display: "grid", gap: "1rem", padding: "0.5rem 0" }}>
+    <div className="grid gap-4 py-2 px-0">
       <ScriptField
         label={copy.fields.hook}
         value={pkg.hook}
@@ -2057,7 +2068,7 @@ function CaptionDetailPanel({
 }: CaptionDetailPanelProps) {
   if (row.status !== "generated") {
     return (
-      <Message severity="info" text={copy.caption.emptyNoScript} style={{ width: "100%" }} />
+      <StatusAlert severity="info" text={copy.caption.emptyNoScript} className="w-full" />
     );
   }
 
@@ -2066,17 +2077,17 @@ function CaptionDetailPanel({
 
   if (caption.status !== "generated" || !record) {
     return (
-      <div style={{ display: "grid", gap: "1rem" }}>
-        <Message severity="info" text={copy.caption.emptyPending} style={{ width: "100%" }} />
+      <div className="grid gap-4">
+        <StatusAlert severity="info" text={copy.caption.emptyPending} className="w-full" />
         <Button
           type="button"
-          label={isRegenerating ? copy.caption.regenerating : copy.caption.regenerate}
-          icon="pi pi-refresh"
-          severity="secondary"
-          loading={isRegenerating}
-          disabled={isBusy}
           onClick={onRegenerate}
-        />
+          variant="secondary"
+          disabled={(isBusy) || (isRegenerating)}
+        >
+          {isRegenerating ? <Spinner className="size-4 text-current" /> : <RefreshCwIcon />}
+          {isRegenerating ? copy.caption.regenerating : copy.caption.regenerate}
+        </Button>
       </div>
     );
   }
@@ -2095,59 +2106,46 @@ function CaptionDetailPanel({
   const ctaGroupId = `cta-select-${row.slotIndex}`;
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
+    <div className="grid gap-4">
       {caption.stale ? (
-        <Message
+        <StatusAlert
           severity="warn"
-          icon="pi pi-exclamation-triangle"
+          icon={<TriangleAlertIcon />}
           text={copy.caption.staleBadge}
-          style={{ width: "100%" }}
+          className="w-full"
         />
       ) : null}
 
       <div>
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "0.5rem",
-            marginBottom: "0.35rem",
-          }}
+          className="flex items-center justify-between gap-2 mb-[0.35rem]"
         >
-          <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "#374151" }}>
+          <span className="font-semibold text-sm text-fog">
             {copy.caption.tabs.caption}
           </span>
           <Button
             type="button"
-            icon="pi pi-copy"
-            label={copy.caption.copyCaption}
-            size="small"
-            text
             onClick={() => onCopy(record.caption)}
-          />
+            variant="ghost"
+            size="sm"
+          >
+            <CopyIcon />
+            {copy.caption.copyCaption}
+          </Button>
         </div>
         <div
-          style={{
-            padding: "0.75rem 1rem",
-            borderRadius: "0.5rem",
-            background: "#f9fafb",
-            border: charOverLimit ? "1px solid #fcd34d" : "1px solid #e5e7eb",
-            fontSize: "0.95rem",
-            lineHeight: 1.5,
-            color: "#111827",
-            whiteSpace: "pre-wrap",
-          }}
+          className={cn(
+            "whitespace-pre-wrap rounded-lg border bg-panel px-4 py-3 text-[0.95rem] leading-normal text-fog",
+            charOverLimit ? "border-butter/60" : "border-edge",
+          )}
         >
           {record.caption}
         </div>
         <p
-          style={{
-            margin: "0.35rem 0 0",
-            fontSize: "0.8125rem",
-            color: charOverLimit ? "#b45309" : "#6b7280",
-            fontWeight: charOverLimit ? 600 : 400,
-          }}
+          className={cn(
+            "mt-[0.35rem] mb-0 text-[0.8125rem]",
+            charOverLimit ? "font-semibold text-butter" : "font-normal text-dim",
+          )}
         >
           {formatTemplate(copy.caption.charCount, {
             count: record.charCount,
@@ -2158,38 +2156,31 @@ function CaptionDetailPanel({
 
       <div>
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "0.5rem",
-            marginBottom: "0.5rem",
-          }}
+          className="flex items-center justify-between gap-2 mb-2"
         >
-          <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "#374151" }}>
+          <span className="font-semibold text-sm text-fog">
             {copy.caption.hashtagsLabel}
           </span>
           <Button
             type="button"
-            icon="pi pi-copy"
-            label={copy.caption.copyHashtags}
-            size="small"
-            text
             onClick={() => onCopy(hashtagBlock)}
-          />
+            variant="ghost"
+            size="sm"
+          >
+            <CopyIcon />
+            {copy.caption.copyHashtags}
+          </Button>
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+        <div className="flex flex-wrap gap-[0.35rem]">
           {record.hashtags.map((tag) => (
-            <Tag key={tag} value={tag} severity={hashtagWarn ? "warning" : "info"} />
+            <StatusBadge key={tag} value={tag} severity={hashtagWarn ? "warning" : "info"} />
           ))}
         </div>
         <p
-          style={{
-            margin: "0.35rem 0 0",
-            fontSize: "0.8125rem",
-            color: hashtagWarn ? "#b45309" : "#6b7280",
-            fontWeight: hashtagWarn ? 600 : 400,
-          }}
+          className={cn(
+            "mt-[0.35rem] mb-0 text-[0.8125rem]",
+            hashtagWarn ? "font-semibold text-butter" : "font-normal text-dim",
+          )}
         >
           {formatTemplate(copy.caption.hashtagCount, {
             count: record.hashtagCount,
@@ -2197,7 +2188,7 @@ function CaptionDetailPanel({
           })}
         </p>
         {hashtagWarn ? (
-          <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "#b45309" }}>
+          <p className="mt-1 mx-0 mb-0 text-[0.8125rem] text-butter">
             {formatTemplate(copy.caption.hashtagsOverMax, {
               max: record.maxHashtagsConfigured,
             })}
@@ -2208,19 +2199,13 @@ function CaptionDetailPanel({
       {record.hasKeywords && record.keywords.length > 0 ? (
         <div>
           <span
-            style={{
-              display: "block",
-              fontWeight: 600,
-              fontSize: "0.875rem",
-              color: "#374151",
-              marginBottom: "0.5rem",
-            }}
+            className="block font-semibold text-sm text-fog mb-2"
           >
             {copy.caption.keywordsLabel}
           </span>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+          <div className="flex flex-wrap gap-[0.35rem]">
             {record.keywords.map((keyword) => (
-              <Tag key={keyword} value={keyword} severity="secondary" />
+              <StatusBadge key={keyword} value={keyword} severity="secondary" />
             ))}
           </div>
         </div>
@@ -2229,20 +2214,22 @@ function CaptionDetailPanel({
       <div>
         <span
           id={ctaGroupId}
-          style={{
-            display: "block",
-            fontWeight: 600,
-            fontSize: "0.875rem",
-            color: "#374151",
-            marginBottom: "0.5rem",
-          }}
+          className="block font-semibold text-sm text-fog mb-2"
         >
           {copy.caption.ctaSelect.selectLabel}
         </span>
-        <div
-          role="radiogroup"
+        <RadioGroup
           aria-labelledby={ctaGroupId}
-          style={{ display: "grid", gap: "0.5rem" }}
+          className="grid gap-2"
+          name={`cta-${row.slotIndex}`}
+          value={
+            caption.selectedCtaIndex !== null &&
+            caption.selectedCtaIndex !== undefined
+              ? String(caption.selectedCtaIndex)
+              : ""
+          }
+          disabled={isBusy || isSelecting}
+          onValueChange={(value) => onSelectCta(Number(value))}
         >
           {record.ctaVariants.map((variant, index) => {
             const inputId = `cta-${row.slotIndex}-${index}`;
@@ -2252,28 +2239,14 @@ function CaptionDetailPanel({
               <label
                 key={`${index}-${variant}`}
                 htmlFor={inputId}
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "0.65rem",
-                  padding: "0.65rem 0.85rem",
-                  borderRadius: "0.375rem",
-                  border: isSelected ? "1px solid #6366f1" : "1px solid #e5e7eb",
-                  background: isSelected ? "#eef2ff" : "#f9fafb",
-                  fontSize: "0.9rem",
-                  color: "#111827",
-                  cursor: isBusy ? "not-allowed" : "pointer",
-                }}
+                className={cn(
+                  "flex items-start gap-[0.65rem] rounded-md border px-[0.85rem] py-[0.65rem] text-[0.9rem] text-fog",
+                  isSelected ? "border-info/60 bg-info/10" : "border-edge bg-panel",
+                  isBusy ? "cursor-not-allowed" : "cursor-pointer",
+                )}
               >
-                <RadioButton
-                  inputId={inputId}
-                  name={`cta-${row.slotIndex}`}
-                  value={index}
-                  checked={isSelected}
-                  disabled={isBusy || isSelecting}
-                  onChange={() => onSelectCta(index)}
-                />
-                <span style={{ flex: 1, lineHeight: 1.5 }}>
+                <RadioGroupItem id={inputId} value={String(index)} />
+                <span className="flex-1 leading-normal">
                   {formatTemplate(copy.caption.ctaVariantLine, {
                     index: index + 1,
                     text: variant,
@@ -2282,14 +2255,10 @@ function CaptionDetailPanel({
               </label>
             );
           })}
-        </div>
+        </RadioGroup>
         {!hasSelectedCta ? (
           <p
-            style={{
-              margin: "0.5rem 0 0",
-              fontSize: "0.8125rem",
-              color: "#6b7280",
-            }}
+            className="mt-2 mx-0 mb-0 text-[0.8125rem] text-dim"
           >
             {copy.caption.ctaSelect.unselectedHint}
           </p>
@@ -2298,42 +2267,25 @@ function CaptionDetailPanel({
 
       <div>
         <span
-          style={{
-            display: "block",
-            fontWeight: 600,
-            fontSize: "0.875rem",
-            color: "#374151",
-            marginBottom: "0.35rem",
-          }}
+          className="block font-semibold text-sm text-fog mb-[0.35rem]"
         >
           {copy.caption.ctaSelect.previewHeading}
         </span>
         {effectivePreview ? (
           <>
             <div
-              style={{
-                padding: "0.75rem 1rem",
-                borderRadius: "0.5rem",
-                background: caption.effectiveCaptionOverLimit ? "#fffbeb" : "#f9fafb",
-                border: caption.effectiveCaptionOverLimit
-                  ? "1px solid #fcd34d"
-                  : "1px solid #e5e7eb",
-                fontSize: "0.95rem",
-                lineHeight: 1.5,
-                color: "#111827",
-                whiteSpace: "pre-wrap",
-              }}
+              className={cn(
+                "whitespace-pre-wrap rounded-lg border px-4 py-3 text-[0.95rem] leading-normal text-fog",
+                caption.effectiveCaptionOverLimit
+                  ? "border-butter/60 bg-butter/10"
+                  : "border-edge bg-panel",
+              )}
             >
               {effectivePreview}
             </div>
             {caption.effectiveCaptionOverLimit ? (
               <p
-                style={{
-                  margin: "0.35rem 0 0",
-                  fontSize: "0.8125rem",
-                  color: "#b45309",
-                  fontWeight: 600,
-                }}
+                className="mt-[0.35rem] mx-0 mb-0 text-[0.8125rem] text-butter font-semibold"
               >
                 {formatTemplate(copy.caption.ctaSelect.effectiveLengthWarn, {
                   count: caption.effectiveCaptionCharCount,
@@ -2344,12 +2296,7 @@ function CaptionDetailPanel({
           </>
         ) : (
           <p
-            style={{
-              margin: 0,
-              fontSize: "0.875rem",
-              color: "#6b7280",
-              fontStyle: "italic",
-            }}
+            className="m-0 text-sm text-dim italic"
           >
             {copy.caption.ctaSelect.unselectedHint}
           </p>
@@ -2358,13 +2305,13 @@ function CaptionDetailPanel({
 
       <Button
         type="button"
-        label={isRegenerating ? copy.caption.regenerating : copy.caption.regenerate}
-        icon="pi pi-refresh"
-        severity="secondary"
-        loading={isRegenerating || isSelecting}
-        disabled={isBusy}
         onClick={onRegenerate}
-      />
+        variant="secondary"
+        disabled={(isBusy) || (isRegenerating || isSelecting)}
+      >
+        {isRegenerating || isSelecting ? <Spinner className="size-4 text-current" /> : <RefreshCwIcon />}
+        {isRegenerating ? copy.caption.regenerating : copy.caption.regenerate}
+      </Button>
     </div>
   );
 }
@@ -2389,15 +2336,15 @@ function OnScreenReadabilityMetrics({
   const hasTooManyBeats = onScreen.warnings.includes("too_many_beats");
 
   return (
-    <div style={{ display: "grid", gap: "0.5rem" }}>
+    <div className="grid gap-2">
       {hasTooManyBeats ? (
-        <Message
+        <StatusAlert
           severity="warn"
-          icon="pi pi-exclamation-triangle"
+          icon={<TriangleAlertIcon />}
           text={formatTemplate(copy.readability.tooManyBeats, {
             max: copy.readability.maxBeatLinesTotal,
           })}
-          style={{ width: "100%" }}
+          className="w-full"
         />
       ) : null}
       {onScreen.beatLines.map((beat) => (
@@ -2443,39 +2390,24 @@ function OnScreenBeatLineMetrics({
 
   return (
     <div
-      style={{
-        padding: "0.5rem 0.75rem",
-        borderRadius: "0.375rem",
-        border: hasWarning ? "1px solid #fcd34d" : "1px solid #e5e7eb",
-        background: hasWarning ? "#fffbeb" : "#f9fafb",
-      }}
+      className={cn(
+        "rounded-md border px-3 py-2",
+        hasWarning ? "border-butter/60 bg-butter/10" : "border-edge bg-panel",
+      )}
     >
       <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: "0.75rem",
-          flexWrap: "wrap",
-        }}
+        className="flex items-start justify-between gap-3 flex-wrap"
       >
         <span
-          style={{
-            fontSize: "0.875rem",
-            color: "#111827",
-            whiteSpace: "pre-wrap",
-            flex: "1 1 auto",
-          }}
+          className="text-sm text-fog whitespace-pre-wrap flex-[1_1_auto]"
         >
           {beat.text}
         </span>
         <span
-          style={{
-            fontSize: "0.8125rem",
-            color: hasWarning ? "#b45309" : "#6b7280",
-            fontWeight: hasWarning ? 600 : 400,
-            whiteSpace: "nowrap",
-          }}
+          className={cn(
+            "whitespace-nowrap text-[0.8125rem]",
+            hasWarning ? "font-semibold text-butter" : "font-normal text-dim",
+          )}
         >
           {beat.charCount}
         </span>
@@ -2483,16 +2415,9 @@ function OnScreenBeatLineMetrics({
       {warningMessages.map((message) => (
         <p
           key={message}
-          style={{
-            margin: "0.35rem 0 0",
-            fontSize: "0.8125rem",
-            color: "#b45309",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.35rem",
-          }}
+          className="mt-[0.35rem] mx-0 mb-0 text-[0.8125rem] text-butter flex items-center gap-[0.35rem]"
         >
-          <i className="pi pi-exclamation-triangle" aria-hidden="true" />
+          <TriangleAlertIcon aria-hidden="true" className="size-4" />
           <span>{message}</span>
         </p>
       ))}
@@ -2524,22 +2449,18 @@ function VoiceoverReadabilityMetrics({
 
   if (hasWarning) {
     return (
-      <Message
+      <StatusAlert
         severity="warn"
-        icon="pi pi-exclamation-triangle"
+        icon={<TriangleAlertIcon />}
         text={summary}
-        style={{ width: "100%" }}
+        className="w-full"
       />
     );
   }
 
   return (
     <p
-      style={{
-        margin: 0,
-        fontSize: "0.875rem",
-        color: "#6b7280",
-      }}
+      className="m-0 text-sm text-dim"
     >
       {summary}
     </p>
@@ -2557,37 +2478,27 @@ function ScriptField({
   return (
     <div>
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "0.5rem",
-          marginBottom: "0.35rem",
-        }}
+        className="flex items-center justify-between gap-2 mb-[0.35rem]"
       >
-        <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "#374151" }}>
+        <span className="font-semibold text-sm text-fog">
           {label}
         </span>
         <Button
           type="button"
-          icon="pi pi-copy"
-          label={copyLabel}
-          size="small"
-          text
           onClick={() => onCopy(value)}
-        />
+          variant="ghost"
+          size="sm"
+        >
+          <CopyIcon />
+          {copyLabel}
+        </Button>
       </div>
       <div
-        style={{
-          padding: "0.75rem 1rem",
-          borderRadius: "0.5rem",
-          background: highlighted ? "#fef3c7" : "#f9fafb",
-          border: highlighted ? "1px solid #fcd34d" : "1px solid #e5e7eb",
-          whiteSpace: preserveWhitespace ? "pre-wrap" : "normal",
-          fontSize: "0.95rem",
-          lineHeight: 1.5,
-          color: "#111827",
-        }}
+        className={cn(
+          "rounded-lg border px-4 py-3 text-[0.95rem] leading-normal text-fog",
+          highlighted ? "border-butter/60 bg-butter/15" : "border-edge bg-panel",
+          preserveWhitespace ? "whitespace-pre-wrap" : "whitespace-normal",
+        )}
       >
         {value}
       </div>
@@ -2615,31 +2526,19 @@ function WeeklyCostFooter({
 
   return (
     <div
-      style={{
-        marginTop: "1rem",
-        padding: "0.85rem 1rem",
-        borderRadius: "0.5rem",
-        border: "1px solid #e5e7eb",
-        background: "#f9fafb",
-      }}
+      className="mt-4 py-[0.85rem] px-4 rounded-lg border border-edge bg-panel"
     >
       <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "0.5rem 1rem",
-          alignItems: "baseline",
-          fontSize: "0.875rem",
-        }}
+        className="flex flex-wrap gap-y-2 gap-x-4 items-baseline text-sm"
       >
-        <span style={{ fontWeight: 600, color: "#374151" }}>{copy.weeklyTotal}</span>
-        <span style={{ color: "#374151" }}>{estimatedLabel}</span>
-        <span style={{ color: costSummary.weeklyActualCostCents === null ? "#6b7280" : "#374151" }}>
+        <span className="font-semibold text-fog">{copy.weeklyTotal}</span>
+        <span className="text-fog">{estimatedLabel}</span>
+        <span className={costSummary.weeklyActualCostCents === null ? "text-dim" : "text-fog"}>
           {actualLabel}
         </span>
       </div>
       {costSummary.hasPartialActual ? (
-        <p style={{ margin: "0.5rem 0 0", fontSize: "0.8125rem", color: "#6b7280" }}>
+        <p className="mt-2 mx-0 mb-0 text-[0.8125rem] text-dim">
           {copy.partialActualHint}
         </p>
       ) : null}
@@ -2650,15 +2549,7 @@ function WeeklyCostFooter({
 function TagLine({ text }: { text: string }) {
   return (
     <span
-      style={{
-        display: "inline-block",
-        padding: "0.35rem 0.75rem",
-        borderRadius: "9999px",
-        background: "#eef2ff",
-        color: "#3730a3",
-        fontSize: "0.875rem",
-        fontWeight: 600,
-      }}
+      className="inline-block py-[0.35rem] px-3 rounded-full bg-info/10 text-info text-sm font-semibold"
     >
       {text}
     </span>
@@ -2674,24 +2565,24 @@ function GeneratingSkeleton({
 }) {
   return (
     <div aria-busy="true" aria-live="polite">
-      <Message
+      <StatusAlert
         severity="info"
         text={message}
-        style={{ width: "100%", marginBottom: "1rem" }}
+        className="w-full mb-4"
       />
-      <Skeleton height="2.5rem" style={{ marginBottom: "0.75rem" }} />
-      <Skeleton height="2.5rem" style={{ marginBottom: "0.75rem" }} />
-      <Skeleton height="2.5rem" style={{ marginBottom: "0.75rem" }} />
-      <Skeleton height="2.5rem" />
+      <Skeleton className="mb-3 h-10 bg-edge" />
+      <Skeleton className="mb-3 h-10 bg-edge" />
+      <Skeleton className="mb-3 h-10 bg-edge" />
+      <Skeleton className="h-10 bg-edge" />
     </div>
   );
 }
 
 function PageHeader({ copy }: { copy: Pick<ScriptsPageCopy, "title" | "subtitle"> }) {
   return (
-    <div style={{ marginBottom: "1.5rem" }}>
-      <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem" }}>{copy.title}</h1>
-      <p style={{ margin: 0, color: "#4b5563" }}>{copy.subtitle}</p>
+    <div className="mb-6">
+      <h1 className="font-display text-fog mt-0 mx-0 mb-2 text-[2rem]">{copy.title}</h1>
+      <p className="m-0 text-dim">{copy.subtitle}</p>
     </div>
   );
 }

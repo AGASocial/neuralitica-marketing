@@ -1,11 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Button } from "primereact/button";
-import { Dropdown } from "primereact/dropdown";
-import { InputText } from "primereact/inputtext";
-import { Message } from "primereact/message";
-import { Toast } from "primereact/toast";
+import { useState } from "react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { SimpleSelect } from "@/components/ui/simple-select";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
 
 import type {
   AvatarForClientResult,
@@ -82,7 +85,6 @@ export function AvatarSetupSection({
   copy,
   preferencesPending = false,
 }: AvatarSetupSectionProps) {
-  const toastRef = useRef<Toast>(null);
   const existing = initial.exists === true ? initial.avatar : null;
   const loadFailed =
     initial.exists === false && "loadFailed" in initial && initial.loadFailed;
@@ -128,11 +130,7 @@ export function AvatarSetupSection({
       setGender(result.avatar.gender);
       setLanguage(result.avatar.language);
       setVoiceId(result.avatar.elevenLabsVoiceId ?? "");
-      toastRef.current?.show({
-        severity: "success",
-        summary: copy.toastSaveSuccess,
-        life: 2500,
-      });
+      toast.success(copy.toastSaveSuccess, { duration: 2500 });
     } catch {
       setBanner(copy.errors.internal);
     } finally {
@@ -150,11 +148,7 @@ export function AvatarSetupSection({
         return;
       }
       setGender(result.gender);
-      toastRef.current?.show({
-        severity: "success",
-        summary: copy.toastPrefillSuccess,
-        life: 2500,
-      });
+      toast.success(copy.toastPrefillSuccess, { duration: 2500 });
     } catch {
       setBanner(copy.errors.internal);
     } finally {
@@ -163,93 +157,87 @@ export function AvatarSetupSection({
   }
 
   if (loadFailed) {
-    return <Message severity="error" text={copy.loadFailed} style={{ width: "100%" }} />;
+    return <StatusAlert severity="error" text={copy.loadFailed} className="w-full" />;
   }
 
   const disabled = pending || preferencesPending || prefilling;
 
   return (
-    <section
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "0.75rem",
-        padding: "1rem 0",
-        borderTop: "1px solid var(--surface-border, #e5e7eb)",
-      }}
-    >
-      <Toast ref={toastRef} />
+    <section className="flex flex-col gap-3 border-t border-edge py-4">
       <div>
-        <h2 style={{ margin: "0 0 0.35rem", fontSize: "1.25rem" }}>{copy.title}</h2>
-        <p style={{ margin: 0, color: "var(--text-color-secondary, #6b7280)" }}>
-          {copy.subtitle}
-        </p>
+        <h2 className="mb-1.5 font-display text-xl text-fog">{copy.title}</h2>
+        <p className="text-dim">{copy.subtitle}</p>
       </div>
 
       {!existing ? (
-        <Message severity="info" text={copy.emptyHint} style={{ width: "100%" }} />
+        <StatusAlert severity="info" text={copy.emptyHint} className="w-full" />
       ) : null}
 
       {banner ? (
-        <Message severity="error" text={banner} style={{ width: "100%" }} />
+        <StatusAlert severity="error" text={banner} className="w-full" />
       ) : null}
 
-      <div
-        style={{
-          display: "grid",
-          gap: "0.75rem",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-        }}
-      >
-        <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-          <span>{copy.genderLabel}</span>
-          <Dropdown
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="avatar-setup-gender" className="text-fog">
+            {copy.genderLabel}
+          </Label>
+          <SimpleSelect
+            id="avatar-setup-gender"
             value={gender}
             options={genderOptions}
-            onChange={(e) => setGender(e.value as AvatarGender)}
+            onChange={(value) => setGender(value)}
             disabled={disabled}
             placeholder={copy.genderLabel}
           />
-        </label>
-        <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-          <span>{copy.languageLabel}</span>
-          <Dropdown
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="avatar-setup-language" className="text-fog">
+            {copy.languageLabel}
+          </Label>
+          <SimpleSelect
+            id="avatar-setup-language"
             value={language}
             options={languageOptions}
-            onChange={(e) => setLanguage(e.value as AvatarLanguage)}
+            onChange={(value) => setLanguage(value)}
             disabled={disabled}
             placeholder={copy.languageLabel}
           />
-        </label>
+        </div>
       </div>
 
-      <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-        <span>{copy.voiceIdLabel}</span>
-        <InputText
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="avatar-setup-voice-id" className="text-fog">
+          {copy.voiceIdLabel}
+        </Label>
+        <Input
+          id="avatar-setup-voice-id"
           value={voiceId}
           onChange={(e) => setVoiceId(e.target.value)}
           disabled={disabled}
           placeholder="ElevenLabs voice_id"
         />
-        <small style={{ color: "var(--text-color-secondary, #6b7280)" }}>
-          {copy.voiceIdHint}
-        </small>
-      </label>
+        <small className="text-dim">{copy.voiceIdHint}</small>
+      </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+      <div className="flex flex-wrap gap-2">
         <Button
           type="button"
-          label={pending ? copy.saving : copy.save}
           onClick={() => void onSave()}
           disabled={disabled || !gender || !language}
-        />
+        >
+          {pending ? <Spinner className="size-4 text-current" /> : null}
+          {pending ? copy.saving : copy.save}
+        </Button>
         <Button
           type="button"
-          outlined
-          label={prefilling ? copy.prefilling : copy.prefillGender}
+          variant="outline"
           onClick={() => void onPrefill()}
           disabled={disabled}
-        />
+        >
+          {prefilling ? <Spinner className="size-4 text-current" /> : null}
+          {prefilling ? copy.prefilling : copy.prefillGender}
+        </Button>
       </div>
     </section>
   );

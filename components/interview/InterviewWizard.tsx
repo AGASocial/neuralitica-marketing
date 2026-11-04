@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
-import { Message } from "primereact/message";
-import { Steps } from "primereact/steps";
 import { useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { cn } from "@/lib/utils";
 import { persistInterviewDraft } from "@/lib/interview/actions/persist-interview-draft";
 import { submitInterview } from "@/lib/interview/actions/submit-interview";
 import type {
@@ -454,46 +455,63 @@ export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProp
   }
 
   return (
-    <div
-      style={{
-        maxWidth: 760,
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.25rem",
-      }}
-    >
+    <div className="mx-auto flex max-w-[760px] flex-col gap-5">
       <div>
-        <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem" }}>{copy.title}</h1>
-        <p style={{ margin: 0, color: "#4b5563" }}>{copy.subtitle}</p>
+        <h1 className="mb-2 font-display text-4xl text-fog">{copy.title}</h1>
+        <p className="text-dim">{copy.subtitle}</p>
       </div>
 
-      <p style={{ margin: 0, fontWeight: 600 }} aria-live="polite">
+      <p className="font-semibold text-fog" aria-live="polite">
         {progressLabel}
       </p>
 
-      <Steps model={stepModel} activeIndex={activeIndex} readOnly />
+      <ol className="m-0 flex list-none items-start gap-2 p-0">
+        {stepModel.map((entry, index) => {
+          const done = index < activeIndex;
+          const current = index === activeIndex;
+          return (
+            <li
+              key={INTERVIEW_STEP_ORDER[index]}
+              aria-current={current ? "step" : undefined}
+              className="flex min-w-0 flex-1 flex-col items-center gap-1.5 text-center"
+            >
+              <span
+                className={cn(
+                  "flex size-8 items-center justify-center rounded-full border text-sm font-semibold",
+                  current
+                    ? "border-butter bg-butter text-deep"
+                    : done
+                      ? "border-butter/60 bg-butter/15 text-butter"
+                      : "border-edge bg-panel text-dim",
+                )}
+              >
+                {index + 1}
+              </span>
+              <span
+                className={cn(
+                  "text-xs leading-tight",
+                  current ? "font-semibold text-fog" : "text-dim",
+                )}
+              >
+                {entry.label}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
 
       {banner ? (
-        <Message
+        <StatusAlert
           severity={banner.severity}
           text={banner.text}
-          style={{ width: "100%" }}
+          className="w-full"
         />
       ) : null}
 
       <form
         onSubmit={handleNext}
         noValidate
-        style={{
-          background: "#ffffff",
-          border: "1px solid #e5e7eb",
-          borderRadius: "8px",
-          padding: "1.25rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "1.25rem",
-        }}
+        className="flex flex-col gap-5 rounded-xl border border-edge bg-panel p-5"
       >
         <InterviewStepFields
           key={viewStep}
@@ -514,60 +532,43 @@ export function InterviewWizard({ draft, copy, authErrors }: InterviewWizardProp
           onClearMessage={clearMessages}
         />
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "0.75rem",
-            flexWrap: "wrap",
-          }}
-        >
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Button
             type="button"
-            label={copy.back}
-            severity="secondary"
-            outlined
+            variant="outline"
             onClick={goBack}
             disabled={pending || activeIndex === 0}
-          />
-          <div
-            style={{
-              display: "flex",
-              gap: "0.75rem",
-              flexWrap: "wrap",
-              marginLeft: "auto",
-            }}
           >
+            {copy.back}
+          </Button>
+          <div className="ml-auto flex flex-wrap gap-3">
             <Button
               type="button"
-              label={
-                pendingMode === "leave"
-                  ? copy.saveAndContinueLaterPending
-                  : copy.saveAndContinueLater
-              }
-              severity="secondary"
-              outlined
+              variant="outline"
               onClick={handleSaveAndContinueLater}
-              loading={pendingMode === "leave"}
               disabled={pending}
-            />
+            >
+              {pendingMode === "leave" ? (
+                <Spinner className="size-4 text-current" />
+              ) : null}
+              {pendingMode === "leave"
+                ? copy.saveAndContinueLaterPending
+                : copy.saveAndContinueLater}
+            </Button>
             {isLastStep ? (
-              <Button
-                type="submit"
-                label={
-                  pendingMode === "submit" ? copy.submitPending : copy.submit
-                }
-                loading={pendingMode === "submit"}
-                disabled={pending || !presentationComplete}
-              />
+              <Button type="submit" disabled={pending || !presentationComplete}>
+                {pendingMode === "submit" ? (
+                  <Spinner className="size-4 text-current" />
+                ) : null}
+                {pendingMode === "submit" ? copy.submitPending : copy.submit}
+              </Button>
             ) : (
-              <Button
-                type="submit"
-                label={pendingMode === "next" ? copy.saving : copy.next}
-                loading={pendingMode === "next"}
-                disabled={pending}
-              />
+              <Button type="submit" disabled={pending}>
+                {pendingMode === "next" ? (
+                  <Spinner className="size-4 text-current" />
+                ) : null}
+                {pendingMode === "next" ? copy.saving : copy.next}
+              </Button>
             )}
           </div>
         </div>

@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "primereact/button";
-import { InputText } from "primereact/inputtext";
-import { Message } from "primereact/message";
-import { Password } from "primereact/password";
 import { useState } from "react";
 
 import { CheckEmailView } from "@/components/auth/CheckEmailView";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { PasswordInput } from "@/components/ui/password-input";
 import { resendConfirmationEmail } from "@/lib/auth/actions/resend-confirmation";
 import { signUp } from "@/lib/auth/actions/sign-up";
 import type { AuthErrorEnvelope, SignUpInput } from "@/lib/contracts/auth";
@@ -26,6 +28,8 @@ type SignupCopy = {
   success: string;
   checkEmailTitle: string;
   loginLink: string;
+  showPassword: string;
+  hidePassword: string;
   confirmPasswordMismatch: string;
   requiredField: string;
   invalidEmail: string;
@@ -263,95 +267,100 @@ export function SignupForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+      <div className="flex flex-col gap-5">
         <div>
-          <h1 style={{ margin: "0 0 0.35rem", fontSize: "1.5rem" }}>{copy.title}</h1>
-          <p style={{ margin: 0, color: "#4b5563" }}>{copy.subtitle}</p>
+          <h1 className="mb-1.5 font-display text-3xl text-fog">{copy.title}</h1>
+          <p className="text-sm text-dim">{copy.subtitle}</p>
         </div>
 
         {formError ? (
-          <Message severity="error" text={formError} style={{ width: "100%" }} />
+          <StatusAlert severity="error" text={formError} className="w-full" />
         ) : null}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-          <label htmlFor="signup-display-name">{copy.displayName}</label>
-          <InputText
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="signup-display-name" className="text-fog">
+            {copy.displayName}
+          </Label>
+          <Input
             id="signup-display-name"
             value={fields.displayName}
             onChange={(event) => updateField("displayName", event.target.value)}
-            invalid={Boolean(fieldErrors.displayName)}
+            aria-invalid={Boolean(fieldErrors.displayName)}
             disabled={pending}
             autoComplete="name"
           />
           {fieldErrors.displayName ? (
-            <small style={{ color: "#dc2626" }}>{fieldErrors.displayName}</small>
+            <small className="text-rose">{fieldErrors.displayName}</small>
           ) : null}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-          <label htmlFor="signup-email">{copy.email}</label>
-          <InputText
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="signup-email" className="text-fog">
+            {copy.email}
+          </Label>
+          <Input
             id="signup-email"
             type="email"
             value={fields.email}
             onChange={(event) => updateField("email", event.target.value)}
-            invalid={Boolean(fieldErrors.email)}
+            aria-invalid={Boolean(fieldErrors.email)}
             disabled={pending}
             autoComplete="email"
           />
           {fieldErrors.email ? (
-            <small style={{ color: "#dc2626" }}>{fieldErrors.email}</small>
+            <small className="text-rose">{fieldErrors.email}</small>
           ) : null}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-          <label htmlFor="signup-password">{copy.password}</label>
-          <Password
-            inputId="signup-password"
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="signup-password" className="text-fog">
+            {copy.password}
+          </Label>
+          <PasswordInput
+            id="signup-password"
             value={fields.password}
             onChange={(event) => updateField("password", event.target.value)}
-            invalid={Boolean(fieldErrors.password)}
+            aria-invalid={Boolean(fieldErrors.password)}
             disabled={pending}
-            toggleMask
-            feedback={false}
-            inputStyle={{ width: "100%" }}
-            style={{ width: "100%" }}
+            showLabel={copy.showPassword}
+            hideLabel={copy.hidePassword}
             autoComplete="new-password"
           />
-          <small style={{ color: "#6b7280" }}>{copy.passwordHint}</small>
+          <small className="text-dim">{copy.passwordHint}</small>
           {fieldErrors.password ? (
-            <small style={{ color: "#dc2626" }}>{fieldErrors.password}</small>
+            <small className="text-rose">{fieldErrors.password}</small>
           ) : null}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-          <label htmlFor="signup-confirm-password">{copy.confirmPassword}</label>
-          <Password
-            inputId="signup-confirm-password"
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="signup-confirm-password" className="text-fog">
+            {copy.confirmPassword}
+          </Label>
+          <PasswordInput
+            id="signup-confirm-password"
             value={fields.confirmPassword}
             onChange={(event) => updateField("confirmPassword", event.target.value)}
-            invalid={Boolean(fieldErrors.confirmPassword)}
+            aria-invalid={Boolean(fieldErrors.confirmPassword)}
             disabled={pending}
-            toggleMask
-            feedback={false}
-            inputStyle={{ width: "100%" }}
-            style={{ width: "100%" }}
+            showLabel={copy.showPassword}
+            hideLabel={copy.hidePassword}
             autoComplete="new-password"
           />
           {fieldErrors.confirmPassword ? (
-            <small style={{ color: "#dc2626" }}>{fieldErrors.confirmPassword}</small>
+            <small className="text-rose">{fieldErrors.confirmPassword}</small>
           ) : null}
         </div>
 
-        <Button
-          type="submit"
-          label={pending ? copy.submitPending : copy.submit}
-          loading={pending}
-          disabled={pending}
-        />
+        <Button type="submit" disabled={pending} className="w-full">
+          {pending ? <Spinner className="size-4 text-current" /> : null}
+          {pending ? copy.submitPending : copy.submit}
+        </Button>
 
-        <p style={{ margin: 0, fontSize: "0.875rem", textAlign: "center" }}>
-          <Link href={`/login?locale=${locale}`} style={{ color: "#4338ca" }}>
+        <p className="text-center text-sm">
+          <Link
+            href={`/login?locale=${locale}`}
+            className="text-butter underline-offset-4 hover:underline"
+          >
             {copy.loginLink}
           </Link>
         </p>

@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "primereact/button";
-import { Checkbox } from "primereact/checkbox";
-import { InputNumber } from "primereact/inputnumber";
-import { Message } from "primereact/message";
-import { Tag } from "primereact/tag";
+
+import { CheckIcon, CircleXIcon, DownloadIcon, PaletteIcon, RefreshCwIcon, VideoIcon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 import type {
   AssemblyJobErrorCode,
@@ -624,45 +629,32 @@ export function OperatorAssemblyPanel({
 
   return (
     <section
-      style={{
-        marginBottom: "1rem",
-        padding: "0.85rem 1rem",
-        borderRadius: "0.5rem",
-        border: "1px solid #e5e7eb",
-        background: "#f9fafb",
-      }}
+      className="mb-4 py-[0.85rem] px-4 rounded-lg border border-edge bg-panel"
       aria-label={copy.title}
     >
       <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "0.5rem",
-          marginBottom: "0.75rem",
-        }}
+        className="flex flex-wrap items-center justify-between gap-2 mb-3"
       >
-        <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600 }}>
+        <h3 className="font-display text-fog m-0 text-[0.95rem] font-semibold">
           {copy.title}
         </h3>
         {isPersistedAssemblyJob(job) ? (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", alignItems: "center" }}>
-            <Tag
+          <div className="flex flex-wrap gap-[0.35rem] items-center">
+            <StatusBadge
               value={copy.status[job.status]}
               severity={assemblyStatusSeverity(job.status)}
               icon={
                 job.status === "processing"
-                  ? "pi pi-spin pi-spinner"
+                  ? <Spinner className="size-3 text-current" />
                   : job.status === "failed"
-                    ? "pi pi-times-circle"
+                    ? <CircleXIcon />
                     : job.status === "completed"
-                      ? "pi pi-check"
+                      ? <CheckIcon />
                       : undefined
               }
             />
             {polling ? (
-              <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>
+              <span className="text-[0.8125rem] text-dim">
                 {copy.polling}
               </span>
             ) : null}
@@ -671,26 +663,21 @@ export function OperatorAssemblyPanel({
       </div>
 
       {!job || isReadinessCompanion(job) ? (
-        <p style={{ margin: "0 0 0.75rem", fontSize: "0.875rem", color: "#6b7280" }}>
+        <p className="mt-0 mx-0 mb-3 text-sm text-dim">
           {copy.empty}
         </p>
       ) : null}
 
       {banner ? (
-        <Message severity="error" text={banner} style={{ width: "100%", marginBottom: "0.75rem" }} />
+        <StatusAlert severity="error" text={banner} className="w-full mb-3" />
       ) : null}
 
       {job ? (
         <dl
-          style={{
-            margin: "0 0 0.75rem",
-            display: "grid",
-            gap: "0.35rem",
-            fontSize: "0.875rem",
-          }}
+          className="mt-0 mx-0 mb-3 grid gap-[0.35rem] text-sm"
         >
           <div>
-            <dt style={{ display: "inline", color: "#6b7280" }}>
+            <dt className="inline text-dim">
               {formatTemplate(copy.durationTarget, {
                 seconds: job.targetDurationSec,
               })}
@@ -698,7 +685,7 @@ export function OperatorAssemblyPanel({
           </div>
           {job.actualDurationSec !== null ? (
             <div>
-              <dt style={{ display: "inline", color: "#6b7280" }}>
+              <dt className="inline text-dim">
                 {formatTemplate(copy.durationActual, {
                   seconds: job.actualDurationSec,
                 })}
@@ -709,108 +696,90 @@ export function OperatorAssemblyPanel({
       ) : null}
 
       {assemblyFailureText ? (
-        <Message
+        <StatusAlert
           severity="error"
-          style={{ width: "100%", marginBottom: "0.75rem" }}
-          content={
-            <div style={{ fontSize: "0.875rem" }}>
-              <span style={{ fontWeight: 600, marginRight: "0.35rem" }}>
+          className="w-full mb-3"
+        >
+          <div className="text-sm">
+              <span className="font-semibold mr-[0.35rem]">
                 {copy.failureReasonLabel}
               </span>
               <span>{assemblyFailureText}</span>
             </div>
-          }
-        />
+        </StatusAlert>
       ) : null}
 
       {previewAssetId ? (
-        <div style={{ marginBottom: "0.75rem" }}>
-          <p style={{ margin: "0 0 0.35rem", fontSize: "0.875rem", fontWeight: 600, color: "#374151" }}>
+        <div className="mb-3">
+          <p className="mt-0 mx-0 mb-[0.35rem] text-sm font-semibold text-fog">
             {brandingCopy.preview}
           </p>
           {showPendingBanner ? (
-            <Message
+            <StatusAlert
               severity="info"
               text={brandingCopy.previewPending}
-              style={{ width: "100%", marginBottom: "0.5rem" }}
+              className="w-full mb-2"
             />
           ) : null}
           {showProcessingBadge ? (
-            <Message
+            <StatusAlert
               severity="info"
               text={brandingCopy.previewProcessing}
-              style={{ width: "100%", marginBottom: "0.5rem" }}
+              className="w-full mb-2"
             />
           ) : null}
           {previewError ? (
-            <Message severity="warn" text={brandingCopy.previewError} style={{ width: "100%" }} />
+            <StatusAlert severity="warn" text={brandingCopy.previewError} className="w-full" />
           ) : (
             <video
               controls
               preload="metadata"
               src={`/api/media/assets/${previewAssetId}`}
-              style={{
-                width: "100%",
-                maxWidth: "270px",
-                aspectRatio: "9 / 16",
-                background: "#111827",
-                borderRadius: "0.375rem",
-              }}
+              className="w-full max-w-[270px] aspect-[9/16] bg-deep rounded-md"
               onError={() => setPreviewError(true)}
             />
           )}
         </div>
       ) : null}
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+      <div className="flex flex-wrap gap-2">
         {showAssemble ? (
           <Button
             type="button"
-            label={pending ? copy.actions.assembling : copy.actions.assemble}
-            icon="pi pi-video"
-            size="small"
-            loading={pending}
-            disabled={panelBusy}
             onClick={() => void handleAssemble()}
-          />
+            size="sm"
+            disabled={(panelBusy) || (pending)}
+          >
+            {pending ? <Spinner className="size-4 text-current" /> : <VideoIcon />}
+            {pending ? copy.actions.assembling : copy.actions.assemble}
+          </Button>
         ) : null}
         {showReassemble ? (
           <Button
             type="button"
-            label={copy.actions.reassemble}
-            icon="pi pi-refresh"
-            size="small"
-            severity="secondary"
-            outlined
             disabled={panelBusy}
             onClick={() => onRequestReassemble(reelScriptId)}
-          />
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCwIcon />
+            {copy.actions.reassemble}
+          </Button>
         ) : null}
       </div>
 
       {job !== null && isPersistedAssemblyJob(job) && job.status === "completed" ? (
         <section
-          style={{
-            marginTop: "1rem",
-            paddingTop: "0.85rem",
-            borderTop: "1px solid #e5e7eb",
-          }}
+          className="mt-4 pt-[0.85rem] border-t border-edge"
           aria-label={brandingCopy.title}
         >
           <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "0.5rem",
-              marginBottom: "0.75rem",
-            }}
+            className="flex flex-wrap items-center justify-between gap-2 mb-3"
           >
-            <h4 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 600 }}>
+            <h4 className="font-display text-fog m-0 text-[0.9rem] font-semibold">
               {brandingCopy.title}
             </h4>
-            <Tag
+            <StatusBadge
               value={brandingStatusLabel}
               severity={
                 job.brandingStatus != null
@@ -819,136 +788,143 @@ export function OperatorAssemblyPanel({
               }
               icon={
                 job.brandingStatus === "processing"
-                  ? "pi pi-spin pi-spinner"
+                  ? <Spinner className="size-3 text-current" />
                   : job.brandingStatus === "failed"
-                    ? "pi pi-times-circle"
+                    ? <CircleXIcon />
                     : job.brandingStatus === "completed"
-                      ? "pi pi-check"
+                      ? <CheckIcon />
                       : undefined
               }
             />
           </div>
 
           {brandingFailureText ? (
-            <Message
+            <StatusAlert
               severity="error"
-              style={{ width: "100%", marginBottom: "0.75rem" }}
-              content={
-                <div style={{ fontSize: "0.875rem" }}>
-                  <span style={{ fontWeight: 600, marginRight: "0.35rem" }}>
+              className="w-full mb-3"
+            >
+              <div className="text-sm">
+                  <span className="font-semibold mr-[0.35rem]">
                     {brandingCopy.failureReasonLabel}
                   </span>
                   <span>{brandingFailureText}</span>
                 </div>
-              }
-            />
+            </StatusAlert>
           ) : null}
 
           <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.65rem",
-              marginBottom: "0.75rem",
-            }}
+            className="flex flex-col gap-[0.65rem] mb-3"
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <div className="flex items-center gap-2">
               <Checkbox
-                inputId={`branding-subtitles-${job.jobId}`}
+                id={`branding-subtitles-${job.jobId}`}
                 checked={subtitlesEnabled}
                 disabled={panelBusy || brandingInFlight}
-                onChange={(event) => setSubtitlesEnabled(event.checked === true)}
+                onCheckedChange={(checked) => setSubtitlesEnabled(checked === true)}
               />
-              <label htmlFor={`branding-subtitles-${job.jobId}`} style={{ fontSize: "0.875rem" }}>
+              <Label htmlFor={`branding-subtitles-${job.jobId}`} className="text-sm">
                 {brandingCopy.toggles.subtitles}
-              </label>
+              </Label>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <div className="flex items-center gap-2">
               <Checkbox
-                inputId={`branding-logo-${job.jobId}`}
+                id={`branding-logo-${job.jobId}`}
                 checked={logoEnabled}
                 disabled={panelBusy || brandingInFlight}
-                onChange={(event) => setLogoEnabled(event.checked === true)}
+                onCheckedChange={(checked) => setLogoEnabled(checked === true)}
               />
-              <label htmlFor={`branding-logo-${job.jobId}`} style={{ fontSize: "0.875rem" }}>
+              <Label htmlFor={`branding-logo-${job.jobId}`} className="text-sm">
                 {brandingCopy.toggles.logo}
-              </label>
+              </Label>
             </div>
             <div>
-              <label
+              <Label
                 htmlFor={`branding-cover-frame-${job.jobId}`}
-                style={{ display: "block", fontSize: "0.875rem", marginBottom: "0.35rem" }}
+                className="mb-[0.35rem] block text-sm"
               >
                 {brandingCopy.coverFrame.label}
-              </label>
-              <InputNumber
-                inputId={`branding-cover-frame-${job.jobId}`}
-                value={coverFrameSec}
-                onValueChange={(event) => setCoverFrameSec(event.value ?? null)}
+              </Label>
+              <Input
+                id={`branding-cover-frame-${job.jobId}`}
+                type="number"
+                inputMode="decimal"
+                value={coverFrameSec ?? ""}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  if (raw === "") {
+                    setCoverFrameSec(null);
+                    return;
+                  }
+                  const parsed = Number(raw);
+                  if (Number.isNaN(parsed)) {
+                    return;
+                  }
+                  setCoverFrameSec(
+                    Math.min(45, Math.max(0, Math.round(parsed * 10) / 10)),
+                  );
+                }}
                 min={0}
                 max={45}
                 step={0.1}
-                minFractionDigits={0}
-                maxFractionDigits={1}
                 disabled={panelBusy || brandingInFlight}
-                style={{ width: "8rem" }}
+                className="w-[8rem]"
               />
-              <p style={{ margin: "0.35rem 0 0", fontSize: "0.8125rem", color: "#6b7280" }}>
+              <p className="mt-[0.35rem] mx-0 mb-0 text-[0.8125rem] text-dim">
                 {brandingCopy.coverFrame.help}
               </p>
             </div>
           </div>
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
+          <div className="flex flex-wrap gap-2 items-center">
             {showApplyBranding ? (
               <Button
                 type="button"
-                label={
-                  brandingPending
-                    ? brandingCopy.actions.applying
-                    : brandingCopy.actions.apply
-                }
-                icon="pi pi-palette"
-                size="small"
-                loading={brandingPending}
-                disabled={panelBusy}
                 onClick={() => void handleApplyBranding()}
-              />
+                size="sm"
+                disabled={(panelBusy) || (brandingPending)}
+              >
+                {brandingPending ? <Spinner className="size-4 text-current" /> : <PaletteIcon />}
+                {
+                                  brandingPending
+                                    ? brandingCopy.actions.applying
+                                    : brandingCopy.actions.apply
+                                }
+              </Button>
             ) : null}
             {showRebrand ? (
               <Button
                 type="button"
-                label={brandingCopy.actions.rebrand}
-                icon="pi pi-refresh"
-                size="small"
-                severity="secondary"
-                outlined
                 disabled={panelBusy}
                 onClick={() =>
-                  onRequestRebrand(
-                    job.jobId,
-                    subtitlesEnabled,
-                    logoEnabled,
-                    resolveCoverFrameSecForApply(coverFrameSec),
-                  )
+                onRequestRebrand(
+                job.jobId,
+                subtitlesEnabled,
+                logoEnabled,
+                resolveCoverFrameSecForApply(coverFrameSec),
+                )
                 }
-              />
+                variant="outline"
+                size="sm"
+              >
+                <RefreshCwIcon />
+                {brandingCopy.actions.rebrand}
+              </Button>
             ) : null}
             {job.coverMediaAssetId ? (
               <a
                 href={`/api/media/assets/${job.coverMediaAssetId}`}
                 download
-                style={{ textDecoration: "none" }}
+                className="no-underline"
               >
                 <Button
                   type="button"
-                  label={brandingCopy.downloadCover}
-                  icon="pi pi-download"
-                  size="small"
-                  severity="help"
-                  outlined
                   disabled={panelBusy}
-                />
+                  variant="outline"
+                  size="sm"
+                >
+                  <DownloadIcon />
+                  {brandingCopy.downloadCover}
+                </Button>
               </a>
             ) : null}
           </div>
@@ -966,14 +942,14 @@ export function AssemblyStatusTag({
   copy: Pick<OperatorAssemblyCopy, "status">;
 }) {
   return (
-    <Tag
+    <StatusBadge
       value={copy.status[status]}
       severity={assemblyStatusSeverity(status)}
       icon={
         status === "processing"
-          ? "pi pi-spin pi-spinner"
+          ? <Spinner className="size-3 text-current" />
           : status === "failed"
-            ? "pi pi-times-circle"
+            ? <CircleXIcon />
             : undefined
       }
     />

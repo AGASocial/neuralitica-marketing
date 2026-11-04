@@ -1,10 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
-import { Message } from "primereact/message";
-import { ProgressSpinner } from "primereact/progressspinner";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
 
 import type { VideoJobErrorCode } from "@/lib/contracts/video-job";
 import { formatCentsForDisplay } from "@/lib/cost-policy/format-cents-for-display";
@@ -202,86 +209,94 @@ export function VideoJobRetryConfirmDialog({
     !canRetry &&
     blockedReasonKey === "scripts.videoJob.retry.limitExceeded";
 
-  const footer = (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "flex-end" }}>
-      <Button
-        type="button"
-        label={copy.cancel}
-        className="p-button-text"
-        disabled={pending}
-        onClick={onHide}
-      />
-      {showOverridePrompt ? (
-        <Button
-          type="button"
-          label={copy.overrideButton}
-          severity="secondary"
-          disabled={pending || !failedJobId}
-          onClick={() => {
-            if (failedJobId) {
-              onHide();
-              onRetryLimitExceeded(failedJobId);
-            }
-          }}
-        />
-      ) : (
-        <Button
-          type="button"
-          label={copy.confirm}
-          disabled={
-            pending ||
-            loading ||
-            loadError !== null ||
-            !canRetry ||
-            estimatedCostCents === null
-          }
-          loading={pending}
-          onClick={() => void handleConfirm()}
-        />
-      )}
-    </div>
-  );
-
   return (
     <Dialog
-      header={copy.title}
-      visible={visible}
-      style={{ width: "min(480px, 95vw)" }}
-      onHide={onHide}
-      footer={footer}
-      closable={!pending}
-      dismissableMask={!pending}
+      open={visible}
+      onOpenChange={(open) => {
+        if (!open && !pending) {
+          onHide();
+        }
+      }}
     >
-      {loading ? (
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 0" }}>
-          <ProgressSpinner style={{ width: "28px", height: "28px" }} />
-          <span>{copy.loading}</span>
-        </div>
-      ) : null}
+      <DialogContent
+        className="w-[min(480px,95vw)] border-edge bg-panel text-fog sm:max-w-[480px]"
+        showCloseButton={!pending}
+        aria-describedby={undefined}
+        onInteractOutside={(event) => {
+          if (pending) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle className="font-display text-2xl">{copy.title}</DialogTitle>
+        </DialogHeader>
+        {loading ? (
+          <div className="flex items-center gap-3 py-4">
+            <Spinner className="size-7" />
+            <span>{copy.loading}</span>
+          </div>
+        ) : null}
 
-      {!loading && loadError ? (
-        <Message severity="error" text={loadError} style={{ width: "100%" }} />
-      ) : null}
+        {!loading && loadError ? (
+          <StatusAlert severity="error" text={loadError} className="w-full" />
+        ) : null}
 
-      {!loading && !loadError && estimatedCostCents !== null ? (
-        <>
-          {!canRetry && blockedReasonKey ? (
-            <Message
-              severity="warn"
-              text={resolveBlockedReason(blockedReasonKey, copy)}
-              style={{ width: "100%", marginBottom: "1rem" }}
-            />
-          ) : null}
-          <dl style={{ margin: 0, fontSize: "0.9rem" }}>
-            <div>
-              <dt style={{ display: "inline", color: "#6b7280" }}>{copy.estimated}: </dt>
-              <dd style={{ display: "inline", margin: 0, fontWeight: 600 }}>
-                {formatCentsForDisplay(estimatedCostCents, locale)}
-              </dd>
-            </div>
-          </dl>
-        </>
-      ) : null}
+        {!loading && !loadError && estimatedCostCents !== null ? (
+          <>
+            {!canRetry && blockedReasonKey ? (
+              <StatusAlert
+                severity="warn"
+                text={resolveBlockedReason(blockedReasonKey, copy)}
+                className="mb-4 w-full"
+              />
+            ) : null}
+            <dl className="m-0 text-[0.9rem]">
+              <div>
+                <dt className="inline text-dim">{copy.estimated}: </dt>
+                <dd className="m-0 inline font-semibold text-fog">
+                  {formatCentsForDisplay(estimatedCostCents, locale)}
+                </dd>
+              </div>
+            </dl>
+          </>
+        ) : null}
+        <DialogFooter className="flex-wrap gap-2">
+          <Button type="button" variant="ghost" disabled={pending} onClick={onHide}>
+            {copy.cancel}
+          </Button>
+          {showOverridePrompt ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pending || !failedJobId}
+              onClick={() => {
+                if (failedJobId) {
+                  onHide();
+                  onRetryLimitExceeded(failedJobId);
+                }
+              }}
+            >
+              {copy.overrideButton}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              disabled={
+                pending ||
+                loading ||
+                loadError !== null ||
+                !canRetry ||
+                estimatedCostCents === null
+              }
+              onClick={() => void handleConfirm()}
+            >
+              {pending ? <Spinner className="size-4 text-current" /> : null}
+              {copy.confirm}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }

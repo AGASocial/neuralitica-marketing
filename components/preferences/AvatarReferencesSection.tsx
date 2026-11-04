@@ -2,11 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState, type ChangeEvent } from "react";
-import { Button } from "primereact/button";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { Message } from "primereact/message";
-import { ProgressBar } from "primereact/progressbar";
-import { Toast } from "primereact/toast";
+import { toast } from "sonner";
+import { TrashIcon, UploadIcon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { IndeterminateProgress } from "@/components/ui/indeterminate-progress";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
 
 import type {
   AvatarReferenceAssetItem,
@@ -210,7 +213,6 @@ export function AvatarReferencesSection({
   preferencesPending = false,
 }: AvatarReferencesSectionProps) {
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadFailed = "loadFailed" in initial && initial.loadFailed;
@@ -222,6 +224,8 @@ export function AvatarReferencesSection({
   );
   const [pendingUpload, setPendingUpload] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [confirmDeleteAsset, setConfirmDeleteAsset] =
+    useState<AvatarReferenceAssetItem | null>(null);
   const [banner, setBanner] = useState<string | null>(
     () => (loadFailed ? copy.loadFailed : null),
   );
@@ -288,11 +292,7 @@ export function AvatarReferencesSection({
           }
           return [...prev, result.asset];
         });
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastUploadSuccess,
-          life: 5000,
-        });
+        toast.success(copy.toastUploadSuccess, { duration: 5000 });
         router.refresh();
         return;
       }
@@ -322,11 +322,7 @@ export function AvatarReferencesSection({
 
       if (result.ok) {
         setAssets((prev) => prev.filter((a) => a.id !== result.deletedAssetId));
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastDeleteSuccess,
-          life: 5000,
-        });
+        toast.success(copy.toastDeleteSuccess, { duration: 5000 });
         router.refresh();
         return;
       }
@@ -344,215 +340,135 @@ export function AvatarReferencesSection({
       return;
     }
 
-    confirmDialog({
-      header: copy.confirmDelete.header,
-      message: copy.confirmDelete.message.replace(
-        "{filename}",
-        asset.metadata.originalFilename,
-      ),
-      acceptLabel: copy.confirmDelete.accept,
-      rejectLabel: copy.confirmDelete.reject,
-      acceptClassName: "p-button-danger",
-      accept: () => void performDelete(asset.id),
-    });
+    setConfirmDeleteAsset(asset);
   }
 
   return (
-    <section
-      style={{
-        background: "#ffffff",
-        border: "1px solid #e5e7eb",
-        borderRadius: "8px",
-        padding: "1rem 1.25rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem",
-      }}
-    >
-      <ConfirmDialog />
-      <Toast ref={toastRef} position="top-right" />
+    <section className="flex flex-col gap-4 rounded-xl border border-edge bg-panel px-5 py-4">
+      <ConfirmDialog
+        open={confirmDeleteAsset !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setConfirmDeleteAsset(null);
+          }
+        }}
+        header={copy.confirmDelete.header}
+        message={
+          confirmDeleteAsset
+            ? copy.confirmDelete.message.replace(
+                "{filename}",
+                confirmDeleteAsset.metadata.originalFilename,
+              )
+            : ""
+        }
+        acceptLabel={copy.confirmDelete.accept}
+        rejectLabel={copy.confirmDelete.reject}
+        destructive
+        onAccept={() => {
+          if (confirmDeleteAsset) {
+            void performDelete(confirmDeleteAsset.id);
+          }
+        }}
+      />
 
       <div>
-        <h2 style={{ margin: "0 0 0.35rem", fontSize: "1.1rem" }}>
-          {copy.title}
-        </h2>
-        <p
-          style={{
-            margin: 0,
-            color: "#6b7280",
-            fontSize: "0.875rem",
-          }}
-        >
-          {copy.subtitle}
-        </p>
+        <h2 className="mb-1.5 font-display text-xl text-fog">{copy.title}</h2>
+        <p className="text-sm text-dim">{copy.subtitle}</p>
       </div>
 
-      <p
-        style={{
-          margin: 0,
-          color: "#4b5563",
-          fontSize: "0.875rem",
-          lineHeight: 1.5,
-        }}
-      >
-        {hintsText}
-      </p>
+      <p className="text-sm leading-normal text-dim">{hintsText}</p>
 
-      <p
-        style={{
-          margin: 0,
-          color: "#6b7280",
-          fontSize: "0.8125rem",
-        }}
-      >
-        {countText}
-      </p>
+      <p className="text-[0.8125rem] text-dim">{countText}</p>
 
       {banner ? (
-        <Message severity="error" text={banner} style={{ width: "100%" }} />
+        <StatusAlert severity="error" text={banner} className="w-full" />
       ) : null}
 
       {!consentActive && !loadFailed ? (
-        <Message
+        <StatusAlert
           severity="warn"
           text={copy.consentRequired}
-          style={{ width: "100%" }}
+          className="w-full"
         />
       ) : null}
 
       {consentActive && atCap ? (
-        <Message
-          severity="info"
-          text={copy.limitReached}
-          style={{ width: "100%" }}
-        />
+        <StatusAlert severity="info" text={copy.limitReached} className="w-full" />
       ) : null}
 
       {pendingUpload ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          <span style={{ fontSize: "0.875rem", color: "#4b5563" }}>
-            {copy.uploading}
-          </span>
-          <ProgressBar mode="indeterminate" style={{ height: "6px" }} />
+        <div className="flex flex-col gap-2">
+          <span className="text-sm text-dim">{copy.uploading}</span>
+          <IndeterminateProgress label={copy.uploading} />
         </div>
       ) : null}
 
-      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+      <div className="flex flex-wrap gap-2">
         <input
           ref={fileInputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,.jpg,.jpeg,.png,.webp,.mp4,.mov"
-          style={{ display: "none" }}
+          className="hidden"
           onChange={(e) => void handleFileChange(e)}
           disabled={!canUpload || busy}
         />
         <Button
           type="button"
-          label={pendingUpload ? copy.uploading : copy.upload}
-          icon="pi pi-upload"
           onClick={() => fileInputRef.current?.click()}
           disabled={!canUpload || busy}
-          loading={pendingUpload}
-        />
+        >
+          {pendingUpload ? <Spinner className="size-4 text-current" /> : <UploadIcon />}
+          {pendingUpload ? copy.uploading : copy.upload}
+        </Button>
       </div>
 
       {assets.length === 0 && !loadFailed ? (
-        <Message severity="info" text={copy.empty} style={{ width: "100%" }} />
+        <StatusAlert severity="info" text={copy.empty} className="w-full" />
       ) : null}
 
       {assets.length > 0 ? (
-        <ul
-          style={{
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.75rem",
-          }}
-        >
+        <ul className="m-0 flex list-none flex-col gap-3 p-0">
           {assets.map((asset) => {
             const video = isVideoMime(asset.metadata.detectedMime);
             const deleting = pendingDeleteId === asset.id;
+            const previewAlt = copy.previewAlt.replace(
+              "{filename}",
+              asset.metadata.originalFilename,
+            );
 
             return (
               <li
                 key={asset.id}
-                style={{
-                  display: "flex",
-                  gap: "0.75rem",
-                  alignItems: "flex-start",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "6px",
-                  padding: "0.75rem",
-                }}
+                className="flex items-start gap-3 rounded-lg border border-edge p-3"
               >
-                <div
-                  style={{
-                    width: 96,
-                    height: 96,
-                    flexShrink: 0,
-                    background: "#f3f4f6",
-                    borderRadius: "4px",
-                    overflow: "hidden",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
+                <div className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded bg-deep">
                   {video ? (
                     <video
                       src={asset.previewUrl}
                       muted
                       playsInline
                       preload="metadata"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                      aria-label={copy.previewAlt.replace(
-                        "{filename}",
-                        asset.metadata.originalFilename,
-                      )}
+                      className="size-full object-cover"
+                      aria-label={previewAlt}
                     />
                   ) : (
                     // eslint-disable-next-line @next/next/no-img-element -- authenticated same-origin serve; not a static/public asset
                     <img
                       src={asset.previewUrl}
-                      alt={copy.previewAlt.replace(
-                        "{filename}",
-                        asset.metadata.originalFilename,
-                      )}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
+                      alt={previewAlt}
+                      className="size-full object-cover"
                     />
                   )}
                 </div>
 
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p
-                    style={{
-                      margin: "0 0 0.35rem",
-                      fontWeight: 600,
-                      wordBreak: "break-word",
-                    }}
-                  >
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1.5 font-semibold break-words text-fog">
                     {copy.filenameLabel.replace(
                       "{filename}",
                       asset.metadata.originalFilename,
                     )}
                   </p>
-                  <p
-                    style={{
-                      margin: "0 0 0.25rem",
-                      color: "#4b5563",
-                      fontSize: "0.875rem",
-                    }}
-                  >
+                  <p className="mb-1 text-sm text-dim">
                     {video ? copy.typeVideo : copy.typeImage}
                     {" · "}
                     {copy.sizeLabel.replace(
@@ -560,13 +476,7 @@ export function AvatarReferencesSection({
                       formatBytes(asset.metadata.sizeBytes, locale),
                     )}
                   </p>
-                  <p
-                    style={{
-                      margin: 0,
-                      color: "#6b7280",
-                      fontSize: "0.8125rem",
-                    }}
-                  >
+                  <p className="text-[0.8125rem] text-dim">
                     {copy.dateLabel.replace(
                       "{date}",
                       formatTimestamp(asset.createdAt, locale),
@@ -576,14 +486,15 @@ export function AvatarReferencesSection({
 
                 <Button
                   type="button"
-                  icon="pi pi-trash"
-                  severity="danger"
-                  outlined
+                  variant="outline"
+                  size="icon"
+                  className="border-rose/60 text-rose hover:bg-rose/10 hover:text-rose"
                   aria-label={copy.delete}
                   onClick={() => requestDelete(asset)}
                   disabled={busy}
-                  loading={deleting}
-                />
+                >
+                  {deleting ? <Spinner className="size-4 text-current" /> : <TrashIcon />}
+                </Button>
               </li>
             );
           })}

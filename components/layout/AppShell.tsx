@@ -11,9 +11,11 @@ type AppShellProps = {
 
 export function AppShell({ locale, user, children }: AppShellProps) {
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div className="flex min-h-screen flex-col bg-deep text-fog">
       <AppHeader locale={locale} user={user} />
-      <main style={{ flex: 1, padding: "1.5rem" }}>{children}</main>
+      <main className="flex-1 overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
+        {children}
+      </main>
     </div>
   );
 }

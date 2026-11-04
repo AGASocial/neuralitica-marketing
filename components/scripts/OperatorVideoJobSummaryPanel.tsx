@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "primereact/button";
-import { Message } from "primereact/message";
-import { Tag } from "primereact/tag";
+
+import { CheckIcon, CircleXIcon, LockOpenIcon, RefreshCwIcon } from "lucide-react";
+
+import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { cn } from "@/lib/utils";
 
 import type {
   ActualCostUnavailableReason,
@@ -269,19 +274,13 @@ export function OperatorVideoJobSummaryPanel({
   if (!job) {
     return (
       <section
-        style={{
-          marginBottom: "1rem",
-          padding: "0.85rem 1rem",
-          borderRadius: "0.5rem",
-          border: "1px solid #e5e7eb",
-          background: "#f9fafb",
-        }}
+        className="mb-4 py-[0.85rem] px-4 rounded-lg border border-edge bg-panel"
         aria-label={copy.title}
       >
-        <h3 style={{ margin: "0 0 0.5rem", fontSize: "0.95rem", fontWeight: 600 }}>
+        <h3 className="font-display text-fog mt-0 mx-0 mb-2 text-[0.95rem] font-semibold">
           {copy.title}
         </h3>
-        <p style={{ margin: 0, fontSize: "0.875rem", color: "#6b7280" }}>
+        <p className="m-0 text-sm text-dim">
           {copy.empty}
         </p>
       </section>
@@ -306,44 +305,31 @@ export function OperatorVideoJobSummaryPanel({
 
   return (
     <section
-      style={{
-        marginBottom: "1rem",
-        padding: "0.85rem 1rem",
-        borderRadius: "0.5rem",
-        border: "1px solid #e5e7eb",
-        background: "#f9fafb",
-      }}
+      className="mb-4 py-[0.85rem] px-4 rounded-lg border border-edge bg-panel"
       aria-label={copy.title}
     >
       <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "0.5rem",
-          marginBottom: "0.75rem",
-        }}
+        className="flex flex-wrap items-center justify-between gap-2 mb-3"
       >
-        <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600 }}>
+        <h3 className="font-display text-fog m-0 text-[0.95rem] font-semibold">
           {copy.title}
         </h3>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", alignItems: "center" }}>
-          <Tag
+        <div className="flex flex-wrap gap-[0.35rem] items-center">
+          <StatusBadge
             value={copy.status[job.status]}
             severity={videoJobStatusSeverity(job.status)}
             icon={
               job.status === "processing"
-                ? "pi pi-spin pi-spinner"
+                ? <Spinner className="size-3 text-current" />
                 : job.status === "failed"
-                  ? "pi pi-times-circle"
+                  ? <CircleXIcon />
                   : job.status === "completed"
-                    ? "pi pi-check"
+                    ? <CheckIcon />
                     : undefined
             }
           />
           {polling ? (
-            <span style={{ fontSize: "0.8125rem", color: "#6b7280" }}>
+            <span className="text-[0.8125rem] text-dim">
               {copy.polling}
             </span>
           ) : null}
@@ -351,43 +337,37 @@ export function OperatorVideoJobSummaryPanel({
       </div>
 
       <dl
-        style={{
-          margin: "0 0 0.75rem",
-          display: "grid",
-          gap: "0.35rem",
-          fontSize: "0.875rem",
-        }}
+        className="mt-0 mx-0 mb-3 grid gap-[0.35rem] text-sm"
       >
         <div>
-          <dt style={{ display: "inline", color: "#6b7280" }}>
+          <dt className="inline text-dim">
             {formatTemplate(copy.attempt, { attempt: job.attempt })}
           </dt>
         </div>
         <div>
-          <dt style={{ display: "inline", color: "#6b7280" }}>
+          <dt className="inline text-dim">
             {formatTemplate(copy.regenerationCount, {
               count: job.regenerationCount,
             })}
           </dt>
         </div>
         <div>
-          <dt style={{ display: "inline", color: "#6b7280" }}>
+          <dt className="inline text-dim">
             {copy.costEstimated}:{" "}
           </dt>
-          <dd style={{ display: "inline", margin: 0, color: "#374151" }}>
+          <dd className="inline m-0 text-fog">
             {costValues.estimated}
           </dd>
         </div>
         <div>
-          <dt style={{ display: "inline", color: "#6b7280" }}>
+          <dt className="inline text-dim">
             {copy.costActual}:{" "}
           </dt>
           <dd
-            style={{
-              display: "inline",
-              margin: 0,
-              color: costValues.actualSubdued ? "#6b7280" : "#374151",
-            }}
+            className={cn(
+              "m-0 inline",
+              costValues.actualSubdued ? "text-dim" : "text-fog",
+            )}
           >
             {costValues.actual}
           </dd>
@@ -395,49 +375,50 @@ export function OperatorVideoJobSummaryPanel({
       </dl>
 
       {failureText ? (
-        <Message
+        <StatusAlert
           severity="error"
-          style={{ width: "100%", marginBottom: "0.75rem" }}
-          content={
-            <div style={{ fontSize: "0.875rem" }}>
-              <span style={{ fontWeight: 600, marginRight: "0.35rem" }}>
+          className="w-full mb-3"
+        >
+          <div className="text-sm">
+              <span className="font-semibold mr-[0.35rem]">
                 {copy.failureReasonLabel}
               </span>
               <span>{failureText}</span>
             </div>
-          }
-        />
+        </StatusAlert>
       ) : null}
 
       {blockedText && !showRetry ? (
-        <Message
+        <StatusAlert
           severity="warn"
           text={blockedText}
-          style={{ width: "100%", marginBottom: "0.75rem" }}
+          className="w-full mb-3"
         />
       ) : null}
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+      <div className="flex flex-wrap gap-2">
         {showRetry ? (
           <Button
             type="button"
-            label={copy.retryButton}
-            icon="pi pi-refresh"
-            size="small"
             disabled={isBusy}
             onClick={() => onRequestRetry(job.jobId)}
-          />
+            size="sm"
+          >
+            <RefreshCwIcon />
+            {copy.retryButton}
+          </Button>
         ) : null}
         {showOverride ? (
           <Button
             type="button"
-            label={copy.retry.overrideButton}
-            icon="pi pi-unlock"
-            size="small"
-            severity="secondary"
             disabled={isBusy}
             onClick={() => onRequestOverride(job.jobId)}
-          />
+            variant="secondary"
+            size="sm"
+          >
+            <LockOpenIcon />
+            {copy.retry.overrideButton}
+          </Button>
         ) : null}
       </div>
     </section>
@@ -452,14 +433,14 @@ export function VideoJobStatusTag({
   copy: Pick<OperatorVideoJobCopy, "status">;
 }) {
   return (
-    <Tag
+    <StatusBadge
       value={copy.status[status]}
       severity={videoJobStatusSeverity(status)}
       icon={
         status === "processing"
-          ? "pi pi-spin pi-spinner"
+          ? <Spinner className="size-3 text-current" />
           : status === "failed"
-            ? "pi pi-times-circle"
+            ? <CircleXIcon />
             : undefined
       }
     />

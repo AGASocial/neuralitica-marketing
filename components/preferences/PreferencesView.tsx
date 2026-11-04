@@ -2,9 +2,9 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Button } from "primereact/button";
-import { Message } from "primereact/message";
 
+import { Button } from "@/components/ui/button";
+import { StatusAlert } from "@/components/ui/status-alert";
 import type { AvatarConsentCopy } from "@/components/preferences/AvatarConsentSection";
 import type { AvatarReferencesCopy } from "@/components/preferences/AvatarReferencesSection";
 import type { AvatarSetupCopy } from "@/components/preferences/AvatarSetupSection";
@@ -102,14 +102,12 @@ export function PreferencesView({
   if (result.exists === false && "loadFailed" in result && result.loadFailed) {
     return (
       <Shell title={copy.title}>
-        <Message
-          severity="error"
-          text={copy.error.body}
-          style={{ width: "100%" }}
-        />
-        <Link href="/dashboard" style={{ textDecoration: "none" }}>
-          <Button type="button" label={copy.error.ctaDashboard} outlined />
-        </Link>
+        <StatusAlert severity="error" text={copy.error.body} className="w-full" />
+        <div>
+          <Button asChild variant="outline">
+            <Link href="/dashboard">{copy.error.ctaDashboard}</Link>
+          </Button>
+        </div>
       </Shell>
     );
   }
@@ -182,17 +180,9 @@ function Shell({
   children: ReactNode;
 }) {
   return (
-    <div
-      style={{
-        maxWidth: 760,
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.25rem",
-      }}
-    >
+    <div className="mx-auto flex max-w-[760px] flex-col gap-5">
       <div>
-        <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem" }}>{title}</h1>
+        <h1 className="mb-2 font-display text-4xl text-fog">{title}</h1>
       </div>
       {children}
     </div>

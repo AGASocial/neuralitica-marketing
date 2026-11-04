@@ -1,19 +1,22 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { Dropdown } from "primereact/dropdown";
-import { InputNumber } from "primereact/inputnumber";
-import { InputText } from "primereact/inputtext";
-import { InputTextarea } from "primereact/inputtextarea";
-import { Message } from "primereact/message";
-import { MultiSelect } from "primereact/multiselect";
-import { Tag } from "primereact/tag";
-import { Toast } from "primereact/toast";
+import { toast } from "sonner";
 
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { NumberInput } from "@/components/ui/number-input";
+import { SimpleSelect } from "@/components/ui/simple-select";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Textarea } from "@/components/ui/textarea";
 import { StringListEditor } from "@/components/playbook/StringListEditor";
 import {
   PLAYBOOK_HOOK_TYPES,
@@ -192,7 +195,6 @@ function slugValid(slug: string): boolean {
 
 export function TrendEntryForm(props: TrendEntryFormProps) {
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
   const { copy, weekStart, playbookOptions } = props;
 
   const isEdit = props.mode === "edit";
@@ -211,6 +213,7 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
   const [pending, setPending] = useState(false);
   const [deactivatePending, setDeactivatePending] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
+  const [confirmDeactivateOpen, setConfirmDeactivateOpen] = useState(false);
 
   const hookOptions = PLAYBOOK_HOOK_TYPES.map((value) => ({
     label: copy.hookTypes[value],
@@ -234,7 +237,7 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
 
   const prioridadOptions = PRIORIDAD_OPTIONS.map((value) => ({
     label: String(value),
-    value,
+    value: String(value),
   }));
 
   function messageForCode(code: TrendErrorCode, messageKey?: string): string {
@@ -333,11 +336,7 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
         });
 
         if (result.ok) {
-          toastRef.current?.show({
-            severity: "success",
-            summary: copy.toastCreateSuccess,
-            life: 4000,
-          });
+          toast.success(copy.toastCreateSuccess, { duration: 4000 });
           router.push(`/operator/trends/${weekStart}/${result.slug}`);
           router.refresh();
           return;
@@ -353,11 +352,7 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
       });
 
       if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastSaveSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastSaveSuccess, { duration: 4000 });
         router.refresh();
         return;
       }
@@ -375,17 +370,7 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
       return;
     }
 
-    confirmDialog({
-      header: copy.confirmDeactivate.header,
-      message: copy.confirmDeactivate.message,
-      icon: "pi pi-exclamation-triangle",
-      acceptLabel: copy.confirmDeactivate.accept,
-      rejectLabel: copy.confirmDeactivate.reject,
-      acceptClassName: "p-button-danger",
-      accept: () => {
-        void handleDeactivate();
-      },
-    });
+    setConfirmDeactivateOpen(true);
   }
 
   async function handleDeactivate() {
@@ -400,11 +385,7 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
       const result = await deactivateTrendEntry(weekStart, props.initial.slug);
 
       if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastDeactivateSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastDeactivateSuccess, { duration: 4000 });
         router.push(`/operator/trends/${weekStart}`);
         router.refresh();
         return;
@@ -421,35 +402,34 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
   const title = isEdit ? copy.editTitle : copy.createTitle;
 
   return (
-    <div style={{ maxWidth: "820px", margin: "0 auto" }}>
-      <ConfirmDialog />
-      <Toast ref={toastRef} />
+    <div className="mx-auto max-w-[820px]">
+      <ConfirmDialog
+        open={confirmDeactivateOpen}
+        onOpenChange={setConfirmDeactivateOpen}
+        header={copy.confirmDeactivate.header}
+        message={copy.confirmDeactivate.message}
+        acceptLabel={copy.confirmDeactivate.accept}
+        rejectLabel={copy.confirmDeactivate.reject}
+        destructive
+        onAccept={() => {
+          void handleDeactivate();
+        }}
+      />
 
-      <div style={{ marginBottom: "1.5rem" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: "1rem",
-            flexWrap: "wrap",
-          }}
-        >
+      <div className="mb-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem" }}>{title}</h1>
-            <p style={{ margin: 0, color: "#4b5563" }}>{copy.subtitle}</p>
+            <h1 className="mb-2 font-display text-4xl text-fog">{title}</h1>
+            <p className="text-dim">{copy.subtitle}</p>
           </div>
-          <Link
-            href={`/operator/trends/${weekStart}`}
-            style={{ textDecoration: "none" }}
-          >
-            <Button type="button" label={copy.backWeek} severity="secondary" outlined />
-          </Link>
+          <Button asChild variant="outline">
+            <Link href={`/operator/trends/${weekStart}`}>{copy.backWeek}</Link>
+          </Button>
         </div>
 
         {isEdit ? (
-          <div style={{ marginTop: "1rem" }}>
-            <Tag
+          <div className="mt-4">
+            <StatusBadge
               severity={inactive ? "secondary" : "success"}
               value={props.initial.slug}
             />
@@ -458,19 +438,15 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
       </div>
 
       {inactive ? (
-        <Message
+        <StatusAlert
           severity="warn"
           text={copy.inactiveBanner}
-          style={{ width: "100%", marginBottom: "1rem" }}
+          className="mb-4 w-full"
         />
       ) : null}
 
       {banner ? (
-        <Message
-          severity="error"
-          text={banner}
-          style={{ width: "100%", marginBottom: "1rem" }}
-        />
+        <StatusAlert severity="error" text={banner} className="mb-4 w-full" />
       ) : null}
 
       <form
@@ -478,71 +454,62 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
           event.preventDefault();
           void handleSubmit();
         }}
-        style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}
+        className="flex flex-col gap-5"
       >
         {!isEdit ? (
           <div>
-            <label htmlFor="trend-slug" style={{ display: "block", fontWeight: 600 }}>
-              {copy.fields.slug}
-            </label>
-            <p style={{ margin: "0.25rem 0 0.5rem", color: "#6b7280", fontSize: "0.9rem" }}>
-              {copy.fields.slugHint}
-            </p>
-            <InputText
+          <Label htmlFor="trend-slug" className="block font-semibold text-fog">
+            {copy.fields.slug}
+          </Label>
+          <p className="mt-1 mb-2 text-[0.9rem] text-dim">{copy.fields.slugHint}</p>
+            <Input
               id="trend-slug"
               value={slug}
               onChange={(event) => setSlug(event.target.value.toLowerCase())}
               disabled={pending}
-              style={{ width: "100%" }}
+              className="w-full"
             />
           </div>
         ) : null}
 
-        <div>
-          <label htmlFor="trend-titulo" style={{ display: "block", fontWeight: 600 }}>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="trend-titulo" className="block font-semibold text-fog">
             {copy.fields.titulo}
-          </label>
-          <InputText
+          </Label>
+          <Input
             id="trend-titulo"
             value={fields.titulo}
             onChange={(event) =>
               setFields((current) => ({ ...current, titulo: event.target.value }))
             }
             disabled={pending || inactive}
-            style={{ width: "100%" }}
+            className="w-full"
           />
         </div>
 
-        <div>
-          <label
-            htmlFor="trend-prioridad"
-            style={{ display: "block", fontWeight: 600 }}
-          >
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="trend-prioridad" className="block font-semibold text-fog">
             {copy.fields.prioridadSemana}
-          </label>
-          <Dropdown
-            inputId="trend-prioridad"
-            value={fields.prioridad_semana}
+          </Label>
+          <SimpleSelect
+            id="trend-prioridad"
+            value={String(fields.prioridad_semana)}
             options={prioridadOptions}
-            onChange={(event) =>
+            onChange={(value) =>
               setFields((current) => ({
                 ...current,
-                prioridad_semana: event.value as number,
+                prioridad_semana: Number(value),
               }))
             }
             disabled={pending || inactive}
-            style={{ width: "100%" }}
           />
         </div>
 
-        <div>
-          <label
-            htmlFor="trend-explicacion"
-            style={{ display: "block", fontWeight: 600 }}
-          >
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="trend-explicacion" className="block font-semibold text-fog">
             {copy.fields.explicacion}
-          </label>
-          <InputTextarea
+          </Label>
+          <Textarea
             id="trend-explicacion"
             value={fields.explicacion}
             onChange={(event) =>
@@ -553,17 +520,17 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
             }
             disabled={pending || inactive}
             rows={4}
-            style={{ width: "100%" }}
+            className="w-full"
           />
         </div>
 
         <div>
-          <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="trend-evitar-enabled"
               checked={evitarEnabled}
-              onChange={(event) => {
-                const enabled = event.target.checked;
+              onCheckedChange={(checked) => {
+                const enabled = checked === true;
                 setEvitarEnabled(enabled);
                 if (enabled && !fields.evitar) {
                   setFields((current) => ({ ...current, evitar: "" }));
@@ -571,20 +538,16 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
               }}
               disabled={pending || inactive}
             />
-            <span style={{ fontWeight: 600 }}>{copy.fields.evitar}</span>
-          </label>
+            <Label htmlFor="trend-evitar-enabled" className="font-semibold text-fog">
+              {copy.fields.evitar}
+            </Label>
+          </div>
           {evitarEnabled ? (
             <>
-              <p
-                style={{
-                  margin: "0.25rem 0 0.5rem",
-                  color: "#6b7280",
-                  fontSize: "0.9rem",
-                }}
-              >
+              <p className="mt-1 mb-2 text-[0.9rem] text-dim">
                 {copy.fields.evitarHint}
               </p>
-              <InputTextarea
+              <Textarea
                 id="trend-evitar"
                 value={fields.evitar ?? ""}
                 onChange={(event) =>
@@ -595,7 +558,7 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
                 }
                 disabled={pending || inactive}
                 rows={3}
-                style={{ width: "100%" }}
+                className="w-full"
               />
             </>
           ) : null}
@@ -617,150 +580,109 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
           maxItems={12}
         />
 
-        <div>
-          <label htmlFor="trend-hook-type" style={{ display: "block", fontWeight: 600 }}>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="trend-hook-type" className="block font-semibold text-fog">
             {copy.fields.hookType}
-          </label>
-          <Dropdown
-            inputId="trend-hook-type"
+          </Label>
+          <SimpleSelect
+            id="trend-hook-type"
             value={fields.hook_type}
             options={hookOptions}
-            onChange={(event) =>
-              setFields((current) => ({
-                ...current,
-                hook_type: event.value as PlaybookHookType,
-              }))
+            onChange={(value) =>
+              setFields((current) => ({ ...current, hook_type: value }))
             }
             disabled={pending || inactive}
-            style={{ width: "100%" }}
           />
         </div>
 
-        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-          <div>
-            <label
-              htmlFor="trend-cold-open"
-              style={{ display: "block", fontWeight: 600 }}
-            >
+        <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="trend-cold-open" className="block font-semibold text-fog">
               {copy.fields.duracionColdOpen}
-            </label>
-            <InputNumber
-              inputId="trend-cold-open"
+            </Label>
+            <NumberInput
+              id="trend-cold-open"
               value={fields.duracion_ideal_seg.cold_open}
-              onValueChange={(event) =>
+              onValueChange={(cold_open) =>
                 setFields((current) => ({
                   ...current,
-                  duracion_ideal_seg: {
-                    ...current.duracion_ideal_seg,
-                    cold_open: event.value ?? 2,
-                  },
+                  duracion_ideal_seg: { ...current.duracion_ideal_seg, cold_open },
                 }))
               }
               min={1}
               max={10}
-              suffix=" s"
+              fallback={2}
+              suffix="s"
               disabled={pending || inactive}
             />
           </div>
-          <div>
-            <label
-              htmlFor="trend-duracion-total"
-              style={{ display: "block", fontWeight: 600 }}
-            >
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="trend-duracion-total" className="block font-semibold text-fog">
               {copy.fields.duracionTotal}
-            </label>
-            <InputNumber
-              inputId="trend-duracion-total"
+            </Label>
+            <NumberInput
+              id="trend-duracion-total"
               value={fields.duracion_ideal_seg.total}
-              onValueChange={(event) =>
+              onValueChange={(total) =>
                 setFields((current) => ({
                   ...current,
-                  duracion_ideal_seg: {
-                    ...current.duracion_ideal_seg,
-                    total: event.value ?? 25,
-                  },
+                  duracion_ideal_seg: { ...current.duracion_ideal_seg, total },
                 }))
               }
               min={5}
               max={90}
-              suffix=" s"
+              fallback={25}
+              suffix="s"
               disabled={pending || inactive}
             />
           </div>
         </div>
 
-        <div>
-          <label
-            htmlFor="trend-modalidades"
-            style={{ display: "block", fontWeight: 600 }}
-          >
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="trend-modalidades" className="block font-semibold text-fog">
             {copy.fields.modalidades}
-          </label>
-          <p style={{ margin: "0.25rem 0 0.5rem", color: "#6b7280", fontSize: "0.9rem" }}>
-            {copy.fields.modalidadesHint}
-          </p>
+          </Label>
+          <p className="mt-1 mb-2 text-[0.9rem] text-dim">{copy.fields.modalidadesHint}</p>
           <MultiSelect
-            inputId="trend-modalidades"
+            id="trend-modalidades"
             value={fields.modalidades_recomendadas}
             options={modalityOptions}
-            onChange={(event) =>
-              setFields((current) => ({
-                ...current,
-                modalidades_recomendadas: event.value as VisualModality[],
-              }))
+            onChange={(value) =>
+              setFields((current) => ({ ...current, modalidades_recomendadas: value }))
             }
             disabled={pending || inactive}
-            display="chip"
-            style={{ width: "100%" }}
           />
         </div>
 
-        <div>
-          <label htmlFor="trend-rubros" style={{ display: "block", fontWeight: 600 }}>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="trend-rubros" className="block font-semibold text-fog">
             {copy.fields.rubros}
-          </label>
-          <p style={{ margin: "0.25rem 0 0.5rem", color: "#6b7280", fontSize: "0.9rem" }}>
-            {copy.fields.rubrosHint}
-          </p>
+          </Label>
+          <p className="mt-1 mb-2 text-[0.9rem] text-dim">{copy.fields.rubrosHint}</p>
           <MultiSelect
-            inputId="trend-rubros"
+            id="trend-rubros"
             value={fields.rubros}
             options={rubroOptions}
-            onChange={(event) =>
-              setFields((current) => ({
-                ...current,
-                rubros: event.value as PlaybookRubro[],
-              }))
+            onChange={(value) =>
+              setFields((current) => ({ ...current, rubros: value }))
             }
             disabled={pending || inactive}
-            display="chip"
-            style={{ width: "100%" }}
           />
         </div>
 
-        <div>
-          <label
-            htmlFor="trend-formatos"
-            style={{ display: "block", fontWeight: 600 }}
-          >
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="trend-formatos" className="block font-semibold text-fog">
             {copy.fields.formatosPlaybook}
-          </label>
-          <p style={{ margin: "0.25rem 0 0.5rem", color: "#6b7280", fontSize: "0.9rem" }}>
-            {copy.fields.formatosPlaybookHint}
-          </p>
+          </Label>
+          <p className="mt-1 mb-2 text-[0.9rem] text-dim">{copy.fields.formatosPlaybookHint}</p>
           <MultiSelect
-            inputId="trend-formatos"
+            id="trend-formatos"
             value={fields.formatos_playbook_compatibles}
             options={formatoOptions}
-            onChange={(event) =>
-              setFields((current) => ({
-                ...current,
-                formatos_playbook_compatibles: event.value as string[],
-              }))
+            onChange={(value) =>
+              setFields((current) => ({ ...current, formatos_playbook_compatibles: value }))
             }
             disabled={pending || inactive || formatoOptions.length === 0}
-            display="chip"
-            style={{ width: "100%" }}
           />
         </div>
 
@@ -781,12 +703,12 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
         />
 
         <div>
-          <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="trend-editing-hints-enabled"
               checked={editingHintsEnabled}
-              onChange={(event) => {
-                const enabled = event.target.checked;
+              onCheckedChange={(checked) => {
+                const enabled = checked === true;
                 setEditingHintsEnabled(enabled);
                 if (enabled && !fields.editing_hints?.length) {
                   setFields((current) => ({
@@ -797,10 +719,15 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
               }}
               disabled={pending || inactive}
             />
-            <span style={{ fontWeight: 600 }}>{copy.fields.editingHints}</span>
-          </label>
+            <Label
+              htmlFor="trend-editing-hints-enabled"
+              className="font-semibold text-fog"
+            >
+              {copy.fields.editingHints}
+            </Label>
+          </div>
           {editingHintsEnabled ? (
-            <div style={{ marginTop: "0.75rem" }}>
+            <div className="mt-3">
               <StringListEditor
                 idPrefix="trend-editing-hints"
                 label={copy.fields.editingHints}
@@ -820,17 +747,12 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
           ) : null}
         </div>
 
-        <div>
-          <label
-            htmlFor="trend-ejemplo"
-            style={{ display: "block", fontWeight: 600 }}
-          >
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="trend-ejemplo" className="block font-semibold text-fog">
             {copy.fields.ejemploReferencia}
-          </label>
-          <p style={{ margin: "0.25rem 0 0.5rem", color: "#6b7280", fontSize: "0.9rem" }}>
-            {copy.fields.ejemploReferenciaHint}
-          </p>
-          <InputTextarea
+          </Label>
+          <p className="mt-1 mb-2 text-[0.9rem] text-dim">{copy.fields.ejemploReferenciaHint}</p>
+          <Textarea
             id="trend-ejemplo"
             value={fields.ejemplo_referencia ?? ""}
             onChange={(event) =>
@@ -841,49 +763,40 @@ export function TrendEntryForm(props: TrendEntryFormProps) {
             }
             disabled={pending || inactive}
             rows={3}
-            style={{ width: "100%" }}
+            className="w-full"
           />
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "0.75rem",
-            flexWrap: "wrap",
-            marginTop: "0.5rem",
-          }}
-        >
+        <div className="mt-2 flex flex-wrap gap-3">
           {!inactive ? (
-            <Button
-              type="submit"
-              label={isEdit ? copy.save : copy.create}
-              loading={pending}
-              disabled={deactivatePending}
-            />
+            <Button type="submit" disabled={pending || deactivatePending}>
+              {pending ? <Spinner className="size-4 text-current" /> : null}
+              {isEdit ? copy.save : copy.create}
+            </Button>
           ) : null}
-          <Link
-            href={`/operator/trends/${weekStart}`}
-            style={{ textDecoration: "none" }}
-          >
-            <Button
-              type="button"
-              label={copy.cancel}
-              severity="secondary"
-              outlined
-              disabled={pending || deactivatePending}
-            />
-          </Link>
+          <Button asChild variant="outline">
+            <Link
+              href={`/operator/trends/${weekStart}`}
+              aria-disabled={pending || deactivatePending}
+              tabIndex={pending || deactivatePending ? -1 : undefined}
+              className={
+                pending || deactivatePending ? "pointer-events-none opacity-50" : undefined
+              }
+            >
+              {copy.cancel}
+            </Link>
+          </Button>
           {isEdit && !inactive ? (
             <Button
               type="button"
-              label={copy.deactivate}
-              severity="danger"
-              outlined
-              loading={deactivatePending}
-              disabled={pending}
+              variant="outline"
+              className="ml-auto border-rose/60 text-rose hover:bg-rose/10 hover:text-rose"
+              disabled={pending || deactivatePending}
               onClick={openDeactivateConfirm}
-              style={{ marginLeft: "auto" }}
-            />
+            >
+              {deactivatePending ? <Spinner className="size-4 text-current" /> : null}
+              {copy.deactivate}
+            </Button>
           ) : null}
         </div>
       </form>

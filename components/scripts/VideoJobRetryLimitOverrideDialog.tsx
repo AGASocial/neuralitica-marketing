@@ -1,10 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
-import { InputTextarea } from "primereact/inputtextarea";
-import { Message } from "primereact/message";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { Textarea } from "@/components/ui/textarea";
 
 import type { VideoJobErrorCode } from "@/lib/contracts/video-job";
 import { overrideVideoJobRetryLimitRequestSchema } from "@/lib/contracts/video-job";
@@ -112,61 +120,60 @@ export function VideoJobRetryLimitOverrideDialog({
     }
   }
 
-  const footer = (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "flex-end" }}>
-      <Button
-        type="button"
-        label={copy.cancel}
-        className="p-button-text"
-        disabled={pending}
-        onClick={handleHide}
-      />
-      <Button
-        type="button"
-        label={copy.confirm}
-        disabled={pending || !reasonValid || !failedJobId}
-        loading={pending}
-        onClick={() => void handleConfirm()}
-      />
-    </div>
-  );
-
   return (
     <Dialog
-      header={copy.title}
-      visible={visible}
-      style={{ width: "min(480px, 95vw)" }}
-      onHide={handleHide}
-      footer={footer}
-      closable={!pending}
-      dismissableMask={!pending}
+      open={visible}
+      onOpenChange={(open) => {
+        if (!open) {
+          handleHide();
+        }
+      }}
     >
-      <Message
-        severity="warn"
-        text={copy.limitMessage}
-        style={{ width: "100%", marginBottom: "1rem" }}
-      />
-      <label
-        htmlFor="video-job-retry-override-reason"
-        style={{ display: "block", fontWeight: 600, marginBottom: "0.35rem" }}
+      <DialogContent
+        className="w-[min(480px,95vw)] border-edge bg-panel text-fog sm:max-w-[480px]"
+        showCloseButton={!pending}
+        aria-describedby={undefined}
+        onInteractOutside={(event) => {
+          if (pending) {
+            event.preventDefault();
+          }
+        }}
       >
-        {copy.reasonLabel}
-      </label>
-      <InputTextarea
-        id="video-job-retry-override-reason"
-        value={reason}
-        onChange={(event) => setReason(event.target.value)}
-        rows={3}
-        maxLength={500}
-        disabled={pending}
-        style={{ width: "100%" }}
-        autoResize
-      />
-      {!reasonValid ? (
-        <p style={{ margin: "0.35rem 0 0", color: "#6b7280", fontSize: "0.875rem" }}>
-          {copy.reasonRequired}
-        </p>
-      ) : null}
+        <DialogHeader>
+          <DialogTitle className="font-display text-2xl">{copy.title}</DialogTitle>
+        </DialogHeader>
+        <StatusAlert severity="warn" text={copy.limitMessage} className="w-full" />
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="video-job-retry-override-reason" className="font-semibold">
+            {copy.reasonLabel}
+          </Label>
+          <Textarea
+            id="video-job-retry-override-reason"
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            rows={3}
+            maxLength={500}
+            disabled={pending}
+            className="w-full"
+          />
+          {!reasonValid ? (
+            <p className="m-0 text-sm text-dim">{copy.reasonRequired}</p>
+          ) : null}
+        </div>
+        <DialogFooter className="flex-wrap gap-2">
+          <Button type="button" variant="ghost" disabled={pending} onClick={handleHide}>
+            {copy.cancel}
+          </Button>
+          <Button
+            type="button"
+            disabled={pending || !reasonValid || !failedJobId}
+            onClick={() => void handleConfirm()}
+          >
+            {pending ? <Spinner className="size-4 text-current" /> : null}
+            {copy.confirm}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }

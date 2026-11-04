@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import { AppNavLinks, type AppNavItem } from "@/components/layout/AppNavLinks";
 import type { CurrentUser } from "@/lib/auth/get-current-user";
 import { getTranslations } from "@/lib/i18n/get-translations";
 
@@ -12,118 +13,83 @@ type AppHeaderProps = {
 export function AppHeader({ locale, user }: AppHeaderProps) {
   const t = getTranslations(locale);
 
+  const clientNav: AppNavItem[] = [
+    { href: "/dashboard", label: t.header.nav.dashboard },
+    { href: "/profile", label: t.header.nav.profile },
+    { href: "/settings/preferences", label: t.header.nav.preferences },
+    { href: "/approvals", label: t.header.nav.approvals },
+    { href: "/ready-to-publish", label: t.header.nav.readyToPublish },
+  ];
+
+  const operatorNav: AppNavItem[] =
+    user.role === "operator"
+      ? [
+          { href: "/operator/strategy", label: t.header.nav.strategy },
+          { href: "/operator/scripts", label: t.header.nav.scripts },
+          { href: "/operator/calendar", label: t.header.nav.calendar },
+          { href: "/operator/playbook", label: t.header.nav.playbook },
+          { href: "/operator/trends", label: t.header.nav.trends },
+          {
+            href: "/operator/settings/cost-policy",
+            label: t.header.nav.costPolicy,
+          },
+        ]
+      : [];
+
+  const navItems = [...clientNav, ...operatorNav];
+
   return (
-    <header
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "1rem",
-        padding: "1rem 1.5rem",
-        background: "#ffffff",
-        borderBottom: "1px solid #e5e7eb",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-        <div style={{ fontWeight: 700, fontSize: "1.125rem" }}>{t.appName}</div>
-        <nav
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "1rem",
-            fontSize: "0.95rem",
-          }}
+    <header className="sticky top-0 z-40 border-b border-edge bg-deep/95 backdrop-blur-sm">
+      <div className="flex h-16 items-center gap-6 px-4 sm:px-6 lg:px-8">
+        <Link
+          href="/dashboard"
+          className="font-display shrink-0 text-2xl text-fog transition-opacity hover:opacity-90 focus-visible:outline-none"
         >
-          <Link href="/dashboard" style={{ color: "#374151", textDecoration: "none" }}>
-            {t.header.nav.dashboard}
-          </Link>
-          <Link href="/profile" style={{ color: "#374151", textDecoration: "none" }}>
-            {t.header.nav.profile}
-          </Link>
-          <Link href="/settings/preferences" style={{ color: "#374151", textDecoration: "none" }}>
-            {t.header.nav.preferences}
-          </Link>
-          <Link href="/approvals" style={{ color: "#374151", textDecoration: "none" }}>
-            {t.header.nav.approvals}
-          </Link>
-          <Link
-            href="/ready-to-publish"
-            style={{ color: "#374151", textDecoration: "none" }}
-          >
-            {t.header.nav.readyToPublish}
-          </Link>
-          {user.role === "operator" ? (
-            <>
-              <Link
-                href="/operator/playbook"
-                style={{ color: "#374151", textDecoration: "none" }}
-              >
-                {t.header.nav.playbook}
-              </Link>
-              <Link
-                href="/operator/trends"
-                style={{ color: "#374151", textDecoration: "none" }}
-              >
-                {t.header.nav.trends}
-              </Link>
-              <Link
-                href="/operator/strategy"
-                style={{ color: "#374151", textDecoration: "none" }}
-              >
-                {t.header.nav.strategy}
-              </Link>
-              <Link
-                href="/operator/scripts"
-                style={{ color: "#374151", textDecoration: "none" }}
-              >
-                {t.header.nav.scripts}
-              </Link>
-              <Link
-                href="/operator/calendar"
-                style={{ color: "#374151", textDecoration: "none" }}
-              >
-                {t.header.nav.calendar}
-              </Link>
-              <Link
-                href="/operator/settings/cost-policy"
-                style={{ color: "#374151", textDecoration: "none" }}
-              >
-                {t.header.nav.costPolicy}
-              </Link>
-            </>
-          ) : null}
-        </nav>
-      </div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "0.75rem",
-          fontSize: "0.95rem",
-          color: "#4b5563",
-          flexShrink: 0,
-          whiteSpace: "nowrap",
-        }}
-      >
-        <span>
-          {t.header.signedInAs}{" "}
-          <strong style={{ color: "#111827" }}>
-            {user.displayName} ({user.email})
-          </strong>
-        </span>
-        <LogoutButton
-          appearance="header"
-          copy={{
-            label: t.header.logout,
-            pendingLabel: t.header.logoutPending,
-            confirmHeader: t.header.confirmHeader,
-            confirmMessage: t.header.confirmMessage,
-            confirmAccept: t.header.confirmAccept,
-            confirmReject: t.header.confirmReject,
-            stayError: t.auth.errors.forbiddenFields,
-          }}
+          neuralitica
+        </Link>
+
+        <AppNavLinks
+          items={navItems}
+          ariaLabel={t.header.navAriaLabel}
+          className="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto md:flex lg:gap-2"
+          linkClassName="text-sm"
         />
+
+        <div className="ml-auto flex shrink-0 items-center gap-3 text-sm text-dim">
+          <span
+            className="hidden max-w-[18rem] truncate lg:inline"
+            title={user.email}
+          >
+            {t.header.signedInAs}{" "}
+            <strong className="font-semibold text-fog">{user.displayName}</strong>
+          </span>
+          <div
+            className="flex size-9 items-center justify-center rounded-full border border-edge bg-panel text-xs font-semibold text-butter"
+            aria-hidden
+          >
+            {user.displayName.slice(0, 1).toUpperCase()}
+          </div>
+          <LogoutButton
+            appearance="header"
+            copy={{
+              label: t.header.logout,
+              pendingLabel: t.header.logoutPending,
+              confirmHeader: t.header.confirmHeader,
+              confirmMessage: t.header.confirmMessage,
+              confirmAccept: t.header.confirmAccept,
+              confirmReject: t.header.confirmReject,
+              stayError: t.auth.errors.forbiddenFields,
+            }}
+          />
+        </div>
       </div>
+
+      <AppNavLinks
+        items={navItems}
+        ariaLabel={t.header.mobileNavAriaLabel}
+        className="flex gap-1 overflow-x-auto border-t border-edge px-4 py-2 md:hidden"
+        linkClassName="text-xs"
+      />
     </header>
   );
 }

@@ -63,7 +63,9 @@
       "scripts": "Guiones",
       "calendar": "Calendario de contenido",
       "costPolicy": "Política de costo"
-    }
+    },
+    "navAriaLabel": "Navegación principal",
+    "mobileNavAriaLabel": "Navegación móvil"
   },
   "auth": {
     "localeSwitcher": {
@@ -110,7 +112,9 @@
         "displayName": {
           "too_small": "El nombre para mostrar es obligatorio."
         }
-      }
+      },
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña"
     },
     "login": {
       "title": "Iniciar sesión",
@@ -134,7 +138,9 @@
         "password": {
           "too_small": "Introduce tu contraseña."
         }
-      }
+      },
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña"
     },
     "reset": {
       "title": "Restablece tu contraseña",
@@ -167,7 +173,9 @@
         "password": {
           "too_small": "Introduce una nueva contraseña."
         }
-      }
+      },
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña"
     },
     "pending": {
       "title": "Cuenta pendiente de activación",
@@ -176,7 +184,8 @@
       "logoutHint": "Puedes cerrar sesión y volver más tarde.",
       "logout": "Cerrar sesión",
       "logoutPending": "Cerrando sesión…"
-    }
+    },
+    "shellTagline": "Producción de contenido para negocios de servicios locales."
   },
   "interview": {
     "title": "Entrevista inicial",
@@ -1948,5 +1957,36 @@
         "runNotResumable": "Esta ejecución no se puede reanudar en este momento."
       }
     }
+  },
+  "campana": {
+    "weeksAriaLabel": "Semanas de la campaña",
+    "reelsHeading": "Reels de esta semana",
+    "viewCalendar": "Ver calendario",
+    "scriptsHeading": "Guiones",
+    "scriptsTotal": "{count} en total",
+    "strategyHeading": "Estrategia",
+    "newReel": "Nuevo reel",
+    "newReelHint": "desde un guion",
+    "rendering": "Renderizando",
+    "status": {
+      "published": "Publicado",
+      "scheduled": "Programado",
+      "review": "Revisar",
+      "rendering": "Renderizando",
+      "draft": "Borrador",
+      "approved": "Aprobado",
+      "inProgress": "En curso",
+      "ready": "Guiones listos",
+      "planned": "Por planear"
+    },
+    "weekLabel": "Sem {n}",
+    "weekMeta": "{client} · semana del {range}",
+    "slotsCount": "{count} reels",
+    "slotsProgress": "{done} de {total}",
+    "openScript": "Abrir guion",
+    "createVideo": "Crear video",
+    "editScript": "Editar",
+    "insightsHeading": "Rendimiento",
+    "editBrief": "Editar brief"
   }
 }

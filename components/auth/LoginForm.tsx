@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
-import { InputText } from "primereact/inputtext";
-import { Message } from "primereact/message";
-import { Password } from "primereact/password";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
 import { logIn } from "@/lib/auth/actions/log-in";
 import type { AuthErrorEnvelope, LogInInput } from "@/lib/contracts/auth";
 import type { Locale } from "@/lib/i18n/locales";
@@ -25,6 +27,8 @@ type LoginCopy = {
   resetSuccess: string;
   signupLink: string;
   resetLink: string;
+  showPassword: string;
+  hidePassword: string;
   requiredField: string;
   invalidEmail: string;
   fieldErrors: {
@@ -199,87 +203,89 @@ export function LoginForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+      <div className="flex flex-col gap-5">
         <div>
-          <h1 style={{ margin: "0 0 0.35rem", fontSize: "1.5rem" }}>{copy.title}</h1>
-          <p style={{ margin: 0, color: "#4b5563" }}>{copy.subtitle}</p>
+          <h1 className="mb-1.5 font-display text-3xl text-fog">{copy.title}</h1>
+          <p className="text-sm text-dim">{copy.subtitle}</p>
         </div>
 
         {banner === "confirmed" ? (
-          <Message severity="success" text={copy.confirmed} style={{ width: "100%" }} />
+          <StatusAlert severity="success" text={copy.confirmed} className="w-full" />
         ) : null}
 
         {banner === "confirmationFailed" ? (
-          <Message
+          <StatusAlert
             severity="error"
             text={copy.confirmationFailed}
-            style={{ width: "100%" }}
+            className="w-full"
           />
         ) : null}
 
         {banner === "resetSuccess" ? (
-          <Message
-            severity="success"
-            text={copy.resetSuccess}
-            style={{ width: "100%" }}
-          />
+          <StatusAlert severity="success" text={copy.resetSuccess} className="w-full" />
         ) : null}
 
         {formError ? (
-          <Message severity="error" text={formError} style={{ width: "100%" }} />
+          <StatusAlert severity="error" text={formError} className="w-full" />
         ) : null}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-          <label htmlFor="login-email">{copy.email}</label>
-          <InputText
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="login-email" className="text-fog">
+            {copy.email}
+          </Label>
+          <Input
             id="login-email"
             type="email"
             value={fields.email}
             onChange={(event) => updateField("email", event.target.value)}
-            invalid={Boolean(fieldErrors.email)}
+            aria-invalid={Boolean(fieldErrors.email)}
             disabled={pending}
             autoComplete="email"
             autoFocus
           />
           {fieldErrors.email ? (
-            <small style={{ color: "#dc2626" }}>{fieldErrors.email}</small>
+            <small className="text-rose">{fieldErrors.email}</small>
           ) : null}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-          <label htmlFor="login-password">{copy.password}</label>
-          <Password
-            inputId="login-password"
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="login-password" className="text-fog">
+            {copy.password}
+          </Label>
+          <PasswordInput
+            id="login-password"
             value={fields.password}
             onChange={(event) => updateField("password", event.target.value)}
-            invalid={Boolean(fieldErrors.password)}
+            aria-invalid={Boolean(fieldErrors.password)}
             disabled={pending}
-            toggleMask
-            feedback={false}
-            inputStyle={{ width: "100%" }}
-            style={{ width: "100%" }}
+            showLabel={copy.showPassword}
+            hideLabel={copy.hidePassword}
             autoComplete="current-password"
           />
           {fieldErrors.password ? (
-            <small style={{ color: "#dc2626" }}>{fieldErrors.password}</small>
+            <small className="text-rose">{fieldErrors.password}</small>
           ) : null}
         </div>
 
-        <Button
-          type="submit"
-          label={pending ? copy.submitPending : copy.submit}
-          loading={pending}
-          disabled={pending}
-        />
+        <Button type="submit" disabled={pending} className="w-full">
+          {pending ? <Spinner className="size-4 text-current" /> : null}
+          {pending ? copy.submitPending : copy.submit}
+        </Button>
 
-        <p style={{ margin: 0, fontSize: "0.875rem", textAlign: "center" }}>
-          <Link href={`/signup?locale=${locale}`} style={{ color: "#4338ca" }}>
+        <p className="text-center text-sm">
+          <Link
+            href={`/signup?locale=${locale}`}
+            className="text-butter underline-offset-4 hover:underline"
+          >
             {copy.signupLink}
           </Link>
         </p>
 
-        <p style={{ margin: 0, fontSize: "0.875rem", textAlign: "center" }}>
-          <Link href={`/reset-password?locale=${locale}`} style={{ color: "#4338ca" }}>
+        <p className="text-center text-sm">
+          <Link
+            href={`/reset-password?locale=${locale}`}
+            className="text-butter underline-offset-4 hover:underline"
+          >
             {copy.resetLink}
           </Link>
         </p>

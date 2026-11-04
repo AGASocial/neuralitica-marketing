@@ -2,13 +2,21 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
-import { Message } from "primereact/message";
-import { Tag } from "primereact/tag";
+import { PlusIcon } from "lucide-react";
 
-import type { TrendEntryCore, TrendSnapshotOperatorView } from "@/lib/contracts/trend";
+import { Button } from "@/components/ui/button";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import type { TrendSnapshotOperatorView } from "@/lib/contracts/trend";
 import { formatWeekRange } from "@/lib/trend/normalize-week-start";
 
 type TrendWeekEditorCopy = {
@@ -63,77 +71,92 @@ export function TrendWeekEditorView({
   );
 
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: "1rem",
-          marginBottom: "1.5rem",
-          flexWrap: "wrap",
-        }}
-      >
+    <div className="mx-auto max-w-[1100px]">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem" }}>{copy.title}</h1>
-          <p style={{ margin: 0, color: "#4b5563" }}>{copy.subtitle}</p>
-          <p style={{ margin: "0.75rem 0 0", fontWeight: 600, color: "#111827" }}>
-            {weekLabel}
-          </p>
-          <p style={{ margin: "0.25rem 0 0", color: "#6b7280", fontSize: "0.9rem" }}>
+          <h1 className="mb-2 font-display text-4xl text-fog">{copy.title}</h1>
+          <p className="text-dim">{copy.subtitle}</p>
+          <p className="mt-3 font-semibold text-fog">{weekLabel}</p>
+          <p className="mt-1 text-[0.9rem] text-dim">
             {copy.publishedLabel}: {formatDate(snapshot.publishedAt, locale)} ·{" "}
             {copy.updatedLabel}: {formatDate(snapshot.updatedAt, locale)}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-          <Link
-            href={`/operator/trends/${snapshot.weekStart}/new`}
-            style={{ textDecoration: "none" }}
-          >
-            <Button type="button" label={copy.addEntry} icon="pi pi-plus" />
-          </Link>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild>
+            <Link href={`/operator/trends/${snapshot.weekStart}/new`}>
+              <PlusIcon />
+              {copy.addEntry}
+            </Link>
+          </Button>
           <Button
             type="button"
-            label={copy.backList}
-            severity="secondary"
-            outlined
+            variant="outline"
             onClick={() => router.push("/operator/trends")}
-          />
+          >
+            {copy.backList}
+          </Button>
         </div>
       </div>
 
       {sortedEntries.length === 0 ? (
-        <Message severity="info" text={copy.empty} style={{ width: "100%" }} />
+        <StatusAlert severity="info" text={copy.empty} className="w-full" />
       ) : (
-        <DataTable
-          value={sortedEntries}
-          stripedRows
-          rowClassName={(row: TrendEntryCore) =>
-            row.activo ? "" : "trend-row-inactive"
-          }
-          emptyMessage={copy.empty}
-        >
-          <Column field="prioridad_semana" header={copy.columns.prioridad} />
-          <Column field="titulo" header={copy.columns.titulo} />
-          <Column field="slug" header={copy.columns.slug} />
-          <Column
-            header={copy.columns.status}
-            body={(row: TrendEntryCore) => (
-              <Tag
-                severity={row.activo ? "success" : "secondary"}
-                value={row.activo ? copy.status.active : copy.status.inactive}
-              />
-            )}
-          />
-          <Column
-            header={copy.columns.actions}
-            body={(row: TrendEntryCore) => (
-              <Link href={`/operator/trends/${snapshot.weekStart}/${row.slug}`}>
-                <Button type="button" label={copy.edit} size="small" />
-              </Link>
-            )}
-          />
-        </DataTable>
+        <div className="rounded-xl border border-edge bg-panel">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-edge hover:bg-transparent">
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.prioridad}
+                </TableHead>
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.titulo}
+                </TableHead>
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.slug}
+                </TableHead>
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.status}
+                </TableHead>
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.actions}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedEntries.map((row) => (
+                <TableRow
+                  key={row.slug}
+                  className={cn(
+                    "border-edge hover:bg-edge/20",
+                    !row.activo && "opacity-60",
+                  )}
+                >
+                  <TableCell className="px-4 py-3 text-fog">
+                    {row.prioridad_semana}
+                  </TableCell>
+                  <TableCell className="px-4 py-3 whitespace-normal text-fog">
+                    {row.titulo}
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-fog">{row.slug}</TableCell>
+                  <TableCell className="px-4 py-3">
+                    <StatusBadge
+                      severity={row.activo ? "success" : "secondary"}
+                      value={row.activo ? copy.status.active : copy.status.inactive}
+                    />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Button asChild size="sm">
+                      <Link href={`/operator/trends/${snapshot.weekStart}/${row.slug}`}>
+                        {copy.edit}
+                      </Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

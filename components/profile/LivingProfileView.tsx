@@ -2,9 +2,9 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Button } from "primereact/button";
-import { Message } from "primereact/message";
 
+import { Button } from "@/components/ui/button";
+import { StatusAlert } from "@/components/ui/status-alert";
 import { LivingProfileEditor } from "@/components/profile/LivingProfileEditor";
 import {
   ProfileBrandingSection,
@@ -84,14 +84,12 @@ export function LivingProfileView({
   if (result.exists === false && "loadFailed" in result && result.loadFailed) {
     return (
       <ProfileShell title={copy.title}>
-        <Message
-          severity="error"
-          text={copy.error.body}
-          style={{ width: "100%" }}
-        />
-        <Link href="/dashboard" style={{ textDecoration: "none" }}>
-          <Button type="button" label={copy.error.ctaDashboard} outlined />
-        </Link>
+        <StatusAlert severity="error" text={copy.error.body} className="w-full" />
+        <div>
+          <Button asChild variant="outline">
+            <Link href="/dashboard">{copy.error.ctaDashboard}</Link>
+          </Button>
+        </div>
       </ProfileShell>
     );
   }
@@ -99,44 +97,21 @@ export function LivingProfileView({
   if (result.exists === false) {
     return (
       <ProfileShell title={copy.title}>
-        <Message
-          severity="info"
-          text={copy.empty.body}
-          style={{ width: "100%" }}
-        />
-        <div
-          style={{
-            display: "flex",
-            gap: "0.75rem",
-            flexWrap: "wrap",
-          }}
-        >
-          <Link href="/interview" style={{ textDecoration: "none" }}>
-            <Button type="button" label={copy.empty.ctaInterview} />
-          </Link>
-          <Link href="/dashboard" style={{ textDecoration: "none" }}>
-            <Button
-              type="button"
-              label={copy.empty.ctaDashboard}
-              severity="secondary"
-              outlined
-            />
-          </Link>
+        <StatusAlert severity="info" text={copy.empty.body} className="w-full" />
+        <div className="flex flex-wrap gap-3">
+          <Button asChild>
+            <Link href="/interview">{copy.empty.ctaInterview}</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/dashboard">{copy.empty.ctaDashboard}</Link>
+          </Button>
         </div>
       </ProfileShell>
     );
   }
 
   return (
-    <div
-      style={{
-        maxWidth: 760,
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.25rem",
-      }}
-    >
+    <div className="mx-auto flex max-w-[760px] flex-col gap-5">
       <LivingProfileEditor
         initial={result}
         locale={locale}
@@ -172,17 +147,9 @@ function ProfileShell({
   children: ReactNode;
 }) {
   return (
-    <div
-      style={{
-        maxWidth: 760,
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.25rem",
-      }}
-    >
+    <div className="mx-auto flex max-w-[760px] flex-col gap-5">
       <div>
-        <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem" }}>{title}</h1>
+        <h1 className="mb-2 font-display text-4xl text-fog">{title}</h1>
       </div>
       {children}
     </div>

@@ -1,10 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Button } from "primereact/button";
-import { Card } from "primereact/card";
-import { InputText } from "primereact/inputtext";
-import { Tag } from "primereact/tag";
+import { Plus, Trash2 } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 import type {
   ContentStrategyBrief,
@@ -13,6 +15,7 @@ import type {
   ContentStrategySlotGoal,
 } from "@/lib/contracts/content-strategy";
 import type { VisualModality } from "@/lib/contracts/visual-preferences";
+import { cn } from "@/lib/utils";
 
 type StrategyBriefCopy = {
   sections: {
@@ -48,22 +51,12 @@ type StrategyBriefViewProps = {
   onBriefChange?: (brief: ContentStrategyBrief) => void;
 };
 
-function goalSeverity(
-  goal: ContentStrategySlotGoal,
-): "success" | "info" | "warning" | "danger" | undefined {
-  switch (goal) {
-    case "trust":
-      return "info";
-    case "education":
-      return "success";
-    case "local_sale":
-      return "warning";
-    case "inbound_dm":
-      return "danger";
-    default:
-      return undefined;
-  }
-}
+const GOAL_BADGE_CLASS: Record<ContentStrategySlotGoal, string> = {
+  trust: "border-info/40 bg-info/15 text-info",
+  education: "border-success/40 bg-success/15 text-success",
+  local_sale: "border-butter/50 bg-butter/15 text-butter",
+  inbound_dm: "border-rose/50 bg-rose/15 text-rose",
+};
 
 function Field({
   label,
@@ -76,21 +69,10 @@ function Field({
 }) {
   return (
     <div>
-      <div
-        style={{
-          fontSize: "0.8rem",
-          fontWeight: 600,
-          color: "#6b7280",
-          marginBottom: "0.25rem",
-          textTransform: "uppercase",
-          letterSpacing: "0.02em",
-        }}
-      >
+      <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-dim">
         {label}
       </div>
-      {children ?? (
-        <div style={{ color: "#111827", lineHeight: 1.5 }}>{value}</div>
-      )}
+      {children ?? <div className="leading-relaxed text-fog">{value}</div>}
     </div>
   );
 }
@@ -116,59 +98,67 @@ function SlotCard({
     playbookLabels?.[slot.formatoPlaybookSlug] ?? slot.formatoPlaybookSlug;
 
   return (
-    <Card
-      style={{ marginBottom: "1rem" }}
-      title={`${copy.slot.slotNumber} ${slot.slotIndex + 1}`}
-    >
-      <div
-        style={{
-          display: "grid",
-          gap: "0.75rem",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        }}
-      >
-        <Field label={copy.slot.tema} value={slot.tema} />
-        <Field label={copy.slot.formato} value={formatoLabel} />
-        <Field label={copy.slot.modalidad} value={copy.modalities[slot.modalidad]} />
-        <Field label={copy.slot.goal}>
-          <Tag value={copy.goals[slot.goal]} severity={goalSeverity(slot.goal)} />
-        </Field>
-        {slot.dayOfWeek ? (
-          <Field label={copy.slot.day} value={copy.days[slot.dayOfWeek]} />
-        ) : null}
-        {slot.tacticaTendenciaSlug ? (
-          <Field label={copy.slot.tactica} value={slot.tacticaTendenciaSlug} />
-        ) : null}
-        {isEditable ? (
-          <>
-            <Field label={copy.slot.angle}>
-              <InputText
-                value={slot.angle ?? ""}
-                onChange={(event) =>
-                  onSlotFieldChange?.(slot.slotIndex, "angle", event.target.value)
-                }
-                style={{ width: "100%" }}
-              />
-            </Field>
-            <Field label={copy.slot.ctaHint}>
-              <InputText
-                value={slot.ctaHint ?? ""}
-                onChange={(event) =>
-                  onSlotFieldChange?.(slot.slotIndex, "ctaHint", event.target.value)
-                }
-                style={{ width: "100%" }}
-              />
-            </Field>
-          </>
-        ) : (
-          <>
-            {slot.angle ? <Field label={copy.slot.angle} value={slot.angle} /> : null}
-            {slot.ctaHint ? (
-              <Field label={copy.slot.ctaHint} value={slot.ctaHint} />
-            ) : null}
-          </>
-        )}
-      </div>
+    <Card className="gap-4 border-edge bg-panel py-5">
+      <CardHeader className="px-5">
+        <CardTitle className="font-display text-2xl font-normal text-fog">
+          {`${copy.slot.slotNumber} ${slot.slotIndex + 1}`}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="px-5">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
+          <Field label={copy.slot.tema} value={slot.tema} />
+          <Field label={copy.slot.formato} value={formatoLabel} />
+          <Field
+            label={copy.slot.modalidad}
+            value={copy.modalities[slot.modalidad]}
+          />
+          <Field label={copy.slot.goal}>
+            <Badge
+              variant="outline"
+              className={cn(GOAL_BADGE_CLASS[slot.goal])}
+            >
+              {copy.goals[slot.goal]}
+            </Badge>
+          </Field>
+          {slot.dayOfWeek ? (
+            <Field label={copy.slot.day} value={copy.days[slot.dayOfWeek]} />
+          ) : null}
+          {slot.tacticaTendenciaSlug ? (
+            <Field label={copy.slot.tactica} value={slot.tacticaTendenciaSlug} />
+          ) : null}
+          {isEditable ? (
+            <>
+              <Field label={copy.slot.angle}>
+                <Input
+                  value={slot.angle ?? ""}
+                  className="border-edge bg-deep text-fog"
+                  onChange={(event) =>
+                    onSlotFieldChange?.(slot.slotIndex, "angle", event.target.value)
+                  }
+                />
+              </Field>
+              <Field label={copy.slot.ctaHint}>
+                <Input
+                  value={slot.ctaHint ?? ""}
+                  className="border-edge bg-deep text-fog"
+                  onChange={(event) =>
+                    onSlotFieldChange?.(slot.slotIndex, "ctaHint", event.target.value)
+                  }
+                />
+              </Field>
+            </>
+          ) : (
+            <>
+              {slot.angle ? (
+                <Field label={copy.slot.angle} value={slot.angle} />
+              ) : null}
+              {slot.ctaHint ? (
+                <Field label={copy.slot.ctaHint} value={slot.ctaHint} />
+              ) : null}
+            </>
+          )}
+        </div>
+      </CardContent>
     </Card>
   );
 }
@@ -231,80 +221,75 @@ export function StrategyBriefView({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+    <div className="flex flex-col gap-8">
       <section>
-        <h2 style={{ margin: "0 0 0.75rem", fontSize: "1.125rem" }}>
+        <h2 className="mb-3 font-display text-2xl text-fog">
           {copy.sections.pillars}
         </h2>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+        <div className="flex flex-wrap gap-2">
           {brief.pillars.map((pillar) => (
-            <Tag key={pillar} value={pillar} severity="secondary" />
+            <Badge
+              key={pillar}
+              variant="outline"
+              className="border-edge bg-panel text-fog"
+            >
+              {pillar}
+            </Badge>
           ))}
         </div>
       </section>
 
       <section>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "0.75rem",
-            marginBottom: "0.75rem",
-          }}
-        >
-          <h2 style={{ margin: 0, fontSize: "1.125rem" }}>{copy.sections.themes}</h2>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="font-display text-2xl text-fog">{copy.sections.themes}</h2>
           {isEditable ? (
             <Button
               type="button"
-              label={copy.themes.add}
-              icon="pi pi-plus"
-              size="small"
-              outlined
+              size="sm"
+              variant="outline"
+              className="rounded-full border-edge bg-transparent text-fog hover:bg-panel hover:text-fog"
               disabled={brief.themes.length >= 8}
               onClick={addTheme}
-            />
+            >
+              <Plus aria-hidden />
+              {copy.themes.add}
+            </Button>
           ) : null}
         </div>
         {isEditable ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          <div className="flex flex-col gap-2">
             {brief.themes.map((theme, index) => (
-              <div
-                key={`theme-${index}`}
-                style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}
-              >
-                <InputText
+              <div key={`theme-${index}`} className="flex items-center gap-2">
+                <Input
                   value={theme}
+                  className="flex-1 border-edge bg-panel text-fog"
                   onChange={(event) => updateTheme(index, event.target.value)}
-                  style={{ flex: 1 }}
                 />
                 <Button
                   type="button"
-                  icon="pi pi-trash"
-                  severity="danger"
-                  text
+                  variant="ghost"
+                  size="icon"
+                  className="text-rose hover:text-rose"
                   aria-label={copy.themes.remove}
                   disabled={brief.themes.length <= 1}
                   onClick={() => removeTheme(index)}
-                />
+                >
+                  <Trash2 aria-hidden />
+                </Button>
               </div>
             ))}
           </div>
         ) : (
-          <ul style={{ margin: 0, paddingLeft: "1.25rem", color: "#374151" }}>
+          <ul className="list-disc space-y-1.5 pl-5 text-fog marker:text-butter">
             {brief.themes.map((theme) => (
-              <li key={theme} style={{ marginBottom: "0.35rem" }}>
-                {theme}
-              </li>
+              <li key={theme}>{theme}</li>
             ))}
           </ul>
         )}
       </section>
 
-      <section>
-        <h2 style={{ margin: "0 0 0.75rem", fontSize: "1.125rem" }}>
-          {copy.sections.slots}
-        </h2>
+      <section className="space-y-4">
+        <h2 className="font-display text-2xl text-fog">{copy.sections.slots}</h2>
         {sortedSlots.map((slot) => (
           <SlotCard
             key={slot.slotIndex}

@@ -1,7 +1,8 @@
 "use client";
 
-import { Button } from "primereact/button";
-import { Message } from "primereact/message";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
 
 type CheckEmailViewProps = {
   title: string;
@@ -27,34 +28,35 @@ export function CheckEmailView({
   resendSuccess = false,
 }: CheckEmailViewProps) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+    <div className="flex flex-col gap-4">
       <div>
-        <h1 style={{ margin: "0 0 0.5rem", fontSize: "1.5rem" }}>{title}</h1>
-        <Message severity="info" text={body} style={{ width: "100%" }} />
+        <h1 className="mb-2 font-display text-3xl text-fog">{title}</h1>
+        <StatusAlert severity="info" text={body} className="w-full" />
       </div>
 
       {resendSuccess ? (
-        <Message
+        <StatusAlert
           severity="success"
           text={resendSuccessMessage}
-          style={{ width: "100%" }}
+          className="w-full"
         />
       ) : null}
 
       {resendError ? (
-        <Message severity="error" text={resendError} style={{ width: "100%" }} />
+        <StatusAlert severity="error" text={resendError} className="w-full" />
       ) : null}
 
       <Button
         type="button"
-        label={resendPending ? resendPendingLabel : resendLabel}
-        loading={resendPending}
+        variant="outline"
         disabled={resendPending}
-        outlined
         onClick={() => {
           void onResend();
         }}
-      />
+      >
+        {resendPending ? <Spinner className="size-4 text-current" /> : null}
+        {resendPending ? resendPendingLabel : resendLabel}
+      </Button>
     </div>
   );
 }

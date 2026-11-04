@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Tag } from "primereact/tag";
+
+import { StatusBadge } from "@/components/ui/status-badge";
 
 import type {
   OperatorBrollJobClipDto,
@@ -156,14 +157,10 @@ export function OperatorBrollJobsPanel({
     return (
       <section
         aria-label={copy.title}
-        style={{
-          marginBottom: "0.75rem",
-          padding: "0.75rem 0",
-          borderTop: "1px solid var(--surface-border)",
-        }}
+        className="mb-3 py-3 px-0 border-t border-edge"
       >
-        <h3 style={{ margin: "0 0 0.35rem", fontSize: "0.95rem" }}>{copy.title}</h3>
-        <p style={{ margin: 0, color: "var(--text-color-secondary)", fontSize: "0.875rem" }}>
+        <h3 className="font-display text-fog mt-0 mx-0 mb-[0.35rem] text-[0.95rem]">{copy.title}</h3>
+        <p className="m-0 text-dim text-sm">
           {copy.empty}
         </p>
       </section>
@@ -177,68 +174,47 @@ export function OperatorBrollJobsPanel({
   return (
     <section
       aria-label={copy.title}
-      style={{
-        marginBottom: "0.75rem",
-        padding: "0.75rem 0",
-        borderTop: "1px solid var(--surface-border)",
-      }}
+      className="mb-3 py-3 px-0 border-t border-edge"
     >
       <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "0.5rem",
-          alignItems: "center",
-          marginBottom: "0.5rem",
-        }}
+        className="flex flex-wrap gap-2 items-center mb-2"
       >
-        <h3 style={{ margin: 0, fontSize: "0.95rem" }}>{copy.title}</h3>
-        <Tag
+        <h3 className="font-display text-fog m-0 text-[0.95rem]">{copy.title}</h3>
+        <StatusBadge
           value={`${completed}/${clips.length}`}
           severity={
             failed > 0 ? "danger" : active > 0 ? "info" : "success"
           }
         />
         {polling ? (
-          <span style={{ fontSize: "0.8rem", color: "var(--text-color-secondary)" }}>
+          <span className="text-[0.8rem] text-dim">
             {copy.polling}
           </span>
         ) : null}
       </div>
 
-      <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+      <ul className="list-none m-0 p-0">
         {clips.map((clip, index) => (
           <li
             key={clip.jobId}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.35rem",
-              padding: "0.5rem 0",
-              borderBottom: "1px solid var(--surface-border)",
-            }}
+            className="flex flex-col gap-[0.35rem] py-2 px-0 border-b border-edge"
           >
             <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "0.5rem",
-                alignItems: "center",
-              }}
+              className="flex flex-wrap gap-2 items-center"
             >
-              <span style={{ minWidth: "4.5rem", fontSize: "0.875rem" }}>
+              <span className="min-w-[4.5rem] text-sm">
                 {formatClipLabel(copy.clipLabel, index + 1)}
               </span>
-              <Tag
+              <StatusBadge
                 value={copy.status[clip.status] ?? clip.status}
                 severity={statusSeverity(clip.status)}
               />
-              <span style={{ fontSize: "0.8rem", color: "var(--text-color-secondary)" }}>
+              <span className="text-[0.8rem] text-dim">
                 {providerLabel(clip.providerKey, copy)}
               </span>
             </div>
             {clip.failureReason ? (
-              <span style={{ fontSize: "0.8rem", color: "var(--red-500)" }}>
+              <span className="text-[0.8rem] text-rose">
                 {copy.failureReasonLabel}: {clip.failureReason}
               </span>
             ) : null}
@@ -247,13 +223,7 @@ export function OperatorBrollJobsPanel({
                 controls
                 preload="metadata"
                 src={`/api/media/assets/${clip.outputMediaAssetId}`}
-                style={{
-                  width: "100%",
-                  maxWidth: "240px",
-                  aspectRatio: "16 / 9",
-                  background: "#111827",
-                  borderRadius: "0.375rem",
-                }}
+                className="w-full max-w-[240px] aspect-[16/9] bg-deep rounded-md"
               />
             ) : null}
           </li>

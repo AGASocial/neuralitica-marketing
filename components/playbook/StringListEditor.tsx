@@ -1,7 +1,9 @@
 "use client";
 
-import { Button } from "primereact/button";
-import { InputText } from "primereact/inputtext";
+import { PlusIcon, TrashIcon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type StringListEditorProps = {
   idPrefix: string;
@@ -52,57 +54,46 @@ export function StringListEditor({
 
   return (
     <fieldset
-      style={{
-        border: "1px solid #e5e7eb",
-        borderRadius: "8px",
-        padding: "1rem",
-        margin: 0,
-      }}
+      className="m-0 rounded-xl border border-edge p-4"
       disabled={disabled}
     >
-      <legend style={{ fontWeight: 600, padding: "0 0.25rem" }}>{label}</legend>
-      {hint ? (
-        <p style={{ margin: "0 0 0.75rem", color: "#6b7280", fontSize: "0.9rem" }}>
-          {hint}
-        </p>
-      ) : null}
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+      <legend className="px-1 font-semibold text-fog">{label}</legend>
+      {hint ? <p className="mb-3 text-[0.9rem] text-dim">{hint}</p> : null}
+      <div className="flex flex-col gap-2">
         {items.map((item, index) => (
-          <div
-            key={`${idPrefix}-${index}`}
-            style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}
-          >
-            <InputText
+          <div key={`${idPrefix}-${index}`} className="flex items-center gap-2">
+            <Input
               id={`${idPrefix}-${index}`}
               value={item}
               onChange={(event) => updateItem(index, event.target.value)}
               placeholder={placeholder}
-              style={{ flex: 1 }}
+              className="flex-1"
               disabled={disabled}
             />
             <Button
               type="button"
-              icon="pi pi-trash"
-              severity="secondary"
-              outlined
+              variant="outline"
+              size="icon"
               aria-label={removeLabel}
               onClick={() => removeItem(index)}
               disabled={disabled || items.length <= minItems}
-            />
+            >
+              <TrashIcon />
+            </Button>
           </div>
         ))}
       </div>
       <Button
         type="button"
-        label={addLabel}
-        icon="pi pi-plus"
-        severity="secondary"
-        outlined
-        size="small"
-        style={{ marginTop: "0.75rem" }}
+        variant="outline"
+        size="sm"
+        className="mt-3"
         onClick={addItem}
         disabled={disabled || items.length >= maxItems}
-      />
+      >
+        <PlusIcon />
+        {addLabel}
+      </Button>
     </fieldset>
   );
 }

@@ -1,15 +1,32 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
-import { Calendar } from "primereact/calendar";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
-import { Dialog } from "primereact/dialog";
-import { Message } from "primereact/message";
-import { Toast } from "primereact/toast";
+import { CalendarIcon, CalendarPlusIcon } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 import type {
   TrendErrorCode,
@@ -61,6 +78,13 @@ type TrendWeekListViewProps = {
   copy: TrendWeekListCopy;
 };
 
+function toDateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function formatDate(iso: string, locale: string): string {
   try {
     return new Intl.DateTimeFormat(locale, {
@@ -78,7 +102,6 @@ export function TrendWeekListView({
   copy,
 }: TrendWeekListViewProps) {
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
   const [publishOpen, setPublishOpen] = useState(false);
   const [pickedDate, setPickedDate] = useState<Date | null>(null);
   const [pending, setPending] = useState(false);
@@ -122,11 +145,7 @@ export function TrendWeekListView({
       const result = await publishOrUpdateSnapshot({ weekStart });
 
       if (result.ok) {
-        toastRef.current?.show({
-          severity: "success",
-          summary: copy.toastPublishSuccess,
-          life: 4000,
-        });
+        toast.success(copy.toastPublishSuccess, { duration: 4000 });
         setPublishOpen(false);
         setPickedDate(null);
         router.push(`/operator/trends/${result.weekStart}`);
@@ -147,109 +166,167 @@ export function TrendWeekListView({
     ? normalizeToIsoMonday(pickedDate)
     : null;
 
+  function closePublishDialog() {
+    setPublishOpen(false);
+    setBanner(null);
+  }
+
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-      <Toast ref={toastRef} />
+    <div className="mx-auto max-w-[1100px]">
       <PageHeader copy={copy} onPublish={() => setPublishOpen(true)} />
 
       {!result.ok ? (
         <>
-          <Message severity="error" text={copy.loadError} style={{ width: "100%" }} />
+          <StatusAlert severity="error" text={copy.loadError} className="w-full" />
           <Button
             type="button"
-            label={copy.backDashboard}
-            className="p-button-text"
-            style={{ marginTop: "1rem" }}
+            variant="ghost"
+            className="mt-4"
             onClick={() => router.push("/dashboard")}
-          />
+          >
+            {copy.backDashboard}
+          </Button>
         </>
       ) : weeks.length === 0 ? (
-        <Message severity="info" text={copy.empty} style={{ width: "100%" }} />
+        <StatusAlert severity="info" text={copy.empty} className="w-full" />
       ) : (
-        <DataTable value={weeks} stripedRows emptyMessage={copy.empty}>
-          <Column
-            header={copy.columns.weekStart}
-            body={(row: TrendWeekListItem) =>
-              formatWeekRange(row.weekStart, locale)
-            }
-          />
-          <Column field="entryCount" header={copy.columns.entryCount} />
-          <Column field="activeEntryCount" header={copy.columns.activeEntryCount} />
-          <Column
-            header={copy.columns.publishedAt}
-            body={(row: TrendWeekListItem) =>
-              formatDate(row.publishedAt, locale)
-            }
-          />
-          <Column
-            header={copy.columns.updatedAt}
-            body={(row: TrendWeekListItem) => formatDate(row.updatedAt, locale)}
-          />
-          <Column
-            header={copy.columns.actions}
-            body={(row: TrendWeekListItem) => (
-              <Link href={`/operator/trends/${row.weekStart}`}>
-                <Button type="button" label={copy.manage} size="small" />
-              </Link>
-            )}
-          />
-        </DataTable>
+        <div className="rounded-xl border border-edge bg-panel">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-edge hover:bg-transparent">
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.weekStart}
+                </TableHead>
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.entryCount}
+                </TableHead>
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.activeEntryCount}
+                </TableHead>
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.publishedAt}
+                </TableHead>
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.updatedAt}
+                </TableHead>
+                <TableHead className="px-4 font-semibold text-dim">
+                  {copy.columns.actions}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {weeks.map((row: TrendWeekListItem) => (
+                <TableRow
+                  key={row.weekStart}
+                  className="border-edge hover:bg-edge/20"
+                >
+                  <TableCell className="px-4 py-3 text-fog">
+                    {formatWeekRange(row.weekStart, locale)}
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-fog">{row.entryCount}</TableCell>
+                  <TableCell className="px-4 py-3 text-fog">
+                    {row.activeEntryCount}
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-fog">
+                    {formatDate(row.publishedAt, locale)}
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-fog">
+                    {formatDate(row.updatedAt, locale)}
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Button asChild size="sm">
+                      <Link href={`/operator/trends/${row.weekStart}`}>
+                        {copy.manage}
+                      </Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       <Dialog
-        header={copy.publishDialogTitle}
-        visible={publishOpen}
-        style={{ width: "min(100%, 28rem)" }}
-        onHide={() => {
-          if (!pending) {
-            setPublishOpen(false);
-            setBanner(null);
+        open={publishOpen}
+        onOpenChange={(open) => {
+          if (!open && !pending) {
+            closePublishDialog();
           }
         }}
-        footer={
-          <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-            <Button
-              type="button"
-              label={copy.publishDialogCancel}
-              severity="secondary"
-              outlined
-              disabled={pending}
-              onClick={() => {
-                setPublishOpen(false);
-                setBanner(null);
-              }}
-            />
-            <Button
-              type="button"
-              label={copy.publishDialogSubmit}
-              loading={pending}
-              disabled={!pickedDate}
-              onClick={() => void handlePublish()}
-            />
-          </div>
-        }
       >
-        <p style={{ margin: "0 0 1rem", color: "#4b5563" }}>{copy.publishDialogHint}</p>
-        <label htmlFor="trend-week-picker" style={{ display: "block", fontWeight: 600 }}>
-          {copy.publishDialogWeekLabel}
-        </label>
-        <Calendar
-          inputId="trend-week-picker"
-          value={pickedDate}
-          onChange={(event) => setPickedDate(event.value ?? null)}
-          dateFormat="yy-mm-dd"
-          showIcon
-          disabled={pending}
-          style={{ width: "100%", marginTop: "0.5rem" }}
-        />
-        {normalizedWeekStart ? (
-          <p style={{ margin: "0.75rem 0 0", color: "#6b7280", fontSize: "0.9rem" }}>
-            {formatWeekRange(normalizedWeekStart, locale)}
-          </p>
-        ) : null}
-        {banner ? (
-          <Message severity="error" text={banner} style={{ width: "100%", marginTop: "1rem" }} />
-        ) : null}
+        <DialogContent
+          className="w-[min(100%,28rem)] border-edge bg-panel text-fog sm:max-w-md"
+          showCloseButton={!pending}
+          aria-describedby={undefined}
+          onInteractOutside={(event) => {
+            if (pending) {
+              event.preventDefault();
+            }
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">
+              {copy.publishDialogTitle}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <p className="text-dim">{copy.publishDialogHint}</p>
+            <div>
+              <Label htmlFor="trend-week-picker" className="mb-2 block font-semibold">
+                {copy.publishDialogWeekLabel}
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="trend-week-picker"
+                    type="button"
+                    variant="outline"
+                    disabled={pending}
+                    className="w-full justify-between font-normal"
+                  >
+                    {pickedDate ? toDateInputValue(pickedDate) : ""}
+                    <CalendarIcon />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto border-edge bg-panel p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={pickedDate ?? undefined}
+                    defaultMonth={pickedDate ?? undefined}
+                    onSelect={(date) => setPickedDate(date instanceof Date ? date : null)}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            {normalizedWeekStart ? (
+              <p className="text-[0.9rem] text-dim">
+                {formatWeekRange(normalizedWeekStart, locale)}
+              </p>
+            ) : null}
+            {banner ? (
+              <StatusAlert severity="error" text={banner} className="w-full" />
+            ) : null}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={pending}
+              onClick={closePublishDialog}
+            >
+              {copy.publishDialogCancel}
+            </Button>
+            <Button
+              type="button"
+              disabled={!pickedDate || pending}
+              onClick={() => void handlePublish()}
+            >
+              {pending ? <Spinner className="size-4 text-current" /> : null}
+              {copy.publishDialogSubmit}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   );
@@ -263,26 +340,15 @@ function PageHeader({
   onPublish: () => void;
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        gap: "1rem",
-        marginBottom: "1.5rem",
-        flexWrap: "wrap",
-      }}
-    >
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem" }}>{copy.title}</h1>
-        <p style={{ margin: 0, color: "#4b5563" }}>{copy.subtitle}</p>
+        <h1 className="mb-2 font-display text-4xl text-fog">{copy.title}</h1>
+        <p className="text-dim">{copy.subtitle}</p>
       </div>
-      <Button
-        type="button"
-        label={copy.publish}
-        icon="pi pi-calendar-plus"
-        onClick={onPublish}
-      />
+      <Button type="button" onClick={onPublish}>
+        <CalendarPlusIcon />
+        {copy.publish}
+      </Button>
     </div>
   );
 }

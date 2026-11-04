@@ -1,9 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "primereact/button";
-import { Message } from "primereact/message";
-import { Tag } from "primereact/tag";
+
+import { PencilIcon, RefreshCwIcon, ShieldIcon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusAlert } from "@/components/ui/status-alert";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 import type { AssemblyJobStatus } from "@/lib/contracts/assembly-job";
 import type { BrandingJobStatus } from "@/lib/contracts/branding-job";
@@ -373,88 +377,62 @@ export function OperatorQaPanel({
 
   return (
     <section
-      style={{
-        background: "#ffffff",
-        border: "1px solid #e5e7eb",
-        borderRadius: "8px",
-        padding: "1rem 1.25rem",
-        marginBottom: "1rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "0.75rem",
-      }}
+      className="bg-panel border border-edge rounded-lg py-4 px-5 mb-4 flex flex-col gap-3"
     >
       <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: "0.75rem",
-          flexWrap: "wrap",
-        }}
+        className="flex justify-between items-start gap-3 flex-wrap"
       >
-        <h3 style={{ margin: 0, fontSize: "1rem" }}>{copy.title}</h3>
+        <h3 className="font-display text-fog m-0 text-base">{copy.title}</h3>
         <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "0.5rem",
-            alignItems: "center",
-          }}
+          className="flex flex-wrap gap-2 items-center"
         >
           {gateReady ? (
-            <Tag value={copy.override.gateReady} severity="success" />
+            <StatusBadge value={copy.override.gateReady} severity="success" />
           ) : null}
           {report ? (
-            <Tag
+            <StatusBadge
               value={copy.status[report.status]}
               severity={qaStatusSeverity(report.status)}
             />
           ) : (
-            <Tag value={copy.status.pending} severity="secondary" />
+            <StatusBadge value={copy.status.pending} severity="secondary" />
           )}
         </div>
       </div>
 
       {banner ? (
-        <Message severity="error" text={banner} style={{ width: "100%" }} />
+        <StatusAlert severity="error" text={banner} className="w-full" />
       ) : null}
 
       {!readyForRun ? (
-        <p style={{ margin: 0, color: "#6b7280", fontSize: "0.875rem" }}>
+        <p className="m-0 text-dim text-sm">
           {copy.empty.prerequisites}
         </p>
       ) : null}
 
       {readyForRun && !hasReport && !pending ? (
-        <p style={{ margin: 0, color: "#6b7280", fontSize: "0.875rem" }}>
+        <p className="m-0 text-dim text-sm">
           {copy.empty.noReport}
         </p>
       ) : null}
 
       {pending && !hasReport ? (
-        <p style={{ margin: 0, color: "#6b7280", fontSize: "0.875rem" }}>
+        <p className="m-0 text-dim text-sm">
           {copy.loading}
         </p>
       ) : null}
 
       {showGateNotReady ? (
-        <Message
+        <StatusAlert
           severity="warn"
           text={copy.gateNotReady}
-          style={{ width: "100%" }}
+          className="w-full"
         />
       ) : null}
 
       {report && report.checks.length > 0 ? (
         <ul
-          style={{
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            display: "grid",
-            gap: "0.5rem",
-          }}
+          className="list-none m-0 p-0 grid gap-2"
         >
           {report.checks.map((check) => {
             const evidenceText = resolveEvidenceText(
@@ -468,65 +446,45 @@ export function OperatorQaPanel({
             return (
               <li
                 key={check.checkKey}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.35rem",
-                  padding: "0.5rem 0",
-                  borderBottom: "1px solid #f3f4f6",
-                }}
+                className="flex flex-col gap-[0.35rem] py-2 px-0 border-b border-edge"
               >
                 <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}
+                  className="flex flex-wrap items-center gap-2"
                 >
-                  <span style={{ fontWeight: 600, fontSize: "0.875rem" }}>
+                  <span className="font-semibold text-sm">
                     {copy.checks[check.checkKey] ?? check.checkKey}
                   </span>
-                  <Tag
+                  <StatusBadge
                     value={copy.checkStatus[check.status]}
                     severity={checkOutcomeSeverity(check.status)}
                   />
-                  <Tag
+                  <StatusBadge
                     value={copy.severity[check.severity]}
                     severity={severityTagSeverity(check.severity)}
-                    rounded
                   />
                   {canOverride ? (
                     <Button
                       type="button"
-                      label={copy.override.action}
-                      icon="pi pi-pencil"
-                      size="small"
-                      outlined
                       disabled={disabled || overridePending || inFlight}
                       onClick={() => openOverrideDialog(check.checkKey)}
-                    />
+                      variant="outline"
+                      size="sm"
+                    >
+                      <PencilIcon />
+                      {copy.override.action}
+                    </Button>
                   ) : null}
                 </div>
                 {evidenceText ? (
                   <p
-                    style={{
-                      margin: 0,
-                      color: "#6b7280",
-                      fontSize: "0.8125rem",
-                      whiteSpace: "pre-wrap",
-                    }}
+                    className="m-0 text-dim text-[0.8125rem] whitespace-pre-wrap"
                   >
                     {evidenceText}
                   </p>
                 ) : null}
                 {blockingLocked ? (
                   <p
-                    style={{
-                      margin: 0,
-                      color: "#9a3412",
-                      fontSize: "0.8125rem",
-                    }}
+                    className="m-0 text-butter text-[0.8125rem]"
                   >
                     {copy.override.blockingLocked}
                   </p>
@@ -539,52 +497,33 @@ export function OperatorQaPanel({
 
       {report && isTerminalQaStatus(report.status) ? (
         <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-            paddingTop: "0.25rem",
-          }}
+          className="flex flex-col gap-2 pt-1"
         >
-          <h4 style={{ margin: 0, fontSize: "0.875rem" }}>
+          <h4 className="font-display text-fog m-0 text-sm">
             {copy.override.auditTitle}
           </h4>
           {overrides.length === 0 ? (
-            <p style={{ margin: 0, color: "#6b7280", fontSize: "0.8125rem" }}>
+            <p className="m-0 text-dim text-[0.8125rem]">
               {copy.override.auditEmpty}
             </p>
           ) : (
             <ul
-              style={{
-                listStyle: "none",
-                margin: 0,
-                padding: 0,
-                display: "grid",
-                gap: "0.5rem",
-              }}
+              className="list-none m-0 p-0 grid gap-2"
             >
               {overrides.map((row) => (
                 <li
                   key={row.overrideId}
-                  style={{
-                    padding: "0.5rem 0",
-                    borderBottom: "1px solid #f3f4f6",
-                    fontSize: "0.8125rem",
-                  }}
+                  className="py-2 px-0 border-b border-edge text-[0.8125rem]"
                 >
-                  <div style={{ fontWeight: 600 }}>
+                  <div className="font-semibold">
                     {copy.checks[row.checkKey] ?? row.checkKey}
                   </div>
                   <p
-                    style={{
-                      margin: "0.25rem 0",
-                      whiteSpace: "pre-wrap",
-                      color: "#374151",
-                    }}
+                    className="my-1 mx-0 whitespace-pre-wrap text-fog"
                   >
                     {row.reason}
                   </p>
-                  <p style={{ margin: 0, color: "#6b7280" }}>
+                  <p className="m-0 text-dim">
                     {formatOverrideTimestamp(row.createdAt)}
                     {row.operatorDisplayName
                       ? ` · ${row.operatorDisplayName}`
@@ -598,34 +537,33 @@ export function OperatorQaPanel({
       ) : null}
 
       {canRun || canRerun ? (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+        <div className="flex flex-wrap gap-2">
           {canRun ? (
             <Button
               type="button"
-              label={pending ? copy.actions.running : copy.actions.run}
-              icon="pi pi-shield"
-              loading={pending}
-              disabled={disabled || pending}
               onClick={() => void handleRun()}
-            />
+              disabled={disabled || pending}
+            >
+              {pending ? <Spinner className="size-4 text-current" /> : <ShieldIcon />}
+              {pending ? copy.actions.running : copy.actions.run}
+            </Button>
           ) : null}
           {canRerun ? (
             <Button
               type="button"
-              label={pending ? copy.actions.running : copy.actions.rerun}
-              icon="pi pi-refresh"
-              severity="secondary"
-              outlined
-              loading={pending}
-              disabled={disabled || pending}
               onClick={() => void handleRun()}
-            />
+              variant="outline"
+              disabled={disabled || pending}
+            >
+              {pending ? <Spinner className="size-4 text-current" /> : <RefreshCwIcon />}
+              {pending ? copy.actions.running : copy.actions.rerun}
+            </Button>
           ) : null}
         </div>
       ) : null}
 
       {inFlight && hasReport ? (
-        <p style={{ margin: 0, color: "#6b7280", fontSize: "0.8125rem" }}>
+        <p className="m-0 text-dim text-[0.8125rem]">
           {copy.loading}
         </p>
       ) : null}
