@@ -79,6 +79,7 @@ container is the transcript pane only (full-height sheet, safe-area insets).
 | `getInterviewStatus` | read | client + operator | no | Business interview progress + current question |
 | `proposeSaveInterviewAnswer` | proposal | client + operator | **no** → `persistInterviewDraft` | “Save this answer?” |
 | `proposeSubmitInterview` | proposal | client + operator | **no** → `submitInterview` | “Submit interview?” |
+| `proposeEnableOwnAvatar` | proposal | client + operator | **no** → `upsertVisualPreferences` (add `own_avatar`) | “Enable videos with your face?” — **never** starts HeyGen/avatar generation |
 
 Later: MCP-UI host (optional).
 

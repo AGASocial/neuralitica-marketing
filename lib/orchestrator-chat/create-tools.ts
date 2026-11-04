@@ -32,6 +32,8 @@ import {
   proposeConfirmPaidGenerationOutputSchema,
   proposeGrantPresenterConsentInputSchema,
   proposeGrantPresenterConsentOutputSchema,
+  proposeEnableOwnAvatarInputSchema,
+  proposeEnableOwnAvatarOutputSchema,
   proposeSaveInterviewAnswerInputSchema,
   proposeSaveInterviewAnswerOutputSchema,
   proposeSetPresenterVoiceInputSchema,
@@ -87,6 +89,13 @@ import {
   isInterviewTextStep,
 } from "@/lib/orchestrator-chat/interview-questions";
 import { getAvatarForClientId } from "@/lib/avatars/get-avatar-for-client";
+import {
+  FACELESS_STYLE_DEFAULT,
+  facelessStyleSchema,
+  visualModalitySchema,
+  type FacelessStyle,
+  type VisualModality,
+} from "@/lib/contracts/visual-preferences";
 import { hasActiveAvatarConsent } from "@/lib/visual-preferences/has-active-avatar-consent";
 import {
   createServerSupabaseClient,
@@ -1336,8 +1345,8 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
             : "Next: choose how your presenter should sound (male/female and language) to match your photo.";
         } else if (!onCameraEnabled) {
           nextHint = es
-            ? "Siguiente: en Preferencias activa “con tu cara”, o pídeme videos con presentador."
-            : "Next: enable on-camera style in Preferences, or ask me for presenter videos.";
+            ? "Siguiente: aprueba la tarjeta para activar videos con tu cara (solo Preferencias; no crea videos)."
+            : "Next: approve the card to enable on-camera videos (Preferences only; does not create videos).";
         } else {
           nextHint = es
             ? "Tu presentador está listo. Podemos crear videos con tu cara (con confirmación de costo)."
@@ -1403,6 +1412,93 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
         };
         assertProposalIsNonMutating(proposal);
         return proposeSetPresenterVoiceOutputSchema.parse({
+          ok: true,
+          proposal,
+        });
+      },
+    }),
+
+    proposeEnableOwnAvatar: tool({
+      description:
+        "Propose enabling on-camera (“with your face”) style via Preferencias upsertVisualPreferences. Requires prior photo consent. Does NOT save until Approve. NEVER starts avatar video jobs, talking-head generation, or any paid generation.",
+      inputSchema: proposeEnableOwnAvatarInputSchema,
+      execute: async (raw) => {
+        const parsed = proposeEnableOwnAvatarInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const consentActive = await hasActiveAvatarConsent(user.id);
+        if (!consentActive) {
+          return toolError({
+            ok: false,
+            error: "FORBIDDEN",
+            message:
+              locale === "es"
+                ? "Primero confirma el consentimiento de foto."
+                : "Confirm photo consent first.",
+          });
+        }
+        if (!isSupabaseConfigured()) {
+          return toolError({
+            ok: false,
+            error: "INTERNAL",
+            message: "Preferences unavailable.",
+          });
+        }
+        const supabase = createServerSupabaseClient();
+        const { data } = await supabase
+          .from("neuramark_visual_preferences")
+          .select("allowed_modes, faceless_style")
+          .eq("client_id", user.id)
+          .maybeSingle();
+
+        const existingModes: VisualModality[] = [];
+        if (Array.isArray(data?.allowed_modes)) {
+          for (const mode of data.allowed_modes) {
+            const m = visualModalitySchema.safeParse(mode);
+            if (m.success && !existingModes.includes(m.data)) {
+              existingModes.push(m.data);
+            }
+          }
+        }
+        if (existingModes.includes("own_avatar")) {
+          return toolError({
+            ok: false,
+            error: "VALIDATION_ERROR",
+            message:
+              locale === "es"
+                ? "Ya tienes activados los videos con tu cara."
+                : "On-camera videos are already enabled.",
+          });
+        }
+
+        const allowedModes: VisualModality[] = [
+          ...existingModes,
+          "own_avatar",
+        ];
+        let facelessStyle: FacelessStyle | null = null;
+        if (allowedModes.includes("faceless")) {
+          const styleParsed = facelessStyleSchema.safeParse(
+            data?.faceless_style,
+          );
+          facelessStyle = styleParsed.success
+            ? styleParsed.data
+            : { ...FACELESS_STYLE_DEFAULT };
+        }
+
+        const proposal = {
+          kind: "enable_own_avatar" as const,
+          requiresConfirmation: true as const,
+          mutates: false as const,
+          incursSpend: false as const,
+          estimatedCostCents: null,
+          summary: proposalSummary(locale, "enable_own_avatar"),
+          action: "upsertVisualPreferences" as const,
+          allowedModes,
+          facelessStyle,
+        };
+        assertProposalIsNonMutating(proposal);
+        return proposeEnableOwnAvatarOutputSchema.parse({
           ok: true,
           proposal,
         });

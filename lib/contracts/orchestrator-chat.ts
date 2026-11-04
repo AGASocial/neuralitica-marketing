@@ -6,6 +6,10 @@ import { z } from "zod";
 
 import { interviewStepKeySchema } from "@/lib/contracts/interview";
 import { trendWeekStartSchema } from "@/lib/contracts/trend";
+import {
+  facelessStyleSchema,
+  visualModalitySchema,
+} from "@/lib/contracts/visual-preferences";
 
 /**
  * Default orchestration model via AI Gateway.
@@ -29,6 +33,7 @@ export const ORCHESTRATOR_PROPOSAL_KINDS = [
   "set_presenter_voice",
   "save_interview_answer",
   "submit_interview",
+  "enable_own_avatar",
 ] as const;
 
 /** Owner-safe media preview path (same shape as approval packages). */
@@ -694,6 +699,34 @@ export const proposeSubmitInterviewOutputSchema = z
 
 export type ProposeSubmitInterviewOutput = z.infer<
   typeof proposeSubmitInterviewOutputSchema
+>;
+
+/**
+ * Enable on-camera (`own_avatar`) modality via Preferencias upsert only.
+ * Never starts HeyGen / avatar video generation.
+ */
+export const proposeEnableOwnAvatarInputSchema = z.object({}).strict();
+
+export type ProposeEnableOwnAvatarInput = z.infer<
+  typeof proposeEnableOwnAvatarInputSchema
+>;
+
+export const proposeEnableOwnAvatarOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    proposal: orchestratorProposalMetaSchema.extend({
+      kind: z.literal("enable_own_avatar"),
+      action: z.literal("upsertVisualPreferences"),
+      allowedModes: z.array(visualModalitySchema).min(1).max(3),
+      facelessStyle: facelessStyleSchema.nullable(),
+      incursSpend: z.literal(false),
+      estimatedCostCents: z.null(),
+    }),
+  })
+  .strict();
+
+export type ProposeEnableOwnAvatarOutput = z.infer<
+  typeof proposeEnableOwnAvatarOutputSchema
 >;
 
 export const orchestratorToolErrorSchema = z

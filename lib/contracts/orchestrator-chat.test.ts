@@ -232,6 +232,32 @@ describe("orchestrator-chat contracts", () => {
     });
   });
 
+  it("enable_own_avatar is non-mutating Preferencias proposal", async () => {
+    const { proposeEnableOwnAvatarOutputSchema: schema } = await import(
+      "./orchestrator-chat"
+    );
+    const parsed = schema.parse({
+      ok: true,
+      proposal: {
+        kind: "enable_own_avatar",
+        requiresConfirmation: true,
+        mutates: false,
+        incursSpend: false,
+        estimatedCostCents: null,
+        summary: "Enable on-camera videos in Preferences.",
+        action: "upsertVisualPreferences",
+        allowedModes: ["faceless", "own_avatar"],
+        facelessStyle: {
+          voice: "ai_voiceover",
+          onScreenText: "captions",
+          broll: "stock",
+        },
+      },
+    });
+    assertProposalIsNonMutating(parsed.proposal);
+    assert.equal(parsed.proposal.action, "upsertVisualPreferences");
+  });
+
   it("interview chat tools are non-mutating proposals + status shape", async () => {
     const {
       getInterviewStatusOutputSchema: statusSchema,

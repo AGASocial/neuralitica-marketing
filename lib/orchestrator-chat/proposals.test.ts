@@ -48,6 +48,7 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(source, /getInterviewStatus/);
     assert.match(source, /proposeSaveInterviewAnswer/);
     assert.match(source, /proposeSubmitInterview/);
+    assert.match(source, /proposeEnableOwnAvatar/);
     assert.doesNotMatch(
       source,
       /from\s+"@\/lib\/interview\/actions\/persist-interview-draft"/,
@@ -56,6 +57,11 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
       source,
       /from\s+"@\/lib\/interview\/actions\/submit-interview"/,
     );
+    assert.doesNotMatch(
+      source,
+      /from\s+"@\/lib\/visual-preferences\/upsert-visual-preferences"/,
+    );
+    assert.doesNotMatch(source, /createHeygenTalkingHeadVideoJob/);
     assert.doesNotMatch(source, /publishToInstagram|graph\.facebook|instagram\.com\/p\//i);
   });
 
@@ -79,6 +85,22 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(card, /upsertAvatar/);
     assert.match(card, /persistInterviewDraft/);
     assert.match(card, /submitInterview/);
+    assert.match(card, /upsertVisualPreferences/);
+    assert.doesNotMatch(card, /createHeygenTalkingHeadVideoJob/);
+    assert.doesNotMatch(card, /createBrollVideoJobs/);
+  });
+
+  it("enable_own_avatar proposal never triggers avatar video generation", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(join(here, "create-tools.ts"), "utf8");
+    const enableBlock = source.slice(
+      source.indexOf("proposeEnableOwnAvatar:"),
+      source.indexOf("getReadyVideoDownload:"),
+    );
+    assert.match(enableBlock, /action:\s*"upsertVisualPreferences"/);
+    assert.doesNotMatch(enableBlock, /createHeygenTalkingHeadVideoJob/);
+    assert.doesNotMatch(enableBlock, /createBrollVideoJobs/);
+    assert.doesNotMatch(enableBlock, /upsertAvatar\(/);
   });
 
   it("paid generation only runs from confirm action after Approve", () => {
