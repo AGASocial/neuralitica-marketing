@@ -20,6 +20,10 @@ import {
   proposeApprovePendingVideoOutputSchema,
   proposeApproveStrategyInputSchema,
   proposeApproveStrategyOutputSchema,
+  getGuidedProgressInputSchema,
+  getGuidedProgressOutputSchema,
+  getReadyVideoDownloadInputSchema,
+  getReadyVideoDownloadOutputSchema,
   proposeConfirmPaidGenerationInputSchema,
   proposeConfirmPaidGenerationOutputSchema,
   proposeGenerateScriptsInputSchema,
@@ -54,9 +58,55 @@ import { loadLatestStrategyRowWithApproval } from "@/lib/content-strategy/load-l
 import { toContentStrategyView } from "@/lib/content-strategy/to-strategy-view";
 import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved-strategy-for-week";
 import { buildReelScriptListForStrategy } from "@/lib/reel-scripts/list-reel-scripts-for-week";
+import { summarizeInterviewSessionRow } from "@/lib/interview/merge-answers";
+import {
+  createServerSupabaseClient,
+  isSupabaseConfigured,
+} from "@/lib/supabase/server";
 
 function toolError(error: OrchestratorToolError) {
   return orchestratorToolErrorSchema.parse(error);
+}
+
+function guidedHint(
+  locale: Locale,
+  key:
+    | "interview"
+    | "plan"
+    | "scripts"
+    | "videos"
+    | "approve"
+    | "ready",
+): string {
+  const es = locale === "es";
+  switch (key) {
+    case "interview":
+      return es
+        ? "Siguiente: completa la ficha de tu negocio (entrevista)."
+        : "Next: finish your business interview.";
+    case "plan":
+      return es
+        ? "Siguiente: armar o aprobar el plan de esta semana."
+        : "Next: create or approve this week’s plan.";
+    case "scripts":
+      return es
+        ? "Siguiente: escribir los textos de los videos."
+        : "Next: write the video texts.";
+    case "videos":
+      return es
+        ? "Siguiente: confirmar el costo y crear los videos (con tu cara o solo imágenes y texto)."
+        : "Next: confirm the cost and create the videos (with your face or images and text only).";
+    case "approve":
+      return es
+        ? "Siguiente: mira tus videos y apruébalos o pide cambios."
+        : "Next: watch your videos and approve or request changes.";
+    case "ready":
+      return es
+        ? "Listo: tus videos están preparados para descargar o publicar aparte (nunca desde este chat)."
+        : "Done: your videos are ready to download or publish separately (never from this chat).";
+    default:
+      return es ? "Dime cómo te ayudo." : "Tell me how I can help.";
+  }
 }
 
 export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
@@ -877,6 +927,194 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
         return proposeConfirmPaidGenerationOutputSchema.parse({
           ok: true,
           proposal,
+        });
+      },
+    }),
+
+    getGuidedProgress: tool({
+      description:
+        "Show the owner’s end-to-end progress from business interview → plan → write-ups → videos → approve → ready to download. Call when they ask where they are or how to continue. Never offers Instagram publish.",
+      inputSchema: getGuidedProgressInputSchema,
+      execute: async (raw) => {
+        const parsed = getGuidedProgressInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const weekStart = resolveOrchestratorWeekStart(undefined);
+
+        let interviewStatus: "not_started" | "in_progress" | "completed" =
+          "not_started";
+        if (isSupabaseConfigured()) {
+          const supabase = createServerSupabaseClient();
+          const { data } = await supabase
+            .from("neuramark_interview_sessions")
+            .select("current_step, answers, status")
+            .eq("client_id", user.id)
+            .maybeSingle();
+          const summary = summarizeInterviewSessionRow(data);
+          if (summary == null) {
+            interviewStatus = "not_started";
+          } else if (summary.status === "completed") {
+            interviewStatus = "completed";
+          } else {
+            interviewStatus = "in_progress";
+          }
+        }
+
+        const [pending, approvedList] = await Promise.all([
+          listPendingApprovalsForClientUser({ user }),
+          listApprovedApprovalsForClientUser({ user }),
+        ]);
+        const pendingApprovalsCount = pending.ok ? pending.items.length : 0;
+        const readyVideosCount = approvedList.ok
+          ? approvedList.items.length
+          : 0;
+
+        let strategyStatus: "none" | "draft" | "approved" | "unknown" = "none";
+        let scriptsReadyCount = 0;
+        let scriptsPendingCount = 0;
+        try {
+          const row = await loadLatestStrategyRowWithApproval({
+            clientId: user.id,
+            weekStart,
+          });
+          if (!row) {
+            strategyStatus = "none";
+          } else {
+            strategyStatus = row.status === "approved" ? "approved" : "draft";
+            if (row.status === "approved") {
+              const { items } = await buildReelScriptListForStrategy({
+                clientId: user.id,
+                weekStart,
+                strategyId: row.id,
+                version: row.version,
+                brief: row.brief,
+              });
+              scriptsReadyCount = items.filter(
+                (i) => i.status === "generated",
+              ).length;
+              scriptsPendingCount = items.filter(
+                (i) => i.status === "pending",
+              ).length;
+            }
+          }
+        } catch {
+          strategyStatus = "unknown";
+        }
+
+        const interviewDone = interviewStatus === "completed";
+        const planDone = strategyStatus === "approved";
+        const scriptsDone = planDone && scriptsPendingCount === 0 && scriptsReadyCount > 0;
+        const videosDone = pendingApprovalsCount + readyVideosCount > 0;
+        const approveDone = pendingApprovalsCount === 0 && readyVideosCount > 0;
+        const readyDone = readyVideosCount > 0 && pendingApprovalsCount === 0;
+
+        let nextStepKey:
+          | "interview"
+          | "plan"
+          | "scripts"
+          | "videos"
+          | "approve"
+          | "ready" = "interview";
+        if (!interviewDone) {
+          nextStepKey = "interview";
+        } else if (!planDone) {
+          nextStepKey = "plan";
+        } else if (!scriptsDone) {
+          nextStepKey = "scripts";
+        } else if (!videosDone) {
+          nextStepKey = "videos";
+        } else if (!approveDone) {
+          nextStepKey = "approve";
+        } else {
+          nextStepKey = "ready";
+        }
+
+        const stepStatus = (
+          key: typeof nextStepKey,
+          done: boolean,
+        ): "todo" | "current" | "done" => {
+          if (done) return "done";
+          if (key === nextStepKey) return "current";
+          return "todo";
+        };
+
+        return getGuidedProgressOutputSchema.parse({
+          ok: true,
+          interviewStatus,
+          interviewHref: "/interview",
+          weekStart,
+          strategyStatus,
+          scriptsReadyCount,
+          scriptsPendingCount,
+          pendingApprovalsCount,
+          readyVideosCount,
+          steps: [
+            {
+              key: "interview",
+              status: stepStatus("interview", interviewDone),
+            },
+            { key: "plan", status: stepStatus("plan", planDone) },
+            { key: "scripts", status: stepStatus("scripts", scriptsDone) },
+            { key: "videos", status: stepStatus("videos", videosDone) },
+            { key: "approve", status: stepStatus("approve", approveDone) },
+            { key: "ready", status: stepStatus("ready", readyDone) },
+          ],
+          nextStepKey,
+          nextStepHint: guidedHint(locale, nextStepKey),
+        });
+      },
+    }),
+
+    getReadyVideoDownload: tool({
+      description:
+        "Show a ready video the owner can download (not Instagram publish). Use when they ask to download or get a finished video.",
+      inputSchema: getReadyVideoDownloadInputSchema,
+      execute: async (raw) => {
+        const parsed = getReadyVideoDownloadInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const approved = await listApprovedApprovalsForClientUser({ user });
+        if (!approved.ok || approved.items.length === 0) {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "No finished videos ready to download yet.",
+          });
+        }
+        const item =
+          parsed.data.approvalId !== undefined
+            ? approved.items.find((i) => i.approvalId === parsed.data.approvalId)
+            : approved.items[0];
+        if (!item) {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "That finished video was not found.",
+          });
+        }
+        const pkg = await getApprovalPackageForClient({
+          rawInput: { approvalId: item.approvalId },
+          user,
+        });
+        if (!pkg.ok) {
+          return toolError({
+            ok: false,
+            error: "NOT_FOUND",
+            message: "Could not load that finished video.",
+          });
+        }
+        return getReadyVideoDownloadOutputSchema.parse({
+          ok: true,
+          approvalId: pkg.package.approvalId,
+          videoPreviewUrl: pkg.package.video.previewUrl,
+          downloadUrl: pkg.package.video.previewUrl,
+          ...(pkg.package.cover?.previewUrl
+            ? { coverPreviewUrl: pkg.package.cover.previewUrl }
+            : {}),
+          captionBody: pkg.package.caption.body.slice(0, 2000),
+          readyToPublishHref: "/ready-to-publish",
         });
       },
     }),

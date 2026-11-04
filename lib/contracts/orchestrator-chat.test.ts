@@ -196,6 +196,42 @@ describe("orchestrator-chat contracts", () => {
     assert.equal(parsed.proposal.paidMediaRequiresCostConfirm, true);
   });
 
+  it("guided progress and ready download schemas parse", async () => {
+    const {
+      getGuidedProgressOutputSchema: progressSchema,
+      getReadyVideoDownloadOutputSchema: downloadSchema,
+    } = await import("./orchestrator-chat");
+    const assetId = "55555555-5555-4555-8555-555555555555";
+    progressSchema.parse({
+      ok: true,
+      interviewStatus: "completed",
+      interviewHref: "/interview",
+      weekStart: WEEK,
+      strategyStatus: "approved",
+      scriptsReadyCount: 3,
+      scriptsPendingCount: 0,
+      pendingApprovalsCount: 1,
+      readyVideosCount: 0,
+      steps: [
+        { key: "interview", status: "done" },
+        { key: "plan", status: "done" },
+        { key: "scripts", status: "done" },
+        { key: "videos", status: "done" },
+        { key: "approve", status: "current" },
+        { key: "ready", status: "todo" },
+      ],
+      nextStepKey: "approve",
+      nextStepHint: "Next: watch your videos.",
+    });
+    downloadSchema.parse({
+      ok: true,
+      approvalId: "66666666-6666-4666-8666-666666666666",
+      videoPreviewUrl: `/api/media/assets/${assetId}`,
+      downloadUrl: `/api/media/assets/${assetId}`,
+      readyToPublishHref: "/ready-to-publish",
+    });
+  });
+
   it("confirm_paid_generation requires a concrete estimate", async () => {
     const { proposeConfirmPaidGenerationOutputSchema: schema } = await import(
       "./orchestrator-chat"

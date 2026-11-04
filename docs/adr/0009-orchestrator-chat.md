@@ -76,6 +76,10 @@ Later: photo/presenter setup via chat, MCP-UI host, thread persistence.
 (plain price from existing cost-policy previews). Approve re-validates the live
 estimate before calling create jobs.
 
+**Guided flow (KAN-84):** `getGuidedProgress` + progress card; style in plain
+words before paid confirm; `getReadyVideoDownload` for download only — chat
+never publishes to Instagram.
+
 ### Phases
 
 1. **P1:** Owner IA + Advanced grouping; chat sheet; API; read + proposal tools;

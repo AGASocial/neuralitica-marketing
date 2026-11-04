@@ -17,6 +17,8 @@ const KNOWN_TOOL_NAMES = [
   "proposeRequestVideoChanges",
   "proposeRegenerateScript",
   "proposeConfirmPaidGeneration",
+  "getGuidedProgress",
+  "getReadyVideoDownload",
 ] as const;
 
 const TOOL_NAME_PATTERN = new RegExp(

@@ -125,6 +125,28 @@
       "playHint": "Press play to watch. Then approve or tell me what to change.",
       "pendingScript": "This write-up is not ready yet."
     },
+    "progress": {
+      "title": "Your path to finished videos",
+      "nextLabel": "Next",
+      "openInterview": "Continue my business interview",
+      "openReady": "Open my finished videos",
+      "stepInterview": "Business interview",
+      "stepPlan": "This week’s plan",
+      "stepScripts": "Video write-ups",
+      "stepVideos": "Create videos",
+      "stepApprove": "Approve videos",
+      "stepReady": "Download / ready",
+      "statusTodo": "waiting",
+      "statusCurrent": "now",
+      "statusDone": "done"
+    },
+    "download": {
+      "title": "Download your video",
+      "hint": "Watch it, then download. Publishing to Instagram stays outside this chat.",
+      "download": "Download",
+      "openReady": "My videos page",
+      "noIg": "This chat never posts to Instagram."
+    },
     "errors": {
       "internal": "Something went wrong. Please try again later."
     }

@@ -111,6 +111,28 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
       changeSomething: t.orchestratorChat.proposal.changeSomething,
       pendingScript: t.orchestratorChat.preview.pendingScript,
     },
+    progress: {
+      title: t.orchestratorChat.progress.title,
+      nextLabel: t.orchestratorChat.progress.nextLabel,
+      openInterview: t.orchestratorChat.progress.openInterview,
+      openReady: t.orchestratorChat.progress.openReady,
+      stepInterview: t.orchestratorChat.progress.stepInterview,
+      stepPlan: t.orchestratorChat.progress.stepPlan,
+      stepScripts: t.orchestratorChat.progress.stepScripts,
+      stepVideos: t.orchestratorChat.progress.stepVideos,
+      stepApprove: t.orchestratorChat.progress.stepApprove,
+      stepReady: t.orchestratorChat.progress.stepReady,
+      statusTodo: t.orchestratorChat.progress.statusTodo,
+      statusCurrent: t.orchestratorChat.progress.statusCurrent,
+      statusDone: t.orchestratorChat.progress.statusDone,
+    },
+    download: {
+      title: t.orchestratorChat.download.title,
+      hint: t.orchestratorChat.download.hint,
+      download: t.orchestratorChat.download.download,
+      openReady: t.orchestratorChat.download.openReady,
+      noIg: t.orchestratorChat.download.noIg,
+    },
   };
 
   return (
