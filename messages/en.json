@@ -554,8 +554,12 @@
       "backDashboard": "Back to dashboard",
       "reviewCta": "Review",
       "createdAt": "Received {date}",
-      "disclosureChip": "Disclosure",
-      "overridesChip": "{count} QA notes"
+      "cardSummary": "Review this video before publishing",
+      "untitled": "Video",
+      "disclosureChip": "AI notice",
+      "disclosureTooltip": "This video indicates it uses AI",
+      "overridesChip": "{count} QA notes",
+      "thumbnailAlt": "Video preview"
     },
     "detail": {
       "title": "Review package",
@@ -565,7 +569,9 @@
       "caption": "Caption",
       "selectedCta": "Call to action",
       "hashtags": "Hashtags",
-      "disclosureTitle": "Disclosure",
+      "disclosureTitle": "AI notice",
+      "disclosureTooltip": "This video indicates it uses AI",
+      "untitled": "Video",
       "overridesTitle": "QA notes",
       "overridesEmpty": "No QA notes were recorded for this package.",
       "overrideReason": "{reason}",

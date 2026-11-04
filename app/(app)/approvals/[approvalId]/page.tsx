@@ -71,11 +71,13 @@ export default async function ApprovalDetailPage({
           checkLabels={t.scripts.qa.checks}
           copy={{
             title: t.approvals.detail.title,
+            untitled: t.approvals.detail.untitled,
             backList: t.approvals.detail.backList,
             caption: t.approvals.detail.caption,
             selectedCta: t.approvals.detail.selectedCta,
             hashtags: t.approvals.detail.hashtags,
             disclosureTitle: t.approvals.detail.disclosureTitle,
+            disclosureTooltip: t.approvals.detail.disclosureTooltip,
             overridesTitle: t.approvals.detail.overridesTitle,
             overridesEmpty: t.approvals.detail.overridesEmpty,
             overrideReason: t.approvals.detail.overrideReason,

@@ -40,11 +40,13 @@ import {
 
 export type ApprovalPackageCopy = {
   title: string;
+  untitled: string;
   backList: string;
   caption: string;
   selectedCta: string;
   hashtags: string;
   disclosureTitle: string;
+  disclosureTooltip: string;
   overridesTitle: string;
   overridesEmpty: string;
   overrideReason: string;
@@ -397,14 +399,22 @@ export function ApprovalPackageView({
         >
           ← {copy.backList}
         </Link>
-        <div
-          className="flex flex-wrap items-center gap-[0.6rem] mt-3"
-        >
-          <h1 className="font-display text-fog m-0 text-[1.75rem]">{copy.title}</h1>
+        <p className="mt-3 mx-0 mb-1 text-dim text-sm">{copy.title}</p>
+        <div className="flex flex-wrap items-center gap-[0.6rem]">
+          <h1 className="font-display text-fog m-0 text-[1.75rem]">
+            {pkg.reelTitle?.trim() || copy.untitled}
+          </h1>
           <StatusBadge
             value={copy.status[pkg.status]}
             severity={statusSeverity(pkg.status)}
           />
+          {pkg.disclosure.required ? (
+            <StatusBadge
+              value={copy.disclosureTitle}
+              severity="info"
+              title={copy.disclosureTooltip}
+            />
+          ) : null}
         </div>
         {pkg.decidedAt ? (
           <p className="mt-2 mx-0 mb-0 text-dim text-sm">

@@ -9,7 +9,14 @@ import {
   SendIcon,
   XIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 
 import { useOrchestratorChat } from "@/components/orchestrator-chat/OrchestratorChatContext";
 import { useStickToBottom } from "@/components/orchestrator-chat/use-stick-to-bottom";
@@ -48,6 +55,10 @@ import type { Locale } from "@/lib/i18n/locales";
 import { createOrchestratorConversation } from "@/lib/orchestrator-chat/actions/create-conversation";
 import { loadLatestOrchestratorConversation } from "@/lib/orchestrator-chat/actions/load-latest-conversation";
 import { prepareAvatarReferenceUpload } from "@/lib/media/prepare-avatar-reference-upload";
+import {
+  autosizeComposerTextarea,
+  shouldSendOnEnterKey,
+} from "@/lib/orchestrator-chat/composer-keydown";
 import { uploadAvatarReferenceAsset } from "@/lib/media/upload-avatar-reference-asset";
 import { sanitizeOrchestratorVisibleText } from "@/lib/orchestrator-chat/sanitize-visible-text";
 
@@ -425,15 +436,33 @@ function OrchestratorChatSession({
     inputRef.current?.focus();
   }
 
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
+  async function sendCurrentInput() {
     const text = input.trim();
     if (!text || busy) {
       return;
     }
     setInput("");
+    requestAnimationFrame(() => autosizeComposerTextarea(inputRef.current));
     stickOnSend();
     await sendMessage({ text });
+  }
+
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault();
+    await sendCurrentInput();
+  }
+
+  function onComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (
+      !shouldSendOnEnterKey(event, {
+        busy,
+        hasText: input.trim().length > 0,
+      })
+    ) {
+      return;
+    }
+    event.preventDefault();
+    void sendCurrentInput();
   }
 
   async function onPickFile(file: File | undefined) {
@@ -837,17 +866,21 @@ function OrchestratorChatSession({
                 ref={inputRef}
                 id="orchestrator-chat-input"
                 value={input}
-                onChange={(event) => setInput(event.target.value)}
+                onChange={(event) => {
+                  setInput(event.target.value);
+                  autosizeComposerTextarea(event.currentTarget);
+                }}
+                onKeyDown={onComposerKeyDown}
                 placeholder={copy.placeholder}
-                rows={2}
+                rows={1}
                 disabled={busy}
-                className="min-h-10 flex-1 resize-none rounded-md border border-edge bg-panel px-3 py-2 text-sm text-fog placeholder:text-dim focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-butter/40"
+                className="max-h-40 min-h-10 flex-1 resize-none overflow-y-auto rounded-md border border-edge bg-panel px-3 py-2 text-sm text-fog placeholder:text-dim focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-butter/40"
               />
               <Button
                 type="submit"
                 disabled={busy || input.trim().length === 0}
                 aria-label={copy.send}
-                className="bg-butter text-deep hover:bg-butter/90"
+                className="shrink-0 bg-butter text-deep hover:bg-butter/90"
               >
                 <SendIcon className="size-4" />
               </Button>

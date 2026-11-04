@@ -58,9 +58,13 @@ export default async function ApprovalsPage() {
         backDashboard: t.approvals.list.backDashboard,
         reviewCta: t.approvals.list.reviewCta,
         createdAt: t.approvals.list.createdAt,
+        cardSummary: t.approvals.list.cardSummary,
+        untitled: t.approvals.list.untitled,
         disclosureChip: t.approvals.list.disclosureChip,
+        disclosureTooltip: t.approvals.list.disclosureTooltip,
         overridesChip: t.approvals.list.overridesChip,
         pendingStatus: t.approvals.detail.status.pending_client,
+        thumbnailAlt: t.approvals.list.thumbnailAlt,
       }}
     />
   );
