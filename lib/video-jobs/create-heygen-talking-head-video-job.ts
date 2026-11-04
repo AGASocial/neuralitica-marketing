@@ -414,7 +414,11 @@ export async function createHeygenTalkingHeadVideoJob(
     let portraitAssetIdForInsert: string | null = null;
     let resolvedInput: Parameters<typeof adapter.createJob>[0];
 
-    if (isOwnAvatar || usesGatewayAvatar) {
+    // Portrait-driven (HeyGen v3 photo avatar) whenever an owned portrait is
+    // supplied — generic_avatar too; stock avatar id only when no portrait.
+    const usesPortrait = Boolean(input.portraitAssetId);
+
+    if (isOwnAvatar || usesGatewayAvatar || usesPortrait) {
       const portraitAssetId = input.portraitAssetId ?? null;
       if (!portraitAssetId) {
         return videoJobMutationError("VALIDATION_ERROR", {
