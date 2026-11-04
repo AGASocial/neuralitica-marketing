@@ -7,11 +7,15 @@ const KNOWN_TOOL_NAMES = [
   "listCampaignStatus",
   "getWeeklyStrategy",
   "getScriptsStatus",
+  "getVideoPreview",
+  "getScriptPreview",
   "proposeGenerateStrategy",
   "proposeApproveStrategy",
   "proposeApprovePendingVideo",
   "proposeGenerateScripts",
   "proposeGenerateVideos",
+  "proposeRequestVideoChanges",
+  "proposeRegenerateScript",
 ] as const;
 
 const TOOL_NAME_PATTERN = new RegExp(

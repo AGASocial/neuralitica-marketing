@@ -7,7 +7,9 @@ export function proposalSummary(
     | "approve_strategy"
     | "approve_pending_video"
     | "generate_scripts"
-    | "generate_videos",
+    | "generate_videos"
+    | "request_video_changes"
+    | "regenerate_script",
   params?: { slotCount?: number },
 ): string {
   const es = locale === "es";
@@ -34,6 +36,14 @@ export function proposalSummary(
       return es
         ? "Preparar la generación de tus videos. Primero aseguramos los textos; el gasto de video se confirma en una tarjeta aparte antes de cobrar."
         : "Prepare generating your videos. We’ll secure the write-ups first; any video spend is confirmed on a separate card before charging.";
+    case "request_video_changes":
+      return es
+        ? "Pedir cambios en este video con lo que me contaste. No se aplica hasta que apruebes."
+        : "Request changes on this video with what you told me. Nothing applies until you approve.";
+    case "regenerate_script":
+      return es
+        ? "Reescribir el texto de este video. Cargo pequeño de escritura con IA; no corre nada hasta que apruebes."
+        : "Rewrite this video’s text. Small AI writing charge; nothing runs until you approve.";
     default:
       return es ? "Confirma por favor." : "Please confirm.";
   }

@@ -12,6 +12,11 @@ import {
   type ProposalCardCopy,
 } from "@/components/orchestrator-chat/ProposalActionCard";
 import {
+  ScriptPreviewCard,
+  VideoPreviewCard,
+  type PreviewCardCopy,
+} from "@/components/orchestrator-chat/PreviewCards";
+import {
   CampaignStatusCard,
   ScriptsStatusCard,
   WeeklyPlanCard,
@@ -40,6 +45,7 @@ export type OrchestratorChatCopy = {
   attachedNote: string;
   proposal: ProposalCardCopy;
   status: StatusCardCopy;
+  preview: PreviewCardCopy;
 };
 
 type OrchestratorChatPanelProps = {
@@ -84,6 +90,21 @@ function asProposal(output: unknown): KnownProposal | null {
     p.kind === "generate_videos" &&
     typeof p.weekStart === "string" &&
     p.paidMediaRequiresCostConfirm === true
+  ) {
+    return p as KnownProposal;
+  }
+  if (
+    p.kind === "request_video_changes" &&
+    typeof p.approvalId === "string" &&
+    typeof p.changeSummary === "string" &&
+    Array.isArray(p.tags)
+  ) {
+    return p as KnownProposal;
+  }
+  if (
+    p.kind === "regenerate_script" &&
+    typeof p.weekStart === "string" &&
+    typeof p.slotIndex === "number"
   ) {
     return p as KnownProposal;
   }
@@ -292,11 +313,65 @@ export function OrchestratorChatPanel({
                   }
 
                   if (
+                    part.type === "tool-getVideoPreview" &&
+                    part.state === "output-available"
+                  ) {
+                    const output = part.output as {
+                      ok?: boolean;
+                      videoPreviewUrl?: string;
+                      coverPreviewUrl?: string;
+                      captionBody?: string;
+                    };
+                    if (output?.ok && output.videoPreviewUrl) {
+                      return (
+                        <VideoPreviewCard
+                          key={`${message.id}-vp-${index}`}
+                          videoPreviewUrl={output.videoPreviewUrl}
+                          coverPreviewUrl={output.coverPreviewUrl}
+                          captionBody={output.captionBody}
+                          copy={copy.preview}
+                          onChangeSomething={focusChangeSomething}
+                        />
+                      );
+                    }
+                  }
+
+                  if (
+                    part.type === "tool-getScriptPreview" &&
+                    part.state === "output-available"
+                  ) {
+                    const output = part.output as {
+                      ok?: boolean;
+                      tema?: string;
+                      status?: "pending" | "generated";
+                      hook?: string;
+                      body?: string;
+                      cta?: string;
+                    };
+                    if (output?.ok && output.tema && output.status) {
+                      return (
+                        <ScriptPreviewCard
+                          key={`${message.id}-sp-${index}`}
+                          tema={output.tema}
+                          status={output.status}
+                          hook={output.hook}
+                          body={output.body}
+                          cta={output.cta}
+                          copy={copy.preview}
+                          onChangeSomething={focusChangeSomething}
+                        />
+                      );
+                    }
+                  }
+
+                  if (
                     (part.type === "tool-proposeGenerateStrategy" ||
                       part.type === "tool-proposeApproveStrategy" ||
                       part.type === "tool-proposeApprovePendingVideo" ||
                       part.type === "tool-proposeGenerateScripts" ||
-                      part.type === "tool-proposeGenerateVideos") &&
+                      part.type === "tool-proposeGenerateVideos" ||
+                      part.type === "tool-proposeRequestVideoChanges" ||
+                      part.type === "tool-proposeRegenerateScript") &&
                     part.state === "output-available"
                   ) {
                     const proposal = asProposal(part.output);
@@ -306,6 +381,7 @@ export function OrchestratorChatPanel({
                           key={`${message.id}-p-${index}`}
                           proposal={proposal}
                           copy={copy.proposal}
+                          previewCopy={copy.preview}
                           onChangeSomething={focusChangeSomething}
                         />
                       );

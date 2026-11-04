@@ -98,6 +98,17 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
       scriptsWaiting: t.orchestratorChat.status.scriptsWaiting,
       emptyScripts: t.orchestratorChat.status.emptyScripts,
     },
+    preview: {
+      videoTitle: t.orchestratorChat.preview.videoTitle,
+      scriptTitle: t.orchestratorChat.preview.scriptTitle,
+      captionLabel: t.orchestratorChat.preview.captionLabel,
+      hookLabel: t.orchestratorChat.preview.hookLabel,
+      bodyLabel: t.orchestratorChat.preview.bodyLabel,
+      ctaLabel: t.orchestratorChat.preview.ctaLabel,
+      playHint: t.orchestratorChat.preview.playHint,
+      changeSomething: t.orchestratorChat.proposal.changeSomething,
+      pendingScript: t.orchestratorChat.preview.pendingScript,
+    },
   };
 
   return (

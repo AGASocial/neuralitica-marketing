@@ -38,6 +38,10 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(source, /requiresConfirmation:\s*true\s*as\s*const/);
     assert.match(source, /proposeGenerateScripts/);
     assert.match(source, /proposeGenerateVideos/);
+    assert.match(source, /proposeRequestVideoChanges/);
+    assert.match(source, /proposeRegenerateScript/);
+    assert.match(source, /getVideoPreview/);
+    assert.match(source, /getScriptPreview/);
   });
 
   it("ProposalActionCard is the mutation boundary for Approve", () => {
@@ -53,6 +57,8 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(card, /approveContentStrategy/);
     assert.match(card, /decideApproval/);
     assert.match(card, /generateReelScripts/);
+    assert.match(card, /regenerateReelScriptSlot/);
+    assert.match(card, /request_changes/);
   });
 
   it("chat route disables reasoning stream to the client", () => {
