@@ -175,13 +175,17 @@ export function mapProposalToAgentCard(
       });
 
     case "enable_own_avatar":
+    case "enable_auto_pilot":
     case "grant_presenter_consent":
     case "set_presenter_voice":
       return parseAgentCard({
         type: "own_avatar_activation",
         title: labels.title,
         summary: proposal.summary,
-        props: {},
+        props:
+          proposal.kind === "enable_auto_pilot"
+            ? { detail: proposal.summary.slice(0, 500) }
+            : {},
         actions,
       });
 

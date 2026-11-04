@@ -16,6 +16,7 @@ export function proposalSummary(
     | "save_interview_answer"
     | "submit_interview"
     | "enable_own_avatar"
+    | "enable_auto_pilot"
     | "confirm_tts_generation",
   params?: { slotCount?: number; amountCents?: number; stepLabel?: string },
 ): string {
@@ -83,6 +84,10 @@ export function proposalSummary(
       return es
         ? "Activar videos con tu cara en Preferencias. Solo guarda el permiso de estilo; no crea ningún video hasta que apruebes un costo aparte."
         : "Enable on-camera videos in Preferences. This only saves the style setting; it does not create any video until you approve a separate cost card.";
+    case "enable_auto_pilot":
+      return es
+        ? "Poner tu negocio en Piloto automático: el agente puede auto-aprobar borradores dentro de tus topes (F0 solo registra la decisión; no publica en Instagram ni gasta solo). No cambia nada hasta que apruebes."
+        : "Put your business on Autopilot: the agent may auto-approve drafts within your caps (F0 only logs the decision; it does not publish to Instagram or spend on its own). Nothing changes until you approve.";
     case "confirm_tts_generation":
       return es
         ? `Crear la voz de este video cuesta unos ${amount}. Es aparte del costo de video con imágenes o presentador. No se cobra nada hasta que apruebes.`

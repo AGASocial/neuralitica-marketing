@@ -81,6 +81,7 @@ export default async function DashboardPage({
     nextAction: buildOwnerHomeNextAction("interview"),
     showNextActionCard: true,
     results: { insightsAvailable: false },
+    notifications: [],
   };
 
   if (user) {
@@ -135,6 +136,7 @@ export default async function DashboardPage({
       pendingApprovals={data.pendingApprovals}
       selectedPendingIds={data.selectedPendingIds}
       pendingOverflowCount={data.pendingOverflowCount}
+      notifications={data.notifications}
       timeline={data.timeline}
       nextSlots={data.nextSlots}
       nextAction={data.nextAction}

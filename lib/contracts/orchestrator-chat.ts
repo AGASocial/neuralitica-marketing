@@ -35,6 +35,7 @@ export const ORCHESTRATOR_PROPOSAL_KINDS = [
   "submit_interview",
   "enable_own_avatar",
   "confirm_tts_generation",
+  "enable_auto_pilot",
 ] as const;
 
 /** Owner-safe media preview path (same shape as approval packages). */
@@ -807,6 +808,31 @@ export const proposeEnableOwnAvatarOutputSchema = z.union([
 
 export type ProposeEnableOwnAvatarOutput = z.infer<
   typeof proposeEnableOwnAvatarOutputSchema
+>;
+
+/** KAN-108: propose Piloto automático — settings upsert only after Approve. */
+export const proposeEnableAutoPilotInputSchema = z.object({}).strict();
+
+export type ProposeEnableAutoPilotInput = z.infer<
+  typeof proposeEnableAutoPilotInputSchema
+>;
+
+const enableAutoPilotProposalSchema = orchestratorProposalMetaSchema.extend({
+  kind: z.literal("enable_auto_pilot"),
+  action: z.literal("upsertAutomationSettings"),
+  incursSpend: z.literal(false),
+  estimatedCostCents: z.null(),
+});
+
+export const proposeEnableAutoPilotOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    proposal: enableAutoPilotProposalSchema,
+  })
+  .strict();
+
+export type ProposeEnableAutoPilotOutput = z.infer<
+  typeof proposeEnableAutoPilotOutputSchema
 >;
 
 /** Eligible write-up option for the TTS cost card video picker. */

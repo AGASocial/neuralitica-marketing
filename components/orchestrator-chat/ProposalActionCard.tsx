@@ -24,6 +24,7 @@ import { persistInterviewDraft } from "@/lib/interview/actions/persist-interview
 import { submitInterview } from "@/lib/interview/actions/submit-interview";
 import type { FacelessStyle, VisualModality } from "@/lib/contracts/visual-preferences";
 import { grantAvatarConsent } from "@/lib/visual-preferences/grant-avatar-consent";
+import { upsertAutomationSettings } from "@/lib/automation/actions/upsert-automation-settings";
 import { upsertVisualPreferences } from "@/lib/visual-preferences/upsert-visual-preferences";
 import { buildInterviewAnswerFragment } from "@/lib/orchestrator-chat/interview-questions";
 import type { PreviewCardCopy } from "@/components/orchestrator-chat/PreviewCards";
@@ -190,6 +191,13 @@ type EnableOwnAvatarProposal = ProposalBase & {
   estimatedCostCents: null;
 };
 
+type EnableAutoPilotProposal = ProposalBase & {
+  kind: "enable_auto_pilot";
+  action: "upsertAutomationSettings";
+  incursSpend: false;
+  estimatedCostCents: null;
+};
+
 type ConfirmTtsGenerationProposal = ProposalBase & {
   kind: "confirm_tts_generation";
   weekStart: string;
@@ -220,7 +228,8 @@ export type KnownProposal =
   | SetPresenterVoiceProposal
   | SaveInterviewAnswerProposal
   | SubmitInterviewProposal
-  | EnableOwnAvatarProposal;
+  | EnableOwnAvatarProposal
+  | EnableAutoPilotProposal;
 
 type ProposalActionCardProps = {
   proposal: KnownProposal;
@@ -357,6 +366,11 @@ export function ProposalActionCard({
         allowedModes: proposal.allowedModes,
         facelessStyle: proposal.facelessStyle,
         genericAvatarId: null,
+      });
+      ok = result.ok === true;
+    } else if (proposal.kind === "enable_auto_pilot") {
+      const result = await upsertAutomationSettings({
+        preset: "auto_pilot",
       });
       ok = result.ok === true;
     } else {

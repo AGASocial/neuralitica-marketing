@@ -21,6 +21,7 @@ import { mediaPreviewUrl } from "@/lib/approvals/caption-preview";
 import type { ApprovalListItemDto } from "@/lib/contracts/approval";
 import type {
   HoyNextSlot,
+  HoyNotificationDto,
   HoyTimelineEntry,
 } from "@/lib/contracts/hoy-feed";
 import type { OwnerHomeNextAction } from "@/lib/contracts/owner-home-dashboard";
@@ -83,6 +84,7 @@ type HoyFeedViewProps = {
   nextActionCopy: NextActionCopy;
   setupCompletion?: SetupCompletionDto;
   setupCompletionCopy?: SetupCompletionCopy;
+  notifications?: HoyNotificationDto[];
 };
 
 function pendingTitle(item: ApprovalListItemDto, fallback: string): string {
@@ -188,6 +190,7 @@ export function HoyFeedView({
   nextActionCopy,
   setupCompletion,
   setupCompletionCopy,
+  notifications = [],
 }: HoyFeedViewProps) {
   const selectedSet = new Set(selectedPendingIds);
   const visiblePending = pendingApprovals.filter((p) =>
@@ -248,6 +251,19 @@ export function HoyFeedView({
               ))}
           </CardContent>
         </Card>
+      ) : null}
+
+      {notifications.length > 0 ? (
+        <ul className="flex list-none flex-col gap-2 p-0">
+          {notifications.map((note) => (
+            <li key={note.id}>
+              <StatusAlert
+                severity="info"
+                text={`${note.title} — ${note.body}`}
+              />
+            </li>
+          ))}
+        </ul>
       ) : null}
 
       <section className="space-y-3" aria-labelledby="hoy-needs-ok">

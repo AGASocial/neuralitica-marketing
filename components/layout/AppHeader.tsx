@@ -39,6 +39,7 @@ export async function AppHeader({
       items: [
         { href: "/profile", label: t.header.nav.profile },
         { href: "/settings/preferences", label: t.header.nav.preferences },
+        { href: "/settings/automation", label: t.header.nav.automation },
       ],
     },
   ];

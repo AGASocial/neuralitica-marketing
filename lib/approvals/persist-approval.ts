@@ -267,7 +267,22 @@ export async function insertPendingApproval(params: {
     return null;
   }
 
-  return mapApprovalRow(data as Record<string, unknown>);
+  const mapped = mapApprovalRow(data as Record<string, unknown>);
+  if (mapped) {
+    // KAN-108 F0: notify or dry-run auto-approve — never publish / never spend here.
+    void import("@/lib/automation/evaluate-pending")
+      .then(({ evaluatePendingApprovalAutomation }) =>
+        evaluatePendingApprovalAutomation({
+          clientId: mapped.clientId,
+          approvalId: mapped.id,
+        }),
+      )
+      .catch((err) => {
+        console.error("[approvals] automation evaluate failed");
+        void err;
+      });
+  }
+  return mapped;
 }
 
 /**
