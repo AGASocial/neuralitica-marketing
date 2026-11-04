@@ -1,7 +1,8 @@
 import { AuthShell } from "@/components/auth/AuthShell";
 import { SetNewPasswordForm } from "@/components/auth/SetNewPasswordForm";
 import { isRecoverySessionReady } from "@/lib/auth/recovery-session";
-import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getTranslations } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export default async function SetNewPasswordPage({
   searchParams,
 }: SetNewPasswordPageProps) {
   const params = await searchParams;
-  const locale = resolveLocale(params.locale);
+  const locale = await resolveRequestLocale();
   const t = getTranslations(locale);
   const recoveryReady = await readRecoveryReady(params.error);
 

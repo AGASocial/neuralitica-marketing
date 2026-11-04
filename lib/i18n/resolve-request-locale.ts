@@ -1,14 +1,17 @@
 import "server-only";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 import { LOCALE_HEADER } from "@/lib/auth/public-routes";
 import { resolveLocale } from "@/lib/i18n/get-translations";
+import {
+  LOCALE_COOKIE_NAME,
+  parseLocaleCookieValue,
+} from "@/lib/i18n/locale-cookie";
 import { isLocale, type Locale } from "@/lib/i18n/locales";
 
 /**
- * Prefer `?locale=` (middleware → x-neuramark-locale) over the user's saved
- * preferredLocale so chat chrome matches the page when the query overrides.
+ * Query (`?locale=` → middleware header) > cookie > preferredLocale > default es.
  */
 export async function resolveRequestLocale(
   preferredLocale?: string | null,
@@ -18,6 +21,15 @@ export async function resolveRequestLocale(
   if (fromQuery && isLocale(fromQuery)) {
     return fromQuery;
   }
+
+  const cookieStore = await cookies();
+  const fromCookie = parseLocaleCookieValue(
+    cookieStore.get(LOCALE_COOKIE_NAME)?.value,
+  );
+  if (fromCookie) {
+    return fromCookie;
+  }
+
   return resolveLocale(preferredLocale);
 }
 

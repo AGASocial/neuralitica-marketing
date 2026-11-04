@@ -11,7 +11,7 @@ export type TranslationKey = keyof typeof en;
 
 export function resolveLocale(
   preferred?: string | null,
-  fallback: Locale = "en",
+  fallback: Locale = "es",
 ): Locale {
   if (preferred && isLocale(preferred)) {
     return preferred;

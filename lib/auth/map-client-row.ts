@@ -14,7 +14,11 @@ function mapRole(value: unknown): UserRole {
 }
 
 function mapLocale(value: unknown): "en" | "es" {
-  return value === "es" ? "es" : "en";
+  if (value === "en") {
+    return "en";
+  }
+  // Explicit es, null, or unknown → Spanish default
+  return "es";
 }
 
 /**

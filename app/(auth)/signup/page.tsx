@@ -1,14 +1,15 @@
 import { AuthShell } from "@/components/auth/AuthShell";
 import { SignupForm } from "@/components/auth/SignupForm";
-import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getTranslations } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 
 type SignupPageProps = {
   searchParams: Promise<{ locale?: string }>;
 };
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
-  const params = await searchParams;
-  const locale = resolveLocale(params.locale);
+  await searchParams;
+  const locale = await resolveRequestLocale();
   const t = getTranslations(locale);
 
   return (

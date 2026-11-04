@@ -12,6 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { StatusAlert } from "@/components/ui/status-alert";
 import { logIn } from "@/lib/auth/actions/log-in";
 import type { AuthErrorEnvelope, LogInInput } from "@/lib/contracts/auth";
+import { setLocalePreference } from "@/lib/i18n/actions/set-locale-preference";
 import type { Locale } from "@/lib/i18n/locales";
 
 type LoginCopy = {
@@ -63,11 +64,6 @@ type FormFields = {
 type FieldErrors = Partial<Record<keyof FormFields, string>>;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function withLocale(path: string, locale: Locale): string {
-  const separator = path.includes("?") ? "&" : "?";
-  return `${path}${separator}locale=${encodeURIComponent(locale)}`;
-}
 
 function resolveLoginErrorMessage(
   error: AuthErrorEnvelope["error"],
@@ -181,7 +177,9 @@ export function LoginForm({
       const result = await logIn(payload);
 
       if (result.ok) {
-        router.push(withLocale(result.redirectTo, locale));
+        // Persist locale cookie; never append ?locale= on redirect.
+        await setLocalePreference({ locale });
+        router.push(result.redirectTo);
         return;
       }
 

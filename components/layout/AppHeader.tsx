@@ -1,11 +1,11 @@
 import Link from "next/link";
 
-import { LogoutButton } from "@/components/auth/LogoutButton";
 import {
   AppNavMenu,
   type AppNavGroup,
   type AppNavLink,
 } from "@/components/layout/AppNavMenu";
+import { UserMenu } from "@/components/layout/UserMenu";
 import {
   OrchestratorChatFab,
   OrchestratorChatPanel,
@@ -173,31 +173,25 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
               openLabel={t.orchestratorChat.openLabel}
               shortcutHint={t.orchestratorChat.openShortcutHint}
             />
-            <span
-              className="hidden max-w-[18rem] truncate lg:inline"
-              title={user.email}
-            >
-              {t.header.signedInAs}{" "}
-              <strong className="font-semibold text-fog">
-                {user.displayName}
-              </strong>
-            </span>
-            <div
-              className="flex size-9 items-center justify-center rounded-full border border-edge bg-panel text-xs font-semibold text-butter"
-              aria-hidden
-            >
-              {user.displayName.slice(0, 1).toUpperCase()}
-            </div>
-            <LogoutButton
-              appearance="header"
+            <UserMenu
+              locale={locale}
+              displayName={user.displayName}
+              email={user.email}
               copy={{
-                label: t.header.logout,
-                pendingLabel: t.header.logoutPending,
-                confirmHeader: t.header.confirmHeader,
-                confirmMessage: t.header.confirmMessage,
-                confirmAccept: t.header.confirmAccept,
-                confirmReject: t.header.confirmReject,
-                stayError: t.auth.errors.forbiddenFields,
+                menuAriaLabel: t.header.userMenu.menuAriaLabel,
+                languageLabel: t.header.userMenu.languageLabel,
+                languageEs: t.header.userMenu.languageEs,
+                languageEn: t.header.userMenu.languageEn,
+                settings: t.header.userMenu.settings,
+                logout: {
+                  label: t.header.logout,
+                  pendingLabel: t.header.logoutPending,
+                  confirmHeader: t.header.confirmHeader,
+                  confirmMessage: t.header.confirmMessage,
+                  confirmAccept: t.header.confirmAccept,
+                  confirmReject: t.header.confirmReject,
+                  stayError: t.auth.errors.forbiddenFields,
+                },
               }}
             />
           </div>

@@ -28,9 +28,11 @@ import {
 } from "@/lib/approvals/errors";
 import { findForbiddenApprovalKeys } from "@/lib/approvals/find-forbidden-approval-keys";
 import {
+  insertPendingApproval,
   listApprovedApprovalsForClient,
   listBrandCompletedAssemblyIdsForClient,
   listPendingApprovalsForClient,
+  loadApprovalByAssembledReelScoped,
   loadApprovalByIdScoped,
 } from "@/lib/approvals/persist-approval";
 import { zodInterviewErrorToFieldErrors } from "@/lib/interview/zod-field-errors";
@@ -58,18 +60,31 @@ export async function listPendingApprovalsForClientUser(params: {
 }): Promise<ListPendingApprovalsResult> {
   const clientId = params.user.id;
 
-  // Optional batch-ensure: failures skip that reel — do not fail whole list
+  // Batch-ensure: strict package when QA/caption ready; otherwise soft-insert
+  // pending_client so Mis videos still shows brand-completed assemblies.
   const candidateIds = await listBrandCompletedAssemblyIdsForClient({
     clientId,
   });
   for (const assembledReelId of candidateIds) {
+    let ensured = false;
     try {
-      await ensureApprovalPackageForAssembledReelForClient({
+      const result = await ensureApprovalPackageForAssembledReelForClient({
         rawInput: { assembledReelId },
         user: params.user,
       });
+      ensured = result.ok === true;
     } catch {
-      // skip reel
+      ensured = false;
+    }
+    if (ensured) {
+      continue;
+    }
+    const existing = await loadApprovalByAssembledReelScoped({
+      assembledReelId,
+      clientId,
+    });
+    if (!existing) {
+      await insertPendingApproval({ clientId, assembledReelId });
     }
   }
 

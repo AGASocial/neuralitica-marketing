@@ -24,7 +24,7 @@ const DEV_USER: CurrentUser = {
   id: DEV_USER_ID,
   email: "gaveho@gmail.com",
   displayName: "Gabriel Vega",
-  preferredLocale: "en",
+  preferredLocale: "es",
   role: "operator",
   active: true,
 };

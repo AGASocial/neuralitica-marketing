@@ -14,6 +14,8 @@ describe("DashboardView last-updated + next-action a11y", () => {
     );
     assert.match(view, /formatLastUpdatedClient/);
     assert.match(view, /lastUpdatedAt/);
+    assert.match(view, /suppressHydrationWarning/);
+    assert.match(view, /useEffect/);
     assert.match(view, /id="home-next-action"/);
     assert.doesNotMatch(view, /sr-only[\s\S]*sectionTitle/);
     assert.match(page, /lastUpdatedAt=\{data\.lastUpdatedAt\}/);

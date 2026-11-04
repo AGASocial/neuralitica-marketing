@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 
 import { OpenChatButton } from "@/components/dashboard/OpenChatButton";
 import { Button } from "@/components/ui/button";
@@ -162,10 +162,13 @@ export function DashboardView({
   setupCompletion,
   setupCompletionCopy,
 }: DashboardViewProps) {
-  const lastUpdatedLabel = useMemo(
-    () => formatLastUpdatedClient(lastUpdatedTemplate, lastUpdatedAt, locale),
-    [lastUpdatedAt, lastUpdatedTemplate, locale],
-  );
+  // Format after mount to avoid SSR/client timezone hydration mismatch (#418).
+  const [lastUpdatedLabel, setLastUpdatedLabel] = useState("");
+  useEffect(() => {
+    setLastUpdatedLabel(
+      formatLastUpdatedClient(lastUpdatedTemplate, lastUpdatedAt, locale),
+    );
+  }, [lastUpdatedAt, lastUpdatedTemplate, locale]);
 
   const countItems = [
     { label: thisWeekCopy.scheduled, value: weekCounts.scheduled },
@@ -179,7 +182,9 @@ export function DashboardView({
       <div>
         <h1 className="font-display text-4xl text-fog sm:text-5xl">{title}</h1>
         <p className="mt-2 max-w-3xl text-dim">{subtitle}</p>
-        <p className="mt-2 text-xs text-dim">{lastUpdatedLabel}</p>
+        <p className="mt-2 text-xs text-dim" suppressHydrationWarning>
+          {lastUpdatedLabel}
+        </p>
       </div>
 
       {setupBanner ? (

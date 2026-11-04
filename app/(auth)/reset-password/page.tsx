@@ -1,6 +1,7 @@
 import { AuthShell } from "@/components/auth/AuthShell";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
-import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getTranslations } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 
 type ResetPasswordPageProps = {
   searchParams: Promise<{ locale?: string }>;
@@ -9,8 +10,8 @@ type ResetPasswordPageProps = {
 export default async function ResetPasswordPage({
   searchParams,
 }: ResetPasswordPageProps) {
-  const params = await searchParams;
-  const locale = resolveLocale(params.locale);
+  await searchParams;
+  const locale = await resolveRequestLocale();
   const t = getTranslations(locale);
 
   return (
