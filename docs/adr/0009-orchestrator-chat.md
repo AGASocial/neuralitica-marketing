@@ -46,7 +46,7 @@ MCP-UI (`@mcp-ui/*`) is optional later — same proposal/confirm semantics.
 
 | Audience | Top-level |
 |----------|-----------|
-| **Owner (Cliente)** | **Home** (chat-first), **My campaign** (`/approvals`), **My videos** (`/ready-to-publish`), **My business** ▾ (`/profile`, `/settings/preferences`) |
+| **Owner (Cliente)** | **Home** (chat-first), **My campaign** (`/approvals`), **My videos** (`/ready-to-publish`), **My business** ▾ (`/profile`, `/settings/preferences`) — copy via `messages/` + `resolveRequestLocale` (honors `?locale=` and `preferredLocale`) |
 | **Operator** | Same owner items + **Advanced** ▾ (strategy, scripts, calendar, playbook, trends, cost policy, cycle) |
 
 Old flat nav (5 client + 6 operator links) is replaced by this grouping. **All

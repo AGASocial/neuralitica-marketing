@@ -3,7 +3,8 @@ import { ApprovalsErrorState } from "@/components/approvals/ApprovalsLoading";
 import { getApprovalPackage } from "@/lib/approvals/actions/get-approval-package";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import type { ApprovalErrorCode } from "@/lib/contracts/approval";
-import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getTranslations } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +54,7 @@ export default async function ApprovalDetailPage({
 }: ApprovalDetailPageProps) {
   const { approvalId } = await params;
   const user = await getCurrentUser();
-  const locale = resolveLocale(user?.preferredLocale);
+  const locale = await resolveRequestLocale(user?.preferredLocale);
   const t = getTranslations(locale);
 
   let loadErrorCode: ApprovalErrorCode | undefined;

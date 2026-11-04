@@ -20,23 +20,23 @@
     },
     "preferencesCard": {
       "title": "Preferencias de producción visual",
-      "body": "Elige qué modalidades de producción aceptas para tus Reels.",
+      "body": "Elige cómo quieres que se vean tus videos (con tu cara, solo imágenes y texto, u otras opciones).",
       "cta": "Abrir preferencias"
     },
     "approvalsCard": {
       "title": "Aprobaciones pendientes",
-      "body": "Reels en espera de tu revisión antes de publicar.",
-      "cta": "Revisar reels"
+      "body": "Videos en espera de tu revisión antes de publicar.",
+      "cta": "Revisar videos"
     },
     "readyToPublishCard": {
       "title": "Listo para publicar",
-      "body": "Reels aprobados con descarga de respaldo para publicar manualmente en Instagram.",
-      "cta": "Ver listo para publicar"
+      "body": "Videos aprobados con descarga de respaldo para publicar manualmente en Instagram.",
+      "cta": "Ver listos para publicar"
     },
     "productionCard": {
       "title": "Estado de producción",
-      "body": "Sigue guiones, trabajos de video y montaje de esta semana.",
-      "cta": "Ver pipeline"
+      "body": "Sigue los textos, videos y montaje de esta semana.",
+      "cta": "Ver estado"
     },
     "setupBanner": {
       "title": "Base de datos no conectada",
@@ -719,7 +719,8 @@
       "subtitle": "Define el género y el idioma del presentador para que guiones y TTS sean coherentes. Opcionalmente vincula una voz clonada de ElevenLabs.",
       "genderLabel": "Género",
       "languageLabel": "Idioma",
-      "voiceIdLabel": "ID de voz ElevenLabs personalizada (opcional)",
+      "voiceIdLabel": "ID de voz personalizada (opcional)",
+      "voiceIdPlaceholder": "Pega un ID de voz personalizado si lo tienes",
       "voiceIdHint": "Déjalo vacío para usar la voz masculina/femenina predeterminada del idioma elegido.",
       "genderMale": "Masculino",
       "genderFemale": "Femenino",

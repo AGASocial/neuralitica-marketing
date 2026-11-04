@@ -2,7 +2,8 @@ import { ApprovalsListView } from "@/components/approvals/ApprovalsListView";
 import { listPendingApprovals } from "@/lib/approvals/actions/list-pending-approvals";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import type { ApprovalListItemDto } from "@/lib/contracts/approval";
-import { getTranslations, resolveLocale } from "@/lib/i18n/get-translations";
+import { getTranslations } from "@/lib/i18n/get-translations";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ function isNextNavigationError(error: unknown): boolean {
  */
 export default async function ApprovalsPage() {
   const user = await getCurrentUser();
-  const locale = resolveLocale(user?.preferredLocale);
+  const locale = await resolveRequestLocale(user?.preferredLocale);
   const t = getTranslations(locale);
 
   let items: ApprovalListItemDto[] = [];
