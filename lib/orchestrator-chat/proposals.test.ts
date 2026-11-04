@@ -159,8 +159,34 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
       join(here, "../../components/layout/AppShell.tsx"),
       "utf8",
     );
+    const header = readFileSync(
+      join(here, "../../components/layout/AppHeader.tsx"),
+      "utf8",
+    );
     assert.doesNotMatch(panel, /OrchestratorChatFab/);
+    assert.doesNotMatch(shell, /OrchestratorChatFab/);
+    assert.doesNotMatch(header, /OrchestratorChatFab/);
     assert.match(shell, /OwnerComposer/);
+    assert.match(header, /conversationLabel|\/conversation/);
+  });
+
+  it("Change prefill hides card UUID from owner-visible text", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const ctx = readFileSync(
+      join(
+        here,
+        "../../components/orchestrator-chat/OrchestratorChatContext.tsx",
+      ),
+      "utf8",
+    );
+    const route = readFileSync(
+      join(here, "../../app/api/chat/route.ts"),
+      "utf8",
+    );
+    assert.match(ctx, /formatChangePrefill/);
+    assert.doesNotMatch(ctx, /\(card:\$\{/);
+    assert.match(route, /extractLatestCardAnchorId/);
+    assert.match(route, /CARD ANCHOR/);
   });
 
   it("paid generation only runs from confirm action after Approve", () => {

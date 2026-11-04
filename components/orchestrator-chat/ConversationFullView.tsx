@@ -105,8 +105,8 @@ export function ConversationFullView({
   onboardingCopy,
 }: ConversationFullViewProps) {
   const {
-    pendingSendText,
-    consumePendingSendText,
+    pendingSend,
+    consumePendingSend,
     setConversationHasUserMessages,
   } = useOrchestratorChat();
   const [hydrated, setHydrated] = useState(false);
@@ -189,8 +189,8 @@ export function ConversationFullView({
       pageTitle={pageTitle}
       canvasTitle={canvasTitle}
       onNew={startNewConversation}
-      pendingSendText={pendingSendText}
-      consumePendingSendText={consumePendingSendText}
+      pendingSend={pendingSend}
+      consumePendingSend={consumePendingSend}
       setConversationHasUserMessages={setConversationHasUserMessages}
       onboardingMode={onboardingMode}
       setupCompletion={setupCompletion}
@@ -207,8 +207,8 @@ function ConversationBody({
   pageTitle,
   canvasTitle,
   onNew,
-  pendingSendText,
-  consumePendingSendText,
+  pendingSend,
+  consumePendingSend,
   setConversationHasUserMessages,
   onboardingMode,
   setupCompletion,
@@ -221,8 +221,11 @@ function ConversationBody({
   pageTitle: string;
   canvasTitle: string;
   onNew: () => void;
-  pendingSendText: string | null;
-  consumePendingSendText: () => string | null;
+  pendingSend: { text: string; metadata?: { cardId: string } } | null;
+  consumePendingSend: () => {
+    text: string;
+    metadata?: { cardId: string };
+  } | null;
   setConversationHasUserMessages: (v: boolean) => void;
   onboardingMode: boolean;
   setupCompletion?: SetupCompletionDto;
@@ -259,23 +262,21 @@ function ConversationBody({
     useStickToBottom({ contentKey });
 
   useEffect(() => {
-    if (!pendingSendText || busy) return;
-    const text = consumePendingSendText();
-    if (!text) return;
+    if (!pendingSend || busy) return;
+    const next = consumePendingSend();
+    if (!next?.text) return;
     if (!firstMessageTracked.current && !messages.some((m) => m.role === "user")) {
       firstMessageTracked.current = true;
       trackUxEvent("chat_first_message", { source: "typed" });
     }
     stickOnSend();
-    void sendMessage({ text });
-  }, [
-    pendingSendText,
-    busy,
-    consumePendingSendText,
-    sendMessage,
-    stickOnSend,
-    messages,
-  ]);
+    void sendMessage({
+      text: next.text,
+      ...(next.metadata?.cardId
+        ? { metadata: { cardId: next.metadata.cardId } }
+        : {}),
+    });
+  }, [pendingSend, busy, consumePendingSend, sendMessage, stickOnSend, messages]);
 
   function focusChangeSomething() {
     trackUxEvent(onboardingMode ? "onboarding_step" : "hoy_action", {

@@ -7,10 +7,11 @@ import { fileURLToPath } from "node:url";
 describe("SuggestedPromptChips + panel hide-on-user-messages", () => {
   const here = dirname(fileURLToPath(import.meta.url));
 
-  it("uses ≥44px tap targets, wrap, and horizontal scroll", () => {
+  it("uses ≥44px tap targets and a single horizontal scroll row", () => {
     const src = readFileSync(join(here, "SuggestedPromptChips.tsx"), "utf8");
     assert.match(src, /min-h-11/);
-    assert.match(src, /flex-wrap/);
+    assert.match(src, /flex-nowrap/);
+    assert.doesNotMatch(src, /flex-wrap/);
     assert.match(src, /overflow-x-auto/);
   });
 

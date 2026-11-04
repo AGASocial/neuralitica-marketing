@@ -278,8 +278,8 @@ function OrchestratorChatSession({
   suggestedChips: SuggestedPromptChip[];
 }) {
   const {
-    pendingSendText,
-    consumePendingSendText,
+    pendingSend,
+    consumePendingSend,
     setConversationHasUserMessages,
   } = useOrchestratorChat();
   const [input, setInput] = useState("");
@@ -334,22 +334,21 @@ function OrchestratorChatSession({
   } = useStickToBottom({ contentKey });
 
   useEffect(() => {
-    if (!pendingSendText || busy) {
+    if (!pendingSend || busy) {
       return;
     }
-    const text = consumePendingSendText();
-    if (!text) {
+    const next = consumePendingSend();
+    if (!next?.text) {
       return;
     }
     stickOnSend();
-    void sendMessage({ text });
-  }, [
-    pendingSendText,
-    busy,
-    consumePendingSendText,
-    sendMessage,
-    stickOnSend,
-  ]);
+    void sendMessage({
+      text: next.text,
+      ...(next.metadata?.cardId
+        ? { metadata: { cardId: next.metadata.cardId } }
+        : {}),
+    });
+  }, [pendingSend, busy, consumePendingSend, sendMessage, stickOnSend]);
 
   function focusChangeSomething() {
     inputRef.current?.focus();

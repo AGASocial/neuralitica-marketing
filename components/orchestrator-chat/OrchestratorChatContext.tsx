@@ -12,10 +12,19 @@ import {
   type RefObject,
 } from "react";
 
+import {
+  formatChangePrefill,
+  type ChangePrefill,
+} from "@/lib/orchestrator-chat/format-change-prefill";
+import type { Locale } from "@/lib/i18n/locales";
+
 export type ChatAnchorContext = {
   cardId: string;
   title: string;
+  locale: Locale;
 };
+
+export type PendingComposerSend = ChangePrefill;
 
 type OrchestratorChatContextValue = {
   open: boolean;
@@ -24,12 +33,15 @@ type OrchestratorChatContextValue = {
   /** Focus the layout composer (Cmd/Ctrl+J). */
   focusComposer: () => void;
   registerComposerInput: (ref: RefObject<HTMLTextAreaElement | null>) => void;
-  /** Text queued for the open chat session to send. */
+  /** Queued send for the open chat session (visible text + optional card metadata). */
+  pendingSend: PendingComposerSend | null;
+  /** Visible text of the pending send (effect trigger / legacy). */
   pendingSendText: string | null;
+  consumePendingSend: () => PendingComposerSend | null;
   consumePendingSendText: () => string | null;
   /** Queue text and open the conversation panel. */
   sendFromComposer: (text: string) => void;
-  /** Open panel with Change… prefill for a card. */
+  /** Open panel with Change… prefill for a card (UUID stays in metadata). */
   openChangeForCard: (anchor: ChatAnchorContext) => void;
   /** True once the hydrated session has reported a user message. */
   conversationHasUserMessages: boolean;
@@ -41,8 +53,10 @@ const OrchestratorChatContext =
 
 export function OrchestratorChatProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [pendingSendText, setPendingSendText] = useState<string | null>(null);
-  const pendingSendRef = useRef<string | null>(null);
+  const [pendingSend, setPendingSend] = useState<PendingComposerSend | null>(
+    null,
+  );
+  const pendingSendRef = useRef<PendingComposerSend | null>(null);
   const [conversationHasUserMessages, setConversationHasUserMessages] =
     useState(false);
   const composerRef = useRef<RefObject<HTMLTextAreaElement | null> | null>(
@@ -69,30 +83,32 @@ export function OrchestratorChatProvider({ children }: { children: ReactNode }) 
     }
   }, []);
 
-  const consumePendingSendText = useCallback(() => {
-    const text = pendingSendRef.current;
+  const consumePendingSend = useCallback(() => {
+    const value = pendingSendRef.current;
     pendingSendRef.current = null;
-    setPendingSendText(null);
-    return text;
+    setPendingSend(null);
+    return value;
   }, []);
+
+  const consumePendingSendText = useCallback(() => {
+    return consumePendingSend()?.text ?? null;
+  }, [consumePendingSend]);
 
   const sendFromComposer = useCallback((text: string) => {
     const trimmed = text.trim();
     if (!trimmed) {
       return;
     }
-    pendingSendRef.current = trimmed;
-    setPendingSendText(trimmed);
+    const next: PendingComposerSend = { text: trimmed };
+    pendingSendRef.current = next;
+    setPendingSend(next);
     setOpen(true);
   }, []);
 
   const openChangeForCard = useCallback((anchor: ChatAnchorContext) => {
-    const prompt =
-      anchor.title.trim().length > 0
-        ? `Cambiar: ${anchor.title} (card:${anchor.cardId})`
-        : `Cambiar (card:${anchor.cardId})`;
-    pendingSendRef.current = prompt;
-    setPendingSendText(prompt);
+    const prefill = formatChangePrefill(anchor);
+    pendingSendRef.current = prefill;
+    setPendingSend(prefill);
     setOpen(true);
   }, []);
 
@@ -113,8 +129,6 @@ export function OrchestratorChatProvider({ children }: { children: ReactNode }) 
         tag === "textarea" ||
         target?.isContentEditable
       ) {
-        // Still allow focusing layout composer when already in a non-layout field
-        // only if the target is NOT the layout composer itself — skip then.
         if (target === composerRef.current?.current) {
           return;
         }
@@ -126,6 +140,8 @@ export function OrchestratorChatProvider({ children }: { children: ReactNode }) 
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [focusComposer]);
 
+  const pendingSendText = pendingSend?.text ?? null;
+
   const value = useMemo(
     () => ({
       open,
@@ -133,7 +149,9 @@ export function OrchestratorChatProvider({ children }: { children: ReactNode }) 
       toggle,
       focusComposer,
       registerComposerInput,
+      pendingSend,
       pendingSendText,
+      consumePendingSend,
       consumePendingSendText,
       sendFromComposer,
       openChangeForCard,
@@ -145,7 +163,9 @@ export function OrchestratorChatProvider({ children }: { children: ReactNode }) 
       toggle,
       focusComposer,
       registerComposerInput,
+      pendingSend,
       pendingSendText,
+      consumePendingSend,
       consumePendingSendText,
       sendFromComposer,
       openChangeForCard,
