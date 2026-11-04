@@ -43,11 +43,15 @@ Voice/TTS spend SHALL use a distinct `confirm_tts_generation` card (not the vide
 - **THEN** the assistant MUST surface the TTS confirmation card rather than answering with price text alone
 
 ### Requirement: Mis videos hub shows production, pending OK, and ready
-The owner `/ready-to-publish` (“Mis videos”) page SHALL list three sections: videos still in production (progress), videos waiting for the owner’s OK (inline playable preview plus Approve / request-changes actions), and approved videos ready to publish (download). Pending brand-completed assemblies MUST be visible after package ensure — not only `status=approved` rows.
+The owner `/ready-to-publish` (“Mis videos”) page SHALL list three sections: in production, waiting for the owner’s OK, and ready to publish (download). Brand-completed assemblies without an approved/rejected decision MUST appear under waiting-for-OK. Approving a package MUST still enforce the QA gate on `decideApproval`.
 
 #### Scenario: Pending assembled reel visible
 - **WHEN** the client has a brand-completed assembled reel without an approved decision
 - **THEN** Mis videos shows it under waiting-for-OK with an inline video preview
+
+#### Scenario: Pending assembled reel visible without QA
+- **WHEN** the client has a brand-completed assembled reel (`status=completed`, `branding_status=completed`, output present) with no approval decision and no QA report
+- **THEN** Mis videos soft-inserts `pending_client` if needed and shows an inline `<video>` preview via the authenticated media route
 
 #### Scenario: In-production jobs visible
 - **WHEN** the client has queued or processing video or assembly jobs for a script
