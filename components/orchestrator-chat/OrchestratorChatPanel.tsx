@@ -49,6 +49,10 @@ import {
   WeeklyPlanCard,
   type StatusCardCopy,
 } from "@/components/orchestrator-chat/StatusCards";
+import {
+  SuggestedPromptChips,
+  type SuggestedPromptChipsCopy,
+} from "@/components/orchestrator-chat/SuggestedPromptChips";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { Locale } from "@/lib/i18n/locales";
@@ -59,6 +63,8 @@ import {
   autosizeComposerTextarea,
   shouldSendOnEnterKey,
 } from "@/lib/orchestrator-chat/composer-keydown";
+import { conversationHasUserMessages } from "@/lib/orchestrator-chat/select-suggested-prompt-chips";
+import type { SuggestedPromptChip } from "@/lib/orchestrator-chat/select-suggested-prompt-chips";
 import { uploadAvatarReferenceAsset } from "@/lib/media/upload-avatar-reference-asset";
 import { sanitizeOrchestratorVisibleText } from "@/lib/orchestrator-chat/sanitize-visible-text";
 
@@ -79,6 +85,7 @@ export type OrchestratorChatCopy = {
   newMessages: string;
   newConversation: string;
   loadingConversation: string;
+  suggestedPrompts: SuggestedPromptChipsCopy;
   proposal: ProposalCardCopy;
   status: StatusCardCopy;
   preview: PreviewCardCopy;
@@ -90,6 +97,7 @@ export type OrchestratorChatCopy = {
 type OrchestratorChatPanelProps = {
   copy: OrchestratorChatCopy;
   locale: Locale;
+  suggestedChips: SuggestedPromptChip[];
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -252,6 +260,7 @@ function newConversationId(): string {
 export function OrchestratorChatPanel({
   copy,
   locale,
+  suggestedChips,
 }: OrchestratorChatPanelProps) {
   const { open, setOpen } = useOrchestratorChat();
   const [hydrated, setHydrated] = useState(false);
@@ -369,6 +378,7 @@ export function OrchestratorChatPanel({
             initialMessages={seedMessages}
             copy={copy}
             locale={locale}
+            suggestedChips={suggestedChips}
           />
         )}
       </SheetContent>
@@ -381,11 +391,13 @@ function OrchestratorChatSession({
   initialMessages,
   copy,
   locale,
+  suggestedChips,
 }: {
   conversationId: string;
   initialMessages: UIMessage[];
   copy: OrchestratorChatCopy;
   locale: Locale;
+  suggestedChips: SuggestedPromptChip[];
 }) {
   const [input, setInput] = useState("");
   const [attachPending, setAttachPending] = useState(false);
@@ -408,6 +420,8 @@ function OrchestratorChatSession({
     transport,
   });
   const busy = status === "submitted" || status === "streaming" || attachPending;
+  const hasUserMessages = conversationHasUserMessages(messages);
+  const showSuggested = !hasUserMessages && suggestedChips.length > 0;
 
   const contentKey = useMemo(() => {
     const last = messages[messages.length - 1];
@@ -510,6 +524,17 @@ function OrchestratorChatSession({
             {messages.length === 0 ? (
               <p className="text-sm text-dim">{copy.empty}</p>
             ) : null}
+            {showSuggested ? (
+              <SuggestedPromptChips
+                chips={suggestedChips}
+                copy={copy.suggestedPrompts}
+                disabled={busy}
+                onSelect={(text) => {
+                  stickOnSend();
+                  void sendMessage({ text });
+                }}
+              />
+            ) : null}
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -546,6 +571,33 @@ function OrchestratorChatSession({
                         {visible}
                       </p>
                     );
+                  }
+
+                  if (
+                    part.type === "tool-suggestNextActions" &&
+                    part.state === "output-available"
+                  ) {
+                    const output = part.output as {
+                      ok?: boolean;
+                      actions?: Array<{ id: string; text: string }>;
+                    };
+                    if (output?.ok && Array.isArray(output.actions) && output.actions.length > 0) {
+                      return (
+                        <SuggestedPromptChips
+                          key={`${message.id}-sna-${index}`}
+                          chips={output.actions.map((action) => ({
+                            id: action.id as SuggestedPromptChip["id"],
+                            text: action.text,
+                          }))}
+                          copy={copy.suggestedPrompts}
+                          disabled={busy}
+                          onSelect={(text) => {
+                            stickOnSend();
+                            void sendMessage({ text });
+                          }}
+                        />
+                      );
+                    }
                   }
 
                   if (part.type === "tool-listCampaignStatus" && part.state === "output-available") {

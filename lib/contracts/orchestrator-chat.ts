@@ -506,6 +506,36 @@ export const getSetupStatusOutputSchema = z
 
 export type GetSetupStatusOutput = z.infer<typeof getSetupStatusOutputSchema>;
 
+export const suggestNextActionsInputSchema = z.object({}).strict();
+
+export type SuggestNextActionsInput = z.infer<
+  typeof suggestNextActionsInputSchema
+>;
+
+export const suggestNextActionItemSchema = z
+  .object({
+    id: z.enum([
+      "finishSetup",
+      "showPendingApprovals",
+      "makeWeeklyPlan",
+      "howIsCampaign",
+      "writeScripts",
+    ]),
+    text: z.string().min(1).max(200),
+  })
+  .strict();
+
+export const suggestNextActionsOutputSchema = z
+  .object({
+    ok: z.literal(true),
+    actions: z.array(suggestNextActionItemSchema).max(5),
+  })
+  .strict();
+
+export type SuggestNextActionsOutput = z.infer<
+  typeof suggestNextActionsOutputSchema
+>;
+
 export const getReadyVideoDownloadInputSchema = z
   .object({
     approvalId: z.string().uuid().optional(),

@@ -216,6 +216,20 @@ describe("orchestrator-chat contracts", () => {
     });
   });
 
+  it("suggestNextActions output schema parses", async () => {
+    const { suggestNextActionsOutputSchema: nextSchema } = await import(
+      "./orchestrator-chat"
+    );
+    nextSchema.parse({
+      ok: true,
+      actions: [
+        { id: "finishSetup", text: "Termina de configurar mi negocio" },
+        { id: "showPendingApprovals", text: "Muéstrame lo que espera mi OK" },
+        { id: "howIsCampaign", text: "¿Cómo va mi campaña?" },
+      ],
+    });
+  });
+
   it("guided progress and ready download schemas parse", async () => {
     const {
       getGuidedProgressOutputSchema: progressSchema,

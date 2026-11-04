@@ -13,14 +13,16 @@ import {
 } from "@/components/orchestrator-chat/OrchestratorChatPanel";
 import type { CurrentUser } from "@/lib/auth/get-current-user";
 import { getTranslations } from "@/lib/i18n/get-translations";
+import { loadSuggestedPromptChips } from "@/lib/orchestrator-chat/load-suggested-prompt-chips";
 
 type AppHeaderProps = {
   locale: "en" | "es";
   user: CurrentUser;
 };
 
-export function AppHeader({ locale, user }: AppHeaderProps) {
+export async function AppHeader({ locale, user }: AppHeaderProps) {
   const t = getTranslations(locale);
+  const suggestedChips = await loadSuggestedPromptChips({ user, locale });
 
   const primary: AppNavLink[] = [
     { href: "/dashboard", label: t.header.nav.home },
@@ -75,6 +77,9 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
     newMessages: t.orchestratorChat.newMessages,
     newConversation: t.orchestratorChat.newConversation,
     loadingConversation: t.orchestratorChat.loadingConversation,
+    suggestedPrompts: {
+      listAriaLabel: t.orchestratorChat.suggestedPrompts.listAriaLabel,
+    },
     proposal: {
       title: t.orchestratorChat.proposal.title,
       approve: t.orchestratorChat.proposal.approve,
@@ -205,7 +210,11 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
           linkClassName="text-xs"
         />
       </header>
-      <OrchestratorChatPanel copy={chatCopy} locale={locale} />
+      <OrchestratorChatPanel
+        copy={chatCopy}
+        locale={locale}
+        suggestedChips={suggestedChips}
+      />
       <OrchestratorChatFab openLabel={t.orchestratorChat.openLabel} />
     </>
   );
