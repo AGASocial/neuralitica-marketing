@@ -18,6 +18,7 @@ describe("dashboard owner locale copy (KAN-84.16 / KAN-98)", () => {
       "Conecta Instagram para ver resultados",
     );
     assert.equal(es.dashboard.atajos.title, "Atajos");
+    assert.equal(es.dashboard.setupCompletion.doIt, "Hacerlo");
     assert.equal(es.dashboard.interviewCard.title, "Entrevista inicial");
     assert.equal(es.dashboard.profileCard.title, "Ficha viva");
 

@@ -72,6 +72,21 @@
       "approvals": "Mi campaña",
       "readyToPublish": "Mis videos"
     },
+    "setupCompletion": {
+      "title": "Termina la configuración",
+      "progress": "{percent}% listo",
+      "doIt": "Hacerlo",
+      "optional": "Opcional",
+      "done": "Listo",
+      "steps": {
+        "business_profile": "Ficha del negocio",
+        "interview": "Entrevista del negocio",
+        "visual_preferences": "Cómo se ven tus videos",
+        "instagram_connected": "Conectar Instagram",
+        "plan_approved": "Aprobar el plan de esta semana",
+        "presenter_avatar": "Presentador en cámara (opcional)"
+      }
+    },
     "interviewCard": {
       "title": "Entrevista inicial",
       "body": "Completa la entrevista guiada para que conozcamos tu negocio.",

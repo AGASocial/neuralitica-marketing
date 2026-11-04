@@ -22,6 +22,7 @@ const KNOWN_TOOL_NAMES = [
   "getGuidedProgress",
   "getReadyVideoDownload",
   "getPresenterSetupStatus",
+  "getSetupStatus",
   "proposeGrantPresenterConsent",
   "proposeSetPresenterVoice",
   "getInterviewStatus",

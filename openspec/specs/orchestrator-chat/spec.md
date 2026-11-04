@@ -56,3 +56,10 @@ The transcript pane SHALL use stick-to-bottom behavior (~80px threshold): always
 #### Scenario: TTS confirm
 - **WHEN** the owner asks to create voice without naming a video
 - **THEN** the TTS card defaults to the latest eligible write-up and includes a picker
+
+### Requirement: getSetupStatus read tool
+Orchestrator chat SHALL provide a read-only `getSetupStatus` tool that returns the owner’s setup completion (required and optional steps, percentComplete) for answering “what’s left / ¿qué me falta?”. The tool MUST NOT mutate state, spend, publish to Instagram, or start avatar generation.
+
+#### Scenario: Tool returns completion
+- **WHEN** `getSetupStatus` is invoked for an authenticated owner
+- **THEN** the tool returns ok with steps and percentComplete aligned with `computeSetupCompletion`

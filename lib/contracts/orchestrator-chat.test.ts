@@ -196,6 +196,26 @@ describe("orchestrator-chat contracts", () => {
     assert.equal(parsed.proposal.paidMediaRequiresCostConfirm, true);
   });
 
+  it("getSetupStatus output schema parses (KAN-99)", async () => {
+    const { getSetupStatusOutputSchema: setupSchema } = await import(
+      "./orchestrator-chat"
+    );
+    setupSchema.parse({
+      ok: true,
+      percentComplete: 40,
+      requiredDone: 2,
+      requiredTotal: 5,
+      steps: [
+        { id: "business_profile", done: true, required: true },
+        { id: "interview", done: true, required: true },
+        { id: "visual_preferences", done: false, required: true },
+        { id: "instagram_connected", done: false, required: true },
+        { id: "plan_approved", done: false, required: true },
+        { id: "presenter_avatar", done: false, required: false },
+      ],
+    });
+  });
+
   it("guided progress and ready download schemas parse", async () => {
     const {
       getGuidedProgressOutputSchema: progressSchema,
