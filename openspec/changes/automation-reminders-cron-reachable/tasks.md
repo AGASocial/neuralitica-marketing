@@ -1,0 +1,4 @@
+- [x] Add `/api/cron/automation-reminders` to public paths (exact match)
+- [x] Unit test: only that cron is exempt
+- [x] Configure `CRON_SECRET` in Vercel production/preview
+- [x] Verify a real reminder email via the cron in production

@@ -15,6 +15,10 @@ const PUBLIC_EXACT = new Set([
   "/reset-password/new",
   "/auth/callback",
   "/auth/callback/recovery",
+  // KAN-108: Vercel Cron has no session cookie; the route enforces
+  // `Authorization: Bearer $CRON_SECRET` itself (verifyCronSecret).
+  // Only the reminders cron is exempted — other crons stay behind login.
+  "/api/cron/automation-reminders",
 ]);
 
 const PROVIDER_ASSET_PATH_RE =
