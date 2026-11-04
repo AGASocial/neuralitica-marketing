@@ -622,6 +622,15 @@ describe("applyVideoJobStatusUpdate — weekly-cycle resume wiring", () => {
     assert.match(src, /nextStatus === "completed" \|\| nextStatus === "failed"/);
     assert.match(src, /onVideoJobCompletedRevision\(\{/);
   });
+
+  it("advances faceless assembly after completed b-roll", () => {
+    const src = readFileSync(
+      path.join(__dirname, "apply-video-job-status-update.ts"),
+      "utf8",
+    );
+    assert.match(src, /maybeAdvanceFacelessAssemblyAfterBroll/);
+    assert.match(src, /assetRole === "broll"/);
+  });
 });
 
 describe("persistVideoJobOutputAsset adapter actualCostCents", () => {

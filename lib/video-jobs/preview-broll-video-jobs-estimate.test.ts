@@ -136,7 +136,7 @@ function installMocks(options: MockOptions = {}) {
               cta: "Call now",
               onScreenText: "On screen",
               voiceoverText: "Voiceover text",
-              targetDurationSec: 30,
+              targetDurationSec: Math.max(5, (beats.length || 1) * 5),
               brollBeats: beats.length > 0 ? beats : undefined,
             },
           };

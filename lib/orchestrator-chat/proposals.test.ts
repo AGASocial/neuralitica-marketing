@@ -31,7 +31,7 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     );
     assert.doesNotMatch(source, /createBrollVideoJobs/);
     assert.doesNotMatch(source, /createHeygenTalkingHeadVideoJob/);
-    assert.match(source, /previewBrollVideoJobsEstimate/);
+    assert.match(source, /estimateFacelessPipelineCost/);
     assert.match(source, /previewHeygenTalkingHeadEstimate/);
     assert.match(source, /assertProposalIsNonMutating/);
     assert.match(source, /mutates:\s*false\s*as\s*const/);
@@ -168,7 +168,8 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
       join(here, "actions/confirm-paid-generation.ts"),
       "utf8",
     );
-    assert.match(action, /previewBrollVideoJobsEstimate/);
+    assert.match(action, /estimateFacelessPipelineCost/);
+    assert.match(action, /synthesizeVoiceoverForReelScript/);
     assert.match(action, /previewHeygenTalkingHeadEstimate/);
     assert.match(action, /confirmEstimateCents/);
     assert.match(action, /ESTIMATE_MISMATCH/);

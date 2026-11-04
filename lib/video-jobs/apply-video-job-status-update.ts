@@ -168,6 +168,16 @@ export async function applyVideoJobStatusUpdate(
     await maybeResumeWeeklyCycleFromJob({ jobKind: "video", jobId: job.id });
   }
 
+  if (nextStatus === "completed" && job.assetRole === "broll") {
+    const { maybeAdvanceFacelessAssemblyAfterBroll } = await import(
+      "@/lib/video-jobs/maybe-advance-faceless-assembly-after-broll"
+    );
+    await maybeAdvanceFacelessAssemblyAfterBroll({
+      clientId: job.clientId,
+      reelScriptId: job.reelScriptId,
+    });
+  }
+
   return {
     ok: true,
     jobId: job.id,

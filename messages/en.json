@@ -628,12 +628,28 @@
     }
   },
   "readyToPublish": {
+    "hub": {
+      "title": "My videos",
+      "subtitle": "See what’s in production, waiting for your OK, or ready to download.",
+      "empty": "No videos yet. Create one from chat when you’re ready.",
+      "sectionInProduction": "In production",
+      "sectionPending": "Waiting for your OK",
+      "sectionReady": "Ready to publish",
+      "emptyInProduction": "Nothing is generating right now.",
+      "emptyPending": "No videos waiting for your OK.",
+      "emptyReady": "No approved videos ready to download yet.",
+      "approveCta": "Approve",
+      "changeCta": "Change something",
+      "inProductionStatus": "In production",
+      "pendingStatus": "Waiting for OK",
+      "progressHint": "We’re still putting this video together. Check back shortly."
+    },
     "list": {
-      "title": "Ready to publish",
-      "subtitle": "Approved Reels with backup downloads for manual Instagram posting.",
-      "empty": "No approved Reels ready to publish yet.",
-      "loadError": "We could not load ready-to-publish Reels. Refresh the page to try again.",
-      "loading": "Loading ready to publish…",
+      "title": "My videos",
+      "subtitle": "See what’s in production, waiting for your OK, or ready to download.",
+      "empty": "No videos yet. Create one from chat when you’re ready.",
+      "loadError": "We could not load your videos. Refresh the page to try again.",
+      "loading": "Loading your videos…",
       "backDashboard": "Back to dashboard",
       "viewCta": "View",
       "decidedAt": "Approved {date}",

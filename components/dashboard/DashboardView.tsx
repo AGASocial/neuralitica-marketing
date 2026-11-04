@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 
 import { OpenChatButton } from "@/components/dashboard/OpenChatButton";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import type {
   SetupCompletionDto,
   SetupStepId,
 } from "@/lib/contracts/setup-completion";
+import type { Locale } from "@/lib/i18n/locales";
 
 export type DashboardCard = {
   title: string;
@@ -79,7 +81,10 @@ type SetupCompletionCopy = {
 type DashboardViewProps = {
   title: string;
   subtitle: string;
-  lastUpdatedLabel: string;
+  /** ISO timestamp — formatted in the browser timezone. */
+  lastUpdatedAt: string;
+  lastUpdatedTemplate: string;
+  locale: Locale;
   setupBanner?: {
     title: string;
     body: string;
@@ -119,10 +124,27 @@ function progressPercent(progress: OwnerHomeCampaignProgress): number {
   return Math.round((progress.completed / progress.total) * 100);
 }
 
+function formatLastUpdatedClient(
+  template: string,
+  iso: string,
+  locale: Locale,
+): string {
+  const date = new Date(iso);
+  const time = Number.isNaN(date.getTime())
+    ? iso
+    : new Intl.DateTimeFormat(locale === "es" ? "es" : "en", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(date);
+  return template.replace("{time}", time);
+}
+
 export function DashboardView({
   title,
   subtitle,
-  lastUpdatedLabel,
+  lastUpdatedAt,
+  lastUpdatedTemplate,
+  locale,
   setupBanner,
   loadError,
   nextAction,
@@ -140,6 +162,11 @@ export function DashboardView({
   setupCompletion,
   setupCompletionCopy,
 }: DashboardViewProps) {
+  const lastUpdatedLabel = useMemo(
+    () => formatLastUpdatedClient(lastUpdatedTemplate, lastUpdatedAt, locale),
+    [lastUpdatedAt, lastUpdatedTemplate, locale],
+  );
+
   const countItems = [
     { label: thisWeekCopy.scheduled, value: weekCounts.scheduled },
     { label: thisWeekCopy.published, value: weekCounts.published },
@@ -165,12 +192,12 @@ export function DashboardView({
       {loadError ? <StatusAlert severity="error" text={loadError} /> : null}
 
       <section aria-labelledby="home-next-action">
-        <h2 id="home-next-action" className="sr-only">
-          {nextActionCopy.sectionTitle}
-        </h2>
         <Card className="gap-4 border-edge bg-panel py-5">
           <CardHeader className="px-5">
-            <p className="text-xs uppercase tracking-wide text-dim">
+            <p
+              id="home-next-action"
+              className="text-xs uppercase tracking-wide text-dim"
+            >
               {nextActionCopy.sectionTitle}
             </p>
             <CardTitle className="font-display text-2xl font-normal text-fog sm:text-3xl">

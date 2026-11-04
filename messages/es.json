@@ -628,16 +628,32 @@
     }
   },
   "readyToPublish": {
+    "hub": {
+      "title": "Mis videos",
+      "subtitle": "Mira lo que está en producción, esperando tu OK o listo para descargar.",
+      "empty": "Aún no hay videos. Crea uno desde el chat cuando quieras.",
+      "sectionInProduction": "En producción",
+      "sectionPending": "Esperando tu OK",
+      "sectionReady": "Listo para publicar",
+      "emptyInProduction": "No hay nada generándose ahora.",
+      "emptyPending": "No hay videos esperando tu OK.",
+      "emptyReady": "Aún no hay videos aprobados listos para descargar.",
+      "approveCta": "Aprobar",
+      "changeCta": "Cambiar algo",
+      "inProductionStatus": "En producción",
+      "pendingStatus": "Esperando OK",
+      "progressHint": "Todavía estamos armando este video. Vuelve en un momento."
+    },
     "list": {
-      "title": "Listo para publicar",
-      "subtitle": "Reels aprobados con descarga de respaldo para publicar manualmente en Instagram.",
-      "empty": "Aún no hay Reels aprobados listos para publicar.",
-      "loadError": "No pudimos cargar los Reels listos para publicar. Actualiza la página para intentarlo de nuevo.",
-      "loading": "Cargando listo para publicar…",
+      "title": "Mis videos",
+      "subtitle": "Mira lo que está en producción, esperando tu OK o listo para descargar.",
+      "empty": "Aún no hay videos. Crea uno desde el chat cuando quieras.",
+      "loadError": "No pudimos cargar tus videos. Actualiza la página para intentarlo de nuevo.",
+      "loading": "Cargando tus videos…",
       "backDashboard": "Volver al panel",
       "viewCta": "Ver",
       "decidedAt": "Aprobado {date}",
-      "disclosureChip": "Disclosure"
+      "disclosureChip": "Aviso"
     },
     "detail": {
       "title": "Listo para publicar",

@@ -148,7 +148,9 @@ function installMocks(options: MockOptions = {}) {
             cta: "Call now",
             onScreenText: "On screen",
             voiceoverText: "Voiceover text",
-            targetDurationSec: 30,
+            // Keep duration aligned with beats so clip-count tests stay beat-driven;
+            // duration-coverage is unit-tested in broll-clip-count.test.ts.
+            targetDurationSec: Math.max(5, (beats.length || 1) * 5),
             brollBeats: beats.length > 0 ? beats : undefined,
           },
         }),

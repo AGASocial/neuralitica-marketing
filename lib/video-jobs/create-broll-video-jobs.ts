@@ -162,6 +162,8 @@ export async function createBrollVideoJobs(
           brollBeats: script.package.brollBeats,
           hook: script.package.hook,
           body: script.package.body,
+          targetDurationSec: script.package.targetDurationSec,
+          clipDurationSec: 5,
         });
 
     const providerResult = await resolveProviderForJob({
