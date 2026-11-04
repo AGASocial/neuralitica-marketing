@@ -22,9 +22,13 @@ import { useOrchestratorChat } from "@/components/orchestrator-chat/Orchestrator
 import { useStickToBottom } from "@/components/orchestrator-chat/use-stick-to-bottom";
 import {
   ProposalActionCard,
-  type KnownProposal,
   type ProposalCardCopy,
 } from "@/components/orchestrator-chat/ProposalActionCard";
+import {
+  asProposal,
+  isProposeToolType,
+} from "@/lib/orchestrator-chat/as-proposal";
+import { trackUxEvent } from "@/lib/analytics/track-ux-event";
 import {
   DownloadReadyCard,
   type DownloadReadyCardCopy,
@@ -101,113 +105,6 @@ type OrchestratorChatPanelProps = {
   locale: Locale;
   suggestedChips: SuggestedPromptChip[];
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function asProposal(output: unknown): KnownProposal | null {
-  if (!isRecord(output) || output.ok !== true || !isRecord(output.proposal)) {
-    return null;
-  }
-  const p = output.proposal;
-  if (
-    p.requiresConfirmation !== true ||
-    p.mutates !== false ||
-    typeof p.kind !== "string" ||
-    typeof p.summary !== "string"
-  ) {
-    return null;
-  }
-  if (p.kind === "generate_strategy" && typeof p.weekStart === "string") {
-    return p as KnownProposal;
-  }
-  if (
-    p.kind === "approve_strategy" &&
-    typeof p.weekStart === "string" &&
-    typeof p.strategyId === "string"
-  ) {
-    return p as KnownProposal;
-  }
-  if (p.kind === "approve_pending_video" && typeof p.approvalId === "string") {
-    return p as KnownProposal;
-  }
-  if (p.kind === "generate_scripts" && typeof p.weekStart === "string") {
-    return p as KnownProposal;
-  }
-  if (
-    p.kind === "generate_videos" &&
-    typeof p.weekStart === "string" &&
-    p.paidMediaRequiresCostConfirm === true
-  ) {
-    return p as KnownProposal;
-  }
-  if (
-    p.kind === "request_video_changes" &&
-    typeof p.approvalId === "string" &&
-    typeof p.changeSummary === "string" &&
-    Array.isArray(p.tags)
-  ) {
-    return p as KnownProposal;
-  }
-  if (
-    p.kind === "regenerate_script" &&
-    typeof p.weekStart === "string" &&
-    typeof p.slotIndex === "number"
-  ) {
-    return p as KnownProposal;
-  }
-  if (
-    p.kind === "confirm_paid_generation" &&
-    typeof p.reelScriptId === "string" &&
-    typeof p.confirmEstimateCents === "number" &&
-    typeof p.estimatedCostCents === "number" &&
-    (p.paidKind === "broll" || p.paidKind === "heygen")
-  ) {
-    return p as KnownProposal;
-  }
-  if (
-    p.kind === "confirm_tts_generation" &&
-    typeof p.reelScriptId === "string" &&
-    typeof p.confirmEstimateCents === "number" &&
-    typeof p.estimatedCostCents === "number" &&
-    p.paidKind === "tts" &&
-    p.styleLabel === "voice" &&
-    Array.isArray(p.eligibleVideos) &&
-    p.eligibleVideos.length > 0
-  ) {
-    return p as KnownProposal;
-  }
-  if (p.kind === "grant_presenter_consent") {
-    return p as KnownProposal;
-  }
-  if (
-    p.kind === "set_presenter_voice" &&
-    (p.gender === "male" || p.gender === "female") &&
-    (p.language === "en" || p.language === "es")
-  ) {
-    return p as KnownProposal;
-  }
-  if (
-    p.kind === "save_interview_answer" &&
-    typeof p.currentStep === "string" &&
-    typeof p.stepLabel === "string" &&
-    typeof p.answerPreview === "string"
-  ) {
-    return p as KnownProposal;
-  }
-  if (p.kind === "submit_interview") {
-    return p as KnownProposal;
-  }
-  if (
-    p.kind === "enable_own_avatar" &&
-    Array.isArray(p.allowedModes) &&
-    p.allowedModes.includes("own_avatar")
-  ) {
-    return p as KnownProposal;
-  }
-  return null;
-}
 
 export function OrchestratorChatToggle({
   openLabel,
@@ -458,11 +355,23 @@ function OrchestratorChatSession({
     inputRef.current?.focus();
   }
 
+  function trackFirstMessage(
+    source: "chip" | "typed",
+    chipId?: string,
+  ) {
+    if (hasUserMessages) return;
+    trackUxEvent("chat_first_message", {
+      source,
+      ...(chipId ? { chip_id: chipId } : {}),
+    });
+  }
+
   async function sendCurrentInput() {
     const text = input.trim();
     if (!text || busy) {
       return;
     }
+    trackFirstMessage("typed");
     setInput("");
     requestAnimationFrame(() => autosizeComposerTextarea(inputRef.current));
     stickOnSend();
@@ -537,9 +446,10 @@ function OrchestratorChatSession({
                 chips={suggestedChips}
                 copy={copy.suggestedPrompts}
                 disabled={busy}
-                onSelect={(text) => {
+                onSelect={(chip) => {
+                  trackFirstMessage("chip", chip.id);
                   stickOnSend();
-                  void sendMessage({ text });
+                  void sendMessage({ text: chip.text });
                 }}
               />
             ) : null}
@@ -614,6 +524,7 @@ function OrchestratorChatSession({
                             if (!text) {
                               return;
                             }
+                            trackFirstMessage("chip", event.id);
                             stickOnSend();
                             void sendMessage({ text });
                           }}
@@ -841,34 +752,24 @@ function OrchestratorChatSession({
                     }
                   }
 
-                  if (
-                    (part.type === "tool-proposeGenerateStrategy" ||
-                      part.type === "tool-proposeApproveStrategy" ||
-                      part.type === "tool-proposeApprovePendingVideo" ||
-                      part.type === "tool-proposeGenerateScripts" ||
-                      part.type === "tool-proposeGenerateVideos" ||
-                      part.type === "tool-proposeRequestVideoChanges" ||
-                      part.type === "tool-proposeRegenerateScript" ||
-                      part.type === "tool-proposeConfirmPaidGeneration" ||
-                      part.type === "tool-proposeConfirmTtsGeneration" ||
-                      part.type === "tool-proposeGrantPresenterConsent" ||
-                      part.type === "tool-proposeSetPresenterVoice" ||
-                      part.type === "tool-proposeSaveInterviewAnswer" ||
-                      part.type === "tool-proposeSubmitInterview" ||
-                      part.type === "tool-proposeEnableOwnAvatar") &&
-                    part.state === "output-available"
-                  ) {
-                    const proposal = asProposal(part.output);
-                    if (proposal) {
-                      return (
-                        <ProposalActionCard
-                          key={`${message.id}-p-${index}`}
-                          proposal={proposal}
-                          copy={copy.proposal}
-                          previewCopy={copy.preview}
-                          onChangeSomething={focusChangeSomething}
-                        />
-                      );
+                  if (isProposeToolType(part.type)) {
+                    const toolPart = part as {
+                      state?: string;
+                      output?: unknown;
+                    };
+                    if (toolPart.state === "output-available") {
+                      const proposal = asProposal(toolPart.output);
+                      if (proposal) {
+                        return (
+                          <ProposalActionCard
+                            key={`${message.id}-p-${index}`}
+                            proposal={proposal}
+                            copy={copy.proposal}
+                            previewCopy={copy.preview}
+                            onChangeSomething={focusChangeSomething}
+                          />
+                        );
+                      }
                     }
                   }
 

@@ -267,7 +267,7 @@ export type GenerateContentStrategyResult =
   | GenerateContentStrategySuccess
   | ContentStrategyMutationError;
 
-export type ContentStrategyInvoker = "operator" | "system";
+export type ContentStrategyInvoker = "operator" | "system" | "client";
 
 export const CONTENT_STRATEGY_AGENT_KEY = "content_strategy_generate" as const;
 export const CONTENT_STRATEGY_RATE_WINDOW_MS = 60 * 60 * 1000;

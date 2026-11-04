@@ -200,6 +200,7 @@ function chainableQuery(terminal: {
 
 type MockOptions = {
   requireOperator?: () => Promise<unknown>;
+  requireActive?: () => Promise<unknown>;
   isAuthGuardError?: (error: unknown) => boolean;
   from?: (table: string) => unknown;
   getBusinessProfileForAgents?: (clientId: string) => Promise<unknown>;
@@ -258,6 +259,10 @@ function installStrategyMocks(options: MockOptions) {
             )),
         requireOperator:
           options.requireOperator ?? (async () => operatorUser),
+        requireActive:
+          options.requireActive ??
+          options.requireOperator ??
+          (async () => operatorUser),
       };
     }
     if (
@@ -554,12 +559,12 @@ describe("validateBriefAgainstAllowlists", () => {
 });
 
 describe("generateContentStrategy action", () => {
-  it("non-operator returns FORBIDDEN without LLM or INSERT", async () => {
+  it("unauthenticated returns UNAUTHENTICATED without LLM or INSERT", async () => {
     let agentCalled = false;
     let insertCalled = false;
     const restore = installStrategyMocks({
-      requireOperator: async () => {
-        throw Object.assign(new Error("forbidden"), { status: 403 });
+      requireActive: async () => {
+        throw Object.assign(new Error("unauthenticated"), { status: 401 });
       },
       generateWeeklyContentStrategy: async () => {
         agentCalled = true;
@@ -578,7 +583,7 @@ describe("generateContentStrategy action", () => {
       const { generateContentStrategy } = require("./actions/generate-content-strategy.ts");
       const result = await generateContentStrategy({ weekStart: WEEK_START });
       assert.equal(result.ok, false);
-      if (!result.ok) assert.equal(result.error.code, "FORBIDDEN");
+      if (!result.ok) assert.equal(result.error.code, "UNAUTHENTICATED");
       assert.equal(agentCalled, false);
       assert.equal(insertCalled, false);
     } finally {
@@ -1695,11 +1700,11 @@ describe("updateContentStrategyBrief action (US-4.2)", () => {
 });
 
 describe("approveContentStrategy action (US-4.2)", () => {
-  it("non-operator returns FORBIDDEN without UPDATE", async () => {
+  it("unauthenticated returns UNAUTHENTICATED without UPDATE", async () => {
     let updateCalled = false;
     const restore = installStrategyMocks({
-      requireOperator: async () => {
-        throw Object.assign(new Error("forbidden"), { status: 403 });
+      requireActive: async () => {
+        throw Object.assign(new Error("unauthenticated"), { status: 401 });
       },
       from: () => ({
         update: () => {
@@ -1717,7 +1722,7 @@ describe("approveContentStrategy action (US-4.2)", () => {
         weekStart: WEEK_START,
       });
       assert.equal(result.ok, false);
-      if (!result.ok) assert.equal(result.error.code, "FORBIDDEN");
+      if (!result.ok) assert.equal(result.error.code, "UNAUTHENTICATED");
       assert.equal(updateCalled, false);
     } finally {
       restore();

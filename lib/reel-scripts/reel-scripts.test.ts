@@ -250,6 +250,7 @@ function wrapAgentOutput(output: unknown) {
 
 type MockOptions = {
   requireOperator?: () => Promise<unknown>;
+  requireActive?: () => Promise<unknown>;
   isAuthGuardError?: (error: unknown) => boolean;
   from?: (table: string) => unknown;
   getBusinessProfileForAgents?: (clientId: string) => Promise<unknown>;
@@ -318,6 +319,10 @@ function installReelScriptMocks(options: MockOptions) {
             )),
         requireOperator:
           options.requireOperator ?? (async () => operatorUser),
+        requireActive:
+          options.requireActive ??
+          options.requireOperator ??
+          (async () => operatorUser),
       };
     }
     if (
@@ -672,12 +677,12 @@ describe("reel script contracts (US-5.1)", () => {
 });
 
 describe("reel script mutations (US-5.1)", () => {
-  it("non-operator generate returns 403 without LLM or UPSERT", async () => {
+  it("unauthenticated generate returns 401 without LLM or UPSERT", async () => {
     let agentCalled = false;
     let upsertCalled = false;
     const restore = installReelScriptMocks({
-      requireOperator: async () => {
-        const err = Object.assign(new Error("forbidden"), { status: 403 });
+      requireActive: async () => {
+        const err = Object.assign(new Error("unauthenticated"), { status: 401 });
         throw err;
       },
       generateReelScriptForSlot: async () => {
@@ -701,7 +706,7 @@ describe("reel script mutations (US-5.1)", () => {
       const { generateReelScripts } = require("./actions/generate-reel-scripts.ts");
       const result = await generateReelScripts({ weekStart: WEEK_START });
       assert.equal(result.ok, false);
-      if (!result.ok) assert.equal(result.error.code, "FORBIDDEN");
+      if (!result.ok) assert.equal(result.error.code, "UNAUTHENTICATED");
       assert.equal(agentCalled, false);
       assert.equal(upsertCalled, false);
     } finally {

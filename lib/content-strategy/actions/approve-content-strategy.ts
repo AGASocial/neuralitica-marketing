@@ -7,7 +7,7 @@ import {
   contentStrategyBriefSchema,
   type ApproveContentStrategyResult,
 } from "@/lib/contracts/content-strategy";
-import { isAuthGuardError, requireOperator } from "@/lib/auth/require-user";
+import { isAuthGuardError, requireActive } from "@/lib/auth/require-user";
 import {
   contentStrategyAgentOutputInvalidError,
   contentStrategyForbiddenError,
@@ -40,16 +40,16 @@ function authGuardEnvelope(error: {
 }
 
 /**
- * Operator approval of draft strategy (US-4.2).
- * Frontend consumer: `/operator/strategy` — Approve strategy CTA.
+ * Draft strategy approval (US-4.2 / KAN-106).
+ * Owners approve their own draft; operators approve for their session client.
  */
 export async function approveContentStrategy(
   rawInput: unknown,
 ): Promise<ApproveContentStrategyResult> {
   try {
-    let operator;
+    let user;
     try {
-      operator = await requireOperator("handler");
+      user = await requireActive("handler");
     } catch (error) {
       if (isAuthGuardError(error)) {
         return authGuardEnvelope(error);
@@ -68,7 +68,7 @@ export async function approveContentStrategy(
       );
     }
 
-    const clientId = operator.id;
+    const clientId = user.id;
     const { strategyId, weekStart } = parsed.data;
 
     const row = await loadStrategyRowForOperator({ strategyId, clientId });
@@ -106,7 +106,7 @@ export async function approveContentStrategy(
     const approved = await approveStrategyRow({
       strategyId,
       clientId,
-      approvedBy: operator.id,
+      approvedBy: user.id,
     });
 
     if (!approved.ok) {
@@ -120,6 +120,8 @@ export async function approveContentStrategy(
     });
 
     revalidatePath("/operator/strategy");
+    revalidatePath("/dashboard");
+    revalidatePath("/conversation");
 
     return {
       ok: true,
@@ -128,8 +130,8 @@ export async function approveContentStrategy(
       version: approved.version,
       status: "approved",
       approvedBy: {
-        id: operator.id,
-        displayName: operator.displayName,
+        id: user.id,
+        displayName: user.displayName,
       },
       approvedAt: approved.approvedAt,
     };

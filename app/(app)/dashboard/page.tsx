@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 import { HoyFeedView } from "@/components/dashboard/HoyFeedView";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import type { OwnerHomeNextStepKey } from "@/lib/contracts/owner-home-dashboard";
@@ -5,6 +7,7 @@ import type { HoyFeedDto } from "@/lib/contracts/hoy-feed";
 import { buildOwnerHomeNextAction } from "@/lib/dashboard/compute-owner-home-snapshot";
 import { shouldShowSetupCompletionOnHome } from "@/lib/dashboard/compute-setup-completion";
 import { loadHoyFeed } from "@/lib/dashboard/load-hoy-feed";
+import { loadShouldEnterOptionAOnboarding } from "@/lib/dashboard/load-option-a-onboarding-gate";
 import { loadSetupCompletion } from "@/lib/dashboard/load-setup-completion";
 import type { SetupCompletionDto } from "@/lib/contracts/setup-completion";
 import { getTranslations } from "@/lib/i18n/get-translations";
@@ -37,11 +40,33 @@ function nextActionCopyFor(
   };
 }
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams: Promise<{ skipOnboarding?: string }>;
+};
+
+export default async function DashboardPage({
+  searchParams,
+}: DashboardPageProps) {
   const user = await getCurrentUser();
   const locale = await resolveRequestLocale(user?.preferredLocale);
   const t = getTranslations(locale);
   const supabaseReady = isSupabaseConfigured();
+  const params = await searchParams;
+  const skipOnboarding = params.skipOnboarding === "1";
+
+  if (user && !skipOnboarding) {
+    try {
+      const enterOnboarding = await loadShouldEnterOptionAOnboarding({ user });
+      if (enterOnboarding) {
+        redirect("/conversation?mode=onboarding");
+      }
+    } catch (error) {
+      if (isNextNavigationError(error)) {
+        throw error;
+      }
+      // Gate load failure must not block Hoy for existing accounts.
+    }
+  }
 
   let loadError: string | undefined;
   let setupCompletion: SetupCompletionDto | undefined;

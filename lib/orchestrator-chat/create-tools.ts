@@ -336,9 +336,6 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
         "Propose creating this week’s content plan. Does NOT create anything until the user taps Approve on the card.",
       inputSchema: proposeGenerateStrategyInputSchema,
       execute: async (raw) => {
-        if (!isOperator(user)) {
-          return toolError(orchestratorForbidden());
-        }
         const parsed = proposeGenerateStrategyInputSchema.safeParse(raw);
         if (!parsed.success) {
           return toolError(orchestratorValidationError());
@@ -367,9 +364,6 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
         "Propose approving the draft weekly plan. Does NOT approve until the user taps Approve on the card.",
       inputSchema: proposeApproveStrategyInputSchema,
       execute: async (raw) => {
-        if (!isOperator(user)) {
-          return toolError(orchestratorForbidden());
-        }
         const parsed = proposeApproveStrategyInputSchema.safeParse(raw);
         if (!parsed.success) {
           return toolError(orchestratorValidationError());
@@ -734,9 +728,6 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
         "Propose writing this week’s video texts (scripts). Does NOT generate until the user taps Approve on the card. Call this whenever you offer to write/create the texts.",
       inputSchema: proposeGenerateScriptsInputSchema,
       execute: async (raw) => {
-        if (!isOperator(user)) {
-          return toolError(orchestratorForbidden());
-        }
         const parsed = proposeGenerateScriptsInputSchema.safeParse(raw);
         if (!parsed.success) {
           return toolError(orchestratorValidationError());
@@ -787,9 +778,6 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
         "Propose preparing video generation for this week. Does NOT spend on paid video until a later cost-confirm card. Call this whenever you offer to generate/create the videos.",
       inputSchema: proposeGenerateVideosInputSchema,
       execute: async (raw) => {
-        if (!isOperator(user)) {
-          return toolError(orchestratorForbidden());
-        }
         const parsed = proposeGenerateVideosInputSchema.safeParse(raw);
         if (!parsed.success) {
           return toolError(orchestratorValidationError());
@@ -841,9 +829,6 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
         "Propose paid video generation with a plain-language price from cost policy. Does NOT spend until the user taps Approve on the cost card. Call this before any on-camera, stock-footage, or paid video create.",
       inputSchema: proposeConfirmPaidGenerationInputSchema,
       execute: async (raw) => {
-        if (!isOperator(user)) {
-          return toolError(orchestratorForbidden());
-        }
         const parsed = proposeConfirmPaidGenerationInputSchema.safeParse(raw);
         if (!parsed.success) {
           return toolError(orchestratorValidationError());

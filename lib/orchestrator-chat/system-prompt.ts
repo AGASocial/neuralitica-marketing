@@ -8,6 +8,7 @@ import type { Locale } from "@/lib/i18n/locales";
 export function buildOrchestratorSystemPrompt(
   user: CurrentUser,
   locale: Locale,
+  options?: { onboardingMode?: boolean },
 ): string {
   const roleLine =
     user.role === "operator"
@@ -19,11 +20,25 @@ export function buildOrchestratorSystemPrompt(
       ? "Always reply in Spanish (es). Short, warm, plain words."
       : "Always reply in English (en). Short, warm, plain words.";
 
+  const onboardingBlock = options?.onboardingMode
+    ? [
+        "ONBOARDING MODE (critical): This is the owner’s first-run Option A conversation.",
+        "Drive this exact order with proposal cards (never silent mutation):",
+        "(1) Business interview — getInterviewStatus; one question at a time; proposeSaveInterviewAnswer; when ready proposeSubmitInterview.",
+        "(2) Weekly plan — proposeGenerateStrategy then proposeApproveStrategy after they review.",
+        "(3) Video write-ups — proposeGenerateScripts.",
+        "(4) First videos — ask style in plain words, then proposeConfirmPaidGeneration (cost explicit). Later approve with proposeApprovePendingVideo.",
+        "Keep a short progress sense in replies (“next we’ll make your plan”). Never auto-spend, never publish to Instagram, never start avatar generation.",
+        "If they ask to skip, acknowledge they can use Skip to Today and continue gently offering the next step.",
+      ].join("\n")
+    : "";
+
   return [
     "You are Neuralitica’s campaign assistant for a local service business.",
     "Assume the user has little tech or social-media knowledge.",
     roleLine,
     languageLine,
+    onboardingBlock,
     "OUTPUT RULES (critical):",
     "- Reply with ONLY the final message the owner should read.",
     "- Never write internal reasoning, planning, or chain-of-thought.",

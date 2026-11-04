@@ -983,6 +983,8 @@ export const chatRequestBodySchema = z
     id: orchestratorConversationIdSchema.optional(),
     messages: z.array(z.unknown()).max(500).optional(),
     locale: z.unknown().optional(),
+    /** KAN-106: Option A first-run conversation. */
+    onboardingMode: z.boolean().optional(),
   })
   .passthrough();
 

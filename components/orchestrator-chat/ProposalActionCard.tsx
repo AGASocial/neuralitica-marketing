@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 
 import {
   AgentCard,
   type AgentCardActionEvent,
 } from "@/components/agent-cards/AgentCard";
+import {
+  detectApprovalDevice,
+  trackUxEvent,
+} from "@/lib/analytics/track-ux-event";
 import { approveContentStrategy } from "@/lib/content-strategy/actions/approve-content-strategy";
 import { generateContentStrategy } from "@/lib/content-strategy/actions/generate-content-strategy";
 import { decideApproval } from "@/lib/approvals/actions/decide-approval";
@@ -234,6 +238,7 @@ export function ProposalActionCard({
   const [pending, startTransition] = useTransition();
   const [done, setDone] = useState(false);
   const [failed, setFailed] = useState(false);
+  const contentReadyAt = useRef(Date.now());
 
   const card = mapProposalToAgentCard(proposal, {
     title: copy.title,
@@ -378,6 +383,16 @@ export function ProposalActionCard({
         const ok = await runApprove(event.meta);
         if (ok) {
           setDone(true);
+          if (
+            proposal.kind === "approve_strategy" ||
+            proposal.kind === "approve_pending_video"
+          ) {
+            trackUxEvent("approval", {
+              device: detectApprovalDevice(),
+              ms_since_content_ready: Date.now() - contentReadyAt.current,
+              kind: proposal.kind,
+            });
+          }
         } else {
           setFailed(true);
         }

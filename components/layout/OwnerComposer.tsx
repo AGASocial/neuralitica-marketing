@@ -15,6 +15,7 @@ import {
   type SuggestedPromptChipsCopy,
 } from "@/components/orchestrator-chat/SuggestedPromptChips";
 import { Button } from "@/components/ui/button";
+import { trackUxEvent } from "@/lib/analytics/track-ux-event";
 import {
   autosizeComposerTextarea,
   shouldSendOnEnterKey,
@@ -95,10 +96,20 @@ export function OwnerComposer({
 
   const showChips = !conversationHasUserMessages && suggestedChips.length > 0;
 
-  function submitText(text: string) {
+  function submitText(
+    text: string,
+    source: "chip" | "typed" = "typed",
+    chipId?: string,
+  ) {
     const trimmed = text.trim();
     if (!trimmed) {
       return;
+    }
+    if (!conversationHasUserMessages) {
+      trackUxEvent("chat_first_message", {
+        source,
+        ...(chipId ? { chip_id: chipId } : {}),
+      });
     }
     setInput("");
     sendFromComposer(trimmed);
@@ -168,7 +179,7 @@ export function OwnerComposer({
           <SuggestedPromptChips
             chips={suggestedChips}
             copy={copy.suggestedPrompts}
-            onSelect={(text) => submitText(text)}
+            onSelect={(chip) => submitText(chip.text, "chip", chip.id)}
           />
         ) : null}
         <form

@@ -6,7 +6,7 @@ import {
   generateReelScriptsInputSchema,
   type GenerateReelScriptsResult,
 } from "@/lib/contracts/reel-script";
-import { isAuthGuardError, requireOperator } from "@/lib/auth/require-user";
+import { isAuthGuardError, requireActive } from "@/lib/auth/require-user";
 import {
   checkScriptGenerationRateLimit,
 } from "@/lib/reel-scripts/check-script-generation-rate-limit";
@@ -35,16 +35,16 @@ function authGuardEnvelope(error: {
 }
 
 /**
- * Operator batch generate for all slots on approved strategy (US-5.1).
- * Frontend consumer: `/operator/scripts` — Generate scripts button.
+ * Batch generate scripts for approved strategy (US-5.1 / KAN-106).
+ * Owners generate for themselves; operators for their session client.
  */
 export async function generateReelScripts(
   rawInput: unknown,
 ): Promise<GenerateReelScriptsResult> {
   try {
-    let operator;
+    let user;
     try {
-      operator = await requireOperator("handler");
+      user = await requireActive("handler");
     } catch (error) {
       if (isAuthGuardError(error)) {
         return authGuardEnvelope(error);
@@ -63,8 +63,17 @@ export async function generateReelScripts(
       );
     }
 
-    const clientId = operator.id;
+    const clientId = user.id;
     const { weekStart } = parsed.data;
+
+    // Owners must not pass operator-only budget overrides.
+    if (
+      user.role !== "operator" &&
+      (parsed.data.budgetOverride !== undefined ||
+        parsed.data.overrideReason !== undefined)
+    ) {
+      return reelScriptForbiddenError();
+    }
 
     const approved = await getApprovedStrategyForWeek({ clientId, weekStart });
     if (!approved || approved.status !== "approved") {
@@ -86,7 +95,7 @@ export async function generateReelScripts(
       clientId,
       weekStart,
       strategyId: approved.id,
-      invokedBy: "operator",
+      invokedBy: user.role === "operator" ? "operator" : "system",
       mode: "batch",
       operatorClientId: clientId,
       budgetOverride: parsed.data.budgetOverride,

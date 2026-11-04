@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { isAuthGuardError, requireOperator } from "@/lib/auth/require-user";
+import { isAuthGuardError, requireActive } from "@/lib/auth/require-user";
 import { confirmPaidGenerationFromChatInputSchema } from "@/lib/contracts/orchestrator-chat";
 import { estimateFacelessPipelineCost } from "@/lib/orchestrator-chat/estimate-faceless-pipeline-cost";
 import { loadReelScriptForVoiceover } from "@/lib/tts/load-reel-script-for-voiceover";
@@ -23,9 +23,9 @@ export async function confirmPaidGenerationFromChat(rawInput: unknown): Promise<
   error?: string;
 }> {
   try {
-    let operator;
+    let user;
     try {
-      operator = await requireOperator("handler");
+      user = await requireActive("handler");
     } catch (error) {
       if (isAuthGuardError(error)) {
         return {
@@ -47,8 +47,8 @@ export async function confirmPaidGenerationFromChat(rawInput: unknown): Promise<
     if (paidKind === "broll") {
       const script = await loadReelScriptForVoiceover({
         reelScriptId,
-        clientId: operator.id,
-        preferredLocale: operator.preferredLocale ?? "en",
+        clientId: user.id,
+        preferredLocale: user.preferredLocale ?? "en",
       });
       if (!script) {
         return { ok: false, error: "NOT_FOUND" };
@@ -56,7 +56,7 @@ export async function confirmPaidGenerationFromChat(rawInput: unknown): Promise<
 
       const total = await estimateFacelessPipelineCost({
         reelScriptId,
-        clientId: operator.id,
+        clientId: user.id,
         voiceoverTextLength: script.voiceoverText.length,
       });
       if (!total.ok) {
@@ -81,7 +81,7 @@ export async function confirmPaidGenerationFromChat(rawInput: unknown): Promise<
 
       const result = await createBrollVideoJobs({
         reelScriptId,
-        clientId: operator.id,
+        clientId: user.id,
       });
       if (result.ok) {
         revalidatePath("/operator/scripts");
@@ -93,7 +93,7 @@ export async function confirmPaidGenerationFromChat(rawInput: unknown): Promise<
 
     const preview = await previewHeygenTalkingHeadEstimate({
       reelScriptId,
-      clientId: operator.id,
+      clientId: user.id,
       ...(targetDurationSec !== undefined ? { targetDurationSec } : {}),
     });
     if (!preview.ok) {
@@ -108,7 +108,7 @@ export async function confirmPaidGenerationFromChat(rawInput: unknown): Promise<
 
     const result = await createHeygenTalkingHeadVideoJob({
       reelScriptId,
-      clientId: operator.id,
+      clientId: user.id,
       targetDurationSec: targetDurationSec ?? preview.durationSec,
       confirmEstimateCents,
     });

@@ -50,10 +50,11 @@ export async function POST(request: Request) {
       ? conversationIdResult.data
       : crypto.randomUUID();
 
+    const onboardingMode = body.onboardingMode === true;
     const tools = createOrchestratorTools(user, locale);
     const result = streamText({
       model: getOrchestratorChatModel(),
-      system: buildOrchestratorSystemPrompt(user, locale),
+      system: buildOrchestratorSystemPrompt(user, locale, { onboardingMode }),
       messages: await convertToModelMessages(messages),
       tools,
       stopWhen: isStepCount(6),
