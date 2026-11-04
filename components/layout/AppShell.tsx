@@ -10,7 +10,7 @@ type AppShellProps = {
   children: ReactNode;
 };
 
-export function AppShell({ locale, user, children }: AppShellProps) {
+export async function AppShell({ locale, user, children }: AppShellProps) {
   return (
     <OrchestratorChatProvider>
       <div className="flex min-h-screen flex-col bg-deep text-fog">

@@ -33,4 +33,13 @@ describe("orchestrator system prompt card discipline", () => {
     assert.match(prompt, /proposeConfirmTtsGeneration/);
     assert.match(prompt, /confirm_tts_generation/);
   });
+
+  it("requires capability overview + suggestNextActions for what-can-you-do", () => {
+    const prompt = buildOrchestratorSystemPrompt(owner, "es");
+    assert.match(prompt, /¿Qué puedes hacer por mí\?/);
+    assert.match(prompt, /What can you do for me\?/);
+    assert.match(prompt, /suggestNextActions/);
+    assert.match(prompt, /weekly plan/i);
+    assert.match(prompt, /configure their business/i);
+  });
 });

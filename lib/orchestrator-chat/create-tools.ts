@@ -24,6 +24,8 @@ import {
   getGuidedProgressOutputSchema,
   getSetupStatusInputSchema,
   getSetupStatusOutputSchema,
+  suggestNextActionsInputSchema,
+  suggestNextActionsOutputSchema,
   getInterviewStatusInputSchema,
   getInterviewStatusOutputSchema,
   getPresenterSetupStatusInputSchema,
@@ -75,6 +77,7 @@ import {
 } from "@/lib/approvals/list-get-approvals";
 import { loadLatestStrategyRowWithApproval } from "@/lib/content-strategy/load-latest-strategy-row-with-approval";
 import { loadSetupCompletion } from "@/lib/dashboard/load-setup-completion";
+import { loadSuggestedPromptChips } from "@/lib/orchestrator-chat/load-suggested-prompt-chips";
 import { toContentStrategyView } from "@/lib/content-strategy/to-strategy-view";
 import { getApprovedStrategyForWeek } from "@/lib/content-strategy/load-approved-strategy-for-week";
 import { buildReelScriptListForStrategy } from "@/lib/reel-scripts/list-reel-scripts-for-week";
@@ -1103,6 +1106,32 @@ export function createOrchestratorTools(user: CurrentUser, locale: Locale) {
             done: step.done,
             required: step.required,
           })),
+        });
+      },
+    }),
+
+    suggestNextActions: tool({
+      description:
+        "Return safe next-step suggestion chips after answering “What can you do for me?” / “¿Qué puedes hacer por mí?”. Read-only; never mutates, spends, or publishes. Never includes direct spend actions.",
+      inputSchema: suggestNextActionsInputSchema,
+      execute: async (raw) => {
+        const parsed = suggestNextActionsInputSchema.safeParse(raw);
+        if (!parsed.success) {
+          return toolError(orchestratorValidationError());
+        }
+        const chips = await loadSuggestedPromptChips({
+          user,
+          locale,
+          includeWhatCanYouDo: false,
+        });
+        return suggestNextActionsOutputSchema.parse({
+          ok: true,
+          actions: chips
+            .filter((chip) => chip.id !== "whatCanYouDo")
+            .map((chip) => ({
+              id: chip.id,
+              text: chip.text,
+            })),
         });
       },
     }),

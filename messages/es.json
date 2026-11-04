@@ -182,6 +182,15 @@
     "newMessages": "↓ Nuevos mensajes",
     "newConversation": "Nueva conversación",
     "loadingConversation": "Cargando tu chat…",
+    "suggestedPrompts": {
+      "listAriaLabel": "Preguntas sugeridas",
+      "whatCanYouDo": "¿Qué puedes hacer por mí?",
+      "finishSetup": "Termina de configurar mi negocio",
+      "showPendingApprovals": "Muéstrame lo que espera mi OK",
+      "makeWeeklyPlan": "Hazme el plan de esta semana",
+      "howIsCampaign": "¿Cómo va mi campaña?",
+      "writeScripts": "Escribe los textos de los videos"
+    },
     "proposal": {
       "title": "Confirma por favor",
       "approve": "Aprobar",
