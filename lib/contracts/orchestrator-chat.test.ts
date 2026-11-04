@@ -8,9 +8,12 @@ import {
   listCampaignStatusInputSchema,
   listCampaignStatusOutputSchema,
   orchestratorProposalMetaSchema,
+  ORCHESTRATOR_CHAT_DEFAULT_MODEL,
   proposeApprovePendingVideoOutputSchema,
   proposeApproveStrategyOutputSchema,
+  proposeGenerateScriptsOutputSchema,
   proposeGenerateStrategyOutputSchema,
+  proposeGenerateVideosOutputSchema,
   type OrchestratorProposalMeta,
 } from "./orchestrator-chat";
 
@@ -148,5 +151,48 @@ describe("orchestrator-chat contracts", () => {
     });
     assertProposalIsNonMutating(parsed.proposal);
     assert.equal(parsed.proposal.action, "decideApproval");
+  });
+
+  it("default model is gemini-2.5-flash (not flash-lite)", () => {
+    assert.equal(ORCHESTRATOR_CHAT_DEFAULT_MODEL, "google/gemini-2.5-flash");
+    assert.doesNotMatch(ORCHESTRATOR_CHAT_DEFAULT_MODEL, /flash-lite/);
+  });
+
+  it("proposeGenerateScripts output is non-mutating proposal", () => {
+    const parsed = proposeGenerateScriptsOutputSchema.parse({
+      ok: true,
+      proposal: {
+        kind: "generate_scripts",
+        requiresConfirmation: true,
+        mutates: false,
+        incursSpend: true,
+        estimatedCostCents: null,
+        summary: "Write this week’s video texts.",
+        weekStart: WEEK,
+        action: "generateReelScripts",
+        pendingSlotCount: 3,
+      },
+    });
+    assertProposalIsNonMutating(parsed.proposal);
+  });
+
+  it("proposeGenerateVideos output flags paid media cost confirm", () => {
+    const parsed = proposeGenerateVideosOutputSchema.parse({
+      ok: true,
+      proposal: {
+        kind: "generate_videos",
+        requiresConfirmation: true,
+        mutates: false,
+        incursSpend: true,
+        estimatedCostCents: null,
+        summary: "Prepare generating your videos.",
+        weekStart: WEEK,
+        action: "generateReelScripts",
+        readyScriptCount: 2,
+        paidMediaRequiresCostConfirm: true,
+      },
+    });
+    assertProposalIsNonMutating(parsed.proposal);
+    assert.equal(parsed.proposal.paidMediaRequiresCostConfirm, true);
   });
 });

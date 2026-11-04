@@ -162,7 +162,7 @@ export function AppHeader({ locale, user }: AppHeaderProps) {
           linkClassName="text-xs"
         />
       </header>
-      <OrchestratorChatPanel copy={chatCopy} />
+      <OrchestratorChatPanel copy={chatCopy} locale={locale} />
     </OrchestratorChatProvider>
   );
 }

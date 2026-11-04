@@ -25,9 +25,19 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
       source,
       /from\s+"@\/lib\/approvals\/actions\/decide-approval"/,
     );
+    assert.doesNotMatch(
+      source,
+      /from\s+"@\/lib\/reel-scripts\/actions\/generate-reel-scripts"/,
+    );
+    assert.doesNotMatch(
+      source,
+      /from\s+"@\/lib\/video-jobs\/actions\//,
+    );
     assert.match(source, /assertProposalIsNonMutating/);
     assert.match(source, /mutates:\s*false\s*as\s*const/);
     assert.match(source, /requiresConfirmation:\s*true\s*as\s*const/);
+    assert.match(source, /proposeGenerateScripts/);
+    assert.match(source, /proposeGenerateVideos/);
   });
 
   it("ProposalActionCard is the mutation boundary for Approve", () => {
@@ -42,5 +52,16 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(card, /generateContentStrategy/);
     assert.match(card, /approveContentStrategy/);
     assert.match(card, /decideApproval/);
+    assert.match(card, /generateReelScripts/);
+  });
+
+  it("chat route disables reasoning stream to the client", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const route = readFileSync(
+      join(here, "../../app/api/chat/route.ts"),
+      "utf8",
+    );
+    assert.match(route, /sendReasoning:\s*false/);
+    assert.match(route, /resolveChatBodyLocale/);
   });
 });

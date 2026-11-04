@@ -22,9 +22,12 @@ as first-party Campaña shadcn cards with zod-typed tool I/O (`lib/contracts/orc
 MCP-UI (`@mcp-ui/*`) is optional later — same proposal/confirm semantics.
 
 - **Transport:** `POST /api/chat` → `streamText` via AI Gateway; default model
-  `google/gemini-2.5-flash-lite` (`ORCHESTRATOR_CHAT_MODEL` override).
-- A stronger model is justified when multi-step plain-language orchestration is
-  weak; keep flash-lite as default.
+  `google/gemini-2.5-flash` (`ORCHESTRATOR_CHAT_MODEL` override).
+- **Model choice (prod smoke 2026-11):** `google/gemini-2.5-flash-lite` leaked
+  English chain-of-thought and tool names into owner-visible replies. Default is
+  therefore **flash** (not flash-lite). KAN-97 may re-evaluate with a harness.
+  Always stream with `sendReasoning: false`; sanitize visible text; never name
+  tools in the system prompt’s required owner output.
 - **Domain:** tools call existing services; **action tools never mutate** — they
   return proposals; mutation only on user Approve via existing Server Actions.
 - **Safety:** never auto-spend; never publish to Instagram from chat;
@@ -59,6 +62,8 @@ right-side sheet (header toggle + keyboard shortcut), and Home emphasizes chat.
 | `proposeGenerateStrategy` | proposal | operator | **no** → `generateContentStrategy` | “Create this week’s plan?” |
 | `proposeApproveStrategy` | proposal | operator | **no** → `approveContentStrategy` | “Approve this plan?” |
 | `proposeApprovePendingVideo` | proposal | client + operator | **no** → `decideApproval` | “Approve this video?” |
+| `proposeGenerateScripts` | proposal | operator | **no** → `generateReelScripts` | “Write this week’s videos?” |
+| `proposeGenerateVideos` | proposal | operator | **no** → prepare scripts; paid media needs cost card (KAN-93) | “Create the videos?” |
 
 Later: script/video preview cards, spend confirm before paid generation, photo/
 presenter setup via chat, MCP-UI host, thread persistence.

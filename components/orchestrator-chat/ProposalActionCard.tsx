@@ -14,6 +14,7 @@ import {
 import { approveContentStrategy } from "@/lib/content-strategy/actions/approve-content-strategy";
 import { generateContentStrategy } from "@/lib/content-strategy/actions/generate-content-strategy";
 import { decideApproval } from "@/lib/approvals/actions/decide-approval";
+import { generateReelScripts } from "@/lib/reel-scripts/actions/generate-reel-scripts";
 
 export type ProposalCardCopy = {
   title: string;
@@ -56,21 +57,43 @@ type ApproveVideoProposal = ProposalBase & {
   captionPreview?: string;
 };
 
+type GenerateScriptsProposal = ProposalBase & {
+  kind: "generate_scripts";
+  weekStart: string;
+  action: "generateReelScripts";
+  pendingSlotCount?: number;
+};
+
+type GenerateVideosProposal = ProposalBase & {
+  kind: "generate_videos";
+  weekStart: string;
+  action: "generateReelScripts";
+  readyScriptCount?: number;
+  paidMediaRequiresCostConfirm: true;
+};
+
 export type KnownProposal =
   | GenerateProposal
   | ApproveStrategyProposal
-  | ApproveVideoProposal;
+  | ApproveVideoProposal
+  | GenerateScriptsProposal
+  | GenerateVideosProposal;
 
 type ProposalActionCardProps = {
   proposal: KnownProposal;
   copy: ProposalCardCopy;
+  onChangeSomething?: () => void;
 };
 
 function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-export function ProposalActionCard({ proposal, copy }: ProposalActionCardProps) {
+export function ProposalActionCard({
+  proposal,
+  copy,
+  onChangeSomething,
+}: ProposalActionCardProps) {
   const [pending, startTransition] = useTransition();
   const [done, setDone] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -88,6 +111,16 @@ export function ProposalActionCard({ proposal, copy }: ProposalActionCardProps) 
         } else if (proposal.kind === "approve_strategy") {
           const result = await approveContentStrategy({
             strategyId: proposal.strategyId,
+            weekStart: proposal.weekStart,
+          });
+          ok = result.ok === true;
+        } else if (
+          proposal.kind === "generate_scripts" ||
+          proposal.kind === "generate_videos"
+        ) {
+          // Paid media (HeyGen / stock / TTS) waits for KAN-93 cost card.
+          // Approve here prepares write-ups via existing generateReelScripts.
+          const result = await generateReelScripts({
             weekStart: proposal.weekStart,
           });
           ok = result.ok === true;
@@ -145,7 +178,13 @@ export function ProposalActionCard({ proposal, copy }: ProposalActionCardProps) 
           >
             {pending ? copy.approving : copy.approve}
           </Button>
-          <Button type="button" variant="ghost" className="text-dim" disabled={pending}>
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-dim"
+            disabled={pending}
+            onClick={() => onChangeSomething?.()}
+          >
             {copy.changeSomething}
           </Button>
         </CardFooter>

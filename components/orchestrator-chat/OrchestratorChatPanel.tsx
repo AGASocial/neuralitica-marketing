@@ -19,8 +19,10 @@ import {
 } from "@/components/orchestrator-chat/StatusCards";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import type { Locale } from "@/lib/i18n/locales";
 import { prepareAvatarReferenceUpload } from "@/lib/media/prepare-avatar-reference-upload";
 import { uploadAvatarReferenceAsset } from "@/lib/media/upload-avatar-reference-asset";
+import { sanitizeOrchestratorVisibleText } from "@/lib/orchestrator-chat/sanitize-visible-text";
 
 export type OrchestratorChatCopy = {
   title: string;
@@ -42,6 +44,7 @@ export type OrchestratorChatCopy = {
 
 type OrchestratorChatPanelProps = {
   copy: OrchestratorChatCopy;
+  locale: Locale;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -74,6 +77,16 @@ function asProposal(output: unknown): KnownProposal | null {
   if (p.kind === "approve_pending_video" && typeof p.approvalId === "string") {
     return p as KnownProposal;
   }
+  if (p.kind === "generate_scripts" && typeof p.weekStart === "string") {
+    return p as KnownProposal;
+  }
+  if (
+    p.kind === "generate_videos" &&
+    typeof p.weekStart === "string" &&
+    p.paidMediaRequiresCostConfirm === true
+  ) {
+    return p as KnownProposal;
+  }
   return null;
 }
 
@@ -102,20 +115,32 @@ export function OrchestratorChatToggle({
   );
 }
 
-export function OrchestratorChatPanel({ copy }: OrchestratorChatPanelProps) {
+export function OrchestratorChatPanel({
+  copy,
+  locale,
+}: OrchestratorChatPanelProps) {
   const { open, setOpen } = useOrchestratorChat();
   const [input, setInput] = useState("");
   const [attachPending, setAttachPending] = useState(false);
   const [attachError, setAttachError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const transport = useMemo(
-    () => new DefaultChatTransport({ api: "/api/chat" }),
-    [],
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: { locale },
+      }),
+    [locale],
   );
 
   const { messages, sendMessage, status, error } = useChat({ transport });
   const busy = status === "submitted" || status === "streaming" || attachPending;
+
+  function focusChangeSomething() {
+    inputRef.current?.focus();
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -207,10 +232,22 @@ export function OrchestratorChatPanel({ copy }: OrchestratorChatPanelProps) {
                 }
               >
                 {message.parts.map((part, index) => {
+                  // Never render model reasoning / CoT parts
+                  if (part.type === "reasoning") {
+                    return null;
+                  }
+
                   if (part.type === "text") {
+                    const visible =
+                      message.role === "assistant"
+                        ? sanitizeOrchestratorVisibleText(part.text)
+                        : part.text;
+                    if (!visible) {
+                      return null;
+                    }
                     return (
                       <p key={`${message.id}-t-${index}`} className="whitespace-pre-wrap">
-                        {part.text}
+                        {visible}
                       </p>
                     );
                   }
@@ -257,7 +294,9 @@ export function OrchestratorChatPanel({ copy }: OrchestratorChatPanelProps) {
                   if (
                     (part.type === "tool-proposeGenerateStrategy" ||
                       part.type === "tool-proposeApproveStrategy" ||
-                      part.type === "tool-proposeApprovePendingVideo") &&
+                      part.type === "tool-proposeApprovePendingVideo" ||
+                      part.type === "tool-proposeGenerateScripts" ||
+                      part.type === "tool-proposeGenerateVideos") &&
                     part.state === "output-available"
                   ) {
                     const proposal = asProposal(part.output);
@@ -267,6 +306,7 @@ export function OrchestratorChatPanel({ copy }: OrchestratorChatPanelProps) {
                           key={`${message.id}-p-${index}`}
                           proposal={proposal}
                           copy={copy.proposal}
+                          onChangeSomething={focusChangeSomething}
                         />
                       );
                     }
@@ -322,6 +362,7 @@ export function OrchestratorChatPanel({ copy }: OrchestratorChatPanelProps) {
                 {copy.placeholder}
               </label>
               <textarea
+                ref={inputRef}
                 id="orchestrator-chat-input"
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
