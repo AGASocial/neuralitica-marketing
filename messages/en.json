@@ -87,6 +87,7 @@
     "error": "Something went wrong. Please try again.",
     "attachError": "We could not save that photo. Check the file and try again.",
     "attachedNote": "I attached a photo ({filename}). Reference id: {assetId}",
+    "newMessages": "↓ New messages",
     "proposal": {
       "title": "Please confirm",
       "approve": "Approve",
