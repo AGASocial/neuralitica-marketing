@@ -5,6 +5,8 @@ import {
   AI_GATEWAY_HEYGEN_UNIT_COST_CENTS_PER_SECOND,
 } from "@/lib/contracts/ai-gateway-video";
 import { resolveAvatarRequestDurationSec } from "@/lib/video-jobs/resolve-avatar-request-duration-sec";
+import { planAvatarVoiceoverSegments } from "@/lib/video-jobs/plan-avatar-voiceover-segments";
+import { materializeAvatarSegmentVoiceovers } from "@/lib/video-jobs/materialize-avatar-segment-voiceovers";
 import {
   HEYGEN_FALLBACK_RATIONALE_KEY,
   HEYGEN_HIGH_TIER_RATIONALE_KEY,
@@ -42,6 +44,7 @@ import { loadReelScriptForVideoJob } from "./load-reel-script-for-video-job";
 import {
   mapVideoJobRow,
   VIDEO_JOB_HEYGEN_FALLBACK_OVERRIDES_TABLE,
+  VIDEO_JOB_SELECT_COLUMNS,
   VIDEO_JOBS_TABLE,
 } from "./video-job-row";
 
@@ -58,16 +61,25 @@ async function resolveHeygenAvatarProviderKey(): Promise<HeygenAvatarProviderKey
   if ("loadFailed" in catalogResult && catalogResult.loadFailed) {
     return null;
   }
+  // Prefer DIRECT heygen_high when active + HEYGEN_API_KEY present; Gateway fallback.
+  const direct = catalogResult.providers.find(
+    (entry) => entry.key === LEGACY_HEYGEN_PROVIDER_KEY && entry.active,
+  );
+  const hasDirectKey =
+    typeof process.env.HEYGEN_API_KEY === "string" &&
+    process.env.HEYGEN_API_KEY.trim().length > 0;
+  if (direct && hasDirectKey) {
+    return LEGACY_HEYGEN_PROVIDER_KEY;
+  }
   const gateway = catalogResult.providers.find(
     (entry) => entry.key === AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY && entry.active,
   );
   if (gateway) {
     return AI_GATEWAY_HEYGEN_AVATAR_PROVIDER_KEY;
   }
-  const legacy = catalogResult.providers.find(
-    (entry) => entry.key === LEGACY_HEYGEN_PROVIDER_KEY && entry.active,
-  );
-  return legacy ? LEGACY_HEYGEN_PROVIDER_KEY : null;
+  // Direct catalog row active but key missing → still surface as unavailable
+  // only after Gateway also missing.
+  return direct ? LEGACY_HEYGEN_PROVIDER_KEY : null;
 }
 
 async function verifyMediaAssetOwned(params: {
@@ -373,10 +385,21 @@ export async function createHeygenTalkingHeadVideoJob(
       assetId: voiceoverAssetId,
       clientId: input.clientId,
     });
-    const targetDurationSec = resolveAvatarRequestDurationSec({
-      voiceoverDurationSec,
-      scriptTargetDurationSec,
+    // Prefer VO length; segments further ceil per-slice for the provider request.
+    const plannedSegments = planAvatarVoiceoverSegments({
+      voiceoverText: script.package.voiceoverText,
+      totalDurationSec:
+        voiceoverDurationSec ??
+        resolveAvatarRequestDurationSec({
+          voiceoverDurationSec,
+          scriptTargetDurationSec,
+        }),
     });
+    // V1 create path: one job for the first (or only) segment covering the
+    // full VO when a single segment is planned. Multi-segment enqueue creates
+    // one job per planned slice; each uses requestDurationSec = ceil(audio).
+    const primarySegment = plannedSegments[0]!;
+    const targetDurationSec = primarySegment.requestDurationSec;
 
     const isOwnAvatar =
       script.visualMode === "own_avatar" || script.modalidad === "own_avatar";
@@ -447,13 +470,20 @@ export async function createHeygenTalkingHeadVideoJob(
       };
     }
 
-    const estimate = await adapter.estimateCost(resolvedInput);
-    // confirmEstimateCents is presentation-only; server estimate is authoritative.
+    // Budget against the sum of planned segment request durations.
+    let totalEstimatedCostCents = 0;
+    for (const segment of plannedSegments) {
+      const segmentEstimate = await adapter.estimateCost({
+        ...resolvedInput,
+        targetDurationSec: segment.requestDurationSec,
+      });
+      totalEstimatedCostCents += segmentEstimate.estimatedCostCents;
+    }
 
     const budgetResult = await assertReelBudgetAllowsEstimatedSpend({
       clientId: input.clientId,
       reelScriptId: input.reelScriptId,
-      estimatedCostCents: estimate.estimatedCostCents,
+      estimatedCostCents: totalEstimatedCostCents,
       operatorClientId: operator.id,
       providerTier: "high",
     });
@@ -475,8 +505,6 @@ export async function createHeygenTalkingHeadVideoJob(
       }
     }
 
-    const createResult = await adapter.createJob(resolvedInput);
-
     if (!isSupabaseConfigured()) {
       return videoJobMutationError("INTERNAL_ERROR");
     }
@@ -485,113 +513,145 @@ export async function createHeygenTalkingHeadVideoJob(
     const usedOperatorFallback = eligibility.path === "operator_fallback";
     const parentJobId = usedOperatorFallback ? eligibility.parentJobId : null;
 
-    const { data: inserted, error: insertError } = await supabase
-      .from(VIDEO_JOBS_TABLE)
-      .insert({
-        client_id: input.clientId,
-        reel_script_id: input.reelScriptId,
-        provider_key: providerKey,
-        provider_tier: "high",
-        asset_role: "primary",
-        external_job_id: createResult.externalJobId,
-        status: createResult.status,
-        estimated_cost_cents: estimate.estimatedCostCents,
-        portrait_asset_id: portraitAssetIdForInsert,
-        voiceover_asset_id: voiceoverAssetId,
-        parent_job_id: parentJobId,
-        attempt: 1,
-        operator_client_id: operator.id,
-      })
-      .select(
-        "id, client_id, reel_script_id, provider_key, provider_tier, asset_role, external_job_id, status, estimated_cost_cents, actual_cost_cents, failure_reason, portrait_asset_id, voiceover_asset_id, output_media_asset_id, parent_job_id, spend_event_id, operator_client_id, attempt, created_at, updated_at",
-      )
-      .single();
-
-    if (insertError || !inserted) {
+    let materializedSegments;
+    try {
+      materializedSegments = await materializeAvatarSegmentVoiceovers({
+        clientId: input.clientId,
+        reelScriptId: input.reelScriptId,
+        fullVoiceoverAssetId: voiceoverAssetId,
+        segments: plannedSegments,
+      });
+    } catch (error) {
+      console.error("[video-jobs] avatar segment voiceover materialize failed", {
+        name: error instanceof Error ? error.name : "unknown",
+      });
       return videoJobMutationError("INTERNAL_ERROR");
     }
 
-    const jobRow = mapVideoJobRow(inserted as Record<string, unknown>);
-    if (!jobRow) {
-      return videoJobMutationError("INTERNAL_ERROR");
-    }
+    let firstJobId: string | null = null;
+    let firstStatus = "queued";
+    let jobsEstimated = 0;
 
-    if (usedOperatorFallback && parentJobId) {
-      const { error: overrideError } = await supabase
-        .from(VIDEO_JOB_HEYGEN_FALLBACK_OVERRIDES_TABLE)
+    for (const segment of materializedSegments) {
+      const segmentInput = {
+        ...resolvedInput,
+        // Audio-driven Direct path follows uploaded audio length; gateway clamps 5–15.
+        // Always request ceil(segment audio) so lip-sync length follows VO slice.
+        targetDurationSec: segment.requestDurationSec,
+        voiceoverAssetId: segment.voiceoverAssetId,
+      };
+      const createResult = await adapter.createJob(segmentInput);
+      const segmentEstimate = await adapter.estimateCost(segmentInput);
+      jobsEstimated += segmentEstimate.estimatedCostCents;
+
+      const { data: inserted, error: insertError } = await supabase
+        .from(VIDEO_JOBS_TABLE)
         .insert({
           client_id: input.clientId,
           reel_script_id: input.reelScriptId,
+          provider_key: providerKey,
+          provider_tier: "high",
+          asset_role: "primary",
+          external_job_id: createResult.externalJobId,
+          status: createResult.status,
+          estimated_cost_cents: segmentEstimate.estimatedCostCents,
+          portrait_asset_id: portraitAssetIdForInsert,
+          voiceover_asset_id: segment.voiceoverAssetId,
           parent_job_id: parentJobId,
-          new_job_id: jobRow.id,
+          attempt: 1,
           operator_client_id: operator.id,
-          rationale_key: HEYGEN_FALLBACK_RATIONALE_KEY,
-        });
-      if (overrideError) {
-        // Vendor job + DB row already exist — compensate so we do not leave a
-        // queued job without spend/poll (QA M2). Mark failed; skip spend+poll.
-        console.error("[video-jobs] heygen fallback override insert failed", {
-          jobId: jobRow.id,
-          parentJobId,
-          message:
-            overrideError instanceof Error
-              ? overrideError.message
-              : typeof overrideError === "object" &&
-                  overrideError &&
-                  "message" in overrideError
-                ? String((overrideError as { message: unknown }).message)
-                : "unknown",
-        });
-        await supabase
-          .from(VIDEO_JOBS_TABLE)
-          .update({
-            status: "failed",
-            failure_reason: "heygen_fallback_audit_failed",
-          })
-          .eq("id", jobRow.id);
+          segment_index: segment.index,
+          segment_start_sec: segment.startSec,
+          segment_duration_sec: segment.durationSec,
+        })
+        .select(VIDEO_JOB_SELECT_COLUMNS)
+        .single();
+
+      if (insertError || !inserted) {
         return videoJobMutationError("INTERNAL_ERROR");
       }
+
+      const jobRow = mapVideoJobRow(inserted as Record<string, unknown>);
+      if (!jobRow) {
+        return videoJobMutationError("INTERNAL_ERROR");
+      }
+
+      if (firstJobId === null) {
+        firstJobId = jobRow.id;
+        firstStatus = createResult.status;
+      }
+
+      if (usedOperatorFallback && parentJobId && segment.index === 0) {
+        const { error: overrideError } = await supabase
+          .from(VIDEO_JOB_HEYGEN_FALLBACK_OVERRIDES_TABLE)
+          .insert({
+            client_id: input.clientId,
+            reel_script_id: input.reelScriptId,
+            parent_job_id: parentJobId,
+            new_job_id: jobRow.id,
+            operator_client_id: operator.id,
+            rationale_key: HEYGEN_FALLBACK_RATIONALE_KEY,
+          });
+        if (overrideError) {
+          console.error("[video-jobs] heygen fallback override insert failed", {
+            jobId: jobRow.id,
+            parentJobId,
+          });
+          await supabase
+            .from(VIDEO_JOBS_TABLE)
+            .update({
+              status: "failed",
+              failure_reason: "heygen_fallback_audit_failed",
+            })
+            .eq("id", jobRow.id);
+          return videoJobMutationError("INTERNAL_ERROR");
+        }
+      }
+
+      const rationaleKey = usedOperatorFallback
+        ? HEYGEN_FALLBACK_RATIONALE_KEY
+        : HEYGEN_HIGH_TIER_RATIONALE_KEY;
+
+      await logProviderDecision({
+        clientId: input.clientId,
+        reelScriptId: input.reelScriptId,
+        jobKind: "talking_head_generate",
+        assetRole: "talking_head",
+        providerTier: "high",
+        providerKey,
+        estimatedCostCents: segmentEstimate.estimatedCostCents,
+        rationaleKey,
+        operatorClientId: operator.id,
+      });
+
+      const { spendEventId } = await recordReelSpendEvent({
+        clientId: input.clientId,
+        reelScriptId: input.reelScriptId,
+        assetRole: "talking_head",
+        jobKind: "talking_head_generate",
+        estimatedCostCents: segmentEstimate.estimatedCostCents,
+        actualCostCents: null,
+        operatorClientId: operator.id,
+        providerKey,
+      });
+
+      await supabase
+        .from(VIDEO_JOBS_TABLE)
+        .update({ spend_event_id: spendEventId })
+        .eq("id", jobRow.id);
+
+      enqueueVideoJobPoll(jobRow.id);
     }
 
-    const rationaleKey = usedOperatorFallback
-      ? HEYGEN_FALLBACK_RATIONALE_KEY
-      : HEYGEN_HIGH_TIER_RATIONALE_KEY;
-
-    await logProviderDecision({
-      clientId: input.clientId,
-      reelScriptId: input.reelScriptId,
-      jobKind: "talking_head_generate",
-      assetRole: "talking_head",
-      providerTier: "high",
-      providerKey,
-      estimatedCostCents: estimate.estimatedCostCents,
-      rationaleKey,
-      operatorClientId: operator.id,
-    });
-
-    const { spendEventId } = await recordReelSpendEvent({
-      clientId: input.clientId,
-      reelScriptId: input.reelScriptId,
-      assetRole: "talking_head",
-      jobKind: "talking_head_generate",
-      estimatedCostCents: estimate.estimatedCostCents,
-      actualCostCents: null,
-      operatorClientId: operator.id,
-      providerKey,
-    });
-
-    await supabase
-      .from(VIDEO_JOBS_TABLE)
-      .update({ spend_event_id: spendEventId })
-      .eq("id", jobRow.id);
-
-    enqueueVideoJobPoll(jobRow.id);
+    if (!firstJobId) {
+      return videoJobMutationError("INTERNAL_ERROR");
+    }
 
     return createHeygenTalkingHeadVideoJobSuccessSchema.parse({
       ok: true,
-      jobId: jobRow.id,
-      status: createResult.status,
-      estimatedCostCents: estimate.estimatedCostCents,
+      jobId: firstJobId,
+      status: firstStatus,
+      estimatedCostCents: jobsEstimated,
       attempt: 1,
       usedOperatorFallback,
     });

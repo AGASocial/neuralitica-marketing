@@ -387,7 +387,7 @@ describe("US-8.1 response normalization", () => {
         portraitAssetId: "00000000-0000-4000-8000-000000000010",
         voiceoverAssetId: "00000000-0000-4000-8000-000000000011",
       });
-      assert.equal(estimate.estimatedCostCents, 60);
+      assert.equal(estimate.estimatedCostCents, 120);
     } finally {
       if (previousToken === undefined) {
         delete process.env.HEYGEN_API_KEY;
@@ -510,6 +510,9 @@ describe("US-8.1 module boundaries", () => {
           continue;
         }
         if (normalized.endsWith("/lib/contracts/heygen-high.ts")) {
+          continue;
+        }
+        if (normalized.includes("/supabase/migrations/")) {
           continue;
         }
         assert.match(

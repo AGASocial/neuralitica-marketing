@@ -35,7 +35,8 @@ export const reelScriptPackageSchema = z
     cta: z.string().trim().min(1).max(200),
     onScreenText: z.string().trim().min(1).max(500),
     voiceoverText: z.string().trim().min(1).max(2000),
-    targetDurationSec: z.number().int().min(15).max(45),
+    /** Union of avatar (8–15) and faceless (15–45); modality clamp is post-LLM. */
+    targetDurationSec: z.number().int().min(8).max(45),
     brollBeats: z.array(reelScriptBrollBeatSchema).max(8).optional(),
     coldOpenNotes: z.string().trim().min(1).max(500).optional(),
     editingNotes: z.string().trim().min(1).max(1000).optional(),
@@ -76,7 +77,7 @@ export const reelScriptListItemSchema = z
     goal: z.string(),
     formatoPlaybookSlug: z.string(),
     modalidad: visualModalitySchema,
-    targetDurationSec: z.number().int().min(15).max(45).nullable(),
+    targetDurationSec: z.number().int().min(8).max(45).nullable(),
     status: z.enum(["pending", "generated"]),
     package: reelScriptPackageSchema.nullable(),
     mustDiscloseNotOwner: z.boolean().nullable(),

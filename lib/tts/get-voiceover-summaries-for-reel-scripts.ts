@@ -96,10 +96,17 @@ export async function getVoiceoverSummariesForReelScripts(params: {
 
   for (const raw of data) {
     const row = raw as VoiceoverAssetRow;
-    const meta = row.metadata as { reelScriptId?: unknown } | null;
+    const meta = row.metadata as {
+      reelScriptId?: unknown;
+      source?: unknown;
+    } | null;
     const reelScriptId =
       meta && typeof meta.reelScriptId === "string" ? meta.reelScriptId : null;
     if (!reelScriptId || !scriptIdSet.has(reelScriptId)) {
+      continue;
+    }
+    // Ignore ffmpeg-sliced segment clips — assembly soundtrack is the full VO.
+    if (meta?.source === "avatar_segment_split") {
       continue;
     }
     if (!latestByReel.has(reelScriptId)) {
@@ -140,7 +147,13 @@ export async function findLatestVoiceoverAssetId(params: {
 
   for (const raw of data) {
     const row = raw as { id: string; metadata: unknown };
-    const meta = row.metadata as { reelScriptId?: unknown } | null;
+    const meta = row.metadata as {
+      reelScriptId?: unknown;
+      source?: unknown;
+    } | null;
+    if (meta?.source === "avatar_segment_split") {
+      continue;
+    }
     if (meta?.reelScriptId === params.reelScriptId) {
       return row.id;
     }

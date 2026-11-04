@@ -26,6 +26,13 @@ import { extractJsonFromLlmContent } from "@/lib/agents/content/generate-weekly-
 import { fitVoiceoverToWordBudget } from "@/lib/agents/content/fit-voiceover-to-word-budget";
 import { looksLikeTruncatedVoiceoverTail } from "@/lib/agents/content/voiceover-completeness";
 import { buildGenericDisclosurePromptHint } from "@/lib/qa/build-generic-disclosure-prompt-hint";
+import {
+  AVATAR_REEL_TARGET_DURATION_SEC_MAX,
+  AVATAR_REEL_TARGET_DURATION_SEC_MIN,
+  clampReelTargetDurationSec,
+  isAvatarVisualModality,
+  reelTargetDurationBoundsForModality,
+} from "@/lib/contracts/avatar-reel-duration";
 import { REEL_SCRIPT_WORDS_PER_SECOND_TARGET } from "@/lib/contracts/reel-script-readability";
 import { computeScriptReadabilityMetrics } from "@/lib/reel-scripts/compute-script-readability";
 import type { LlmProviderAdapter } from "@/lib/providers/provider-adapters";
@@ -253,10 +260,18 @@ export function buildReelScriptPrompts(
     locale,
   );
 
+  const durationBounds = reelTargetDurationBoundsForModality(modalidad);
+  const isAvatar = isAvatarVisualModality(modalidad);
   const durationHint =
     formatoHints.duracionIdealSeg !== null
-      ? `Target duration hint from formato: ${formatoHints.duracionIdealSeg} seconds (must still be 15–45).`
-      : "Target duration must be an integer between 15 and 45 seconds inclusive.";
+      ? `Target duration hint from formato: ${formatoHints.duracionIdealSeg} seconds (must still be ${durationBounds.min}–${durationBounds.max} for this modality).`
+      : `Target duration must be an integer between ${durationBounds.min} and ${durationBounds.max} seconds inclusive for modality ${modalidad}.`;
+  const wordBudgetExampleSec = isAvatar
+    ? AVATAR_REEL_TARGET_DURATION_SEC_MIN
+    : 15;
+  const wordBudgetExampleHighSec = isAvatar
+    ? AVATAR_REEL_TARGET_DURATION_SEC_MAX
+    : 30;
 
   const systemPrompt = [
     "You are a server-side Instagram Reels video script agent.",
@@ -272,7 +287,7 @@ export function buildReelScriptPrompts(
     '  "cta": string (max 200 chars),',
     '  "onScreenText": string (max 500 chars; newlines OK for beat lines),',
     '  "voiceoverText": string (max 2000 chars),',
-    '  "targetDurationSec": integer 15–45,',
+    `  "targetDurationSec": integer ${durationBounds.min}–${durationBounds.max},`,
     '  "brollBeats"?: string[] (max 8 items, each max 300 chars),',
     '  "coldOpenNotes"?: string (max 500 chars),',
     '  "editingNotes"?: string (max 1000 chars)',
@@ -281,7 +296,10 @@ export function buildReelScriptPrompts(
     "Hard rules:",
     `- Production modality for this slot (trusted): ${modalidad}`,
     durationHint,
-    `- voiceoverText word budget: hit ~${REEL_SCRIPT_WORDS_PER_SECOND_TARGET} words per second of targetDurationSec (e.g. 15s → ~${Math.round(15 * REEL_SCRIPT_WORDS_PER_SECOND_TARGET)} words; 30s → ~${Math.round(30 * REEL_SCRIPT_WORDS_PER_SECOND_TARGET)} words). Stay within 90–100% of that budget — too few words makes TTS finish early.`,
+    isAvatar
+      ? `- Avatar / talking-head reels MUST be short: ${AVATAR_REEL_TARGET_DURATION_SEC_MIN}–${AVATAR_REEL_TARGET_DURATION_SEC_MAX} seconds (prefer ~12s).`
+      : "- Faceless reels keep the longer 15–45 second range.",
+    `- voiceoverText word budget: hit ~${REEL_SCRIPT_WORDS_PER_SECOND_TARGET} words per second of targetDurationSec (e.g. ${wordBudgetExampleSec}s → ~${Math.round(wordBudgetExampleSec * REEL_SCRIPT_WORDS_PER_SECOND_TARGET)} words; ${wordBudgetExampleHighSec}s → ~${Math.round(wordBudgetExampleHighSec * REEL_SCRIPT_WORDS_PER_SECOND_TARGET)} words). Stay within 90–100% of that budget — too few words makes TTS finish early.`,
     "- voiceoverText MUST be a complete spoken script that ends in a finished sentence with terminal punctuation (. ! ? …). Never stop mid-clause (forbidden tails like \"Recuerda, yo soy\" / \"Remember, I am\").",
     "- Prefer dropping an earlier full sentence over cutting the closing CTA mid-sentence.",
     "- Include brollBeats, coldOpenNotes, and/or editingNotes when formato or táctica editing hints reference cold open, rewind, or B-roll structure.",
@@ -432,10 +450,15 @@ export async function generateReelScriptForSlot(
       continue;
     }
 
+    const clampedTargetDurationSec = clampReelTargetDurationSec({
+      targetDurationSec: schema.data.targetDurationSec,
+      modalidad: params.slotContext.modalidad,
+    });
+
     // Post-LLM: fit VO to word budget at sentence boundaries (never mid-clause).
     const fitted = fitVoiceoverToWordBudget({
       voiceoverText: schema.data.voiceoverText,
-      targetDurationSec: schema.data.targetDurationSec,
+      targetDurationSec: clampedTargetDurationSec,
     });
     if (looksLikeTruncatedVoiceoverTail(fitted.voiceoverText)) {
       lastError = new ReelScriptAgentError(
@@ -447,6 +470,7 @@ export async function generateReelScriptForSlot(
 
     const packageOut: ReelScriptPackage = {
       ...schema.data,
+      targetDurationSec: clampedTargetDurationSec,
       voiceoverText: fitted.voiceoverText,
     };
     const readability = computeScriptReadabilityMetrics(packageOut);

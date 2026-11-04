@@ -587,9 +587,16 @@ describe("reel script contracts (US-5.1)", () => {
     assert.equal(
       reelScriptPackageSchema.safeParse({
         ...VALID_SCRIPT_PACKAGE,
-        targetDurationSec: 10,
+        targetDurationSec: 7,
       }).success,
       false,
+    );
+    assert.equal(
+      reelScriptPackageSchema.safeParse({
+        ...VALID_SCRIPT_PACKAGE,
+        targetDurationSec: 10,
+      }).success,
+      true,
     );
     assert.equal(
       reelScriptPackageSchema.safeParse({

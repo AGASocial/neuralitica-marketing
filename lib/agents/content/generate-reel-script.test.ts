@@ -174,7 +174,7 @@ describe("reelScriptPackageSchema", () => {
     assert.equal(result.success, true);
   });
 
-  it("rejects targetDurationSec outside 15-45", async () => {
+  it("rejects targetDurationSec outside 8-45", async () => {
     const { reelScriptPackageSchema } = await import(
       "@/lib/contracts/reel-script"
     );
@@ -185,9 +185,20 @@ describe("reelScriptPackageSchema", () => {
         cta: "CTA",
         onScreenText: "Text",
         voiceoverText: "VO",
-        targetDurationSec: 10,
+        targetDurationSec: 7,
       }).success,
       false,
+    );
+    assert.equal(
+      reelScriptPackageSchema.safeParse({
+        hook: "Hook",
+        body: "Body",
+        cta: "CTA",
+        onScreenText: "Text",
+        voiceoverText: "VO",
+        targetDurationSec: 10,
+      }).success,
+      true,
     );
     assert.equal(
       reelScriptPackageSchema.safeParse({
@@ -496,7 +507,7 @@ describe("generate-reel-script agent module", () => {
             cta: "CTA",
             onScreenText: "Text",
             voiceoverText: "VO",
-            targetDurationSec: 10,
+            targetDurationSec: 7,
           }),
         ),
       (error: unknown) => {

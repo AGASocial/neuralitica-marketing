@@ -2,18 +2,14 @@ import "server-only";
 
 import {
   HEYGEN_ALLOWED_OUTPUT_HOSTS,
-  HEYGEN_API_BASE_URL,
-  HEYGEN_API_KEY_HEADER,
   HEYGEN_AVATAR_ENGINE,
-  HEYGEN_CREATE_VIDEO_PATH,
-  HEYGEN_DEFAULT_CREATE_OPTIONS,
   HEYGEN_DEFAULT_AVATAR_ID_ENV,
+  HEYGEN_DEFAULT_CREATE_OPTIONS,
   HEYGEN_ENV_KEY_NAME,
   HEYGEN_FETCH_MAX_BYTES,
   HEYGEN_FETCH_MAX_REDIRECTS,
   HEYGEN_FETCH_TIMEOUT_MS,
   HEYGEN_FORBIDDEN_ENGINE_TYPES,
-  HEYGEN_GET_VIDEO_PATH_PREFIX,
   HEYGEN_UNIT_COST_CENTS_PER_SECOND,
   PROVIDER_CONFIG_MISSING,
 } from "@/lib/contracts/heygen-high";
@@ -24,6 +20,7 @@ import {
   type CreateVideoJobInput,
   type ExternalJobId,
 } from "@/lib/contracts/providers";
+import { cropPortraitTo9x16 } from "@/lib/media/crop-portrait-to-9x16";
 import { resolveMediaAssetUrlForProvider } from "@/lib/media/resolve-media-asset-url-for-provider";
 import {
   uploadGeneratedVideoBuffer,
@@ -40,6 +37,19 @@ import {
 } from "@/lib/providers/normalize-provider-response";
 import { optionalDurationSecFromBuffer } from "@/lib/providers/video/optional-duration-sec-from-buffer";
 import type { VideoProviderAdapter } from "@/lib/providers/provider-adapters";
+import {
+  getCachedHeygenLook,
+  upsertCachedHeygenLook,
+} from "@/lib/providers/video/heygen-look-cache";
+import {
+  heygenCreateAudioDrivenAvatarVideo,
+  heygenCreatePhotoAvatar,
+  heygenGetVideo,
+  heygenUploadAsset,
+  heygenWaitForLookCompleted,
+  readHeygenResponseErrorMessage,
+  type HeygenV3ClientDeps,
+} from "@/lib/providers/video/heygen-v3-client";
 
 type HeygenVideoPayload = {
   video_id?: unknown;
@@ -78,6 +88,11 @@ export type CreateHeygenHighAdapterParams = {
   heygenAvatarId?: string;
   /** Pre-seed job context for poller paths (US-8.4 L1 — job-row tenant context). */
   initialJobContexts?: Map<ExternalJobId, JobContext>;
+  getCachedLook?: typeof getCachedHeygenLook;
+  upsertCachedLook?: typeof upsertCachedHeygenLook;
+  sleep?: (ms: number) => Promise<void>;
+  /** Test seam — skip sharp crop when injecting pre-cropped bytes. */
+  cropPortrait?: typeof cropPortraitTo9x16;
 };
 
 function getHeygenApiKey(): string {
@@ -160,51 +175,6 @@ function assertNoForbiddenEngine(body: Record<string, unknown>): void {
   }
 }
 
-function buildCreateBody(params: {
-  mode: "own_avatar" | "generic_avatar";
-  audioUrl: string;
-  imageUrl?: string;
-  heygenAvatarId?: string;
-}): Record<string, unknown> {
-  if (params.mode === "own_avatar") {
-    if (!params.imageUrl) {
-      throw new ProviderAdapterError(
-        "INVALID_PROVIDER_INPUT",
-        "Portrait image URL is required for own_avatar HeyGen path",
-      );
-    }
-    const body: Record<string, unknown> = {
-      type: "image",
-      image: {
-        type: "url",
-        url: params.imageUrl,
-      },
-      audio_url: params.audioUrl,
-      ...HEYGEN_DEFAULT_CREATE_OPTIONS,
-    };
-    assertNoForbiddenEngine(body);
-    return body;
-  }
-
-  const avatarId = params.heygenAvatarId?.trim();
-  if (!avatarId) {
-    throw new ProviderAdapterError(
-      PROVIDER_CONFIG_MISSING,
-      "Provider is not configured",
-    );
-  }
-
-  const body: Record<string, unknown> = {
-    type: "avatar",
-    avatar_id: avatarId,
-    audio_url: params.audioUrl,
-    ...HEYGEN_DEFAULT_CREATE_OPTIONS,
-    engine: { ...HEYGEN_AVATAR_ENGINE },
-  };
-  assertNoForbiddenEngine(body);
-  return body;
-}
-
 function extractOutputUrl(payload: HeygenVideoPayload): string | undefined {
   const preferred = payload.video_url;
   if (typeof preferred === "string" && preferred.startsWith("https:")) {
@@ -217,75 +187,21 @@ function extractOutputUrl(payload: HeygenVideoPayload): string | undefined {
   return undefined;
 }
 
-function extractVideoId(payload: HeygenVideoPayload): unknown {
-  return payload.video_id ?? payload.id;
-}
-
-async function readResponseErrorMessage(
-  response: Response,
-  apiKey: string,
-): Promise<string> {
-  const text = await response.text();
-  if (text.trim().length === 0) {
-    return `Provider request failed (${response.status})`;
-  }
-
-  let candidate = text;
-  try {
-    const payload = JSON.parse(text) as HeygenApiResponse & {
-      detail?: unknown;
-      error?: unknown;
-      title?: unknown;
-    };
-    const raw =
-      payload.detail ??
-      payload.error ??
-      payload.message ??
-      payload.title ??
-      text;
-    candidate = typeof raw === "string" ? raw : JSON.stringify(raw);
-  } catch {
-    candidate = text;
-  }
-
-  if (apiKey.length > 0) {
-    candidate = candidate.split(apiKey).join("[redacted]");
-  }
-
-  return sanitizeProviderErrorMessage(candidate);
-}
-
-async function heygenRequest(
-  fetchImpl: typeof fetch,
-  apiKey: string,
-  path: string,
-  init?: RequestInit,
-): Promise<Response> {
-  const url = `${HEYGEN_API_BASE_URL}${path}`;
-  return fetchImpl(url, {
-    ...init,
-    headers: {
-      [HEYGEN_API_KEY_HEADER]: apiKey,
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-  });
-}
-
-async function downloadProviderOutput(
+async function downloadBytes(
   initialUrl: string,
-  allowedHosts: readonly string[],
+  allowedHosts: readonly string[] | null,
   fetchImpl: typeof fetch,
+  maxBytes: number,
 ): Promise<{ buffer: Buffer; contentType: string }> {
-  let currentUrl = validateProviderOutputUrl(initialUrl, allowedHosts);
+  let currentUrl =
+    allowedHosts === null
+      ? initialUrl
+      : validateProviderOutputUrl(initialUrl, allowedHosts);
   let redirects = 0;
 
   while (true) {
     const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      HEYGEN_FETCH_TIMEOUT_MS,
-    );
+    const timeout = setTimeout(() => controller.abort(), HEYGEN_FETCH_TIMEOUT_MS);
 
     let response: Response;
     try {
@@ -306,7 +222,6 @@ async function downloadProviderOutput(
           "Provider output redirect missing location",
         );
       }
-
       redirects += 1;
       if (redirects > HEYGEN_FETCH_MAX_REDIRECTS) {
         throw new ProviderAdapterError(
@@ -314,11 +229,11 @@ async function downloadProviderOutput(
           "Provider output exceeded redirect limit",
         );
       }
-
-      currentUrl = validateProviderOutputUrl(
-        new URL(location, currentUrl).href,
-        allowedHosts,
-      );
+      const next = new URL(location, currentUrl).href;
+      currentUrl =
+        allowedHosts === null
+          ? next
+          : validateProviderOutputUrl(next, allowedHosts);
       continue;
     }
 
@@ -326,29 +241,19 @@ async function downloadProviderOutput(
       throw new ProviderAdapterError(
         "PROVIDER_DOWNLOAD_FAILED",
         sanitizeProviderErrorMessage(
-          `Provider output download failed (${response.status})`,
+          `Download failed (${response.status})`,
         ),
       );
     }
 
     const contentType = response.headers.get("content-type") ?? "";
-    if (
-      !contentType.startsWith("video/") &&
-      contentType !== "application/octet-stream"
-    ) {
-      throw new ProviderAdapterError(
-        "PROVIDER_DOWNLOAD_FAILED",
-        "Provider output content type is not video",
-      );
-    }
-
     const contentLength = response.headers.get("content-length");
     if (contentLength) {
       const size = Number.parseInt(contentLength, 10);
-      if (Number.isFinite(size) && size > HEYGEN_FETCH_MAX_BYTES) {
+      if (Number.isFinite(size) && size > maxBytes) {
         throw new ProviderAdapterError(
           "PROVIDER_DOWNLOAD_FAILED",
-          "Provider output exceeds maximum size",
+          "Download exceeds maximum size",
         );
       }
     }
@@ -359,22 +264,18 @@ async function downloadProviderOutput(
     if (!body) {
       throw new ProviderAdapterError(
         "PROVIDER_DOWNLOAD_FAILED",
-        "Provider output body is empty",
+        "Download body is empty",
       );
     }
-
     const reader = body.getReader();
     while (true) {
       const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-
+      if (done) break;
       totalBytes += value.byteLength;
-      if (totalBytes > HEYGEN_FETCH_MAX_BYTES) {
+      if (totalBytes > maxBytes) {
         throw new ProviderAdapterError(
           "PROVIDER_DOWNLOAD_FAILED",
-          "Provider output exceeds maximum size",
+          "Download exceeds maximum size",
         );
       }
       chunks.push(Buffer.from(value));
@@ -382,11 +283,60 @@ async function downloadProviderOutput(
 
     return {
       buffer: Buffer.concat(chunks),
-      contentType: contentType.startsWith("video/")
-        ? contentType.split(";")[0]!.trim()
-        : "video/mp4",
+      contentType: contentType.split(";")[0]?.trim() || "application/octet-stream",
     };
   }
+}
+
+async function resolveOrCreatePhotoLook(params: {
+  deps: HeygenV3ClientDeps;
+  clientId: string;
+  portraitAssetId: string;
+  portraitUrl: string;
+  fetchImpl: typeof fetch;
+  getCachedLook: typeof getCachedHeygenLook;
+  upsertCachedLook: typeof upsertCachedHeygenLook;
+  cropPortrait: typeof cropPortraitTo9x16;
+}): Promise<string> {
+  const cached = await params.getCachedLook({
+    clientId: params.clientId,
+    portraitAssetId: params.portraitAssetId,
+  });
+  if (cached?.heygenLookId) {
+    return cached.heygenLookId;
+  }
+
+  // Our signed media URLs are first-party — skip HeyGen host allowlist.
+  const { buffer } = await downloadBytes(
+    params.portraitUrl,
+    null,
+    params.fetchImpl,
+    HEYGEN_FETCH_MAX_BYTES,
+  );
+  const cropped = await params.cropPortrait({ input: buffer });
+  const uploadedImage = await heygenUploadAsset(params.deps, {
+    bytes: cropped.buffer,
+    filename: "portrait-9x16.jpg",
+    mimeType: cropped.mimeType,
+  });
+
+  const created = await heygenCreatePhotoAvatar(params.deps, {
+    name: `neuramark-${params.clientId.slice(0, 8)}`,
+    imageAssetId: uploadedImage.assetId,
+  });
+  if (created.status !== "completed") {
+    await heygenWaitForLookCompleted(params.deps, created.lookId);
+  }
+
+  await params.upsertCachedLook({
+    clientId: params.clientId,
+    portraitAssetId: params.portraitAssetId,
+    heygenLookId: created.lookId,
+    heygenGroupId: created.groupId,
+    heygenImageAssetId: uploadedImage.assetId,
+  });
+
+  return created.lookId;
 }
 
 export function createHeygenHighAdapter(
@@ -400,6 +350,10 @@ export function createHeygenHighAdapter(
     fetchImpl = fetch,
     heygenAvatarId = process.env[HEYGEN_DEFAULT_AVATAR_ID_ENV],
     initialJobContexts,
+    getCachedLook = getCachedHeygenLook,
+    upsertCachedLook = upsertCachedHeygenLook,
+    sleep,
+    cropPortrait = cropPortraitTo9x16,
   } = params;
 
   const resolveAssetUrl =
@@ -438,6 +392,7 @@ export function createHeygenHighAdapter(
         heygenAvatarId,
       );
       const apiKey = getHeygenApiKey();
+      const deps: HeygenV3ClientDeps = { apiKey, fetchImpl, sleep };
       const estimatedCostCents = estimateCentsForDuration(
         input,
         unitCostCentsPerSecond,
@@ -449,46 +404,64 @@ export function createHeygenHighAdapter(
         input.clientId,
         "audio",
       );
+      const { buffer: audioBytes, contentType: audioMime } = await downloadBytes(
+        audioUrl,
+        null,
+        fetchImpl,
+        HEYGEN_FETCH_MAX_BYTES,
+      );
+      const audioExt = audioMime.includes("wav")
+        ? "wav"
+        : audioMime.includes("mp4")
+          ? "m4a"
+          : "mp3";
+      const uploadedAudio = await heygenUploadAsset(deps, {
+        bytes: audioBytes,
+        filename: `voiceover.${audioExt}`,
+        mimeType: audioMime.startsWith("audio/")
+          ? audioMime
+          : "audio/mpeg",
+      });
 
-      let imageUrl: string | undefined;
+      let avatarId: string;
       if (mode === "own_avatar" && portraitAssetId) {
-        imageUrl = await resolveAssetUrl(
+        const portraitUrl = await resolveAssetUrl(
           portraitAssetId,
           input.clientId,
           "portrait",
         );
+        avatarId = await resolveOrCreatePhotoLook({
+          deps,
+          clientId: input.clientId,
+          portraitAssetId,
+          portraitUrl,
+          fetchImpl,
+          getCachedLook,
+          upsertCachedLook,
+          cropPortrait,
+        });
+      } else {
+        avatarId = heygenAvatarId!.trim();
       }
 
-      const createBody = buildCreateBody({
-        mode,
-        audioUrl,
-        imageUrl,
-        heygenAvatarId,
+      const createExtras: Record<string, unknown> = {
+        ...HEYGEN_DEFAULT_CREATE_OPTIONS,
+        engine: { ...HEYGEN_AVATAR_ENGINE },
+      };
+      assertNoForbiddenEngine(createExtras);
+
+      const created = await heygenCreateAudioDrivenAvatarVideo(deps, {
+        avatarId,
+        audioAssetId: uploadedAudio.assetId,
+        bodyExtras: createExtras,
       });
 
-      const response = await heygenRequest(
-        fetchImpl,
-        apiKey,
-        HEYGEN_CREATE_VIDEO_PATH,
-        {
-          method: "POST",
-          body: JSON.stringify(createBody),
-        },
-      );
-
-      if (!response.ok) {
-        const message = await readResponseErrorMessage(response, apiKey);
-        throw new ProviderAdapterError("PROVIDER_REQUEST_FAILED", message);
-      }
-
-      const payload = (await response.json()) as HeygenApiResponse;
-      const data = payload.data ?? {};
-      const externalJobId = parseExternalJobId(extractVideoId(data));
+      const externalJobId = parseExternalJobId(created.videoId);
       const statusResult = normalizeVideoJobStatusResult(
         {
-          status: data.status,
-          errorMessage: data.error ?? data.message,
-          outputUrl: extractOutputUrl(data),
+          status: created.status,
+          errorMessage: undefined,
+          outputUrl: undefined,
         },
         HEYGEN_ALLOWED_OUTPUT_HOSTS,
       );
@@ -508,16 +481,11 @@ export function createHeygenHighAdapter(
     async getJobStatus(externalJobId: ExternalJobId) {
       parseExternalJobId(externalJobId);
       const apiKey = getHeygenApiKey();
+      const deps: HeygenV3ClientDeps = { apiKey, fetchImpl, sleep };
 
-      const response = await heygenRequest(
-        fetchImpl,
-        apiKey,
-        `${HEYGEN_GET_VIDEO_PATH_PREFIX}${encodeURIComponent(externalJobId)}`,
-        { method: "GET" },
-      );
-
+      const response = await heygenGetVideo(deps, externalJobId);
       if (!response.ok) {
-        const message = await readResponseErrorMessage(response, apiKey);
+        const message = await readHeygenResponseErrorMessage(response, apiKey);
         return normalizeVideoJobStatusResult(
           {
             status: "failed",
@@ -569,10 +537,11 @@ export function createHeygenHighAdapter(
       }
 
       validateProviderOutputUrl(outputUrl, HEYGEN_ALLOWED_OUTPUT_HOSTS);
-      const { buffer, contentType } = await downloadProviderOutput(
+      const { buffer, contentType } = await downloadBytes(
         outputUrl,
         HEYGEN_ALLOWED_OUTPUT_HOSTS,
         fetchImpl,
+        HEYGEN_FETCH_MAX_BYTES,
       );
 
       const estimatedCostCents = defaultEstimateCents;
@@ -580,14 +549,18 @@ export function createHeygenHighAdapter(
         clientId: context.clientId,
         reelScriptId: context.reelScriptId,
         buffer,
-        mimeType: contentType,
+        mimeType: contentType.startsWith("video/")
+          ? contentType
+          : "video/mp4",
       });
 
       const durationSec = await optionalDurationSecFromBuffer(buffer);
 
       return storedMediaAssetSchema.parse({
         storageKey: uploaded.storageKey,
-        mimeType: contentType,
+        mimeType: contentType.startsWith("video/")
+          ? contentType.split(";")[0]!.trim()
+          : "video/mp4",
         sizeBytes: uploaded.sizeBytes,
         actualCostCents: estimatedCostCents,
         ...(durationSec != null ? { durationSec } : {}),

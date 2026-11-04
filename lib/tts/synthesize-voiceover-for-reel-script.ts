@@ -192,6 +192,7 @@ export async function synthesizeVoiceoverForReelScript(
     const durationCheck = assertVoiceoverDurationMatchesTarget({
       actualDurationSec: storedAsset.durationSec,
       targetDurationSec: script.targetDurationSec,
+      modalidad: script.modalidad,
     });
     if (!durationCheck.ok) {
       console.error("[tts] voiceover duration outside target tolerance", {

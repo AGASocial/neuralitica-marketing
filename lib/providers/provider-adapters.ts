@@ -209,6 +209,13 @@ export function resolveProvider(
   }
 
   if (context.assetRole === "talking_head" && context.tier === "high") {
+    // Prefer HeyGen DIRECT (heygen_high) when active; Gateway stays as fallback.
+    const directHeygen = resolvedCandidates.find(
+      (row) => row.key === "heygen_high",
+    );
+    if (directHeygen) {
+      return directHeygen;
+    }
     const gatewayAvatar = resolvedCandidates.find(
       (row) => row.key === DEFAULT_LOW_TIER_PROVIDER_KEYS.talkingHeadGateway,
     );

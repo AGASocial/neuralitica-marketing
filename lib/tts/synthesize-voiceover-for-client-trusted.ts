@@ -152,6 +152,7 @@ export async function synthesizeVoiceoverForClientTrusted(
     const durationCheck = assertVoiceoverDurationMatchesTarget({
       actualDurationSec: storedAsset.durationSec,
       targetDurationSec: script.targetDurationSec,
+      modalidad: script.modalidad,
     });
     if (!durationCheck.ok) {
       console.error("[tts] trusted voiceover duration outside target tolerance", {
