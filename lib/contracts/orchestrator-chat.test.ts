@@ -196,6 +196,32 @@ describe("orchestrator-chat contracts", () => {
     assert.equal(parsed.proposal.paidMediaRequiresCostConfirm, true);
   });
 
+  it("confirm_paid_generation requires a concrete estimate", async () => {
+    const { proposeConfirmPaidGenerationOutputSchema: schema } = await import(
+      "./orchestrator-chat"
+    );
+    const parsed = schema.parse({
+      ok: true,
+      proposal: {
+        kind: "confirm_paid_generation",
+        requiresConfirmation: true,
+        mutates: false,
+        incursSpend: true,
+        estimatedCostCents: 120,
+        confirmEstimateCents: 120,
+        summary: "Creating this video costs about $1.20.",
+        weekStart: WEEK,
+        slotIndex: 0,
+        reelScriptId: "44444444-4444-4444-8444-444444444444",
+        styleLabel: "images_and_text",
+        paidKind: "broll",
+        action: "confirmPaidGenerationFromChat",
+      },
+    });
+    assertProposalIsNonMutating(parsed.proposal);
+    assert.equal(parsed.proposal.estimatedCostCents, 120);
+  });
+
   it("proposeRequestVideoChanges and regenerate_script are non-mutating", async () => {
     const {
       proposeRequestVideoChangesOutputSchema: reqSchema,

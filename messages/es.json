@@ -95,7 +95,9 @@
       "success": "Listo.",
       "error": "No se pudo completar. Inténtalo de nuevo.",
       "spendHint": "Si apruebas, se usarán unos {amount}.",
-      "spendUnknown": "Esto puede usar un cargo pequeño de escritura con IA. No corre nada hasta que apruebes."
+      "spendUnknown": "Esto puede usar un cargo pequeño de escritura con IA. No corre nada hasta que apruebes.",
+      "stylePresenter": "Con tu cara / presentador",
+      "styleImages": "Solo imágenes y texto"
     },
     "status": {
       "campaignTitle": "Cómo van las cosas",

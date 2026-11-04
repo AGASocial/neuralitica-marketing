@@ -29,10 +29,10 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
       source,
       /from\s+"@\/lib\/reel-scripts\/actions\/generate-reel-scripts"/,
     );
-    assert.doesNotMatch(
-      source,
-      /from\s+"@\/lib\/video-jobs\/actions\//,
-    );
+    assert.doesNotMatch(source, /createBrollVideoJobs/);
+    assert.doesNotMatch(source, /createHeygenTalkingHeadVideoJob/);
+    assert.match(source, /previewBrollVideoJobsEstimate/);
+    assert.match(source, /previewHeygenTalkingHeadEstimate/);
     assert.match(source, /assertProposalIsNonMutating/);
     assert.match(source, /mutates:\s*false\s*as\s*const/);
     assert.match(source, /requiresConfirmation:\s*true\s*as\s*const/);
@@ -40,6 +40,7 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(source, /proposeGenerateVideos/);
     assert.match(source, /proposeRequestVideoChanges/);
     assert.match(source, /proposeRegenerateScript/);
+    assert.match(source, /proposeConfirmPaidGeneration/);
     assert.match(source, /getVideoPreview/);
     assert.match(source, /getScriptPreview/);
   });
@@ -59,6 +60,21 @@ describe("orchestrator-chat no-mutation-without-confirm", () => {
     assert.match(card, /generateReelScripts/);
     assert.match(card, /regenerateReelScriptSlot/);
     assert.match(card, /request_changes/);
+    assert.match(card, /confirmPaidGenerationFromChat/);
+  });
+
+  it("paid generation only runs from confirm action after Approve", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const action = readFileSync(
+      join(here, "actions/confirm-paid-generation.ts"),
+      "utf8",
+    );
+    assert.match(action, /previewBrollVideoJobsEstimate/);
+    assert.match(action, /previewHeygenTalkingHeadEstimate/);
+    assert.match(action, /confirmEstimateCents/);
+    assert.match(action, /ESTIMATE_MISMATCH/);
+    assert.match(action, /createBrollVideoJobs/);
+    assert.match(action, /createHeygenTalkingHeadVideoJob/);
   });
 
   it("chat route disables reasoning stream to the client", () => {

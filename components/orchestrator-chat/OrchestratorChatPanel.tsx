@@ -108,6 +108,15 @@ function asProposal(output: unknown): KnownProposal | null {
   ) {
     return p as KnownProposal;
   }
+  if (
+    p.kind === "confirm_paid_generation" &&
+    typeof p.reelScriptId === "string" &&
+    typeof p.confirmEstimateCents === "number" &&
+    typeof p.estimatedCostCents === "number" &&
+    (p.paidKind === "broll" || p.paidKind === "heygen")
+  ) {
+    return p as KnownProposal;
+  }
   return null;
 }
 
@@ -371,7 +380,8 @@ export function OrchestratorChatPanel({
                       part.type === "tool-proposeGenerateScripts" ||
                       part.type === "tool-proposeGenerateVideos" ||
                       part.type === "tool-proposeRequestVideoChanges" ||
-                      part.type === "tool-proposeRegenerateScript") &&
+                      part.type === "tool-proposeRegenerateScript" ||
+                      part.type === "tool-proposeConfirmPaidGeneration") &&
                     part.state === "output-available"
                   ) {
                     const proposal = asProposal(part.output);

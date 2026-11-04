@@ -19,6 +19,7 @@ import {
 import { approveContentStrategy } from "@/lib/content-strategy/actions/approve-content-strategy";
 import { generateContentStrategy } from "@/lib/content-strategy/actions/generate-content-strategy";
 import { decideApproval } from "@/lib/approvals/actions/decide-approval";
+import { confirmPaidGenerationFromChat } from "@/lib/orchestrator-chat/actions/confirm-paid-generation";
 import { generateReelScripts } from "@/lib/reel-scripts/actions/generate-reel-scripts";
 import { regenerateReelScriptSlot } from "@/lib/reel-scripts/actions/regenerate-reel-script-slot";
 
@@ -31,6 +32,8 @@ export type ProposalCardCopy = {
   error: string;
   spendHint: string;
   spendUnknown: string;
+  stylePresenter: string;
+  styleImages: string;
 };
 
 type ProposalBase = {
@@ -104,6 +107,21 @@ type RegenerateScriptProposal = ProposalBase & {
   cta?: string;
 };
 
+type ConfirmPaidGenerationProposal = ProposalBase & {
+  kind: "confirm_paid_generation";
+  weekStart: string;
+  slotIndex: number;
+  reelScriptId: string;
+  tema?: string;
+  styleLabel: "presenter" | "images_and_text";
+  paidKind: "broll" | "heygen";
+  action: "confirmPaidGenerationFromChat";
+  confirmEstimateCents: number;
+  targetDurationSec?: number;
+  incursSpend: true;
+  estimatedCostCents: number;
+};
+
 export type KnownProposal =
   | GenerateProposal
   | ApproveStrategyProposal
@@ -111,7 +129,8 @@ export type KnownProposal =
   | GenerateScriptsProposal
   | GenerateVideosProposal
   | RequestVideoChangesProposal
-  | RegenerateScriptProposal;
+  | RegenerateScriptProposal
+  | ConfirmPaidGenerationProposal;
 
 type ProposalActionCardProps = {
   proposal: KnownProposal;
@@ -175,6 +194,16 @@ export function ProposalActionCard({
           const result = await regenerateReelScriptSlot({
             weekStart: proposal.weekStart,
             slotIndex: proposal.slotIndex,
+          });
+          ok = result.ok === true;
+        } else if (proposal.kind === "confirm_paid_generation") {
+          const result = await confirmPaidGenerationFromChat({
+            reelScriptId: proposal.reelScriptId,
+            paidKind: proposal.paidKind,
+            confirmEstimateCents: proposal.confirmEstimateCents,
+            ...(proposal.targetDurationSec !== undefined
+              ? { targetDurationSec: proposal.targetDurationSec }
+              : {}),
           });
           ok = result.ok === true;
         } else {
@@ -290,6 +319,13 @@ export function ProposalActionCard({
     );
   }
 
+  const stylePlain =
+    proposal.kind === "confirm_paid_generation"
+      ? proposal.styleLabel === "presenter"
+        ? copy.stylePresenter
+        : copy.styleImages
+      : null;
+
   return (
     <Card className="border-edge bg-panel text-fog shadow-none">
       <CardHeader className="gap-1 px-4 pb-0 pt-4">
@@ -302,6 +338,12 @@ export function ProposalActionCard({
         ) : null}
         {proposal.kind === "approve_pending_video" && proposal.captionPreview ? (
           <p className="line-clamp-3 text-fog/90">{proposal.captionPreview}</p>
+        ) : null}
+        {proposal.kind === "confirm_paid_generation" ? (
+          <>
+            {proposal.tema ? <p className="text-fog/90">{proposal.tema}</p> : null}
+            {stylePlain ? <p>{stylePlain}</p> : null}
+          </>
         ) : null}
         {spendNote}
         {statusNotes}

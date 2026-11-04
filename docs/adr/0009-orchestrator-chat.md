@@ -68,9 +68,13 @@ right-side sheet (header toggle + keyboard shortcut), and Home emphasizes chat.
 | `getScriptPreview` | read | operator | no | Readable write-up |
 | `proposeRequestVideoChanges` | proposal | client + operator | **no** → `decideApproval` request_changes | “Apply these changes?” |
 | `proposeRegenerateScript` | proposal | operator | **no** → `regenerateReelScriptSlot` | “Rewrite this write-up?” |
+| `proposeConfirmPaidGeneration` | proposal | operator | **no** until Approve → `confirmPaidGenerationFromChat` (re-checks estimate, then b-roll/HeyGen) | “This costs about $X — approve?” |
 
-Later: spend confirm before paid generation (KAN-93), photo/presenter setup via
-chat, MCP-UI host, thread persistence.
+Later: photo/presenter setup via chat, MCP-UI host, thread persistence.
+
+**KAN-93:** Paid media never starts from chat without `confirm_paid_generation`
+(plain price from existing cost-policy previews). Approve re-validates the live
+estimate before calling create jobs.
 
 ### Phases
 
