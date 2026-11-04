@@ -182,11 +182,15 @@ The owner shell SHALL expose a layout compositor on all owner pages using the sa
 - **THEN** the panel opens and the message is delivered to the orchestrator session
 
 ### Requirement: Card-anchored Change
-Activating Change / Cambiar on a Hoy (or other surface) `AgentCard` SHALL open the conversation panel with prefills that identify the card (id and title/context) so the owner can request revisions without leaving the card context.
+Activating Change / Cambiar on a Hoy (or other surface) `AgentCard` SHALL open the conversation panel with a visible user message of the form `Cambiar: <title>` (ES) or `Change: <title>` (EN) using the card title/context. The owner-visible message MUST NOT include the raw card UUID. The card id SHALL be supplied to the agent via hidden message metadata/context (not rendered in the transcript bubble).
 
 #### Scenario: Change from Hoy card
 - **WHEN** the owner activates Change on a pending reel card on Hoy
-- **THEN** the conversation panel opens with context referencing that card’s id/title
+- **THEN** the conversation panel opens with a visible prefill `Cambiar: <title>` or `Change: <title>` and without a visible card UUID
+
+#### Scenario: Agent receives card id
+- **WHEN** Change is activated for a card with id `X`
+- **THEN** the chat request/context includes card id `X` for the agent while the transcript text shown to the owner omits `X`
 
 ### Requirement: Full-screen conversation route
 The system SHALL provide a full-screen conversation view at `/conversation` (Option A layout: transcript thread plus a canvas/list of agent cards) reachable in one tap from the shell Conversación control. The view MUST reuse the same orchestrator chat transport and persistence as the panel. Outside onboarding mode the canvas MAY remain a preview of tool cards; in onboarding mode cards in thread and canvas MUST support Approve/Change.
