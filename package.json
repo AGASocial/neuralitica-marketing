@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@ai-sdk/gateway": "^4.0.135",
+    "@ai-sdk/react": "^4.0.166",
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.54.0",
     "@tailwindcss/postcss": "^4.3.4",
