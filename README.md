@@ -45,7 +45,7 @@ Open the provider tier comparison: [plan/PROVIDER_TIERS.html](plan/PROVIDER_TIER
 - **Next.js** — one app for frontend **and** backend (App Router).
 - **Supabase (Postgres)** — the database for all environments.
 - **Vercel** — deployment target.
-- **PrimeReact** — default UI library; custom components are exceptions.
+- **Tailwind CSS v4 + shadcn/ui** — default UI stack (Campaña dark theme); custom components are exceptions. See ADR-0008.
 - **i18n** — English and Spanish translation files for all user-facing copy.
 
 ### Hard architectural rules
@@ -120,7 +120,7 @@ Six role definitions, usable by any AI agent runtime (Cursor subagents, Codex, C
 |---|---|---|
 | `product-owner.md` | Owns the backlog: stories, tasks, priorities, sprints, status reporting. Creates story folders and `TASKS.md`. Only actor allowed to check acceptance criteria. | `plan/USER_STORIES.md`, `plan/stories/US-x.y/TASKS.md` |
 | `security-architect.md` | Design-time partner of the product-owner: threat-models stories **before** implementation, adds binding `[SEC]` acceptance criteria, can veto unsafe designs (always with an alternative), runs periodic back-door sweeps of the codebase. | `plan/stories/US-x.y/SECURITY.md`, `plan/SECURITY_BASELINE.md` |
-| `nextjs-frontend.md` | Implements FE tasks: Server Components first, PrimeReact, EN/ES i18n, all data via Next.js endpoints (never Supabase directly). | app code, FE section of `TASKS.md` |
+| `nextjs-frontend.md` | Implements FE tasks: Server Components first, Tailwind + shadcn/ui, EN/ES i18n, all data via Next.js endpoints (never Supabase directly). | app code, FE section of `TASKS.md` |
 | `nextjs-backend.md` | Implements BE/DB tasks: Server Actions, Route Handlers, validation, Supabase migrations with `neuramark_` prefix. **The only layer that touches Supabase.** | app code, migrations, BE/DB sections of `TASKS.md` |
 | `requirements-validator.md` | Verifies a story is actually done: every acceptance criterion (functional + `[SEC]`) checked against code with file-level evidence; flags scope creep. Read-only on app code. | `plan/stories/US-x.y/VALIDATION.md` |
 | `qa-engineer.md` | Enterprise-grade audit: bugs, injection, secrets/key leakage into the client bundle, back doors, unprefixed DB objects, error resilience. Must run lint/build/tests before a verdict. Read-only on app code. | `plan/stories/US-x.y/QA.md` |

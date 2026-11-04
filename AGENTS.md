@@ -77,6 +77,6 @@ Neutral protocol (this AGENTS.md + docs/governance/)
 
 ## Architecture defaults (summary)
 
-- Single Next.js App Router app; Supabase only from server; `neuramark_` DB prefix; EN/ES i18n; PrimeReact-first; Vercel deploy; `getCurrentUser()` identity seam; operator/client role flag only.
+- Single Next.js App Router app; Supabase only from server; `neuramark_` DB prefix; EN/ES i18n; Tailwind CSS v4 + shadcn/ui (Campaña); Vercel deploy; `getCurrentUser()` identity seam; operator/client role flag only.
 
 See parent `../AGENTS.md` and this repo `README.md` for full stack rules.

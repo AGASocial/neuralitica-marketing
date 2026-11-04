@@ -1,14 +1,24 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { Message } from "primereact/message";
 import { useRef, useState } from "react";
 
 import { logOut } from "@/lib/auth/actions/log-out";
 import type { LogOutResult } from "@/lib/contracts/auth";
 import { isLocale } from "@/lib/i18n/locales";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 export type LogoutButtonCopy = {
   label: string;
@@ -58,6 +68,7 @@ export function LogoutButton({
   const pendingRef = useRef(false);
   const [pending, setPending] = useState(false);
   const [stayError, setStayError] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
 
   async function handleLogout() {
     if (pendingRef.current) {
@@ -79,55 +90,51 @@ export function LogoutButton({
       pendingRef.current = false;
       setStayError(copy.stayError);
       setPending(false);
+      setOpen(false);
     } catch {
       router.push(loginHref());
     }
   }
 
-  function askToLogOut() {
-    if (pendingRef.current) {
-      return;
-    }
-
-    confirmDialog({
-      header: copy.confirmHeader,
-      message: copy.confirmMessage,
-      acceptLabel: copy.confirmAccept,
-      rejectLabel: copy.confirmReject,
-      icon: "pi pi-sign-out",
-      accept: () => {
-        void handleLogout();
-      },
-    });
-  }
-
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "0.5rem",
-        flexShrink: 0,
-      }}
-    >
-      <ConfirmDialog />
-
+    <div className="flex shrink-0 flex-col gap-2">
       {stayError ? (
-        <Message severity="error" text={stayError} style={{ width: "100%" }} />
+        <Alert variant="destructive">
+          <AlertDescription>{stayError}</AlertDescription>
+        </Alert>
       ) : null}
 
-      <Button
-        type="button"
-        label={pending ? copy.pendingLabel : copy.label}
-        icon="pi pi-sign-out"
-        loading={pending}
-        disabled={pending}
-        text={appearance === "header"}
-        outlined={appearance === "pending"}
-        size={appearance === "header" ? "small" : undefined}
-        style={{ whiteSpace: "nowrap" }}
-        onClick={askToLogOut}
-      />
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogTrigger asChild>
+          <Button
+            type="button"
+            variant={appearance === "header" ? "ghost" : "outline"}
+            size={appearance === "header" ? "sm" : "default"}
+            disabled={pending}
+            className="whitespace-nowrap"
+          >
+            {pending ? copy.pendingLabel : copy.label}
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{copy.confirmHeader}</AlertDialogTitle>
+            <AlertDialogDescription>{copy.confirmMessage}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>{copy.confirmReject}</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={pending}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleLogout();
+              }}
+            >
+              {pending ? copy.pendingLabel : copy.confirmAccept}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

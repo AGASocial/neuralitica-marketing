@@ -63,7 +63,9 @@
       "scripts": "Guiones",
       "calendar": "Calendario de contenido",
       "costPolicy": "Política de costo"
-    }
+    },
+    "navAriaLabel": "Navegación principal",
+    "mobileNavAriaLabel": "Navegación móvil"
   },
   "auth": {
     "localeSwitcher": {
@@ -176,7 +178,8 @@
       "logoutHint": "Puedes cerrar sesión y volver más tarde.",
       "logout": "Cerrar sesión",
       "logoutPending": "Cerrando sesión…"
-    }
+    },
+    "shellTagline": "Producción de contenido para negocios de servicios locales."
   },
   "interview": {
     "title": "Entrevista inicial",
@@ -1947,6 +1950,28 @@
         "runNotReplannable": "Esta ejecución no se puede re-planificar en su estado actual.",
         "runNotResumable": "Esta ejecución no se puede reanudar en este momento."
       }
+    }
+  },
+  "campana": {
+    "weeksAriaLabel": "Semanas de la campaña",
+    "reelsHeading": "Reels de esta semana",
+    "viewCalendar": "Ver calendario",
+    "scriptsHeading": "Guiones",
+    "scriptsTotal": "{count} en total",
+    "strategyHeading": "Estrategia",
+    "newReel": "Nuevo reel",
+    "newReelHint": "desde un guion",
+    "rendering": "Renderizando",
+    "status": {
+      "published": "Publicado",
+      "scheduled": "Programado",
+      "review": "Revisar",
+      "rendering": "Renderizando",
+      "draft": "Borrador",
+      "approved": "Aprobado",
+      "inProgress": "En curso",
+      "ready": "Guiones listos",
+      "planned": "Por planear"
     }
   }
 }

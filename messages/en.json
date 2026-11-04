@@ -63,7 +63,9 @@
       "scripts": "Scripts",
       "calendar": "Content calendar",
       "costPolicy": "Cost policy"
-    }
+    },
+    "navAriaLabel": "Main navigation",
+    "mobileNavAriaLabel": "Mobile navigation"
   },
   "auth": {
     "localeSwitcher": {
@@ -176,7 +178,8 @@
       "logoutHint": "You can log out and return later.",
       "logout": "Log out",
       "logoutPending": "Logging out…"
-    }
+    },
+    "shellTagline": "Content production for local service businesses."
   },
   "interview": {
     "title": "Initial interview",
@@ -1947,6 +1950,28 @@
         "runNotReplannable": "This run cannot be re-planned in its current state.",
         "runNotResumable": "This run cannot be resumed right now."
       }
+    }
+  },
+  "campana": {
+    "weeksAriaLabel": "Campaign weeks",
+    "reelsHeading": "Reels for this week",
+    "viewCalendar": "View calendar",
+    "scriptsHeading": "Scripts",
+    "scriptsTotal": "{count} total",
+    "strategyHeading": "Strategy",
+    "newReel": "New reel",
+    "newReelHint": "from a script",
+    "rendering": "Rendering",
+    "status": {
+      "published": "Published",
+      "scheduled": "Scheduled",
+      "review": "Review",
+      "rendering": "Rendering",
+      "draft": "Draft",
+      "approved": "Approved",
+      "inProgress": "In progress",
+      "ready": "Scripts ready",
+      "planned": "To plan"
     }
   }
 }

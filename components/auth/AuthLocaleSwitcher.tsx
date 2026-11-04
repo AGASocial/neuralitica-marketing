@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import type { CSSProperties } from "react";
 
 import type { Locale } from "@/lib/i18n/locales";
+import { cn } from "@/lib/utils";
 
 /** Safe query keys to preserve across locale switches. Never copy tokens or PII. */
 const AUTH_LOCALE_HREF_KEYS = [
@@ -49,21 +49,29 @@ export function AuthLocaleSwitcher({ locale, labels }: AuthLocaleSwitcherProps) 
     return hrefForLocale(pathname, searchParams, nextLocale);
   }
 
-  const linkStyle = (active: boolean): CSSProperties => ({
-    fontSize: "0.875rem",
-    fontWeight: active ? 600 : 500,
-    color: active ? "#4338ca" : "#6b7280",
-    textDecoration: "none",
-    padding: "0.15rem 0.35rem",
-  });
-
   return (
-    <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
-      <Link href={hrefFor("en")} style={linkStyle(locale === "en")}>
+    <div className="flex items-center justify-center gap-2 text-sm">
+      <Link
+        href={hrefFor("en")}
+        className={cn(
+          "rounded-full px-2 py-0.5 focus-visible:outline-none",
+          locale === "en" ? "font-semibold text-butter" : "text-dim hover:text-fog",
+        )}
+        aria-current={locale === "en" ? "true" : undefined}
+      >
         {labels.en}
       </Link>
-      <span style={{ color: "#d1d5db" }}>|</span>
-      <Link href={hrefFor("es")} style={linkStyle(locale === "es")}>
+      <span className="text-edge" aria-hidden>
+        |
+      </span>
+      <Link
+        href={hrefFor("es")}
+        className={cn(
+          "rounded-full px-2 py-0.5 focus-visible:outline-none",
+          locale === "es" ? "font-semibold text-butter" : "text-dim hover:text-fog",
+        )}
+        aria-current={locale === "es" ? "true" : undefined}
+      >
         {labels.es}
       </Link>
     </div>

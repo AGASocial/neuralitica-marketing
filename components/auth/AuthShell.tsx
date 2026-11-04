@@ -14,52 +14,23 @@ export function AuthShell({ locale, children }: AuthShellProps) {
   const t = getTranslations(locale);
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "1.5rem",
-        background:
-          "linear-gradient(160deg, #eef2ff 0%, var(--page-bg) 45%, #f8fafc 100%)",
-      }}
-    >
+    <div className="flex min-h-screen flex-col items-center justify-center bg-deep px-4 py-10 text-fog">
       <div
-        style={{
-          width: "100%",
-          maxWidth: "440px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-        }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <div
-            style={{
-              fontWeight: 700,
-              fontSize: "1.35rem",
-              color: "#312e81",
-              marginBottom: "0.35rem",
-            }}
-          >
-            {t.appName}
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_color-mix(in_srgb,var(--panel)_70%,transparent),_transparent_55%)]"
+      />
+      <div className="relative z-10 flex w-full max-w-md flex-col gap-5">
+        <div className="text-center">
+          <div className="font-display text-3xl text-fog">{t.appName}</div>
+          <p className="mt-1 text-sm text-dim">{t.auth.shellTagline}</p>
+          <div className="mt-3 flex justify-center">
+            <Suspense fallback={null}>
+              <AuthLocaleSwitcher locale={locale} labels={t.auth.localeSwitcher} />
+            </Suspense>
           </div>
-          <Suspense fallback={null}>
-            <AuthLocaleSwitcher locale={locale} labels={t.auth.localeSwitcher} />
-          </Suspense>
         </div>
 
-        <div
-          style={{
-            background: "#ffffff",
-            borderRadius: "12px",
-            border: "1px solid #e5e7eb",
-            boxShadow: "0 10px 30px rgba(49, 46, 129, 0.08)",
-            padding: "1.75rem",
-          }}
-        >
+        <div className="rounded-2xl border border-edge bg-panel/80 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] sm:p-7">
           {children}
         </div>
       </div>
