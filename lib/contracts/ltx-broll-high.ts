@@ -193,10 +193,25 @@ export function buildLtxResultUrl(requestId: string): string {
 }
 
 /** Server-authored LTX B-roll prompt wrapper (Phase B orchestrator). */
-export function buildLtxBrollPrompt(params: { beatText: string }): string {
+export function buildLtxBrollPrompt(params: {
+  beatText: string;
+  masterPrompts?: { global: string | null; business: string | null };
+}): string {
   const beat = params.beatText.trim();
   const wrapped = `${LTX_PROMPT_BEAT_OPEN}${beat}${LTX_PROMPT_BEAT_CLOSE}`;
-  const prompt = `High-polish cinematic B-roll. ${wrapped}`;
+  
+  const parts = ["High-polish cinematic B-roll."];
+  
+  if (params.masterPrompts?.global) {
+    parts.push(params.masterPrompts.global);
+  }
+  if (params.masterPrompts?.business) {
+    parts.push(params.masterPrompts.business);
+  }
+  
+  parts.push(wrapped);
+  
+  const prompt = parts.join(" ");
   if (prompt.length <= LTX_PROMPT_MAX_CHARS) {
     return prompt;
   }

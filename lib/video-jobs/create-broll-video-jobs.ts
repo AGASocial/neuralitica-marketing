@@ -39,6 +39,7 @@ import {
   createServerSupabaseClient,
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
+import { loadMasterPrompts } from "@/lib/prompts/load-master-prompts";
 
 import {
   computeBrollClipCount,
@@ -74,15 +75,26 @@ export type CreateBrollVideoJobsOptions = {
 
 export function buildWanBrollPrompt(params: {
   beatText: string;
+  masterPrompts?: { global: string | null; business: string | null };
 }): string {
   const beat = params.beatText.trim().slice(0, 280);
-  const wrapped = [
+  const parts = [
     "Faceless cinematic B-roll for a vertical 9:16 Instagram Reel.",
     "Dynamic camera with continuous motion: smooth push-in, subtle orbit, or tracking shot.",
     "Energetic pacing, shallow depth of field, natural light, rich texture, high detail.",
     "No people, no faces, no logos, no on-screen text, no watermarks.",
-    `Scene: ${WAN_PROMPT_BEAT_OPEN}${beat}${WAN_PROMPT_BEAT_CLOSE}`,
-  ].join(" ");
+  ];
+
+  if (params.masterPrompts?.global) {
+    parts.push(params.masterPrompts.global);
+  }
+  if (params.masterPrompts?.business) {
+    parts.push(params.masterPrompts.business);
+  }
+
+  parts.push(`Scene: ${WAN_PROMPT_BEAT_OPEN}${beat}${WAN_PROMPT_BEAT_CLOSE}`);
+
+  const wrapped = parts.join(" ");
   return wrapped.slice(0, WAN_PROMPT_MAX_CHARS);
 }
 
@@ -234,12 +246,16 @@ export async function createBrollVideoJobs(
           ? AI_GATEWAY_SEEDANCE_UNIT_COST_CENTS_PER_CLIP
           : WAN_UNIT_COST_CENTS_PER_CLIP;
 
+    const masterPrompts = await loadMasterPrompts({
+      clientId: input.clientId,
+    });
+
     for (let i = 0; i < clipCount; i += 1) {
       const beatText = beatTexts[i] ?? beatTexts[0] ?? script.package.hook;
       const prompt =
         providerKey === LTX_PROVIDER_KEY
-          ? buildLtxBrollPrompt({ beatText })
-          : buildWanBrollPrompt({ beatText });
+          ? buildLtxBrollPrompt({ beatText, masterPrompts })
+          : buildWanBrollPrompt({ beatText, masterPrompts });
 
       const resolvedInput = {
         reelScriptId: input.reelScriptId,

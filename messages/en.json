@@ -2124,6 +2124,33 @@
         "forbidden": "You do not have permission to manage cost policy.",
         "internal": "Something went wrong. Please try again later."
       }
+    },
+    "masterPrompts": {
+      "title": "Master prompts",
+      "subtitle": "Steer content generation (strategy, scripts, B-roll) with creative direction. Master prompts apply uniformly while preserving safety and schema constraints.",
+      "globalSectionTitle": "Global master prompt",
+      "globalHint": "Applies to all clients. Focus on hooks, retention, pacing for Instagram Reels.",
+      "globalPlaceholder": "Enter global creative guidance (e.g., retention-first pacing, hooks within 2 seconds, 9:16 vertical framing)...",
+      "businessSectionTitle": "Per-business master prompt",
+      "businessHint": "Optional business-specific override. Use sparingly for special client needs.",
+      "businessPlaceholder": "Enter business-specific creative guidance...",
+      "clientLabel": "Client",
+      "clientPlaceholder": "Select a client",
+      "saveGlobal": "Save global prompt",
+      "saveBusiness": "Save business prompt",
+      "saving": "Saving…",
+      "characterCount": "{count} / 4000 characters",
+      "toastGlobalSuccess": "Global master prompt saved.",
+      "toastBusinessSuccess": "Business master prompt saved.",
+      "backDashboard": "Back to dashboard",
+      "loadError": "We could not load master prompts settings. Refresh the page to try again.",
+      "errors": {
+        "validation": "Master prompt exceeds 4,000 character limit.",
+        "unavailable": "Master prompts are unavailable. Try again later.",
+        "unauthenticated": "Sign in to manage master prompts.",
+        "forbidden": "You do not have permission to manage master prompts.",
+        "internal": "Something went wrong. Please try again later."
+      }
     }
   },
   "operator": {
