@@ -1,0 +1,5 @@
+- [x] Add `expandBrollClipSequenceForDuration` and wire broll_stitch concat list expansion in `runAssemblyJob`
+- [x] Remove freeze-frame pad from `buildBrollConcatArgs`; keep trim to voiceover/target when looped video exceeds output duration
+- [x] Unit tests in `lib/assembly/ffmpeg/build-broll-concat-args.test.ts`
+- [x] `openspec validate fix-faceless-short-broll-fill --strict`
+- [x] Typecheck, lint edited files, run `lib/assembly` unit tests
