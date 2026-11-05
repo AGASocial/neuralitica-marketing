@@ -8,7 +8,7 @@ import { isAuthGuardError, requireOperator } from "@/lib/auth/require-user";
 import {
   createServerSupabaseClient,
   isSupabaseConfigured,
-    10|} from "@/lib/supabase/server";
+} from "@/lib/supabase/server";
 
 export async function updateBusinessMasterPrompt(
   input: unknown,
@@ -18,7 +18,7 @@ export async function updateBusinessMasterPrompt(
   } catch (error) {
     if (isAuthGuardError(error)) {
       return {
-    20|        ok: false,
+        ok: false,
         error: {
           code: error.status === 401 ? "UNAUTHENTICATED" : "FORBIDDEN",
         },
@@ -28,7 +28,7 @@ export async function updateBusinessMasterPrompt(
   }
 
   const parsed = updateBusinessMasterPromptInputSchema.safeParse(input);
-    30|  if (!parsed.success) {
+  if (!parsed.success) {
     return {
       ok: false,
       error: { code: "VALIDATION_ERROR" },
@@ -38,7 +38,7 @@ export async function updateBusinessMasterPrompt(
   const trimmed = parsed.data.businessMasterPrompt.trim();
   const promptValue = trimmed.length > 0 ? trimmed : null;
 
-    40|  if (!isSupabaseConfigured()) {
+  if (!isSupabaseConfigured()) {
     return {
       ok: false,
       error: { code: "INTERNAL_ERROR" },
@@ -47,7 +47,7 @@ export async function updateBusinessMasterPrompt(
 
   const supabase = createServerSupabaseClient();
 
-    50|  // Upsert per-business prompt row.
+  // Upsert per-business prompt row.
   const { error: upsertError } = await supabase
     .from("neuramark_business_prompts")
     .upsert(
@@ -57,7 +57,7 @@ export async function updateBusinessMasterPrompt(
       },
       {
         onConflict: "client_id",
-    60|        ignoreDuplicates: false,
+        ignoreDuplicates: false,
       },
     );
 
@@ -67,7 +67,7 @@ export async function updateBusinessMasterPrompt(
       code: upsertError.code,
       message: upsertError.message,
     });
-    70|    return {
+    return {
       ok: false,
       error: { code: "INTERNAL_ERROR" },
     };
@@ -76,4 +76,4 @@ export async function updateBusinessMasterPrompt(
   revalidatePath("/operator/settings/master-prompts");
 
   return { ok: true };
-    80|}
+}

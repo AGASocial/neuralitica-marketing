@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Operator master prompts settings (operator-master-prompts OpenSpec change).
-    10| * Auth: `operator/layout.tsx` `requireOperator("page")`.
+ * Auth: `operator/layout.tsx` `requireOperator("page")`.
  */
 export default async function MasterPromptsSettingsPage() {
   const user = await getCurrentUser();
@@ -18,7 +18,7 @@ export default async function MasterPromptsSettingsPage() {
   const result = await getMasterPromptsForSettings();
 
   if (!result.ok) {
-    20|    return (
+    return (
       <div className="mx-auto max-w-[960px]">
         <h1 className="mb-1.5 font-display text-4xl text-fog">
           {t.settings.masterPrompts.title}
@@ -28,7 +28,7 @@ export default async function MasterPromptsSettingsPage() {
     );
   }
 
-    30|  return (
+  return (
     <MasterPromptsSettingsView
       initialPrompts={result.prompts}
       locale={locale}
@@ -38,7 +38,7 @@ export default async function MasterPromptsSettingsPage() {
         globalSectionTitle: t.settings.masterPrompts.globalSectionTitle,
         globalHint: t.settings.masterPrompts.globalHint,
         globalPlaceholder: t.settings.masterPrompts.globalPlaceholder,
-    40|        businessSectionTitle: t.settings.masterPrompts.businessSectionTitle,
+        businessSectionTitle: t.settings.masterPrompts.businessSectionTitle,
         businessHint: t.settings.masterPrompts.businessHint,
         businessPlaceholder: t.settings.masterPrompts.businessPlaceholder,
         clientLabel: t.settings.masterPrompts.clientLabel,
@@ -48,7 +48,7 @@ export default async function MasterPromptsSettingsPage() {
         saving: t.settings.masterPrompts.saving,
         characterCount: t.settings.masterPrompts.characterCount,
         toastGlobalSuccess: t.settings.masterPrompts.toastGlobalSuccess,
-    50|        toastBusinessSuccess: t.settings.masterPrompts.toastBusinessSuccess,
+        toastBusinessSuccess: t.settings.masterPrompts.toastBusinessSuccess,
         backDashboard: t.settings.masterPrompts.backDashboard,
         loadError: t.settings.masterPrompts.loadError,
         errors: t.settings.masterPrompts.errors,

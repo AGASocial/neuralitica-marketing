@@ -8,7 +8,7 @@ import { isAuthGuardError, requireOperator } from "@/lib/auth/require-user";
 import {
   createServerSupabaseClient,
   isSupabaseConfigured,
-    10|} from "@/lib/supabase/server";
+} from "@/lib/supabase/server";
 
 export async function updateGlobalMasterPrompt(
   input: unknown,
@@ -18,7 +18,7 @@ export async function updateGlobalMasterPrompt(
   } catch (error) {
     if (isAuthGuardError(error)) {
       return {
-    20|        ok: false,
+        ok: false,
         error: {
           code: error.status === 401 ? "UNAUTHENTICATED" : "FORBIDDEN",
         },
@@ -28,7 +28,7 @@ export async function updateGlobalMasterPrompt(
   }
 
   const parsed = updateGlobalMasterPromptInputSchema.safeParse(input);
-    30|  if (!parsed.success) {
+  if (!parsed.success) {
     return {
       ok: false,
       error: { code: "VALIDATION_ERROR" },
@@ -38,7 +38,7 @@ export async function updateGlobalMasterPrompt(
   const trimmed = parsed.data.globalMasterPrompt.trim();
   const promptValue = trimmed.length > 0 ? trimmed : null;
 
-    40|  if (!isSupabaseConfigured()) {
+  if (!isSupabaseConfigured()) {
     return {
       ok: false,
       error: { code: "INTERNAL_ERROR" },
@@ -47,7 +47,7 @@ export async function updateGlobalMasterPrompt(
 
   const supabase = createServerSupabaseClient();
 
-    50|  // Upsert singleton global prompt row.
+  // Upsert singleton global prompt row.
   const { error: upsertError } = await supabase
     .from("neuramark_operator_prompts")
     .upsert(
@@ -57,7 +57,7 @@ export async function updateGlobalMasterPrompt(
         // Singleton: if no row exists, insert with default UUID.
         // If row exists, update it. Since we use unique index on ((1)),
         // there will only ever be one row.
-    60|        ignoreDuplicates: false,
+        ignoreDuplicates: false,
       },
     );
 
@@ -67,7 +67,7 @@ export async function updateGlobalMasterPrompt(
       message: upsertError.message,
     });
     return {
-    70|      ok: false,
+      ok: false,
       error: { code: "INTERNAL_ERROR" },
     };
   }

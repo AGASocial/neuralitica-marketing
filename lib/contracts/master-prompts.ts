@@ -8,7 +8,7 @@ export const operatorPromptsRowSchema = z.object({
   globalMasterPrompt: z.string().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
-    10|});
+});
 
 export type OperatorPromptsRow = z.infer<typeof operatorPromptsRowSchema>;
 
@@ -19,7 +19,7 @@ export const businessPromptsRowSchema = z.object({
   id: z.string().uuid(),
   clientId: z.string().uuid(),
   businessMasterPrompt: z.string().nullable(),
-    20|  createdAt: z.string().datetime(),
+  createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
 
@@ -30,7 +30,7 @@ export type BusinessPromptsRow = z.infer<typeof businessPromptsRowSchema>;
  */
 export const masterPromptsResultSchema = z.object({
   global: z.string().nullable(),
-    30|  business: z.string().nullable(),
+  business: z.string().nullable(),
 });
 
 export type MasterPromptsResult = z.infer<typeof masterPromptsResultSchema>;
@@ -41,7 +41,7 @@ export type MasterPromptsResult = z.infer<typeof masterPromptsResultSchema>;
 export const updateGlobalMasterPromptInputSchema = z.object({
   globalMasterPrompt: z.string().max(4000),
 });
-    40|
+
 export type UpdateGlobalMasterPromptInput = z.infer<
   typeof updateGlobalMasterPromptInputSchema
 >;
@@ -52,7 +52,7 @@ export type UpdateGlobalMasterPromptInput = z.infer<
 export const updateBusinessMasterPromptInputSchema = z.object({
   clientId: z.string().uuid(),
   businessMasterPrompt: z.string().max(4000),
-    50|});
+});
 
 export type UpdateBusinessMasterPromptInput = z.infer<
   typeof updateBusinessMasterPromptInputSchema
@@ -63,4 +63,4 @@ export type UpdateBusinessMasterPromptInput = z.infer<
  */
 export type PromptUpdateResult =
   | { ok: true }
-    60|  | { ok: false; error: { code: string; messageKey?: string } };
+  | { ok: false; error: { code: string; messageKey?: string } };

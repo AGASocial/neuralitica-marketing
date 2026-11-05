@@ -9,7 +9,7 @@ import {
 /**
  * Load global and per-business master prompts for a client.
  * Returns nulls when prompts are missing or empty (trimmed to empty string).
-    10| * Called by strategy, script, and B-roll generation to inject creative steering.
+ * Called by strategy, script, and B-roll generation to inject creative steering.
  */
 export async function loadMasterPrompts(params: {
   clientId: string;
@@ -19,7 +19,7 @@ export async function loadMasterPrompts(params: {
     return { global: null, business: null };
   }
 
-    20|  const supabase = createServerSupabaseClient();
+  const supabase = createServerSupabaseClient();
 
   // Load global master prompt (singleton row).
   const { data: globalRow, error: globalError } = await supabase
@@ -29,7 +29,7 @@ export async function loadMasterPrompts(params: {
 
   if (globalError && globalError.code !== "PGRST116") {
     // PGRST116 = no rows returned; expected when no global prompt set yet.
-    30|    console.error("[master-prompts] Failed to load global prompt", {
+    console.error("[master-prompts] Failed to load global prompt", {
       code: globalError.code,
       message: globalError.message,
     });
@@ -40,7 +40,7 @@ export async function loadMasterPrompts(params: {
 
   // Load per-business master prompt for this client.
   const { data: businessRow, error: businessError } = await supabase
-    40|    .from("neuramark_business_prompts")
+    .from("neuramark_business_prompts")
     .select("business_master_prompt")
     .eq("client_id", params.clientId)
     .maybeSingle();
@@ -50,7 +50,7 @@ export async function loadMasterPrompts(params: {
       clientId: params.clientId,
       code: businessError.code,
       message: businessError.message,
-    50|    });
+    });
   }
 
   const businessPrompt = businessRow?.business_master_prompt?.trim() ?? null;
