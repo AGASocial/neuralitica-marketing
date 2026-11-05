@@ -17,6 +17,8 @@ import { TRUSTED_METRICS_SUMMARY_TAG } from "@/lib/contracts/strategy-insights";
 import type { TrendSnapshotForWeekResult } from "@/lib/contracts/trend";
 import type { ProviderCatalogRow, SupportedLocale } from "@/lib/contracts/providers";
 import type { LlmProviderAdapter } from "@/lib/providers/provider-adapters";
+import type { MasterPromptsResult } from "@/lib/contracts/master-prompts";
+import { loadMasterPrompts } from "@/lib/prompts/load-master-prompts";
 
 export const UNTRUSTED_BUSINESS_PROFILE_TAG = "UNTRUSTED_BUSINESS_PROFILE";
 export const UNTRUSTED_PLAYBOOK_HINTS_TAG = "UNTRUSTED_PLAYBOOK_HINTS";
@@ -29,6 +31,7 @@ export type WeeklyStrategyPromptInput = {
   weekStart: string;
   locale: SupportedLocale;
   metricsSummaryForPrompt?: MetricsSummaryForPrompt | null;
+  masterPrompts?: MasterPromptsResult;
 };
 
 export type WeeklyStrategyPrompts = {
@@ -168,7 +171,7 @@ function goalDefinitions(locale: SupportedLocale): string {
 export function buildWeeklyStrategyPrompts(
   input: WeeklyStrategyPromptInput,
 ): WeeklyStrategyPrompts {
-  const { profile, playbook, trend, weekStart, locale, metricsSummaryForPrompt } =
+  const { profile, playbook, trend, weekStart, locale, metricsSummaryForPrompt, masterPrompts } =
     input;
   const allowedModes = profile.visualModeSummary?.allowedModes ?? [];
   const mustDisclose = profile.visualModeSummary?.mustDiscloseNotOwner === true;
@@ -213,6 +216,9 @@ export function buildWeeklyStrategyPrompts(
     "  ]",
     "}",
     "",
+    masterPrompts?.global ? `Master Creative Direction:\n${masterPrompts.global}\n` : "",
+    masterPrompts?.business ? `Business-Specific Creative Direction:\n${masterPrompts.business}\n` : "",
+    "",
     "Hard rules:",
     "- Produce 3 to 7 slots.",
     `- Allowed modalidades (must use only these): ${allowedModes.join(", ")}`,
@@ -223,10 +229,10 @@ export function buildWeeklyStrategyPrompts(
     "",
     "Goal definitions:",
     goalDefinitions(locale),
-    hasMetricsSummary ? "" : undefined,
-    hasMetricsSummary ? metricsSummarySystemAddendum(locale) : undefined,
+    hasMetricsSummary ? "" : "",
+    hasMetricsSummary ? metricsSummarySystemAddendum(locale) : "",
   ]
-    .filter((line) => line !== undefined && line.length > 0)
+    .filter((line) => line.length > 0)
     .join("\n");
 
   const userPromptParts = [
@@ -309,6 +315,10 @@ export async function generateWeeklyContentStrategy(
 ): Promise<unknown> {
   const locale = resolveStrategyLocale(params.profile, params.locale);
 
+  const masterPrompts = await loadMasterPrompts({
+    clientId: params.profile.clientId,
+  });
+
   const { systemPrompt, userPrompt } = buildWeeklyStrategyPrompts({
     profile: params.profile,
     playbook: params.playbook,
@@ -316,6 +326,7 @@ export async function generateWeeklyContentStrategy(
     weekStart: params.weekStart,
     locale,
     metricsSummaryForPrompt: params.metricsSummaryForPrompt,
+    masterPrompts,
   });
 
   const completion = await params.llmAdapter.complete({

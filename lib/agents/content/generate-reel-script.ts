@@ -36,6 +36,8 @@ import { getReelDurationPolicyForModality } from "@/lib/reel-duration-policy/get
 import { REEL_SCRIPT_WORDS_PER_SECOND_TARGET } from "@/lib/contracts/reel-script-readability";
 import { computeScriptReadabilityMetrics } from "@/lib/reel-scripts/compute-script-readability";
 import type { LlmProviderAdapter } from "@/lib/providers/provider-adapters";
+import type { MasterPromptsResult } from "@/lib/contracts/master-prompts";
+import { loadMasterPrompts } from "@/lib/prompts/load-master-prompts";
 
 /** Enough headroom for full package JSON (hook/body/cta/voiceover/broll). */
 export const REEL_SCRIPT_MAX_OUTPUT_TOKENS = 4096 as const;
@@ -83,6 +85,7 @@ export type ReelScriptPromptInput = {
   revisionContext?: RevisionContext;
   /** Duration bounds from neuramark_reel_duration_policies (or loader fallback). */
   durationPolicy: ReelDurationPolicy;
+  masterPrompts?: MasterPromptsResult;
 };
 
 export type ReelScriptPrompts = {
@@ -252,6 +255,7 @@ export function buildReelScriptPrompts(
     presenterGender,
     revisionContext,
     durationPolicy,
+    masterPrompts,
   } = input;
   const { slot, formatoHints, tacticaHints, mustDiscloseForSlot, modalidad } =
     slotContext;
@@ -298,6 +302,9 @@ export function buildReelScriptPrompts(
     '  "coldOpenNotes"?: string (max 500 chars),',
     '  "editingNotes"?: string (max 1000 chars)',
     "}",
+    "",
+    masterPrompts?.global ? `Master Creative Direction:\n${masterPrompts.global}\n` : "",
+    masterPrompts?.business ? `Business-Specific Creative Direction:\n${masterPrompts.business}\n` : "",
     "",
     "Hard rules:",
     `- Production modality for this slot (trusted): ${modalidad}`,
@@ -387,6 +394,11 @@ export async function generateReelScriptForSlot(
   const durationPolicy = await getReelDurationPolicyForModality(
     params.slotContext.modalidad,
   );
+  
+  const masterPrompts = await loadMasterPrompts({
+    clientId: params.profile.clientId,
+  });
+
   const { systemPrompt, userPrompt } = buildReelScriptPrompts({
     profile: params.profile,
     slotContext: params.slotContext,
@@ -394,6 +406,7 @@ export async function generateReelScriptForSlot(
     presenterGender: params.presenterGender,
     revisionContext: params.revisionContext,
     durationPolicy,
+    masterPrompts,
   });
 
   const baseInput = {

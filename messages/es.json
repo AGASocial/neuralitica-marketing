@@ -2124,6 +2124,33 @@
         "forbidden": "No tienes permiso para administrar la política de costo.",
         "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
       }
+    },
+    "masterPrompts": {
+      "title": "Prompts maestros",
+      "subtitle": "Dirige la generación de contenido (estrategia, guiones, B-roll) con orientación creativa. Los prompts maestros se aplican uniformemente mientras preservan las restricciones de seguridad y esquema.",
+      "globalSectionTitle": "Prompt maestro global",
+      "globalHint": "Se aplica a todos los clientes. Enfócate en ganchos, retención, ritmo para Instagram Reels.",
+      "globalPlaceholder": "Ingresa orientación creativa global (ej: ritmo que prioriza retención, ganchos en 2 segundos, encuadre vertical 9:16)...",
+      "businessSectionTitle": "Prompt maestro por negocio",
+      "businessHint": "Override opcional específico del negocio. Usa con moderación para necesidades especiales del cliente.",
+      "businessPlaceholder": "Ingresa orientación creativa específica del negocio...",
+      "clientLabel": "Cliente",
+      "clientPlaceholder": "Selecciona un cliente",
+      "saveGlobal": "Guardar prompt global",
+      "saveBusiness": "Guardar prompt del negocio",
+      "saving": "Guardando…",
+      "characterCount": "{count} / 4000 caracteres",
+      "toastGlobalSuccess": "Prompt maestro global guardado.",
+      "toastBusinessSuccess": "Prompt maestro del negocio guardado.",
+      "backDashboard": "Volver al dashboard",
+      "loadError": "No pudimos cargar la configuración de prompts maestros. Actualiza la página e inténtalo de nuevo.",
+      "errors": {
+        "validation": "El prompt maestro excede el límite de 4,000 caracteres.",
+        "unavailable": "Los prompts maestros no están disponibles. Inténtalo más tarde.",
+        "unauthenticated": "Inicia sesión para administrar los prompts maestros.",
+        "forbidden": "No tienes permiso para administrar los prompts maestros.",
+        "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
+      }
     }
   },
   "operator": {
