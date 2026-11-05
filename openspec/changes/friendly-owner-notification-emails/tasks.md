@@ -1,25 +1,25 @@
 # Tasks
 
-- [ ] Add logo asset `public/email/neuralitica-logo.png` (480×139 PNG from uploads)
-- [ ] Build HTML email template function in `lib/notifications/email/templates.ts`
-  - [ ] `renderOwnerNotificationEmail(params)` with logo, headline, body, CTA button, footer
-  - [ ] Campaña brand colors: deep teal header `#0E2226`, butter CTA `#F2C94C`, fog body `#EAF2EE`
-  - [ ] Generate both `html` and `text` versions
-- [ ] Update `lib/automation/evaluate-pending.ts`
-  - [ ] Friendlier Spanish subject: "Video esperando tu visto bueno"
-  - [ ] Warmer body copy
-  - [ ] Call template function, pass `html` to `sendOwnerNotificationEmail`
-- [ ] Update `lib/automation/run-reminders.ts`
-  - [ ] 24h subject: "Tu video sigue esperando tu visto bueno"
-  - [ ] 48h subject: friendlier tone
-  - [ ] 72h subject: friendlier tone
-  - [ ] Warmer body copy for all three
-  - [ ] Call template function for each, pass `html` to `sendOwnerNotificationEmail`
-- [ ] Unit tests
-  - [ ] Template renders logo URL correctly
-  - [ ] CTA button links to correct approval URL
-  - [ ] HTML escapes user-controlled strings
-  - [ ] Both reminders and pending emails use templates
-- [ ] Run `npx openspec validate --all --strict`
-- [ ] Run `npm run typecheck && npm test`
-- [ ] Push and open PR
+- [x] Add logo asset `public/email/neuralitica-logo.png` (480×139 PNG from uploads)
+- [x] Build HTML email template function in `lib/notifications/email/templates.ts`
+  - [x] `renderOwnerNotificationEmail(params)` with logo, headline, body, CTA button, footer
+  - [x] Campaña brand colors: deep teal header `#0E2226`, butter CTA `#F2C94C`, fog body `#EAF2EE`
+  - [x] Generate both `html` and `text` versions
+- [x] Update `lib/automation/evaluate-pending.ts`
+  - [x] Friendlier Spanish subject: "Video esperando tu visto bueno"
+  - [x] Warmer body copy
+  - [x] Call template function, pass `html` to `sendOwnerNotificationEmail`
+- [x] Update `lib/automation/run-reminders.ts`
+  - [x] 24h subject: "Tu video sigue esperando tu visto bueno"
+  - [x] 48h subject: "Recordatorio amigable (48 horas)"
+  - [x] 72h subject: "Tu video sigue esperando (72 horas)"
+  - [x] Warmer body copy for all three
+  - [x] Call template function for each, pass `html` to `sendOwnerNotificationEmail`
+- [x] Unit tests
+  - [x] Template renders logo URL correctly
+  - [x] CTA button links to correct approval URL
+  - [x] HTML escapes user-controlled strings
+  - [x] Both reminders and pending emails use templates
+- [x] Run `npx openspec validate --all --strict`
+- [x] Run `npm run typecheck && npm test`
+- [x] Push and open PR
