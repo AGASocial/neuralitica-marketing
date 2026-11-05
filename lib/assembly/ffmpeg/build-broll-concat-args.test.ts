@@ -6,7 +6,9 @@ import { describe, it } from "node:test";
 
 import {
   buildBrollConcatArgs,
+  expandBrollClipSequenceForDuration,
   formatBrollConcatListContents,
+  resolveBrollOutputDurationSec,
 } from "./build-broll-concat-args";
 
 const TEMP = "/tmp/neuramark-assembly/job-b";
@@ -100,22 +102,54 @@ describe("buildBrollConcatArgs", () => {
     assertNoForbiddenText(args);
   });
 
-  it("3 clips — pad when short", () => {
+  it("3 clips — trim when long (unchanged)", () => {
     const clips = clipPaths(3);
     const args = buildBrollConcatArgs({
       localConcatListPath: CONCAT,
       localClipPaths: clips,
       localVoiceoverPath: VOICEOVER,
       localOutputPath: OUTPUT,
-      sourceDurationSec: 20,
+      sourceDurationSec: 40,
       targetDurationSec: 30,
       toleranceSec: 2,
       coldOpenTrimSec: null,
     });
 
-    const vfIndex = args.indexOf("-vf");
-    assert.match(args[vfIndex + 1]!, /tpad=stop_mode=add:stop_duration=10/);
-    assert.ok(args.includes("apad=pad_dur=10"));
+    assert.ok(args.includes("-t"));
+    assert.ok(args.includes("30"));
+    assert.ok(!args.join(" ").includes("tpad"));
+    assertNoShellMetacharacters(args);
+  });
+
+  it("short total after loop — trims to voiceover length", () => {
+    const clips = clipPaths(1);
+    const clipPath = clips[0]!;
+    const voiceoverSec = 30.35;
+    const clipSec = 5.04;
+    const { expandedPaths, totalDurationSec } =
+      expandBrollClipSequenceForDuration({
+        clipPaths: [clipPath],
+        clipDurationSecs: [clipSec],
+        requiredTotalDurationSec: voiceoverSec,
+      });
+    assert.ok(expandedPaths.length >= 7);
+    assert.ok(totalDurationSec >= voiceoverSec);
+
+    const args = buildBrollConcatArgs({
+      localConcatListPath: CONCAT,
+      localClipPaths: clips,
+      localVoiceoverPath: VOICEOVER,
+      localOutputPath: OUTPUT,
+      sourceDurationSec: totalDurationSec,
+      targetDurationSec: 32,
+      toleranceSec: 2,
+      coldOpenTrimSec: null,
+      voiceoverDurationSec: voiceoverSec,
+    });
+
+    assert.ok(args.includes("-t"));
+    assert.ok(args.includes("30.35"));
+    assert.ok(!args.join(" ").includes("tpad"));
     assertNoShellMetacharacters(args);
   });
 
@@ -183,6 +217,55 @@ describe("buildBrollConcatArgs", () => {
     assert.ok(args.includes("-ss"));
     assert.ok(args.includes("3"));
     assertNoForbiddenText(args);
+  });
+});
+
+describe("expandBrollClipSequenceForDuration", () => {
+  it("loops clip order until required duration is met", () => {
+    const paths = clipPaths(2);
+    const { expandedPaths, totalDurationSec } =
+      expandBrollClipSequenceForDuration({
+        clipPaths: paths,
+        clipDurationSecs: [5, 5],
+        requiredTotalDurationSec: 30,
+      });
+    assert.equal(expandedPaths.length, 6);
+    assert.deepEqual(expandedPaths, [
+      paths[0],
+      paths[1],
+      paths[0],
+      paths[1],
+      paths[0],
+      paths[1],
+    ]);
+    assert.equal(totalDurationSec, 30);
+  });
+
+  it("does not repeat when one cycle already covers duration", () => {
+    const paths = clipPaths(3);
+    const { expandedPaths, totalDurationSec } =
+      expandBrollClipSequenceForDuration({
+        clipPaths: paths,
+        clipDurationSecs: [12, 12, 12],
+        requiredTotalDurationSec: 30,
+      });
+    assert.equal(expandedPaths.length, 3);
+    assert.equal(totalDurationSec, 36);
+  });
+
+  it("includes cold-open offset in required duration via caller", () => {
+    const outputSec = resolveBrollOutputDurationSec({
+      targetDurationSec: 30,
+      voiceoverDurationSec: 30.35,
+    });
+    assert.equal(outputSec, 30.35);
+    const paths = clipPaths(1);
+    const { totalDurationSec } = expandBrollClipSequenceForDuration({
+      clipPaths: paths,
+      clipDurationSecs: [5.04],
+      requiredTotalDurationSec: outputSec + 2,
+    });
+    assert.ok(totalDurationSec >= 32.35);
   });
 });
 

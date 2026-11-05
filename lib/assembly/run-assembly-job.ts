@@ -21,6 +21,7 @@ import { isTerminalAssemblyJobStatus } from "./assembly-job-row";
 import { computeAssemblyInputFingerprint } from "./compute-input-fingerprint";
 import {
   buildBrollConcatArgs,
+  expandBrollClipSequenceForDuration,
   formatBrollConcatListContents,
 } from "./ffmpeg/build-broll-concat-args";
 import { buildAvatarSegmentTimelineArgs } from "./ffmpeg/build-avatar-segment-timeline-args";
@@ -453,7 +454,7 @@ async function runBrollStitchPath(
   try {
     const storage = getMediaStorage();
     const clipPaths: string[] = [];
-    let sourceDurationSec = 0;
+    const clipDurationSecs: number[] = [];
 
     for (let i = 0; i < brollAssets.length; i += 1) {
       const asset = brollAssets[i]!;
@@ -466,15 +467,9 @@ async function runBrollStitchPath(
         await failAssemblyJob(activeJob.id, ASSEMBLY_FAILURE_PROBE);
         return;
       }
-      sourceDurationSec += probe.durationSec;
+      clipDurationSecs.push(probe.durationSec);
       clipPaths.push(clipPath);
     }
-
-    await writeFile(
-      concatListPath,
-      formatBrollConcatListContents(clipPaths),
-      "utf8",
-    );
 
     storage.assertSafeKey(voiceoverAsset.storageKey);
     const ext = voiceoverExtensionFromStorageKey(voiceoverAsset.storageKey);
@@ -505,6 +500,35 @@ async function runBrollStitchPath(
       targetDurationSec: activeJob.targetDurationSec,
       voiceoverDurationSec,
     });
+
+    const coldOpenOffsetSec =
+      coldOpenTrimSec != null && coldOpenTrimSec > 0 ? coldOpenTrimSec : 0;
+    const rawSourceDurationSec = clipDurationSecs.reduce(
+      (sum, sec) => sum + sec,
+      0,
+    );
+    const effectiveSourceBeforeLoopSec =
+      rawSourceDurationSec - coldOpenOffsetSec;
+    const loopFillThresholdSec = expectedDurationSec - toleranceSec;
+
+    let sourceDurationSec = rawSourceDurationSec;
+    let concatClipPaths = clipPaths;
+    if (effectiveSourceBeforeLoopSec < loopFillThresholdSec) {
+      const expanded = expandBrollClipSequenceForDuration({
+        clipPaths,
+        clipDurationSecs,
+        requiredTotalDurationSec: coldOpenOffsetSec + expectedDurationSec,
+      });
+      sourceDurationSec = expanded.totalDurationSec;
+      concatClipPaths = expanded.expandedPaths;
+    }
+
+    await writeFile(
+      concatListPath,
+      formatBrollConcatListContents(concatClipPaths),
+      "utf8",
+    );
+
     const ffmpegArgs = buildBrollConcatArgs({
       localConcatListPath: concatListPath,
       localClipPaths: clipPaths,

@@ -75,16 +75,6 @@ export function buildBrollConcatArgs(
     effectiveSourceSec > outputDurationSec + input.toleranceSec ||
     (typeof input.voiceoverDurationSec === "number" &&
       effectiveSourceSec > outputDurationSec);
-  const needsPad =
-    effectiveSourceSec < outputDurationSec - input.toleranceSec;
-  const padSec = needsPad
-    ? outputDurationSec - effectiveSourceSec
-    : 0;
-
-  let videoFilter = BASE_VIDEO_FILTER;
-  if (needsPad) {
-    videoFilter = `${BASE_VIDEO_FILTER},tpad=stop_mode=add:stop_duration=${formatDurationSec(padSec)}`;
-  }
 
   const args: string[] = ["-y"];
 
@@ -102,16 +92,12 @@ export function buildBrollConcatArgs(
     "-i",
     input.localVoiceoverPath,
     "-vf",
-    videoFilter,
+    BASE_VIDEO_FILTER,
     "-map",
     "0:v:0",
     "-map",
     "1:a:0",
   );
-
-  if (needsPad) {
-    args.push("-af", `apad=pad_dur=${formatDurationSec(padSec)}`);
-  }
 
   args.push(
     "-c:v",
@@ -134,6 +120,52 @@ export function buildBrollConcatArgs(
 
   args.push(input.localOutputPath);
   return args;
+}
+
+/**
+ * Repeat clip1..clipN in order until total duration meets `requiredTotalDurationSec`.
+ * Used when paid b-roll covers less than voiceover/target — no new provider calls.
+ */
+export function expandBrollClipSequenceForDuration(input: {
+  clipPaths: string[];
+  clipDurationSecs: number[];
+  requiredTotalDurationSec: number;
+}): { expandedPaths: string[]; totalDurationSec: number } {
+  const { clipPaths, clipDurationSecs, requiredTotalDurationSec } = input;
+  if (clipPaths.length < 1) {
+    throw new Error("clipPaths must not be empty");
+  }
+  if (clipPaths.length !== clipDurationSecs.length) {
+    throw new Error("clipPaths and clipDurationSecs length mismatch");
+  }
+  if (
+    !Number.isFinite(requiredTotalDurationSec) ||
+    requiredTotalDurationSec <= 0
+  ) {
+    throw new Error("requiredTotalDurationSec must be a positive finite number");
+  }
+
+  const cycleDurationSec = clipDurationSecs.reduce(
+    (sum, sec) => sum + Math.max(0, sec),
+    0,
+  );
+  if (cycleDurationSec <= 0) {
+    throw new Error("clip cycle duration must be positive");
+  }
+
+  const expandedPaths: string[] = [];
+  let totalDurationSec = 0;
+  while (totalDurationSec < requiredTotalDurationSec) {
+    for (let i = 0; i < clipPaths.length; i += 1) {
+      expandedPaths.push(clipPaths[i]!);
+      totalDurationSec += clipDurationSecs[i]!;
+      if (totalDurationSec >= requiredTotalDurationSec) {
+        break;
+      }
+    }
+  }
+
+  return { expandedPaths, totalDurationSec };
 }
 
 /**
