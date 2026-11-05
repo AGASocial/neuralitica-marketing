@@ -130,6 +130,7 @@ export default async function DashboardPage({
         slotPreparing: hoy.slotPreparing,
         slotScheduled: hoy.slotScheduled,
         loadError,
+        approvalErrors: t.approvals.errors,
         setupBanner: supabaseReady ? undefined : t.dashboard.setupBanner,
         timelineMessages: hoy.timeline,
       }}

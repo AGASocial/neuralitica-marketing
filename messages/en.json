@@ -684,7 +684,8 @@
       "invalidTransition": "This package was already decided.",
       "revisionLimitExceeded": "You have no revision rounds remaining.",
       "rateLimited": "Too many attempts. Please wait and try again later.",
-      "internal": "Something went wrong. Please try again later."
+      "internal": "Something went wrong. Please try again later.",
+      "approveFailed": "Could not approve. Try again in a moment."
     }
   },
   "readyToPublish": {

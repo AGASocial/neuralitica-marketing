@@ -11,6 +11,10 @@ import { StatusAlert } from "@/components/ui/status-alert";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { mapMyVideosPendingToCard } from "@/lib/agent-cards";
 import { decideApproval } from "@/lib/approvals/actions/decide-approval";
+import {
+  approvalDecideErrorMessage,
+  type ApprovalDecideErrorCopy,
+} from "@/lib/approvals/approval-decide-error-message";
 import type { ApprovedListItemDto } from "@/lib/contracts/approval";
 import type {
   MyVideosInProductionItem,
@@ -41,6 +45,7 @@ export type MyVideosHubCopy = {
   progressHint: string;
   untitled: string;
   formatLabels: Record<VisualModality, string>;
+  approvalErrors: ApprovalDecideErrorCopy;
 };
 
 type MyVideosHubViewProps = {
@@ -110,15 +115,21 @@ function PendingCard({
           }
           setError(null);
           startTransition(async () => {
-            const result = await decideApproval({
-              approvalId: item.approvalId,
-              decision: "approved",
-            });
-            if (!result.ok) {
-              setError(copy.loadError);
-              return;
+            try {
+              const result = await decideApproval({
+                approvalId: item.approvalId,
+                decision: "approved",
+              });
+              if (!result.ok) {
+                setError(
+                  approvalDecideErrorMessage(result.error, copy.approvalErrors),
+                );
+                return;
+              }
+              router.refresh();
+            } catch {
+              setError(approvalDecideErrorMessage(null, copy.approvalErrors));
             }
-            router.refresh();
           });
         }}
       />

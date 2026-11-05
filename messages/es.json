@@ -684,7 +684,8 @@
       "invalidTransition": "Este paquete ya fue decidido.",
       "revisionLimitExceeded": "No te quedan rondas de revisión.",
       "rateLimited": "Demasiados intentos. Espera e inténtalo de nuevo más tarde.",
-      "internal": "Algo salió mal. Inténtalo de nuevo más tarde."
+      "internal": "Algo salió mal. Inténtalo de nuevo más tarde.",
+      "approveFailed": "No se pudo aprobar. Inténtalo de nuevo en un momento."
     }
   },
   "readyToPublish": {

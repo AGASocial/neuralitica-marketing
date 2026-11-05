@@ -17,6 +17,11 @@ import {
   trackUxEvent,
 } from "@/lib/analytics/track-ux-event";
 import { decideApproval } from "@/lib/approvals/actions/decide-approval";
+import {
+  approvalDecideErrorMessage,
+  shouldForceApproveError,
+  type ApprovalDecideErrorCopy,
+} from "@/lib/approvals/approval-decide-error-message";
 import { mediaPreviewUrl } from "@/lib/approvals/caption-preview";
 import type { ApprovalListItemDto } from "@/lib/contracts/approval";
 import type {
@@ -51,6 +56,7 @@ export type HoyFeedCopy = {
   slotPreparing: string;
   slotScheduled: string;
   loadError?: string;
+  approvalErrors: ApprovalDecideErrorCopy;
   setupBanner?: { title: string; body: string };
   timelineMessages: Record<string, string>;
 };
@@ -155,22 +161,43 @@ function PendingHoyCard({
         }
         setError(null);
         startTransition(async () => {
-          const result = await decideApproval({
-            approvalId: item.approvalId,
-            decision: "approved",
-          });
-          if (!result.ok) {
-            setError(copy.loadError ?? "Error");
-            return;
+          try {
+            if (
+              typeof window !== "undefined" &&
+              shouldForceApproveError(window.location.search)
+            ) {
+              setError(
+                approvalDecideErrorMessage(
+                  {
+                    code: "INVALID_TRANSITION",
+                    messageKey: "approvals.errors.invalidTransition",
+                  },
+                  copy.approvalErrors,
+                ),
+              );
+              return;
+            }
+            const result = await decideApproval({
+              approvalId: item.approvalId,
+              decision: "approved",
+            });
+            if (!result.ok) {
+              setError(
+                approvalDecideErrorMessage(result.error, copy.approvalErrors),
+              );
+              return;
+            }
+            trackUxEvent("hoy_action", { action: "approve", approval_id: item.approvalId });
+            trackUxEvent("approval", {
+              device: detectApprovalDevice(),
+              ms_since_content_ready: Date.now() - contentReadyAt.current,
+              kind: "approve_pending_video",
+              surface: "hoy",
+            });
+            router.refresh();
+          } catch {
+            setError(approvalDecideErrorMessage(null, copy.approvalErrors));
           }
-          trackUxEvent("hoy_action", { action: "approve", approval_id: item.approvalId });
-          trackUxEvent("approval", {
-            device: detectApprovalDevice(),
-            ms_since_content_ready: Date.now() - contentReadyAt.current,
-            kind: "approve_pending_video",
-            surface: "hoy",
-          });
-          router.refresh();
         });
       }}
     />
