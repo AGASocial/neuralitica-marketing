@@ -216,8 +216,8 @@ export function buildWeeklyStrategyPrompts(
     "  ]",
     "}",
     "",
-    masterPrompts?.global ? `Master Creative Direction:\n${masterPrompts.global}\n` : undefined,
-    masterPrompts?.business ? `Business-Specific Creative Direction:\n${masterPrompts.business}\n` : undefined,
+    masterPrompts?.global ? `Master Creative Direction:\n${masterPrompts.global}\n` : "",
+    masterPrompts?.business ? `Business-Specific Creative Direction:\n${masterPrompts.business}\n` : "",
     "",
     "Hard rules:",
     "- Produce 3 to 7 slots.",
@@ -229,10 +229,10 @@ export function buildWeeklyStrategyPrompts(
     "",
     "Goal definitions:",
     goalDefinitions(locale),
-    hasMetricsSummary ? "" : undefined,
-    hasMetricsSummary ? metricsSummarySystemAddendum(locale) : undefined,
+    hasMetricsSummary ? "" : "",
+    hasMetricsSummary ? metricsSummarySystemAddendum(locale) : "",
   ]
-    .filter((line) => line !== undefined && line.length > 0)
+    .filter((line) => line.length > 0)
     .join("\n");
 
   const userPromptParts = [
