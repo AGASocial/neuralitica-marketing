@@ -78,11 +78,14 @@ export async function evaluatePendingApprovalAutomation(
   }
 
   const title =
-    locale === "en" ? "Video waiting for your OK" : "Video esperando tu OK";
+    locale === "en"
+      ? "Video waiting for your approval"
+      : "Video esperando tu visto bueno";
   const body =
     locale === "en"
-      ? "I have a video ready. Please review and Approve or Change."
-      : "Tengo un video listo. Revísalo y elige Aprobar o Cambiar.";
+      ? "I have a video ready for you. Please take a moment to review it and let me know if you'd like to Approve or Change anything."
+      : "Tengo un video listo para ti. Tómate un momento para revisarlo y dime si quieres Aprobarlo o Cambiar algo.";
+  const ctaText = locale === "en" ? "Review video" : "Revisar video";
 
   await insertHoyNotification({
     clientId: input.clientId,
@@ -105,11 +108,24 @@ export async function evaluatePendingApprovalAutomation(
     const siteUrl = (process.env.SITE_URL ?? "https://marketing.neuraliti.ca")
       .trim()
       .replace(/\/$/, "");
+    const ctaUrl = `${siteUrl}/approvals/${input.approvalId}`;
+
+    const { renderOwnerNotificationEmail } = await import(
+      "@/lib/notifications/email/templates"
+    );
+    const { html, text } = renderOwnerNotificationEmail({
+      headline: title,
+      body,
+      ctaText,
+      ctaUrl,
+      siteUrl,
+    });
+
     const emailResult = await sendOwnerNotificationEmail({
       to: input.ownerEmail,
       subject: title,
-      text: body,
-      html: `<p>${body}</p><p><a href="${siteUrl}/approvals/${input.approvalId}">Review</a></p>`,
+      text,
+      html,
       idempotencyKey: `email_pending:${input.approvalId}`,
       clientId: input.clientId,
       approvalId: input.approvalId,

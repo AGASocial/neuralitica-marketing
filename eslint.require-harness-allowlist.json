@@ -23,6 +23,7 @@
     "lib/metrics/get-strategy-performance-insights.test.ts",
     "lib/metrics/sanitize-tema-for-metrics-prompt.test.ts",
     "lib/metrics/upsert-reel-metrics.test.ts",
+    "lib/notifications/email/templates.test.ts",
     "lib/orchestration/actions/trigger-weekly-cycle-for-client.test.ts",
     "lib/orchestration/dispatch-weekly-cycle-outbox.test.ts",
     "lib/orchestration/ensure-approval-package-for-system-cycle.test.ts",
