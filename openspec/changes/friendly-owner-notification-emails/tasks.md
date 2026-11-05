@@ -1,0 +1,25 @@
+# Tasks
+
+- [ ] Add logo asset `public/email/neuralitica-logo.png` (480×139 PNG from uploads)
+- [ ] Build HTML email template function in `lib/notifications/email/templates.ts`
+  - [ ] `renderOwnerNotificationEmail(params)` with logo, headline, body, CTA button, footer
+  - [ ] Campaña brand colors: deep teal header `#0E2226`, butter CTA `#F2C94C`, fog body `#EAF2EE`
+  - [ ] Generate both `html` and `text` versions
+- [ ] Update `lib/automation/evaluate-pending.ts`
+  - [ ] Friendlier Spanish subject: "Video esperando tu visto bueno"
+  - [ ] Warmer body copy
+  - [ ] Call template function, pass `html` to `sendOwnerNotificationEmail`
+- [ ] Update `lib/automation/run-reminders.ts`
+  - [ ] 24h subject: "Tu video sigue esperando tu visto bueno"
+  - [ ] 48h subject: friendlier tone
+  - [ ] 72h subject: friendlier tone
+  - [ ] Warmer body copy for all three
+  - [ ] Call template function for each, pass `html` to `sendOwnerNotificationEmail`
+- [ ] Unit tests
+  - [ ] Template renders logo URL correctly
+  - [ ] CTA button links to correct approval URL
+  - [ ] HTML escapes user-controlled strings
+  - [ ] Both reminders and pending emails use templates
+- [ ] Run `npx openspec validate --all --strict`
+- [ ] Run `npm run typecheck && npm test`
+- [ ] Push and open PR

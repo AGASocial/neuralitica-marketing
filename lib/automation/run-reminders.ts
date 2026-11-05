@@ -51,6 +51,8 @@ async function maybeRemind(params: {
   titleEn: string;
   bodyEs: string;
   bodyEn: string;
+  ctaTextEs: string;
+  ctaTextEn: string;
   ownerEmail: string | null;
 }): Promise<boolean> {
   const key = `${params.kind}:${params.approvalId}`;
@@ -59,6 +61,8 @@ async function maybeRemind(params: {
   }
   const title = params.titleEs;
   const body = params.bodyEs;
+  const ctaText = params.ctaTextEs;
+
   await insertHoyNotification({
     clientId: params.clientId,
     kind: params.kind,
@@ -75,10 +79,27 @@ async function maybeRemind(params: {
     idempotencyKey: key,
   });
   if (params.ownerEmail) {
+    const siteUrl = (process.env.SITE_URL ?? "https://marketing.neuraliti.ca")
+      .trim()
+      .replace(/\/$/, "");
+    const ctaUrl = `${siteUrl}/approvals/${params.approvalId}`;
+
+    const { renderOwnerNotificationEmail } = await import(
+      "@/lib/notifications/email/templates"
+    );
+    const { html, text } = renderOwnerNotificationEmail({
+      headline: title,
+      body,
+      ctaText,
+      ctaUrl,
+      siteUrl,
+    });
+
     await sendOwnerNotificationEmail({
       to: params.ownerEmail,
       subject: title,
-      text: body,
+      text,
+      html,
       idempotencyKey: `email_${params.kind}:${params.approvalId}`,
       clientId: params.clientId,
       approvalId: params.approvalId,
@@ -136,12 +157,14 @@ export async function runAutomationReminders(params?: {
         clientId: row.client_id,
         approvalId: row.id,
         kind: "reminder_72h",
-        titleEs: "Aún necesito tu OK (72 h)",
-        titleEn: "Still need your OK (72h)",
+        titleEs: "Tu video sigue esperando (72 horas)",
+        titleEn: "Your video is still waiting (72 hours)",
         bodyEs:
-          "Llevo 72 horas esperando. Si no respondes, seguiré esperando (F0 no auto-publica).",
+          "Han pasado 72 horas desde que preparé este video para ti. Sin presión, pero cuando tengas un momento, me encantaría saber tu opinión.",
         bodyEn:
-          "I have waited 72 hours. I will keep waiting (F0 does not auto-publish).",
+          "It's been 72 hours since I prepared this video for you. No pressure, but when you have a moment, I'd love to hear your thoughts.",
+        ctaTextEs: "Ver video",
+        ctaTextEn: "View video",
         ownerEmail,
       });
       if (ok) summary.reminded72 += 1;
@@ -152,12 +175,14 @@ export async function runAutomationReminders(params?: {
         clientId: row.client_id,
         approvalId: row.id,
         kind: "reminder_48h",
-        titleEs: "Recordatorio (48 h) — revisa tu correo",
-        titleEn: "Reminder (48h) — check email",
+        titleEs: "Recordatorio amigable (48 horas)",
+        titleEn: "Friendly reminder (48 hours)",
         bodyEs:
-          "Han pasado 48 horas. Te aviso también por correo si las notificaciones están activas.",
+          "Han pasado 48 horas y tu video sigue esperando tu visto bueno. ¿Tienes un momento para revisarlo?",
         bodyEn:
-          "It has been 48 hours. I am also emailing if notifications are enabled.",
+          "It's been 48 hours and your video is still waiting for your approval. Do you have a moment to review it?",
+        ctaTextEs: "Revisar ahora",
+        ctaTextEn: "Review now",
         ownerEmail,
       });
       if (ok) summary.reminded48 += 1;
@@ -168,10 +193,14 @@ export async function runAutomationReminders(params?: {
         clientId: row.client_id,
         approvalId: row.id,
         kind: "reminder_24h",
-        titleEs: "Recordatorio: video pendiente de OK",
-        titleEn: "Reminder: video still needs your OK",
-        bodyEs: "Llevo 24 horas con un video esperando tu aprobación.",
-        bodyEn: "A video has been waiting for your OK for 24 hours.",
+        titleEs: "Tu video sigue esperando tu visto bueno",
+        titleEn: "Your video is waiting for your approval",
+        bodyEs:
+          "Hace 24 horas que preparé un video para ti. Cuando tengas un momento, ¿podrías revisarlo y darme tu visto bueno?",
+        bodyEn:
+          "I prepared a video for you 24 hours ago. When you have a moment, could you review it and give me your approval?",
+        ctaTextEs: "Revisar video",
+        ctaTextEn: "Review video",
         ownerEmail,
       });
       if (ok) summary.reminded24 += 1;

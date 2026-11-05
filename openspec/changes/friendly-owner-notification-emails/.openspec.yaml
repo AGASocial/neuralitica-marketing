@@ -1,0 +1,5 @@
+schema: change
+goal: Friendly owner notification emails with logo and CTA
+affected_areas:
+  - proactive-automation
+  - email-notifications
