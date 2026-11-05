@@ -27,8 +27,11 @@ import { GenericAvatarDisclosurePreview } from "@/components/preferences/Generic
 import { ReadyToPublishDownloadPanel } from "@/components/ready-to-publish/ReadyToPublishDownloadPanel";
 import { decideApproval } from "@/lib/approvals/actions/decide-approval";
 import {
+  approvalDecideErrorMessage,
+  type ApprovalDecideErrorCopy,
+} from "@/lib/approvals/approval-decide-error-message";
+import {
   APPROVAL_FEEDBACK_MAX_LENGTH,
-  type ApprovalErrorCode,
   type ApprovalPackageDto,
   type ApprovalStatus,
 } from "@/lib/contracts/approval";
@@ -95,23 +98,7 @@ export type ApprovalPackageCopy = {
     waiting: string;
     toastSubmitted: string;
   };
-  errors: Record<
-    | "unauthenticated"
-    | "forbidden"
-    | "validation"
-    | "notFound"
-    | "forbiddenFields"
-    | "qaGateNotReady"
-    | "assemblyNotReady"
-    | "brandingRequired"
-    | "captionRequired"
-    | "captionCtaNotSelected"
-    | "invalidTransition"
-    | "revisionLimitExceeded"
-    | "rateLimited"
-    | "internal",
-    string
-  >;
+  errors: ApprovalDecideErrorCopy;
 };
 
 type ApprovalPackageViewProps = {
@@ -149,44 +136,6 @@ function statusSeverity(
       return "info";
     default:
       return "secondary";
-  }
-}
-
-function mapErrorMessage(
-  code: ApprovalErrorCode,
-  errors: ApprovalPackageCopy["errors"],
-): string {
-  switch (code) {
-    case "UNAUTHENTICATED":
-      return errors.unauthenticated;
-    case "FORBIDDEN":
-      return errors.forbidden;
-    case "VALIDATION_ERROR":
-      return errors.validation;
-    case "NOT_FOUND":
-      return errors.notFound;
-    case "FORBIDDEN_FIELDS":
-      return errors.forbiddenFields;
-    case "QA_GATE_NOT_READY":
-      return errors.qaGateNotReady;
-    case "ASSEMBLY_NOT_READY":
-      return errors.assemblyNotReady;
-    case "BRANDING_REQUIRED":
-      return errors.brandingRequired;
-    case "CAPTION_REQUIRED":
-      return errors.captionRequired;
-    case "CAPTION_CTA_NOT_SELECTED":
-      return errors.captionCtaNotSelected;
-    case "INVALID_TRANSITION":
-      return errors.invalidTransition;
-    case "REVISION_LIMIT_EXCEEDED":
-      return errors.revisionLimitExceeded;
-    case "RATE_LIMITED":
-      return errors.rateLimited;
-    case "INTERNAL_ERROR":
-    case "REVISION_ROUTING_FAILED":
-    default:
-      return errors.internal;
   }
 }
 
@@ -239,7 +188,10 @@ export function ApprovalPackageView({
 
   const isPending = pkg.status === "pending_client";
   const isWaiting = pkg.status === "changes_requested";
-  const gateBlocksApprove = pkg.gate?.ready === false;
+  // A null gate status means no QA report. The client can still decide.
+  // A report that exists and is not ready stays blocked.
+  const gateBlocksApprove =
+    pkg.gate?.ready === false && pkg.gate.status != null;
   const feedbackTrimmed = feedback.trim();
   const feedbackTooLong = feedbackTrimmed.length > APPROVAL_FEEDBACK_MAX_LENGTH;
   const summaryTrimmed = revisionSummary.trim();
@@ -307,54 +259,60 @@ export function ApprovalPackageView({
 
     setBanner(null);
     startTransition(async () => {
-      const result = await decideApproval({
-        approvalId: pkg.approvalId,
-        decision,
-        ...(decision === "rejected" && feedbackTrimmed.length > 0
-          ? { clientFeedback: feedbackTrimmed }
-          : {}),
-        ...(decision === "request_changes"
-          ? {
-              changeRequest: buildChangeRequest(
-                selectedTags,
-                notesByTag,
-                revisionSummary,
-              ),
-            }
-          : {}),
-      });
+      try {
+        const result = await decideApproval({
+          approvalId: pkg.approvalId,
+          decision,
+          ...(decision === "rejected" && feedbackTrimmed.length > 0
+            ? { clientFeedback: feedbackTrimmed }
+            : {}),
+          ...(decision === "request_changes"
+            ? {
+                changeRequest: buildChangeRequest(
+                  selectedTags,
+                  notesByTag,
+                  revisionSummary,
+                ),
+              }
+            : {}),
+        });
 
-      if (!result.ok) {
-        const message = mapErrorMessage(result.error.code, copy.errors);
+        if (!result.ok) {
+          const message = approvalDecideErrorMessage(result.error, copy.errors);
+          setBanner(message);
+          toast.error(message, { duration: 5000 });
+          return;
+        }
+
+        setPkg((prev) => ({
+          ...prev,
+          status: result.status,
+          decidedAt: result.decidedAt,
+          ...(typeof result.revisionCount === "number"
+            ? { revisionCount: result.revisionCount }
+            : {}),
+          ...(typeof result.revisionsRemaining === "number"
+            ? { revisionsRemaining: result.revisionsRemaining }
+            : {}),
+        }));
+        setRejectMode(false);
+        setRequestChangesMode(false);
+        setFeedback("");
+        resetRevisionForm();
+
+        let toastSummary = copy.toastApproved;
+        if (result.status === "rejected") {
+          toastSummary = copy.toastRejected;
+        } else if (result.status === "changes_requested") {
+          toastSummary = copy.revision.toastSubmitted;
+        }
+
+        toast.success(toastSummary, { duration: 4000 });
+      } catch {
+        const message = approvalDecideErrorMessage(null, copy.errors);
         setBanner(message);
         toast.error(message, { duration: 5000 });
-        return;
       }
-
-      setPkg((prev) => ({
-        ...prev,
-        status: result.status,
-        decidedAt: result.decidedAt,
-        ...(typeof result.revisionCount === "number"
-          ? { revisionCount: result.revisionCount }
-          : {}),
-        ...(typeof result.revisionsRemaining === "number"
-          ? { revisionsRemaining: result.revisionsRemaining }
-          : {}),
-      }));
-      setRejectMode(false);
-      setRequestChangesMode(false);
-      setFeedback("");
-      resetRevisionForm();
-
-      let toastSummary = copy.toastApproved;
-      if (result.status === "rejected") {
-        toastSummary = copy.toastRejected;
-      } else if (result.status === "changes_requested") {
-        toastSummary = copy.revision.toastSubmitted;
-      }
-
-      toast.success(toastSummary, { duration: 4000 });
     });
   }
 

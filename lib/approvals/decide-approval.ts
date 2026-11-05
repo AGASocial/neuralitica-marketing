@@ -110,7 +110,12 @@ export async function decideApprovalForClient(
   const gate = await getQaGateStatusForAssembledReel(
     approval.assembledReelId,
   );
-  if (gate.ready !== true) {
+  // No QA row means the gate is empty, not failed. The client already watched
+  // the video, so an explicit approve / reject / request_changes is allowed.
+  // A report that exists and is not ready still blocks. This does not run QA.
+  // Autopilot keeps requiring gate.ready and does not use this waiver.
+  const qaReportMissing = gate.qaReportId == null && gate.status == null;
+  if (gate.ready !== true && !qaReportMissing) {
     return approvalQaGateNotReadyError();
   }
 

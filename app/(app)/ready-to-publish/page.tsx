@@ -85,6 +85,7 @@ export default async function ReadyToPublishPage() {
         pendingStatus: hub.pendingStatus,
         progressHint: hub.progressHint,
         untitled: hub.untitled,
+        approvalErrors: t.approvals.errors,
         formatLabels: {
           own_avatar: t.preferences.modes.own_avatar.label,
           generic_avatar: t.preferences.modes.generic_avatar.label,

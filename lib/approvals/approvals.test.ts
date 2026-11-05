@@ -1034,6 +1034,209 @@ describe("decideApproval action", () => {
   });
 });
 
+const missingQaReportGate = {
+  ready: false,
+  status: null,
+  hasBlockingFailures: false,
+  hasOverridableFailures: false,
+  qaReportId: null,
+  overriddenCheckKeys: [] as string[],
+  uncoveredFailedCheckKeys: [] as string[],
+};
+
+const EXISTING_QA_REPORT_ID = "ffffffff-0000-4000-8000-111111111111";
+
+describe("decideApprovalForClient when QA report is missing", () => {
+  async function decideWithGate(params: {
+    gate: Record<string, unknown>;
+    rawInput: Record<string, unknown>;
+    onUpdateDecision?: () => unknown;
+    onRequestChanges?: () => unknown;
+  }) {
+    return withServerOnlyStub(async () => {
+      clearApprovalCaches();
+      const nodeModule = Module as unknown as NodeModuleLoad;
+      const originalLoad = nodeModule._load;
+      let updateDecisionCalled = false;
+      let requestChangesCalled = false;
+      nodeModule._load = function (request, parent, isMain) {
+        if (request === "server-only") return {};
+        const req = String(request);
+        if (req.includes("check-approval-rate-limit")) {
+          return {
+            checkApprovalRateLimit: async () => ({ ok: true }),
+            recordApprovalAttempt: async () => {},
+          };
+        }
+        if (req.includes("persist-approval")) {
+          return {
+            loadApprovalByIdScoped: async () => pendingApproval,
+            updateApprovalDecision: async () => {
+              updateDecisionCalled = true;
+              return params.onUpdateDecision?.() ?? null;
+            },
+            updateApprovalRequestChanges: async () => {
+              requestChangesCalled = true;
+              return params.onRequestChanges?.() ?? null;
+            },
+          };
+        }
+        if (req.includes("get-qa-gate-status-for-assembled-reel")) {
+          return {
+            getQaGateStatusForAssembledReel: async () => params.gate,
+          };
+        }
+        if (req.includes("compose-approval-package")) {
+          return {
+            toApprovalListItemDto: async ({
+              approval,
+            }: {
+              approval: typeof pendingApproval;
+            }) => ({
+              approvalId: approval.id,
+              assembledReelId: approval.assembledReelId,
+              status: approval.status,
+              createdAt: approval.createdAt,
+              captionPreview: "preview",
+              title: "Reel",
+            }),
+          };
+        }
+        if (req.includes("route-approval-change-request")) {
+          return { routeApprovalChangeRequest: async () => {} };
+        }
+        return originalLoad(request, parent, isMain);
+      };
+      try {
+        clearApprovalCaches();
+        const { decideApprovalForClient } = require("./decide-approval.ts");
+        const result = await decideApprovalForClient({
+          rawInput: params.rawInput,
+          user: CLIENT,
+        });
+        return { result, updateDecisionCalled, requestChangesCalled };
+      } finally {
+        nodeModule._load = originalLoad;
+        clearApprovalCaches();
+      }
+    });
+  }
+
+  it("no QA report → client approve is stored", async () => {
+    const decided = {
+      ...pendingApproval,
+      status: "approved" as const,
+      decidedAt: "2026-08-30T19:05:00.000Z",
+      decidedBy: CLIENT_ID,
+    };
+    const { result, updateDecisionCalled } = await decideWithGate({
+      gate: missingQaReportGate,
+      rawInput: { approvalId: APPROVAL_ID, decision: "approved" },
+      onUpdateDecision: () => decided,
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.status, "approved");
+    }
+    assert.equal(updateDecisionCalled, true);
+  });
+
+  it("no QA report → client reject is stored", async () => {
+    const decided = {
+      ...pendingApproval,
+      status: "rejected" as const,
+      decidedAt: "2026-08-30T19:05:00.000Z",
+      decidedBy: CLIENT_ID,
+      clientFeedback: "Not this one",
+    };
+    const { result, updateDecisionCalled } = await decideWithGate({
+      gate: missingQaReportGate,
+      rawInput: {
+        approvalId: APPROVAL_ID,
+        decision: "rejected",
+        clientFeedback: "Not this one",
+      },
+      onUpdateDecision: () => decided,
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.status, "rejected");
+    }
+    assert.equal(updateDecisionCalled, true);
+  });
+
+  it("no QA report → client request_changes is stored", async () => {
+    const updated = {
+      ...pendingApproval,
+      status: "changes_requested" as const,
+      revisionCount: 1,
+      decidedAt: "2026-08-30T20:00:00.000Z",
+      decidedBy: CLIENT_ID,
+    };
+    const { result, requestChangesCalled, updateDecisionCalled } =
+      await decideWithGate({
+        gate: missingQaReportGate,
+        rawInput: {
+          approvalId: APPROVAL_ID,
+          decision: "request_changes",
+          changeRequest: {
+            tags: ["caption"],
+            summary: "Soften the CTA",
+          },
+        },
+        onRequestChanges: () => updated,
+      });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.status, "changes_requested");
+    }
+    assert.equal(requestChangesCalled, true);
+    assert.equal(updateDecisionCalled, false);
+  });
+
+  it("existing QA report with blocking failures → QA_GATE_NOT_READY, no write", async () => {
+    const { result, updateDecisionCalled, requestChangesCalled } =
+      await decideWithGate({
+        gate: {
+          ready: false,
+          status: "failed",
+          hasBlockingFailures: true,
+          hasOverridableFailures: false,
+          qaReportId: EXISTING_QA_REPORT_ID,
+          overriddenCheckKeys: [],
+          uncoveredFailedCheckKeys: [],
+        },
+        rawInput: { approvalId: APPROVAL_ID, decision: "approved" },
+      });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.equal(result.error.code, "QA_GATE_NOT_READY");
+    }
+    assert.equal(updateDecisionCalled, false);
+    assert.equal(requestChangesCalled, false);
+  });
+
+  it("existing QA report with uncovered overridable failures → QA_GATE_NOT_READY, no write", async () => {
+    const { result, updateDecisionCalled } = await decideWithGate({
+      gate: {
+        ready: false,
+        status: "failed",
+        hasBlockingFailures: false,
+        hasOverridableFailures: true,
+        qaReportId: EXISTING_QA_REPORT_ID,
+        overriddenCheckKeys: [],
+        uncoveredFailedCheckKeys: ["caption_tone"],
+      },
+      rawInput: { approvalId: APPROVAL_ID, decision: "rejected" },
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.equal(result.error.code, "QA_GATE_NOT_READY");
+    }
+    assert.equal(updateDecisionCalled, false);
+  });
+});
+
 describe("getApprovalPackage / listPendingApprovals", () => {
   it("get foreign → NOT_FOUND", async () => {
     await withServerOnlyStub(async () => {
@@ -1129,6 +1332,21 @@ describe("gate helper purity (source)", () => {
     assert.match(decideSrc, /getQaGateStatusForAssembledReel/);
     assert.doesNotMatch(ensureSrc, /rawInput\.ready|params\.ready|qaPassed/);
     assert.doesNotMatch(decideSrc, /rawInput\.ready|params\.ready|qaPassed/);
+    assert.doesNotMatch(decideSrc, /run-qa-for-assembled-reel|generateText/);
+  });
+
+  it("autopilot still requires a passed QA gate", () => {
+    const autoSrc = readFileSync(
+      path.join(__dirname, "../automation/auto-approve-deps.ts"),
+      "utf8",
+    );
+    const engineSrc = readFileSync(
+      path.join(__dirname, "../automation/auto-approve-engine.ts"),
+      "utf8",
+    );
+    assert.match(autoSrc, /qaGateReady: gate\.ready === true/);
+    assert.match(engineSrc, /if \(!facts\.qaGateReady\)/);
+    assert.doesNotMatch(autoSrc, /qaReportId == null/);
   });
 
   it("Cliente actions call requireActive first", () => {

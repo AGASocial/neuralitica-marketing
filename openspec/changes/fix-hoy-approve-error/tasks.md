@@ -1,0 +1,6 @@
+- [x] Allow explicit client decide when the QA gate has no report; keep `QA_GATE_NOT_READY` when a report exists and is not ready
+- [x] Unit tests for both cases in `lib/approvals/*.test.ts`; autopilot still requires `gate.ready`
+- [x] Map decide errors on Hoy, Mis videos, and approval detail to `approvals.errors.*`, with `approveFailed` fallback; never a bare "Error"
+- [x] Hoy `?forceApproveError=1` shows the `INVALID_TRANSITION` message without calling `decideApproval`
+- [x] EN/ES `approvals.errors.approveFailed`
+- [x] `openspec validate fix-hoy-approve-error --strict` (repo-wide `--all` still fails on the pre-existing `fix-composer-fixed-footer-chips` change)
