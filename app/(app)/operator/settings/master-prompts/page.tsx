@@ -1,5 +1,6 @@
 import { MasterPromptsSettingsView } from "@/components/prompts/MasterPromptsSettingsView";
 import { getMasterPromptsForSettings } from "@/lib/prompts/get-master-prompts-for-settings";
+import { loadOperatorClientsForStrategy } from "@/lib/content-strategy/load-operator-clients-for-strategy";
 import { getTranslations } from "@/lib/i18n/get-translations";
 import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
@@ -15,7 +16,10 @@ export default async function MasterPromptsSettingsPage() {
   const locale = await resolveRequestLocale(user?.preferredLocale);
   const t = getTranslations(locale);
 
-  const result = await getMasterPromptsForSettings();
+  const [result, clients] = await Promise.all([
+    getMasterPromptsForSettings(),
+    loadOperatorClientsForStrategy(),
+  ]);
 
   if (!result.ok) {
     return (
@@ -31,6 +35,7 @@ export default async function MasterPromptsSettingsPage() {
   return (
     <MasterPromptsSettingsView
       initialPrompts={result.prompts}
+      clients={clients}
       locale={locale}
       copy={{
         title: t.settings.masterPrompts.title,
@@ -43,6 +48,7 @@ export default async function MasterPromptsSettingsPage() {
         businessPlaceholder: t.settings.masterPrompts.businessPlaceholder,
         clientLabel: t.settings.masterPrompts.clientLabel,
         clientPlaceholder: t.settings.masterPrompts.clientPlaceholder,
+        emptyBusinesses: t.settings.masterPrompts.emptyBusinesses,
         saveGlobal: t.settings.masterPrompts.saveGlobal,
         saveBusiness: t.settings.masterPrompts.saveBusiness,
         saving: t.settings.masterPrompts.saving,
