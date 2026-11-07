@@ -2136,6 +2136,7 @@
       "businessPlaceholder": "Enter business-specific creative guidance...",
       "clientLabel": "Client",
       "clientPlaceholder": "Select a client",
+      "emptyBusinesses": "No active businesses available. Add a client to edit per-business prompts.",
       "saveGlobal": "Save global prompt",
       "saveBusiness": "Save business prompt",
       "saving": "Saving…",

@@ -4,7 +4,15 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { MasterPromptsForSettings } from "@/lib/prompts/get-master-prompts-for-settings";
+import type { OperatorClientOption } from "@/lib/content-strategy/load-operator-clients-for-strategy";
 import type { SupportedLocale } from "@/lib/contracts/providers";
 import { updateGlobalMasterPrompt } from "@/lib/prompts/actions/update-global-master-prompt";
 import { updateBusinessMasterPrompt } from "@/lib/prompts/actions/update-business-master-prompt";
@@ -20,6 +28,7 @@ type MasterPromptsCopy = {
   businessPlaceholder: string;
   clientLabel: string;
   clientPlaceholder: string;
+  emptyBusinesses: string;
   saveGlobal: string;
   saveBusiness: string;
   saving: string;
@@ -39,6 +48,7 @@ type MasterPromptsCopy = {
 
 export type MasterPromptsSettingsViewProps = {
   initialPrompts: MasterPromptsForSettings;
+  clients: OperatorClientOption[];
   locale: SupportedLocale;
   copy: MasterPromptsCopy;
 };
@@ -161,26 +171,37 @@ export function MasterPromptsSettingsView(
           <p className="text-sm text-fog-light">{props.copy.businessHint}</p>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-fog mb-1">
-            {props.copy.clientLabel}
-          </label>
-          <input
-            type="text"
-            value={selectedClientId}
-            onChange={(e) => {
-              setSelectedClientId(e.target.value);
-              setBusinessPrompt(
-                props.initialPrompts.perBusinessByClientId[e.target.value] ?? "",
-              );
-            }}
-            placeholder={props.copy.clientPlaceholder}
-            className="w-full rounded-md border border-ash px-3 py-2 text-fog text-sm focus:outline-none focus:ring-2 focus:ring-sky"
-          />
-          <p className="mt-1 text-xs text-fog-light">
-            Enter client UUID to edit per-business prompt
-          </p>
-        </div>
+        {props.clients.length === 0 ? (
+          <div>
+            <p className="text-sm text-fog-light">{props.copy.emptyBusinesses}</p>
+          </div>
+        ) : (
+          <div>
+            <label className="block text-sm font-medium text-fog mb-1">
+              {props.copy.clientLabel}
+            </label>
+            <Select
+              value={selectedClientId}
+              onValueChange={(value) => {
+                setSelectedClientId(value);
+                setBusinessPrompt(
+                  props.initialPrompts.perBusinessByClientId[value] ?? "",
+                );
+              }}
+            >
+              <SelectTrigger className="w-full border-ash bg-white text-fog">
+                <SelectValue placeholder={props.copy.clientPlaceholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {props.clients.map((client) => (
+                  <SelectItem key={client.id} value={client.id}>
+                    {client.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {selectedClientId && (
           <>

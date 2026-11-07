@@ -2136,6 +2136,7 @@
       "businessPlaceholder": "Ingresa orientación creativa específica del negocio...",
       "clientLabel": "Cliente",
       "clientPlaceholder": "Selecciona un cliente",
+      "emptyBusinesses": "No hay negocios activos disponibles. Agrega un cliente para editar prompts por negocio.",
       "saveGlobal": "Guardar prompt global",
       "saveBusiness": "Guardar prompt del negocio",
       "saving": "Guardando…",
