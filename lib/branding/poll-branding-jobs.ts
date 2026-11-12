@@ -8,6 +8,10 @@ import {
   createIdlePollBackoff,
   createStaleSweepGate,
 } from "@/lib/worker/idle-poll-backoff";
+import {
+  createWorkerWakeGate,
+  type WorkerWakeGate,
+} from "@/lib/worker/wake-gate";
 
 import {
   getBrandingJobIdleBackoffMultiplier,
@@ -18,10 +22,6 @@ import {
 import { BRANDING_JOBS_TABLE } from "./branding-job-row";
 import { markStaleBrandingJobsFailed } from "./mark-stale-branding-jobs-failed";
 import { runBrandingJob } from "./run-branding-job";
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 export type PollQueuedBrandingJobsBatchOptions = {
   limit?: number;
@@ -81,7 +81,14 @@ export async function pollQueuedBrandingJobsBatch(
   return { processed };
 }
 
-export async function runBrandingWorkerLoop(): Promise<never> {
+export type RunBrandingWorkerLoopOptions = {
+  wakeGate?: WorkerWakeGate;
+};
+
+export async function runBrandingWorkerLoop(
+  options: RunBrandingWorkerLoopOptions = {},
+): Promise<never> {
+  const wakeGate = options.wakeGate ?? createWorkerWakeGate();
   const baseIntervalMs = getBrandingJobPollIntervalMs();
   const backoff = createIdlePollBackoff({
     baseIntervalMs,
@@ -89,6 +96,9 @@ export async function runBrandingWorkerLoop(): Promise<never> {
     multiplier: getBrandingJobIdleBackoffMultiplier(),
   });
   const staleGate = createStaleSweepGate(getBrandingJobStaleSweepIntervalMs());
+  wakeGate.onWake(() => {
+    backoff.reset();
+  });
 
   while (true) {
     const runStaleSweep = staleGate.shouldSweep();
@@ -98,6 +108,6 @@ export async function runBrandingWorkerLoop(): Promise<never> {
     if (runStaleSweep) {
       staleGate.markSwept();
     }
-    await sleep(backoff.afterPoll(processed > 0));
+    await wakeGate.sleep(backoff.afterPoll(processed > 0));
   }
 }

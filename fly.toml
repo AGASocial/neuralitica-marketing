@@ -1,5 +1,6 @@
 # Neuramark media worker on Fly.io (ADR-0003). Deploy: `fly deploy` (see docs/governance/OPERATIONS.md).
-# No [http_service]: the workers only poll Supabase, they serve no public HTTP.
+# Public HTTPS per process group (distinct external ports) for authenticated wake pings from Vercel.
+# Machines stay running: auto_stop off / min_machines_running so poll loops are not killed.
 app = "neuralitica-marketing-worker"
 primary_region = "iad"
 
@@ -26,3 +27,47 @@ primary_region = "iad"
   size = "shared-cpu-1x"
   memory = "1gb"
   processes = ["assembly", "branding"]
+
+# video — public HTTPS on :443 → internal 8080
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+  processes = ["video"]
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+# assembly — public HTTPS on :8443 → internal 8080
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+  processes = ["assembly"]
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 8443
+    handlers = ["tls", "http"]
+
+# branding — public HTTPS on :8444 → internal 8080
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+  processes = ["branding"]
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 8444
+    handlers = ["tls", "http"]

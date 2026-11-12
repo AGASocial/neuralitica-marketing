@@ -1,9 +1,13 @@
 import { pollActiveVideoJobsBatch, runVideoJobWorkerLoop } from "@/lib/video-jobs/poll-video-job-until-terminal";
+import { createWorkerWakeGate } from "@/lib/worker/wake-gate";
+import { startWorkerWakeHttpServer } from "@/lib/worker/wake-http-server";
 
 const mode = process.env.VIDEO_JOB_POLL_MODE ?? "fly";
 if (mode === "fly") {
+  const wakeGate = createWorkerWakeGate();
+  startWorkerWakeHttpServer({ onWake: () => wakeGate.wake() });
   console.info("[worker] video job poll loop started", { mode, region: process.env.FLY_REGION ?? null });
-  runVideoJobWorkerLoop().catch((error) => {
+  runVideoJobWorkerLoop({ wakeGate }).catch((error) => {
     console.error("[worker] video job loop crashed", {
       message: error instanceof Error ? error.message : "unknown",
     });

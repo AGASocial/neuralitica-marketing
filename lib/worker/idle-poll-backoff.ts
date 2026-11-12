@@ -3,7 +3,8 @@
  * Pure module — safe to import from node:test without server-only.
  */
 
-export const WORKER_IDLE_MAX_INTERVAL_MS_DEFAULT = 60_000 as const;
+/** Deep-idle backup poll when wake pings are missed (default 10 minutes). */
+export const WORKER_IDLE_MAX_INTERVAL_MS_DEFAULT = 600_000 as const;
 export const WORKER_IDLE_BACKOFF_MULTIPLIER_DEFAULT = 2 as const;
 /** Decouple stale sweeps from every queue tick (default 5 minutes). */
 export const WORKER_STALE_SWEEP_INTERVAL_MS_DEFAULT = 300_000 as const;

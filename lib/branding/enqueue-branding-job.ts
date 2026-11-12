@@ -1,14 +1,18 @@
 import "server-only";
 
+import { pingWorkerWake } from "@/lib/worker/ping-worker-wake";
+import { scheduleWorkerWakeWithAfter } from "@/lib/worker/schedule-worker-wake-after";
+
 import { getBrandingJobPollMode } from "./branding-job-config";
 
 /**
  * Enqueue branding worker per ADR-0003 runtime matrix.
- * Production (fly): no-op — Fly worker polls neuramark_assembled_reels directly.
+ * Production (fly): fire-and-forget wake ping so the Fly branding process polls ASAP.
  * Dev (in_process): fire-and-forget async run in Node.
  */
 export function enqueueBrandingJob(assemblyJobId: string): void {
   if (getBrandingJobPollMode() !== "in_process") {
+    pingWorkerWake("branding", { schedule: scheduleWorkerWakeWithAfter });
     return;
   }
 

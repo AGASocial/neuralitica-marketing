@@ -16,7 +16,7 @@ describe("createIdlePollBackoff", () => {
   it("returns base after first empty, then doubles until max", () => {
     const backoff = createIdlePollBackoff({
       baseIntervalMs: 3_000,
-      maxIntervalMs: 60_000,
+      maxIntervalMs: 600_000,
       multiplier: 2,
     });
 
@@ -26,14 +26,17 @@ describe("createIdlePollBackoff", () => {
     assert.equal(backoff.afterPoll(false), 12_000);
     assert.equal(backoff.afterPoll(false), 24_000);
     assert.equal(backoff.afterPoll(false), 48_000);
-    assert.equal(backoff.afterPoll(false), 60_000);
-    assert.equal(backoff.afterPoll(false), 60_000);
+    assert.equal(backoff.afterPoll(false), 96_000);
+    assert.equal(backoff.afterPoll(false), 192_000);
+    assert.equal(backoff.afterPoll(false), 384_000);
+    assert.equal(backoff.afterPoll(false), 600_000);
+    assert.equal(backoff.afterPoll(false), 600_000);
   });
 
   it("resets to base immediately when work is found", () => {
     const backoff = createIdlePollBackoff({
       baseIntervalMs: 5_000,
-      maxIntervalMs: 60_000,
+      maxIntervalMs: 600_000,
       multiplier: 2,
     });
 
