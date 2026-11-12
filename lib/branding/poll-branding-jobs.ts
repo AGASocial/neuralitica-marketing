@@ -4,8 +4,17 @@ import {
   createServerSupabaseClient,
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
+import {
+  createIdlePollBackoff,
+  createStaleSweepGate,
+} from "@/lib/worker/idle-poll-backoff";
 
-import { getBrandingJobPollIntervalMs } from "./branding-job-config";
+import {
+  getBrandingJobIdleBackoffMultiplier,
+  getBrandingJobIdleMaxIntervalMs,
+  getBrandingJobPollIntervalMs,
+  getBrandingJobStaleSweepIntervalMs,
+} from "./branding-job-config";
 import { BRANDING_JOBS_TABLE } from "./branding-job-row";
 import { markStaleBrandingJobsFailed } from "./mark-stale-branding-jobs-failed";
 import { runBrandingJob } from "./run-branding-job";
@@ -14,12 +23,29 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function pollQueuedBrandingJobsBatch(limit = 5): Promise<void> {
+export type PollQueuedBrandingJobsBatchOptions = {
+  limit?: number;
+  /** When false, skip markStaleBrandingJobsFailed for this tick. Default true. */
+  runStaleSweep?: boolean;
+};
+
+export async function pollQueuedBrandingJobsBatch(
+  limitOrOptions: number | PollQueuedBrandingJobsBatchOptions = 5,
+): Promise<{ processed: number }> {
+  const options: PollQueuedBrandingJobsBatchOptions =
+    typeof limitOrOptions === "number"
+      ? { limit: limitOrOptions, runStaleSweep: true }
+      : limitOrOptions;
+  const limit = options.limit ?? 5;
+  const runStaleSweep = options.runStaleSweep !== false;
+
   if (!isSupabaseConfigured()) {
-    return;
+    return { processed: 0 };
   }
 
-  await markStaleBrandingJobsFailed();
+  if (runStaleSweep) {
+    await markStaleBrandingJobsFailed();
+  }
 
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
@@ -31,9 +57,10 @@ export async function pollQueuedBrandingJobsBatch(limit = 5): Promise<void> {
     .limit(limit);
 
   if (error || !data) {
-    return;
+    return { processed: 0 };
   }
 
+  let processed = 0;
   for (const row of data) {
     const jobId = (row as { id: unknown }).id;
     if (typeof jobId !== "string") {
@@ -41,6 +68,7 @@ export async function pollQueuedBrandingJobsBatch(limit = 5): Promise<void> {
     }
     try {
       await runBrandingJob(jobId);
+      processed += 1;
     } catch (pollError) {
       console.error("[branding-jobs] batch run failed", {
         jobId,
@@ -49,11 +77,27 @@ export async function pollQueuedBrandingJobsBatch(limit = 5): Promise<void> {
       });
     }
   }
+
+  return { processed };
 }
 
 export async function runBrandingWorkerLoop(): Promise<never> {
+  const baseIntervalMs = getBrandingJobPollIntervalMs();
+  const backoff = createIdlePollBackoff({
+    baseIntervalMs,
+    maxIntervalMs: getBrandingJobIdleMaxIntervalMs(),
+    multiplier: getBrandingJobIdleBackoffMultiplier(),
+  });
+  const staleGate = createStaleSweepGate(getBrandingJobStaleSweepIntervalMs());
+
   while (true) {
-    await pollQueuedBrandingJobsBatch();
-    await sleep(getBrandingJobPollIntervalMs());
+    const runStaleSweep = staleGate.shouldSweep();
+    const { processed } = await pollQueuedBrandingJobsBatch({
+      runStaleSweep,
+    });
+    if (runStaleSweep) {
+      staleGate.markSwept();
+    }
+    await sleep(backoff.afterPoll(processed > 0));
   }
 }

@@ -14,8 +14,10 @@ const defaultDependencies: VideoJobsCronDependencies = {
 };
 
 /**
- * Vercel Cron fallback while Fly video worker (ADR-0003) is IMPLEMENTATION INCOMPLETE.
- * Single-tick poll of queued/processing jobs (primary + broll) against vendors.
+ * Vercel Cron failover while Fly video worker (ADR-0003) is the primary poller.
+ * Kept scheduled so vendor status + stale sweep still progress if the Fly video
+ * process is down. Single-tick poll (fits Vercel maxDuration); not a substitute
+ * for the continuous Fly loop under load.
  */
 export async function handleVideoJobsCron(
   request: Request,

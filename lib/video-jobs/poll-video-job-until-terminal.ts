@@ -6,13 +6,22 @@ import {
   createServerSupabaseClient,
   isSupabaseConfigured,
 } from "@/lib/supabase/server";
+import {
+  createIdlePollBackoff,
+  createStaleSweepGate,
+} from "@/lib/worker/idle-poll-backoff";
 
 import { applyVideoJobStatusUpdate } from "./apply-video-job-status-update";
 import { getVideoAdapterForJob } from "./get-video-adapter-for-job";
 import { loadVideoJobByIdUnscoped } from "./load-video-job";
 import { markStaleVideoJobsFailed } from "./mark-stale-video-jobs-failed";
 import { isTerminalVideoJobStatus } from "./retry-eligibility";
-import { getVideoJobPollIntervalMs } from "./video-job-config";
+import {
+  getVideoJobIdleBackoffMultiplier,
+  getVideoJobIdleMaxIntervalMs,
+  getVideoJobPollIntervalMs,
+  getVideoJobStaleSweepIntervalMs,
+} from "./video-job-config";
 import { VIDEO_JOBS_TABLE } from "./video-job-row";
 
 function sleep(ms: number): Promise<void> {
@@ -88,12 +97,29 @@ export async function pollVideoJobUntilTerminal(jobId: string): Promise<void> {
   }
 }
 
-export async function pollActiveVideoJobsBatch(limit = 10): Promise<void> {
+export type PollActiveVideoJobsBatchOptions = {
+  limit?: number;
+  /** When false, skip markStaleVideoJobsFailed for this tick. Default true. */
+  runStaleSweep?: boolean;
+};
+
+export async function pollActiveVideoJobsBatch(
+  limitOrOptions: number | PollActiveVideoJobsBatchOptions = 10,
+): Promise<{ processed: number }> {
+  const options: PollActiveVideoJobsBatchOptions =
+    typeof limitOrOptions === "number"
+      ? { limit: limitOrOptions, runStaleSweep: true }
+      : limitOrOptions;
+  const limit = options.limit ?? 10;
+  const runStaleSweep = options.runStaleSweep !== false;
+
   if (!isSupabaseConfigured()) {
-    return;
+    return { processed: 0 };
   }
 
-  await markStaleVideoJobsFailed();
+  if (runStaleSweep) {
+    await markStaleVideoJobsFailed();
+  }
 
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
@@ -104,9 +130,10 @@ export async function pollActiveVideoJobsBatch(limit = 10): Promise<void> {
     .limit(limit);
 
   if (error || !data) {
-    return;
+    return { processed: 0 };
   }
 
+  let processed = 0;
   for (const row of data) {
     const jobId = (row as { id: unknown }).id;
     if (typeof jobId !== "string") {
@@ -114,6 +141,7 @@ export async function pollActiveVideoJobsBatch(limit = 10): Promise<void> {
     }
     try {
       await pollVideoJobUntilTerminal(jobId);
+      processed += 1;
     } catch (pollError) {
       console.error("[video-jobs] batch poll failed", {
         jobId,
@@ -122,10 +150,13 @@ export async function pollActiveVideoJobsBatch(limit = 10): Promise<void> {
       });
     }
   }
+
+  return { processed };
 }
 
 /**
  * Single-tick batch for Vercel Cron (does not block until terminal).
+ * Always runs stale sweep — cron already fires at most once per minute.
  */
 export async function pollActiveVideoJobsOnceBatch(
   limit = 20,
@@ -174,8 +205,22 @@ export async function pollActiveVideoJobsOnceBatch(
 }
 
 export async function runVideoJobWorkerLoop(): Promise<never> {
+  const baseIntervalMs = getVideoJobPollIntervalMs();
+  const backoff = createIdlePollBackoff({
+    baseIntervalMs,
+    maxIntervalMs: getVideoJobIdleMaxIntervalMs(),
+    multiplier: getVideoJobIdleBackoffMultiplier(),
+  });
+  const staleGate = createStaleSweepGate(getVideoJobStaleSweepIntervalMs());
+
   while (true) {
-    await pollActiveVideoJobsBatch();
-    await sleep(getVideoJobPollIntervalMs());
+    const runStaleSweep = staleGate.shouldSweep();
+    const { processed } = await pollActiveVideoJobsBatch({
+      runStaleSweep,
+    });
+    if (runStaleSweep) {
+      staleGate.markSwept();
+    }
+    await sleep(backoff.afterPoll(processed > 0));
   }
 }
