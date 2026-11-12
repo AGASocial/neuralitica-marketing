@@ -7,6 +7,11 @@ import {
   NEURAMARK_ASSEMBLY_STALE_TIMEOUT_MIN_DEFAULT,
 } from "@/lib/contracts/assembly-job";
 import type { AssemblyJobPollMode } from "@/lib/contracts/assembly-job";
+import {
+  readWorkerIdleBackoffMultiplier,
+  readWorkerIdleMaxIntervalMs,
+  readWorkerStaleSweepIntervalMs,
+} from "@/lib/worker/idle-poll-backoff";
 
 export function readAssemblyJobPollMode(
   env: NodeJS.ProcessEnv = process.env,
@@ -30,6 +35,27 @@ export function readAssemblyJobPollIntervalMs(
   return Number.isFinite(parsed) && parsed > 0
     ? parsed
     : ASSEMBLY_JOB_POLL_INTERVAL_MS_DEFAULT;
+}
+
+export function readAssemblyJobIdleMaxIntervalMs(
+  env: NodeJS.ProcessEnv = process.env,
+): number {
+  return readWorkerIdleMaxIntervalMs(env, "ASSEMBLY_JOB_IDLE_MAX_INTERVAL_MS");
+}
+
+export function readAssemblyJobIdleBackoffMultiplier(
+  env: NodeJS.ProcessEnv = process.env,
+): number {
+  return readWorkerIdleBackoffMultiplier(env);
+}
+
+export function readAssemblyJobStaleSweepIntervalMs(
+  env: NodeJS.ProcessEnv = process.env,
+): number {
+  return readWorkerStaleSweepIntervalMs(
+    env,
+    "ASSEMBLY_JOB_STALE_SWEEP_INTERVAL_MS",
+  );
 }
 
 export function readAssemblyStaleTimeoutMin(

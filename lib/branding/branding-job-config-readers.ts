@@ -3,6 +3,11 @@
  */
 import type { AssemblyJobPollMode } from "@/lib/contracts/assembly-job";
 import { readAssemblyJobPollMode } from "@/lib/assembly/assembly-job-config-readers";
+import {
+  readWorkerIdleBackoffMultiplier,
+  readWorkerIdleMaxIntervalMs,
+  readWorkerStaleSweepIntervalMs,
+} from "@/lib/worker/idle-poll-backoff";
 
 import {
   BRANDING_JOB_POLL_INTERVAL_MS_DEFAULT,
@@ -33,6 +38,27 @@ export function readBrandingJobPollIntervalMs(
   return Number.isFinite(parsed) && parsed > 0
     ? parsed
     : BRANDING_JOB_POLL_INTERVAL_MS_DEFAULT;
+}
+
+export function readBrandingJobIdleMaxIntervalMs(
+  env: NodeJS.ProcessEnv = process.env,
+): number {
+  return readWorkerIdleMaxIntervalMs(env, "BRANDING_JOB_IDLE_MAX_INTERVAL_MS");
+}
+
+export function readBrandingJobIdleBackoffMultiplier(
+  env: NodeJS.ProcessEnv = process.env,
+): number {
+  return readWorkerIdleBackoffMultiplier(env);
+}
+
+export function readBrandingJobStaleSweepIntervalMs(
+  env: NodeJS.ProcessEnv = process.env,
+): number {
+  return readWorkerStaleSweepIntervalMs(
+    env,
+    "BRANDING_JOB_STALE_SWEEP_INTERVAL_MS",
+  );
 }
 
 export function readBrandingStaleTimeoutMin(

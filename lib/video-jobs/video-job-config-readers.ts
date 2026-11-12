@@ -7,6 +7,11 @@ import {
   VIDEO_MAX_RETRIES_PER_REEL_DEFAULT,
 } from "@/lib/contracts/video-job";
 import type { VideoJobPollMode } from "@/lib/contracts/video-job";
+import {
+  readWorkerIdleBackoffMultiplier,
+  readWorkerIdleMaxIntervalMs,
+  readWorkerStaleSweepIntervalMs,
+} from "@/lib/worker/idle-poll-backoff";
 
 export function readVideoJobPollMode(
   env: NodeJS.ProcessEnv = process.env,
@@ -30,6 +35,27 @@ export function readVideoJobPollIntervalMs(
   return Number.isFinite(parsed) && parsed > 0
     ? parsed
     : VIDEO_JOB_POLL_INTERVAL_MS_DEFAULT;
+}
+
+export function readVideoJobIdleMaxIntervalMs(
+  env: NodeJS.ProcessEnv = process.env,
+): number {
+  return readWorkerIdleMaxIntervalMs(env, "VIDEO_JOB_IDLE_MAX_INTERVAL_MS");
+}
+
+export function readVideoJobIdleBackoffMultiplier(
+  env: NodeJS.ProcessEnv = process.env,
+): number {
+  return readWorkerIdleBackoffMultiplier(env);
+}
+
+export function readVideoJobStaleSweepIntervalMs(
+  env: NodeJS.ProcessEnv = process.env,
+): number {
+  return readWorkerStaleSweepIntervalMs(
+    env,
+    "VIDEO_JOB_STALE_SWEEP_INTERVAL_MS",
+  );
 }
 
 export function readVideoJobStaleTimeoutMs(
