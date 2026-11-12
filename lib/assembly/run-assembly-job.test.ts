@@ -142,7 +142,7 @@ describe("enqueueAssemblyJob dev seam", () => {
     delete process.env.ASSEMBLY_JOB_POLL_MODE;
   });
 
-  it("no-ops when fly mode", () => {
+  it("does not throw in fly mode when wake ping is unconfigured", () => {
     withServerOnlyStub(() => {
       process.env.ASSEMBLY_JOB_POLL_MODE = "fly";
       const { readAssemblyJobPollMode } =

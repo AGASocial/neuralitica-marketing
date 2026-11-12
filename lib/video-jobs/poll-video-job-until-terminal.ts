@@ -10,6 +10,10 @@ import {
   createIdlePollBackoff,
   createStaleSweepGate,
 } from "@/lib/worker/idle-poll-backoff";
+import {
+  createWorkerWakeGate,
+  type WorkerWakeGate,
+} from "@/lib/worker/wake-gate";
 
 import { applyVideoJobStatusUpdate } from "./apply-video-job-status-update";
 import { getVideoAdapterForJob } from "./get-video-adapter-for-job";
@@ -204,7 +208,14 @@ export async function pollActiveVideoJobsOnceBatch(
   return { polled, terminal };
 }
 
-export async function runVideoJobWorkerLoop(): Promise<never> {
+export type RunVideoJobWorkerLoopOptions = {
+  wakeGate?: WorkerWakeGate;
+};
+
+export async function runVideoJobWorkerLoop(
+  options: RunVideoJobWorkerLoopOptions = {},
+): Promise<never> {
+  const wakeGate = options.wakeGate ?? createWorkerWakeGate();
   const baseIntervalMs = getVideoJobPollIntervalMs();
   const backoff = createIdlePollBackoff({
     baseIntervalMs,
@@ -212,6 +223,9 @@ export async function runVideoJobWorkerLoop(): Promise<never> {
     multiplier: getVideoJobIdleBackoffMultiplier(),
   });
   const staleGate = createStaleSweepGate(getVideoJobStaleSweepIntervalMs());
+  wakeGate.onWake(() => {
+    backoff.reset();
+  });
 
   while (true) {
     const runStaleSweep = staleGate.shouldSweep();
@@ -221,6 +235,6 @@ export async function runVideoJobWorkerLoop(): Promise<never> {
     if (runStaleSweep) {
       staleGate.markSwept();
     }
-    await sleep(backoff.afterPoll(processed > 0));
+    await wakeGate.sleep(backoff.afterPoll(processed > 0));
   }
 }

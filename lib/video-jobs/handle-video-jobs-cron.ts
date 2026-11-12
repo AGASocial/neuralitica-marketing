@@ -15,9 +15,10 @@ const defaultDependencies: VideoJobsCronDependencies = {
 
 /**
  * Vercel Cron failover while Fly video worker (ADR-0003) is the primary poller.
- * Kept scheduled so vendor status + stale sweep still progress if the Fly video
- * process is down. Single-tick poll (fits Vercel maxDuration); not a substitute
- * for the continuous Fly loop under load.
+ * Happy-path latency uses enqueue wake pings + Fly idle backup (default 10 min).
+ * This cron is middleware-public + CRON_SECRET, scheduled every 10 minutes so
+ * vendor status + stale sweep still progress if the Fly video process is down.
+ * Single-tick poll (fits Vercel maxDuration); not a substitute for the Fly loop.
  */
 export async function handleVideoJobsCron(
   request: Request,

@@ -1,7 +1,7 @@
 {
   "crons": [
     { "path": "/api/cron/weekly-cycle", "schedule": "0 6 * * 1" },
-    { "path": "/api/cron/video-jobs", "schedule": "* * * * *" },
+    { "path": "/api/cron/video-jobs", "schedule": "*/10 * * * *" },
     { "path": "/api/cron/automation-reminders", "schedule": "0 * * * *" }
   ]
 }

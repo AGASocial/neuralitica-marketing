@@ -8,6 +8,10 @@ import {
   createIdlePollBackoff,
   createStaleSweepGate,
 } from "@/lib/worker/idle-poll-backoff";
+import {
+  createWorkerWakeGate,
+  type WorkerWakeGate,
+} from "@/lib/worker/wake-gate";
 
 import {
   getAssemblyJobIdleBackoffMultiplier,
@@ -18,10 +22,6 @@ import {
 import { ASSEMBLY_JOBS_TABLE } from "./assembly-job-row";
 import { markStaleAssemblyJobsFailed } from "./mark-stale-assembly-jobs-failed";
 import { runAssemblyJob } from "./run-assembly-job";
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 export type PollQueuedAssemblyJobsBatchOptions = {
   limit?: number;
@@ -80,7 +80,14 @@ export async function pollQueuedAssemblyJobsBatch(
   return { processed };
 }
 
-export async function runAssemblyWorkerLoop(): Promise<never> {
+export type RunAssemblyWorkerLoopOptions = {
+  wakeGate?: WorkerWakeGate;
+};
+
+export async function runAssemblyWorkerLoop(
+  options: RunAssemblyWorkerLoopOptions = {},
+): Promise<never> {
+  const wakeGate = options.wakeGate ?? createWorkerWakeGate();
   const baseIntervalMs = getAssemblyJobPollIntervalMs();
   const backoff = createIdlePollBackoff({
     baseIntervalMs,
@@ -88,6 +95,9 @@ export async function runAssemblyWorkerLoop(): Promise<never> {
     multiplier: getAssemblyJobIdleBackoffMultiplier(),
   });
   const staleGate = createStaleSweepGate(getAssemblyJobStaleSweepIntervalMs());
+  wakeGate.onWake(() => {
+    backoff.reset();
+  });
 
   while (true) {
     const runStaleSweep = staleGate.shouldSweep();
@@ -97,6 +107,6 @@ export async function runAssemblyWorkerLoop(): Promise<never> {
     if (runStaleSweep) {
       staleGate.markSwept();
     }
-    await sleep(backoff.afterPoll(processed > 0));
+    await wakeGate.sleep(backoff.afterPoll(processed > 0));
   }
 }
